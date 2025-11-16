@@ -1,0 +1,154 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+/* ============================
+   ENUMS
+   ============================ */
+
+enum UserRole {
+  SUPER_ADMIN
+  GYM_ADMIN
+}
+
+enum GymSubscriptionPlan {
+  MONTHLY
+  YEARLY
+}
+
+enum GymSubscriptionStatus {
+  ACTIVE
+  SUSPENDED
+  EXPIRED
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  EXPIRES_TODAY
+  EXPIRED
+}
+
+/* ============================
+   MODELS
+   ============================ */
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  password  String
+  role      UserRole
+  firstName String?
+  lastName  String?
+  gymId     String?
+  gym       Gym?     @relation(fields: [gymId], references: [id], onDelete: SetNull)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Gym {
+  id                   String                 @id @default(cuid())
+  name                 String
+  email                String                 @unique  
+  phone                String?
+  address              String?
+  city                 String?
+  country              String?
+  logoUrl              String?
+  subscriptionPlan     GymSubscriptionPlan
+  subscriptionStatus   GymSubscriptionStatus  @default(ACTIVE)
+  users                User[]
+  membershipPlans      MembershipPlan[]
+  members              Member[]
+  subscriptions        Subscription[]
+  payments             Payment[]
+  createdAt            DateTime               @default(now())
+  updatedAt            DateTime               @updatedAt
+}
+
+
+model MembershipPlan {
+  id            String           @id @default(cuid())
+  gymId         String
+  gym           Gym              @relation(fields: [gymId], references: [id], onDelete: Cascade)
+
+  name          String
+  durationDays  Int
+  price         Float
+  isActive      Boolean          @default(true)
+
+  subscriptions Subscription[]
+
+  createdAt     DateTime         @default(now())
+  updatedAt     DateTime         @updatedAt
+}
+
+model Member {
+  id            String           @id @default(cuid())
+  gymId         String
+  gym           Gym              @relation(fields: [gymId], references: [id], onDelete: Cascade)
+
+  firstName     String
+  lastName      String
+  email         String?
+  phone         String?
+
+  subscriptions Subscription[]
+
+  createdAt     DateTime         @default(now())
+  updatedAt     DateTime         @updatedAt
+
+  @@index([gymId])
+}
+
+model Subscription {
+  id        String               @id @default(cuid())
+  
+  memberId  String
+  member    Member               @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  
+  gymId     String
+  gym       Gym                  @relation(fields: [gymId], references: [id], onDelete: Cascade)
+
+  planId    String
+  plan      MembershipPlan       @relation(fields: [planId], references: [id], onDelete: Restrict)
+
+  startDate DateTime
+  endDate   DateTime
+  pricePaid Float
+  status    SubscriptionStatus
+
+  paymentId String?
+  payment   Payment?             @relation(fields: [paymentId], references: [id], onDelete: SetNull)
+
+  createdAt DateTime             @default(now())
+  updatedAt DateTime             @updatedAt
+
+  @@index([gymId])
+  @@index([memberId])
+  @@index([endDate])
+}
+
+model Payment {
+  id             String          @id @default(cuid())
+  gymId          String
+  gym            Gym             @relation(fields: [gymId], references: [id], onDelete: Cascade)
+
+  /* Important: Relation fix */
+  subscriptions  Subscription[]
+
+  amount         Float
+  currency       String          @default("MAD")
+  paymentDate    DateTime        @default(now())
+
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+
+  @@index([gymId])
+  @@index([paymentDate])
+}

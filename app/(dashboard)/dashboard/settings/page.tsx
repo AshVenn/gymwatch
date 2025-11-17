@@ -5,6 +5,8 @@ import { useEffect, useMemo, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Label } from '@/components/ui/label'
+import { useToast } from '@/components/ui/use-toast'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 
 interface GymData {
@@ -28,7 +30,7 @@ export default function SettingsPage() {
     city: '',
     country: '',
   })
-  const [message, setMessage] = useState('')
+  const { toast } = useToast()
 
   const gymKey = useMemo(() => ['gym', session?.user?.gymId ?? 'no-gym'] as const, [session?.user?.gymId])
 
@@ -80,11 +82,18 @@ export default function SettingsPage() {
       return data
     },
     onSuccess: () => {
-      setMessage('Paramètres mis à jour avec succès')
+      toast({
+        title: 'Paramètres mis à jour',
+        description: 'Les informations de votre salle ont été enregistrées.',
+      })
       queryClient.invalidateQueries(gymKey)
     },
     onError: (error) => {
-      setMessage(error instanceof Error ? error.message : 'Une erreur est survenue')
+      toast({
+        title: 'Mise à jour impossible',
+        description: error instanceof Error ? error.message : 'Une erreur est survenue',
+        variant: 'destructive',
+      })
     },
   })
 
@@ -94,7 +103,6 @@ export default function SettingsPage() {
   }
 
   const handleSubmit = () => {
-    setMessage('')
     updateGymMutation.mutate()
   }
 
@@ -114,21 +122,16 @@ export default function SettingsPage() {
           <CardTitle>Informations de la salle de sport</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          {(message || isError) && (
-            <div
-              className={`p-3 rounded-md text-sm ${
-                (message || '').includes('succès') && !isError
-                  ? 'bg-green-100 text-green-800'
-                  : 'bg-red-100 text-red-800'
-              }`}
-            >
-              {message || 'Une erreur est survenue lors du chargement'}
-            </div>
+          {isError && (
+            <p className="rounded-md border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive">
+              Une erreur est survenue lors du chargement des paramètres.
+            </p>
           )}
 
           <div>
-            <label className="block text-sm font-medium mb-2">Nom de la salle</label>
+            <Label htmlFor="gym-name">Nom de la salle</Label>
             <Input
+              id="gym-name"
               name="name"
               value={formData.name}
               onChange={handleInputChange}
@@ -137,8 +140,9 @@ export default function SettingsPage() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium mb-2">Email</label>
+            <Label htmlFor="gym-email">Email</Label>
             <Input
+              id="gym-email"
               type="email"
               name="email"
               value={formData.email}
@@ -148,8 +152,9 @@ export default function SettingsPage() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium mb-2">Téléphone</label>
+            <Label htmlFor="gym-phone">Téléphone</Label>
             <Input
+              id="gym-phone"
               name="phone"
               value={formData.phone}
               onChange={handleInputChange}
@@ -158,8 +163,9 @@ export default function SettingsPage() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium mb-2">Adresse</label>
+            <Label htmlFor="gym-address">Adresse</Label>
             <Input
+              id="gym-address"
               name="address"
               value={formData.address}
               onChange={handleInputChange}
@@ -168,8 +174,9 @@ export default function SettingsPage() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium mb-2">Ville</label>
+            <Label htmlFor="gym-city">Ville</Label>
             <Input
+              id="gym-city"
               name="city"
               value={formData.city}
               onChange={handleInputChange}
@@ -178,8 +185,9 @@ export default function SettingsPage() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium mb-2">Pays</label>
+            <Label htmlFor="gym-country">Pays</Label>
             <Input
+              id="gym-country"
               name="country"
               value={formData.country}
               onChange={handleInputChange}

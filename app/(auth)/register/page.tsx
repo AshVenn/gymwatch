@@ -19,7 +19,6 @@ export default function RegisterPage() {
   })
   const [error, setError] = useState('')
   const router = useRouter()
-  const { toast } = useToast()
 
   const registerMutation = useMutation({
     mutationFn: async () => {

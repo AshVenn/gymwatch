@@ -7,12 +7,12 @@ import { AuthProvider } from './providers/session-provider'
 import { ReactQueryProvider } from './providers/react-query-provider'
 import { Toaster } from '@/components/ui/sonner'
 
-const siteUrl = 'https://www.gymwatch.fr'
+const siteUrl = 'https://www.gymwatch.ma'
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
   title: {
-    default: 'GymWatch – Gestion moderne des salles de sport',
+    default: 'GymWatch - Gestion moderne des salles de sport',
     template: '%s | GymWatch',
   },
   description:
@@ -25,7 +25,7 @@ export const metadata: Metadata = {
   publisher: 'GymWatch',
   alternates: { canonical: '/' },
   openGraph: {
-    title: 'GymWatch – Centralisez la gestion de vos clubs de fitness',
+    title: 'GymWatch - Centralisez la gestion de vos clubs de fitness',
     description:
       'Tableau de bord multi-locataires pour suivre vos membres, abonnements et revenus en temps réel.',
     url: siteUrl,

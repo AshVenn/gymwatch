@@ -2,6 +2,7 @@
 
 import { useSession } from 'next-auth/react'
 import { useMemo, useState } from 'react'
+import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import {
   Table,
@@ -51,7 +52,7 @@ export default function PlansPage() {
   })
   const [isOpen, setIsOpen] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const { toast } = useToast()
+
 
   // 🔒 BLOCK PAGE IF USER IS NOT AUTHENTICATED
   if (status === 'loading') {

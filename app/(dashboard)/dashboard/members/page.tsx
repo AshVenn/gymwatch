@@ -70,7 +70,7 @@ export default function MembersPage() {
 
   const [isOpen, setIsOpen] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const { toast } = useToast()
+
 
   // 🔒 Authentication checks
   if (status === 'loading') return <div>Chargement de l'utilisateur...</div>
@@ -141,21 +141,22 @@ export default function MembersPage() {
 
       return data
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries(membersQueryKey)
-      setIsOpen(false)
-      setFormData({
-        firstName: '',
-        lastName: '',
-        email: '',
-        phone: '',
-        planId: '',
-        startDate: '',
-      })
-      setEditingId(null)
-      setError(null)
-      toast.success(editingId ? 'Membre mis à jour avec succès' : 'Nouveau membre ajouté !')
-    },
+        onSuccess: () => {
+          queryClient.invalidateQueries({ queryKey: membersQueryKey })
+          setIsOpen(false)
+          setFormData({
+            firstName: '',
+            lastName: '',
+            email: '',
+            phone: '',
+            planId: 'none',
+            startDate: '',
+          })
+          setEditingId(null)
+          setError(null)
+          toast.success(editingId ? 'Membre mis à jour avec succès' : 'Nouveau membre ajouté !')
+        },
+
     onError: (err) => {
       const message = err instanceof Error ? err.message : 'Erreur lors de la sauvegarde.'
       setError(message)
@@ -175,7 +176,7 @@ export default function MembersPage() {
       }
     },
     onSuccess: () => {
-      queryClient.invalidateQueries(membersQueryKey)
+      queryClient.invalidateQueries({ queryKey: membersQueryKey })
       toast.success('Membre supprimé avec succès')
     },
     onError: (err) => {
@@ -307,22 +308,23 @@ export default function MembersPage() {
               {/* PLAN */}
               <div>
                 <Label htmlFor="member-plan">Plan</Label>
-                <Select
-                  value={formData.planId}
-                  onValueChange={(value) => setFormData({ ...formData, planId: value })}
-                >
-                  <SelectTrigger id="member-plan">
-                    <SelectValue placeholder="Aucun" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="">Aucun</SelectItem>
-                    {plans.map((plan) => (
-                      <SelectItem key={plan.id} value={plan.id}>
-                        {plan.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                  <Select
+                    value={formData.planId}
+                    onValueChange={(value) => setFormData({ ...formData, planId: value })}
+                  >
+                    <SelectTrigger id="member-plan">
+                      <SelectValue placeholder="Aucun" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">Aucun</SelectItem>
+                      {plans.map((plan) => (
+                        <SelectItem key={plan.id} value={plan.id}>
+                          {plan.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+
               </div>
 
               {/* START DATE */}

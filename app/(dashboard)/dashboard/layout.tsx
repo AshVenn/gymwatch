@@ -1,5 +1,5 @@
 'use client'
-//(dashboard)/dashboard/layout.tsx
+
 import { useSession, signOut } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
@@ -11,25 +11,33 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import { LayoutGrid, Users, Calendar, Layers, Settings, LogOut, Menu, X } from 'lucide-react'
+import {
+  LayoutGrid,
+  Users,
+  Calendar,
+  Layers,
+  Settings,
+  LogOut,
+  Menu,
+  X,
+} from 'lucide-react'
 import { cn } from '@/lib/utils'
 
-export default function DashboardLayout({
-  children,
-}: {
-  children: React.ReactNode
-}) {
+export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const { data: session, status } = useSession()
   const router = useRouter()
   const [sidebarOpen, setSidebarOpen] = useState(false)
 
+  // ---- AUTH REDIRECT ----
   useEffect(() => {
-    if (status === 'unauthenticated') {
-      router.push('/login')
+    if (status === "loading") return
+    if (status === "unauthenticated") {
+      router.replace("/login")
     }
-  }, [status, router])
+  }, [status])
 
-  if (status === 'loading') {
+  // ---- LOADING ----
+  if (status === "loading") {
     return (
       <div className="flex h-screen items-center justify-center">
         <div className="text-center">
@@ -39,21 +47,22 @@ export default function DashboardLayout({
     )
   }
 
-  if (!session) {
-    return null
-  }
+  // ---- UNAUTH ----
+  if (status === "unauthenticated") return null
 
+  // ---- RENDER AFTER AUTH ONLY ----
   const navigationItems = [
     { href: '/dashboard', label: 'Tableau de bord', icon: LayoutGrid },
     { href: '/dashboard/members', label: 'Membres', icon: Users },
     { href: '/dashboard/subscriptions', label: 'Abonnements', icon: Calendar },
-    { href: '/dashboard/plans', label: 'Plans d\'abonnement', icon: Layers },
+    { href: '/dashboard/plans', label: "Plans d'abonnement", icon: Layers },
     { href: '/dashboard/settings', label: 'Paramètres', icon: Settings },
   ]
 
   return (
     <div className="flex h-screen bg-background text-foreground">
-      {/* Sidebar */}
+    
+      {/* SIDEBAR */}
       <aside
         className={cn(
           'fixed inset-y-0 left-0 z-50 w-64 border-r border-border bg-card shadow-lg transition-transform md:relative md:translate-x-0',
@@ -70,6 +79,7 @@ export default function DashboardLayout({
               <X size={24} />
             </button>
           </div>
+
           <nav className="flex-1 space-y-2 p-4">
             {navigationItems.map((item) => {
               const Icon = item.icon
@@ -86,6 +96,7 @@ export default function DashboardLayout({
               )
             })}
           </nav>
+
           <div className="border-t border-border/60 p-4">
             <Button
               variant="ghost"
@@ -99,9 +110,8 @@ export default function DashboardLayout({
         </div>
       </aside>
 
-      {/* Main content */}
+      {/* MAIN */}
       <div className="flex-1 flex flex-col overflow-hidden">
-        {/* Header */}
         <header className="flex items-center justify-between border-b border-border bg-background/95 px-6 py-4 backdrop-blur supports-[backdrop-filter]:bg-background/80">
           <button
             onClick={() => setSidebarOpen(!sidebarOpen)}
@@ -109,14 +119,15 @@ export default function DashboardLayout({
           >
             <Menu size={24} />
           </button>
+
           <div className="flex items-center gap-4 ml-auto">
             <span className="text-sm text-muted-foreground">
-              {session.user?.email}
+              {session?.user?.email}
             </span>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="outline" className="rounded-full w-10 h-10 p-0">
-                  {session.user?.name?.charAt(0).toUpperCase()}
+                  {session?.user?.name?.charAt(0).toUpperCase()}
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
@@ -128,11 +139,8 @@ export default function DashboardLayout({
           </div>
         </header>
 
-        {/* Content */}
-        <main className="flex-1 overflow-auto">
-          <div className="p-6">
-            {children}
-          </div>
+        <main className="flex-1 overflow-auto p-6">
+          {children}
         </main>
       </div>
     </div>

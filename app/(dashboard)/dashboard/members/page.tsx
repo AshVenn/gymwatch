@@ -1,7 +1,7 @@
 'use client'
 
 import { useSession } from 'next-auth/react'
-import { useEffect, useState } from 'react'
+import { useMemo, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import {
   Table,
@@ -25,7 +25,17 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 import { MoreVertical, Plus, Edit2, Trash2 } from 'lucide-react'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { toast } from 'sonner'
 
 interface Member {
   id: string
@@ -46,9 +56,7 @@ interface Plan {
 
 export default function MembersPage() {
   const { data: session, status } = useSession()
-  const [members, setMembers] = useState<Member[]>([])
-  const [plans, setPlans] = useState<Plan[]>([])
-  const [loading, setLoading] = useState(true)
+  const queryClient = useQueryClient()
   const [editingId, setEditingId] = useState<string | null>(null)
 
   const [formData, setFormData] = useState({
@@ -76,49 +84,105 @@ export default function MembersPage() {
       </div>
     )
 
-  // ─────────────────────────────────────────────
-  // FETCH MEMBERS + PLANS
-  // ─────────────────────────────────────────────
-  useEffect(() => {
-    if (session?.user?.gymId) {
-      fetchMembers()
-      fetchPlans()
-    }
-  }, [session])
+  const gymId = session.user.gymId
+  const membersQueryKey = useMemo(() => ['members', gymId] as const, [gymId])
+  const plansQueryKey = useMemo(() => ['plans', gymId] as const, [gymId])
 
-  const fetchMembers = async () => {
-    try {
+  const {
+    data: members = [],
+    isLoading: membersLoading,
+    isError: membersError,
+  } = useQuery<Member[]>({
+    queryKey: membersQueryKey,
+    enabled: status === 'authenticated',
+    queryFn: async () => {
       const response = await fetch('/api/members')
 
       if (!response.ok) {
-        console.error('API returned error')
-        setMembers([])
-        return
+        throw new Error('Impossible de charger les membres')
       }
 
       const data = await response.json()
-      setMembers(Array.isArray(data) ? data : [])
-    } catch (error) {
-      console.error('Failed to fetch members:', error)
-      setMembers([])
-    } finally {
-      setLoading(false)
-    }
-  }
+      return Array.isArray(data) ? data : []
+    },
+  })
 
-  const fetchPlans = async () => {
-    try {
+  const { data: plans = [] } = useQuery<Plan[]>({
+    queryKey: plansQueryKey,
+    enabled: status === 'authenticated',
+    queryFn: async () => {
       const response = await fetch('/api/plans')
-      const data = await response.json()
-      setPlans(data)
-    } catch (error) {
-      console.error('Failed to fetch plans:', error)
-    }
-  }
+      if (!response.ok) {
+        throw new Error('Impossible de charger les plans')
+      }
 
-  // ─────────────────────────────────────────────
-  // FORM ACTIONS
-  // ─────────────────────────────────────────────
+      const data = await response.json()
+      return Array.isArray(data) ? data : []
+    },
+  })
+
+  const saveMemberMutation = useMutation({
+    mutationFn: async () => {
+      const method = editingId ? 'PUT' : 'POST'
+      const url = editingId ? `/api/members/${editingId}` : '/api/members'
+
+      const response = await fetch(url, {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData),
+      })
+
+      const data = await response.json().catch(() => ({}))
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Impossible de sauvegarder le membre')
+      }
+
+      return data
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries(membersQueryKey)
+      setIsOpen(false)
+      setFormData({
+        firstName: '',
+        lastName: '',
+        email: '',
+        phone: '',
+        planId: '',
+        startDate: '',
+      })
+      setEditingId(null)
+      setError(null)
+      toast.success(editingId ? 'Membre mis à jour avec succès' : 'Nouveau membre ajouté !')
+    },
+    onError: (err) => {
+      const message = err instanceof Error ? err.message : 'Erreur lors de la sauvegarde.'
+      setError(message)
+      toast.error(message)
+    },
+  })
+
+  const deleteMemberMutation = useMutation({
+    mutationFn: async (memberId: string) => {
+      const response = await fetch(`/api/members/${memberId}`, {
+        method: 'DELETE',
+      })
+
+      if (!response.ok) {
+        const data = await response.json().catch(() => ({}))
+        throw new Error(data.error || 'Impossible de supprimer le membre')
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries(membersQueryKey)
+      toast.success('Membre supprimé avec succès')
+    },
+    onError: (err) => {
+      const message = err instanceof Error ? err.message : 'Impossible de supprimer le membre'
+      toast.error(message)
+    },
+  })
+
   const handleAddMember = () => {
     setEditingId(null)
     setFormData({
@@ -145,62 +209,31 @@ export default function MembersPage() {
     setIsOpen(true)
   }
 
-  const handleSubmit = async () => {
+  const handleSubmit = () => {
     if (!formData.firstName || !formData.lastName) {
-      alert('Prénom et Nom obligatoires.')
+      toast.error('Prénom et Nom obligatoires.')
       return
     }
 
-    try {
-      const method = editingId ? 'PUT' : 'POST'
-      const url = editingId ? `/api/members/${editingId}` : '/api/members'
-
-      const response = await fetch(url, {
-        method,
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData),
-      })
-
-      if (response.ok) {
-        await fetchMembers()
-        setIsOpen(false)
-        setFormData({
-          firstName: '',
-          lastName: '',
-          email: '',
-          phone: '',
-          planId: '',
-          startDate: '',
-        })
-      }
-    } catch (error) {
-      console.error('Failed to save member:', error)
-    }
+    saveMemberMutation.mutate()
   }
 
-  const handleDeleteMember = async (memberId: string) => {
+  const handleDeleteMember = (memberId: string) => {
     if (confirm('Êtes-vous sûr de vouloir supprimer ce membre ?')) {
-      try {
-        const response = await fetch(`/api/members/${memberId}`, {
-          method: 'DELETE',
-        })
-        if (response.ok) await fetchMembers()
-      } catch (error) {
-        console.error('Failed to delete member:', error)
-      }
+      deleteMemberMutation.mutate(memberId)
     }
   }
 
-  // ─────────────────────────────────────────────
-  // LOADING & EMPTY STATES
-  // ─────────────────────────────────────────────
-  if (loading) return <div>Chargement des membres...</div>
+  if (membersLoading) return <div>Chargement des membres...</div>
 
-  // ─────────────────────────────────────────────
-  // PAGE JSX
-  // ─────────────────────────────────────────────
   return (
     <div className="space-y-6">
+      {(error || membersError) && (
+        <div className="text-red-500 font-medium">
+          {error || 'Impossible de charger les membres.'}
+        </div>
+      )}
+
       <div className="flex justify-between items-center">
         <div>
           <h1 className="text-3xl font-bold">Membres</h1>
@@ -227,8 +260,9 @@ export default function MembersPage() {
             <div className="space-y-4">
               {/* FIRST NAME */}
               <div>
-                <label className="block text-sm font-medium mb-2">Prénom</label>
+                <Label htmlFor="member-first-name">Prénom</Label>
                 <Input
+                  id="member-first-name"
                   value={formData.firstName}
                   onChange={(e) =>
                     setFormData({ ...formData, firstName: e.target.value })
@@ -238,8 +272,9 @@ export default function MembersPage() {
 
               {/* LAST NAME */}
               <div>
-                <label className="block text-sm font-medium mb-2">Nom</label>
+                <Label htmlFor="member-last-name">Nom</Label>
                 <Input
+                  id="member-last-name"
                   value={formData.lastName}
                   onChange={(e) =>
                     setFormData({ ...formData, lastName: e.target.value })
@@ -249,8 +284,9 @@ export default function MembersPage() {
 
               {/* EMAIL */}
               <div>
-                <label className="block text-sm font-medium mb-2">Email</label>
+                <Label htmlFor="member-email">Email</Label>
                 <Input
+                  id="member-email"
                   type="email"
                   value={formData.email}
                   onChange={(e) =>
@@ -261,8 +297,9 @@ export default function MembersPage() {
 
               {/* PHONE */}
               <div>
-                <label className="block text-sm font-medium mb-2">Téléphone</label>
+                <Label htmlFor="member-phone">Téléphone</Label>
                 <Input
+                  id="member-phone"
                   value={formData.phone}
                   onChange={(e) =>
                     setFormData({ ...formData, phone: e.target.value })
@@ -270,61 +307,61 @@ export default function MembersPage() {
                 />
               </div>
 
-              {/* PLAN SELECTOR */}
+              {/* PLAN */}
               <div>
-                <label className="block text-sm font-medium mb-2">
-                  Plan d'abonnement (optionnel)
-                </label>
-                <select
-                  className="border rounded w-full p-2"
+                <Label htmlFor="member-plan">Plan</Label>
+                <Select
                   value={formData.planId}
-                  onChange={(e) =>
-                    setFormData({ ...formData, planId: e.target.value })
-                  }
+                  onValueChange={(value) => setFormData({ ...formData, planId: value })}
                 >
-                  <option value="">Aucun</option>
-                  {plans.map((plan) => (
-                    <option key={plan.id} value={plan.id}>
-                      {plan.name} — {plan.price} MAD
-                    </option>
-                  ))}
-                </select>
+                  <SelectTrigger id="member-plan">
+                    <SelectValue placeholder="Aucun" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="">Aucun</SelectItem>
+                    {plans.map((plan) => (
+                      <SelectItem key={plan.id} value={plan.id}>
+                        {plan.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
 
               {/* START DATE */}
-              {formData.planId && (
-                <div>
-                  <label className="block text-sm font-medium mb-2">
-                    Date de début
-                  </label>
-                  <Input
-                    type="date"
-                    value={formData.startDate}
-                    onChange={(e) =>
-                      setFormData({ ...formData, startDate: e.target.value })
-                    }
-                  />
-                </div>
-              )}
+              <div>
+                <Label htmlFor="member-start-date">Date de début</Label>
+                <Input
+                  id="member-start-date"
+                  type="date"
+                  value={formData.startDate}
+                  onChange={(e) =>
+                    setFormData({ ...formData, startDate: e.target.value })
+                  }
+                />
+              </div>
 
-              <Button onClick={handleSubmit} className="w-full">
-                {editingId ? 'Mettre à jour' : 'Ajouter'}
+              <Button onClick={handleSubmit} className="w-full" disabled={saveMemberMutation.isPending}>
+                {saveMemberMutation.isPending
+                  ? 'Enregistrement...'
+                  : editingId
+                    ? 'Mettre à jour'
+                    : 'Ajouter'}
               </Button>
             </div>
           </DialogContent>
         </Dialog>
       </div>
 
-      {/* TABLE */}
       <div className="rounded-lg border overflow-x-auto">
         <Table>
           <TableHeader>
             <TableRow className="bg-slate-50">
-              <TableHead>Nom</TableHead>
               <TableHead>Prénom</TableHead>
-              <TableHead>Téléphone</TableHead>
+              <TableHead>Nom</TableHead>
               <TableHead>Email</TableHead>
-              <TableHead>Date de création</TableHead>
+              <TableHead>Téléphone</TableHead>
+              <TableHead>Date d'inscription</TableHead>
               <TableHead className="text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
@@ -332,16 +369,13 @@ export default function MembersPage() {
           <TableBody>
             {members.map((member) => (
               <TableRow key={member.id}>
-                <TableCell>{member.lastName ?? '-'}</TableCell>
-                <TableCell>{member.firstName ?? '-'}</TableCell>
-                <TableCell>{member.phone || '-'}</TableCell>
+                <TableCell className="font-medium">{member.firstName}</TableCell>
+                <TableCell>{member.lastName}</TableCell>
                 <TableCell>{member.email || '-'}</TableCell>
+                <TableCell>{member.phone || '-'}</TableCell>
                 <TableCell>
-                  {member.createdAt
-                    ? new Date(member.createdAt).toLocaleDateString('fr-FR')
-                    : '-'}
+                  {new Date(member.createdAt).toLocaleDateString('fr-FR')}
                 </TableCell>
-
                 <TableCell className="text-right">
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
@@ -349,16 +383,14 @@ export default function MembersPage() {
                         <MoreVertical size={16} />
                       </Button>
                     </DropdownMenuTrigger>
-
                     <DropdownMenuContent align="end">
-                      <DropdownMenuItem onClick={() => handleEditMember(member)}>
+                      <DropdownMenuItem onSelect={() => handleEditMember(member)}>
                         <Edit2 className="mr-2" size={16} />
                         Modifier
                       </DropdownMenuItem>
-
                       <DropdownMenuItem
-                        onClick={() => handleDeleteMember(member.id)}
                         className="text-destructive"
+                        onSelect={() => handleDeleteMember(member.id)}
                       >
                         <Trash2 className="mr-2" size={16} />
                         Supprimer
@@ -369,7 +401,6 @@ export default function MembersPage() {
               </TableRow>
             ))}
           </TableBody>
-
         </Table>
       </div>
     </div>

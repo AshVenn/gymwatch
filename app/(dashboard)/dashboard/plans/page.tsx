@@ -1,7 +1,7 @@
 'use client'
 
 import { useSession } from 'next-auth/react'
-import { useEffect, useState } from 'react'
+import { useMemo, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import {
   Table,
@@ -25,7 +25,11 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Switch } from '@/components/ui/switch'
 import { MoreVertical, Plus, Edit2, Trash2 } from 'lucide-react'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { toast } from 'sonner'
 
 interface Plan {
   id: string
@@ -37,8 +41,7 @@ interface Plan {
 
 export default function PlansPage() {
   const { data: session, status } = useSession()
-  const [plans, setPlans] = useState<Plan[]>([])
-  const [loading, setLoading] = useState(true)
+  const queryClient = useQueryClient()
   const [editingId, setEditingId] = useState<string | null>(null)
   const [formData, setFormData] = useState({
     name: '',
@@ -62,36 +65,30 @@ export default function PlansPage() {
     return <div className="text-red-500 font-medium">Aucun gymnase associé à votre compte.</div>
   }
 
-  useEffect(() => {
-    // Fetch only when session is ready
-    if (status === 'authenticated' && session?.user?.gymId) {
-      fetchPlans()
-    }
-  }, [session, status])
+  const planQueryKey = useMemo(() => ['plans', session.user.gymId] as const, [session.user.gymId])
 
-  const fetchPlans = async () => {
-    try {
-      setError(null)
+  const {
+    data: plans = [],
+    isLoading,
+    isError,
+  } = useQuery<Plan[]>({
+    queryKey: planQueryKey,
+    enabled: status === 'authenticated',
+    queryFn: async () => {
       const response = await fetch('/api/plans')
 
       if (!response.ok) {
         if (response.status === 401) {
-          setError("Non autorisé. Votre session a peut-être expiré.")
-          setPlans([])
-          return
+          throw new Error('Non autorisé. Votre session a peut-être expiré.')
         }
-        throw new Error("Erreur serveur.")
+
+        throw new Error('Erreur serveur.')
       }
 
       const data = await response.json()
-      setPlans(data)
-    } catch (error) {
-      console.error('Failed to fetch plans:', error)
-      setError("Impossible de charger les plans.")
-    } finally {
-      setLoading(false)
-    }
-  }
+      return Array.isArray(data) ? data : []
+    },
+  })
 
   const handleAddPlan = () => {
     setEditingId(null)
@@ -110,8 +107,8 @@ export default function PlansPage() {
     setIsOpen(true)
   }
 
-  const handleSubmit = async () => {
-    try {
+  const savePlanMutation = useMutation({
+    mutationFn: async () => {
       const method = editingId ? 'PUT' : 'POST'
       const url = editingId ? `/api/plans/${editingId}` : '/api/plans'
 
@@ -126,45 +123,72 @@ export default function PlansPage() {
         }),
       })
 
-      if (response.ok) {
-        await fetchPlans()
-        setIsOpen(false)
-        setFormData({ name: '', durationDays: '', price: '', isActive: true })
-      } else {
-        setError("Échec de la sauvegarde du plan.")
+      const data = await response.json().catch(() => ({}))
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Erreur lors de la sauvegarde')
       }
-    } catch (error) {
-      console.error('Failed to save plan:', error)
-      setError("Erreur lors de la sauvegarde.")
-    }
+
+      return data
+    },
+    onSuccess: () => {
+      setError(null)
+      setIsOpen(false)
+      setFormData({ name: '', durationDays: '', price: '', isActive: true })
+      setEditingId(null)
+      queryClient.invalidateQueries(planQueryKey)
+      toast.success(editingId ? 'Plan mis à jour avec succès' : 'Plan créé avec succès')
+    },
+    onError: (err) => {
+      const message = err instanceof Error ? err.message : 'Erreur lors de la sauvegarde.'
+      setError(message)
+      toast.error(message)
+    },
+  })
+
+  const deletePlanMutation = useMutation({
+    mutationFn: async (planId: string) => {
+      const response = await fetch(`/api/plans/${planId}`, { method: 'DELETE' })
+      const data = await response.json().catch(() => ({}))
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Impossible de supprimer le plan.')
+      }
+
+      return data
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries(planQueryKey)
+      toast.success('Plan supprimé avec succès')
+    },
+    onError: (err) => {
+      const message = err instanceof Error ? err.message : 'Erreur lors de la suppression.'
+      setError(message)
+      toast.error(message)
+    },
+  })
+
+  const handleSubmit = () => {
+    savePlanMutation.mutate()
   }
 
-  const handleDeletePlan = async (planId: string) => {
+  const handleDeletePlan = (planId: string) => {
     if (confirm('Êtes-vous sûr de vouloir supprimer ce plan ?')) {
-      try {
-        const response = await fetch(`/api/plans/${planId}`, {
-          method: 'DELETE',
-        })
-
-        if (response.ok) {
-          await fetchPlans()
-        } else {
-          setError("Impossible de supprimer le plan.")
-        }
-      } catch (error) {
-        console.error('Failed to delete plan:', error)
-        setError("Erreur lors de la suppression.")
-      }
+      deletePlanMutation.mutate(planId)
     }
   }
 
-  if (loading) {
+  if (isLoading) {
     return <div>Chargement des plans...</div>
   }
 
   return (
     <div className="space-y-6">
-      {error && <div className="text-red-500 font-medium">{error}</div>}
+      {(error || isError) && (
+        <div className="text-red-500 font-medium">
+          {error || 'Impossible de charger les plans.'}
+        </div>
+      )}
 
       <div className="flex justify-between items-center">
         <div>
@@ -189,8 +213,9 @@ export default function PlansPage() {
 
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium mb-2">Nom du plan</label>
+                <Label htmlFor="plan-name">Nom du plan</Label>
                 <Input
+                  id="plan-name"
                   value={formData.name}
                   onChange={(e) =>
                     setFormData({ ...formData, name: e.target.value })
@@ -200,10 +225,9 @@ export default function PlansPage() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium mb-2">
-                  Durée en jours
-                </label>
+                <Label htmlFor="plan-duration">Durée en jours</Label>
                 <Input
+                  id="plan-duration"
                   type="number"
                   value={formData.durationDays}
                   onChange={(e) =>
@@ -214,8 +238,9 @@ export default function PlansPage() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium mb-2">Prix (MAD)</label>
+                <Label htmlFor="plan-price">Prix (MAD)</Label>
                 <Input
+                  id="plan-price"
                   type="number"
                   step="0.01"
                   value={formData.price}
@@ -226,20 +251,25 @@ export default function PlansPage() {
                 />
               </div>
 
-              <div className="flex items-center gap-2">
-                <input
-                  type="checkbox"
+              <div className="flex items-center justify-between">
+                <Label htmlFor="plan-active" className="text-sm font-medium">
+                  Actif
+                </Label>
+                <Switch
+                  id="plan-active"
                   checked={formData.isActive}
-                  onChange={(e) =>
-                    setFormData({ ...formData, isActive: e.target.checked })
+                  onCheckedChange={(checked) =>
+                    setFormData({ ...formData, isActive: checked })
                   }
-                  className="rounded"
                 />
-                <label className="text-sm font-medium">Actif</label>
               </div>
 
-              <Button onClick={handleSubmit} className="w-full">
-                {editingId ? 'Mettre à jour' : 'Créer'}
+              <Button onClick={handleSubmit} className="w-full" disabled={savePlanMutation.isPending}>
+                {savePlanMutation.isPending
+                  ? 'Enregistrement...'
+                  : editingId
+                    ? 'Mettre à jour'
+                    : 'Créer'}
               </Button>
             </div>
           </DialogContent>
@@ -284,13 +314,13 @@ export default function PlansPage() {
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
-                      <DropdownMenuItem onClick={() => handleEditPlan(plan)}>
+                      <DropdownMenuItem onSelect={() => handleEditPlan(plan)}>
                         <Edit2 className="mr-2" size={16} />
                         Modifier
                       </DropdownMenuItem>
 
                       <DropdownMenuItem
-                        onClick={() => handleDeletePlan(plan.id)}
+                        onSelect={() => handleDeletePlan(plan.id)}
                         className="text-destructive"
                       >
                         <Trash2 className="mr-2" size={16} />

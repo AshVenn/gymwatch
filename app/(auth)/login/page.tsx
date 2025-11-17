@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { signIn } from 'next-auth/react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 
 export default function LoginPage() {
@@ -57,8 +58,9 @@ export default function LoginPage() {
             )}
             
             <div>
-              <label className="block text-sm font-medium mb-2">Email</label>
+              <Label htmlFor="login-email">Email</Label>
               <Input
+                id="login-email"
                 type="email"
                 placeholder="admin@fitzone.ma"
                 value={email}
@@ -69,8 +71,9 @@ export default function LoginPage() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium mb-2">Mot de passe</label>
+              <Label htmlFor="login-password">Mot de passe</Label>
               <Input
+                id="login-password"
                 type="password"
                 placeholder="••••••••"
                 value={password}

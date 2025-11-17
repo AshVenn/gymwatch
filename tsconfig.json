@@ -23,6 +23,9 @@
     "paths": {
       "@/*": [
         "./*"
+      ],
+      "@tanstack/react-query": [
+        "./lib/vendor/react-query"
       ]
     },
     "plugins": [

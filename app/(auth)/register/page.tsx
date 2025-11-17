@@ -5,6 +5,9 @@ import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { useMutation } from '@tanstack/react-query'
+import { toast } from 'sonner'
+import { Label } from '@/components/ui/label'
 
 export default function RegisterPage() {
   const [formData, setFormData] = useState({
@@ -15,26 +18,10 @@ export default function RegisterPage() {
     confirmPassword: '',
   })
   const [error, setError] = useState('')
-  const [loading, setLoading] = useState(false)
   const router = useRouter()
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target
-    setFormData(prev => ({ ...prev, [name]: value }))
-  }
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setLoading(true)
-    setError('')
-
-    if (formData.adminPassword !== formData.confirmPassword) {
-      setError('Les mots de passe ne correspondent pas')
-      setLoading(false)
-      return
-    }
-
-    try {
+  const registerMutation = useMutation({
+    mutationFn: async () => {
       const response = await fetch('/api/auth/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -49,15 +36,39 @@ export default function RegisterPage() {
       const data = await response.json()
 
       if (!response.ok) {
-        setError(data.error || 'Une erreur est survenue')
-      } else {
-        router.push('/login?registered=true')
+        throw new Error(data.error || 'Une erreur est survenue')
       }
-    } catch (err) {
-      setError('Une erreur est survenue')
-    } finally {
-      setLoading(false)
+
+      return data
+    },
+    onSuccess: () => {
+      toast.success('Compte créé avec succès !')
+      router.push('/login?registered=true')
+    },
+    onError: (error) => {
+      const message = error instanceof Error ? error.message : 'Une erreur est survenue'
+      setError(message)
+      toast.error(message)
+    },
+  })
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target
+    setFormData(prev => ({ ...prev, [name]: value }))
+  }
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setError('')
+
+    if (formData.adminPassword !== formData.confirmPassword) {
+      const mismatchMessage = 'Les mots de passe ne correspondent pas'
+      setError(mismatchMessage)
+      toast.error(mismatchMessage)
+      return
     }
+
+    registerMutation.mutate()
   }
 
   return (
@@ -78,71 +89,76 @@ export default function RegisterPage() {
             )}
 
             <div>
-              <label className="block text-sm font-medium mb-2">Nom de la salle</label>
+              <Label htmlFor="gymName">Nom de la salle</Label>
               <Input
+                id="gymName"
                 name="gymName"
                 placeholder="FitZone Casablanca"
                 value={formData.gymName}
                 onChange={handleChange}
                 required
-                disabled={loading}
+                disabled={registerMutation.isPending}
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium mb-2">Email de la salle</label>
+              <Label htmlFor="gymEmail">Email de la salle</Label>
               <Input
+                id="gymEmail"
                 name="email"
                 type="email"
                 placeholder="contact@salle.ma"
                 value={formData.email}
                 onChange={handleChange}
                 required
-                disabled={loading}
+                disabled={registerMutation.isPending}
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium mb-2">Email administrateur</label>
+              <Label htmlFor="adminEmail">Email administrateur</Label>
               <Input
+                id="adminEmail"
                 name="adminEmail"
                 type="email"
                 placeholder="admin@salle.ma"
                 value={formData.adminEmail}
                 onChange={handleChange}
                 required
-                disabled={loading}
+                disabled={registerMutation.isPending}
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium mb-2">Mot de passe</label>
+              <Label htmlFor="adminPassword">Mot de passe</Label>
               <Input
+                id="adminPassword"
                 name="adminPassword"
                 type="password"
                 placeholder="••••••••"
                 value={formData.adminPassword}
                 onChange={handleChange}
                 required
-                disabled={loading}
+                disabled={registerMutation.isPending}
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium mb-2">Confirmer le mot de passe</label>
+              <Label htmlFor="confirmPassword">Confirmer le mot de passe</Label>
               <Input
+                id="confirmPassword"
                 name="confirmPassword"
                 type="password"
                 placeholder="••••••••"
                 value={formData.confirmPassword}
                 onChange={handleChange}
                 required
-                disabled={loading}
+                disabled={registerMutation.isPending}
               />
             </div>
 
-            <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? 'Inscription en cours...' : 'Créer un compte'}
+            <Button type="submit" className="w-full" disabled={registerMutation.isPending}>
+              {registerMutation.isPending ? 'Inscription en cours...' : 'Créer un compte'}
             </Button>
           </form>
 

@@ -1,10 +1,13 @@
 'use client'
 //(dashboard)/dashboard/settings/page.tsx
 import { useSession } from 'next-auth/react'
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { toast } from 'sonner'
 
 interface GymData {
   id: string
@@ -18,8 +21,7 @@ interface GymData {
 
 export default function SettingsPage() {
   const { data: session } = useSession()
-  const [gym, setGym] = useState<GymData | null>(null)
-  const [loading, setLoading] = useState(true)
+  const queryClient = useQueryClient()
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -28,66 +30,75 @@ export default function SettingsPage() {
     city: '',
     country: '',
   })
-  const [saving, setSaving] = useState(false)
-  const [message, setMessage] = useState('')
+
+  const gymKey = useMemo(() => ['gym', session?.user?.gymId ?? 'no-gym'] as const, [session?.user?.gymId])
+
+  const {
+    data: gym,
+    isLoading,
+    isError,
+  } = useQuery<GymData>({
+    queryKey: gymKey,
+    enabled: Boolean(session?.user?.gymId),
+    queryFn: async () => {
+      const response = await fetch('/api/gym')
+
+      if (!response.ok) {
+        throw new Error('Impossible de charger les paramètres du gymnase')
+      }
+
+      return response.json()
+    },
+  })
 
   useEffect(() => {
-    if (session?.user?.gymId) {
-      fetchGymData()
-    }
-  }, [session])
-
-  const fetchGymData = async () => {
-    try {
-      const response = await fetch('/api/gym')
-      const data = await response.json()
-      setGym(data)
+    if (gym) {
       setFormData({
-        name: data.name,
-        email: data.email,
-        phone: data.phone || '',
-        address: data.address || '',
-        city: data.city || '',
-        country: data.country || '',
+        name: gym.name,
+        email: gym.email,
+        phone: gym.phone || '',
+        address: gym.address || '',
+        city: gym.city || '',
+        country: gym.country || '',
       })
-    } catch (error) {
-      console.error('Failed to fetch gym data:', error)
-    } finally {
-      setLoading(false)
     }
-  }
+  }, [gym])
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target
-    setFormData((prev) => ({ ...prev, [name]: value }))
-  }
-
-  const handleSubmit = async () => {
-    setSaving(true)
-    setMessage('')
-
-    try {
+  const updateGymMutation = useMutation({
+    mutationFn: async () => {
       const response = await fetch('/api/gym', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData),
       })
 
-      if (response.ok) {
-        setMessage('Paramètres mis à jour avec succès')
-        await fetchGymData()
-      } else {
-        setMessage('Une erreur est survenue lors de la mise à jour')
+      const data = await response.json().catch(() => ({}))
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Une erreur est survenue lors de la mise à jour')
       }
-    } catch (error) {
-      setMessage('Une erreur est survenue')
-      console.error('Failed to update gym data:', error)
-    } finally {
-      setSaving(false)
-    }
+
+      return data
+    },
+    onSuccess: () => {
+      toast.success('Paramètres mis à jour avec succès')
+      queryClient.invalidateQueries(gymKey)
+    },
+    onError: (error) => {
+      toast.error(error instanceof Error ? error.message : 'Une erreur est survenue')
+    },
+  })
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target
+    setFormData((prev) => ({ ...prev, [name]: value }))
   }
 
-  if (loading) {
+  const handleSubmit = () => {
+    updateGymMutation.mutate()
+  }
+
+  if (isLoading) {
     return <div>Chargement des paramètres...</div>
   }
 
@@ -103,21 +114,16 @@ export default function SettingsPage() {
           <CardTitle>Informations de la salle de sport</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          {message && (
-            <div
-              className={`p-3 rounded-md text-sm ${
-                message.includes('succès')
-                  ? 'bg-green-100 text-green-800'
-                  : 'bg-red-100 text-red-800'
-              }`}
-            >
-              {message}
+          {isError && (
+            <div className="p-3 rounded-md text-sm bg-red-100 text-red-800">
+              Une erreur est survenue lors du chargement
             </div>
           )}
 
           <div>
-            <label className="block text-sm font-medium mb-2">Nom de la salle</label>
+            <Label htmlFor="gym-name">Nom de la salle</Label>
             <Input
+              id="gym-name"
               name="name"
               value={formData.name}
               onChange={handleInputChange}
@@ -126,8 +132,9 @@ export default function SettingsPage() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium mb-2">Email</label>
+            <Label htmlFor="gym-email">Email</Label>
             <Input
+              id="gym-email"
               type="email"
               name="email"
               value={formData.email}
@@ -137,8 +144,9 @@ export default function SettingsPage() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium mb-2">Téléphone</label>
+            <Label htmlFor="gym-phone">Téléphone</Label>
             <Input
+              id="gym-phone"
               name="phone"
               value={formData.phone}
               onChange={handleInputChange}
@@ -147,8 +155,9 @@ export default function SettingsPage() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium mb-2">Adresse</label>
+            <Label htmlFor="gym-address">Adresse</Label>
             <Input
+              id="gym-address"
               name="address"
               value={formData.address}
               onChange={handleInputChange}
@@ -157,8 +166,9 @@ export default function SettingsPage() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium mb-2">Ville</label>
+            <Label htmlFor="gym-city">Ville</Label>
             <Input
+              id="gym-city"
               name="city"
               value={formData.city}
               onChange={handleInputChange}
@@ -167,8 +177,9 @@ export default function SettingsPage() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium mb-2">Pays</label>
+            <Label htmlFor="gym-country">Pays</Label>
             <Input
+              id="gym-country"
               name="country"
               value={formData.country}
               onChange={handleInputChange}
@@ -176,8 +187,8 @@ export default function SettingsPage() {
             />
           </div>
 
-          <Button onClick={handleSubmit} disabled={saving} className="w-full">
-            {saving ? 'Enregistrement en cours...' : 'Enregistrer les modifications'}
+          <Button onClick={handleSubmit} disabled={updateGymMutation.isPending} className="w-full">
+            {updateGymMutation.isPending ? 'Enregistrement en cours...' : 'Enregistrer les modifications'}
           </Button>
         </CardContent>
       </Card>

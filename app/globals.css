@@ -120,3 +120,29 @@
     @apply bg-background text-foreground;
   }
 }
+
+@layer utilities {
+  .hero-parallax {
+    background-image:
+      radial-gradient(circle at 25% 20%, color-mix(in oklab, var(--primary) 60%, transparent) 0, transparent 45%),
+      radial-gradient(circle at 80% -10%, color-mix(in oklab, var(--secondary) 45%, transparent) 0, transparent 40%),
+      url('/hero-grid.svg');
+    background-size: 160% 160%, 140% 140%, cover;
+    background-repeat: no-repeat;
+    background-attachment: fixed;
+    animation: float-background 32s ease-in-out infinite alternate;
+    filter: drop-shadow(0 0 40px color-mix(in oklab, var(--primary) 35%, transparent));
+  }
+
+  @keyframes float-background {
+    0% {
+      transform: translate3d(0, -6%, 0) scale(1);
+    }
+    50% {
+      transform: translate3d(0, 4%, 0) scale(1.05);
+    }
+    100% {
+      transform: translate3d(0, -6%, 0) scale(1);
+    }
+  }
+}

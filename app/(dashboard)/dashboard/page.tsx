@@ -1,6 +1,7 @@
 'use client'
 import { useSession } from 'next-auth/react'
-import { useEffect, useState } from 'react'
+import { useMemo } from 'react'
+import { useQuery } from '@tanstack/react-query'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import {
   LineChart,
@@ -28,48 +29,49 @@ interface DashboardStats {
 export default function DashboardPage() {
   const { data: session } = useSession()
 
-  const [stats, setStats] = useState<DashboardStats>({
+  const defaultStats = useMemo<DashboardStats>(() => ({
     monthlyRevenue: 0,
     activeMembers: 0,
     newMembers: 0,
     percentageChange: 0,
     revenueByMonth: [],
     planDistribution: [],
-    expiringSoon: []
+    expiringSoon: [],
+  }), [])
+
+  const { data: stats = defaultStats, isLoading, isError } = useQuery({
+    queryKey: ['dashboard-stats', session?.user?.gymId],
+    enabled: Boolean(session?.user?.gymId),
+    queryFn: async () => {
+      const response = await fetch('/api/dashboard/stats')
+
+      if (!response.ok) {
+        throw new Error('Impossible de charger les statistiques')
+      }
+
+      const data = await response.json()
+      return {
+        monthlyRevenue: data.monthlyRevenue ?? 0,
+        activeMembers: data.activeMembers ?? 0,
+        newMembers: data.newMembers ?? 0,
+        percentageChange: data.percentageChange ?? 0,
+        revenueByMonth: data.revenueByMonth ?? [],
+        planDistribution: data.planDistribution ?? [],
+        expiringSoon: data.expiringSoon ?? [],
+      } satisfies DashboardStats
+    },
   })
 
-  const [loading, setLoading] = useState(true)
-
-  useEffect(() => {
-    const fetchStats = async () => {
-      try {
-        const response = await fetch('/api/dashboard/stats')
-        const data = await response.json()
-
-        // Ensure all fields exist
-        setStats({
-          monthlyRevenue: data.monthlyRevenue ?? 0,
-          activeMembers: data.activeMembers ?? 0,
-          newMembers: data.newMembers ?? 0,
-          percentageChange: data.percentageChange ?? 0,
-          revenueByMonth: data.revenueByMonth ?? [],
-          planDistribution: data.planDistribution ?? [],
-          expiringSoon: data.expiringSoon ?? [],
-        })
-      } catch (error) {
-        console.error('Failed to fetch stats:', error)
-      } finally {
-        setLoading(false)
-      }
-    }
-
-    if (session?.user?.gymId) {
-      fetchStats()
-    }
-  }, [session])
-
-  if (loading) {
+  if (isLoading) {
     return <div className="text-center py-10">Chargement des statistiques...</div>
+  }
+
+  if (isError) {
+    return (
+      <div className="text-center py-10 text-red-500">
+        Impossible de charger les statistiques pour le moment.
+      </div>
+    )
   }
 
   const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444']

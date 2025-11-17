@@ -75,6 +75,8 @@ export default function DashboardPage() {
   }
 
   const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444']
+  const planDistribution = (stats.planDistribution ?? []) as DashboardStats['planDistribution']
+  const expiringSoon = (stats.expiringSoon ?? []) as DashboardStats['expiringSoon']
 
   return (
     <div className="space-y-6">
@@ -169,7 +171,7 @@ export default function DashboardPage() {
             <ResponsiveContainer width="100%" height={300}>
               <PieChart>
                 <Pie
-                  data={stats.planDistribution ?? []}
+                  data={planDistribution}
                   cx="50%"
                   cy="50%"
                   labelLine={false}
@@ -178,8 +180,8 @@ export default function DashboardPage() {
                   fill="#8884d8"
                   dataKey="value"
                 >
-                  {(stats.planDistribution ?? []).map((entry, i) => (
-                    <Cell key={i} fill={COLORS[i % COLORS.length]} />
+                  {planDistribution.map((entry, index) => (
+                    <Cell key={`${entry.name}-${index}`} fill={COLORS[index % COLORS.length]} />
                   ))}
                 </Pie>
                 <Tooltip />
@@ -195,24 +197,24 @@ export default function DashboardPage() {
         <CardHeader>
           <CardTitle>Abonnements expirant dans les 7 prochains jours</CardTitle>
           <CardDescription>
-            {stats.expiringSoon?.length ?? 0} abonnements expireront bientôt
+            {expiringSoon.length ?? 0} abonnements expireront bientôt
           </CardDescription>
         </CardHeader>
         <CardContent>
-          {(stats.expiringSoon?.length ?? 0) === 0 ? (
+          {expiringSoon.length === 0 ? (
             <p className="text-muted-foreground text-center py-4">
               Aucun abonnement n'expire dans les 7 prochains jours
             </p>
           ) : (
             <div className="space-y-3">
-              {(stats.expiringSoon ?? []).map((s) => (
-                <div key={s.id} className="flex justify-between items-center p-3 bg-slate-50 rounded-lg">
+              {expiringSoon.map((subscription) => (
+                <div key={subscription.id} className="flex justify-between items-center p-3 bg-slate-50 rounded-lg">
                   <div>
-                    <p className="font-medium">{s.memberName}</p>
-                    <p className="text-sm text-muted-foreground">{s.endDate}</p>
+                    <p className="font-medium">{subscription.memberName}</p>
+                    <p className="text-sm text-muted-foreground">{subscription.endDate}</p>
                   </div>
                   <div className="text-right">
-                    <p className="font-medium">{s.daysLeft} jours</p>
+                    <p className="font-medium">{subscription.daysLeft} jours</p>
                   </div>
                 </div>
               ))}

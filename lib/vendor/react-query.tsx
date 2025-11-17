@@ -35,7 +35,6 @@ export class QueryClient {
     const hash = hashQueryKey(queryKey)
     this.cache.set(hash, data)
     this.keyMap.set(hash, queryKey)
-    this.listeners.get(hash)?.forEach((listener) => listener())
   }
 
   subscribe(queryKey: QueryKey, listener: () => void) {
@@ -137,28 +136,31 @@ export function useQuery<TData>(options: UseQueryOptions<TData>): UseQueryResult
   }
 }
 
-interface UseMutationOptions<TData, TVariables, TContext = unknown> {
+type MutationArgs<TVariables> = TVariables extends void ? [] : [TVariables]
+type MutationVariables<TVariables> = TVariables extends void ? TVariables | undefined : TVariables
+
+interface UseMutationOptions<TData, TVariables = void, TContext = unknown> {
   mutationFn: (variables: TVariables) => Promise<TData>
-  onSuccess?: (data: TData, variables: TVariables, context?: TContext) => void | Promise<void>
-  onError?: (error: unknown, variables: TVariables, context?: TContext) => void | Promise<void>
+  onSuccess?: (data: TData, variables: MutationVariables<TVariables>, context?: TContext) => void | Promise<void>
+  onError?: (error: unknown, variables: MutationVariables<TVariables>, context?: TContext) => void | Promise<void>
   onSettled?: (
     data: TData | undefined,
     error: unknown,
-    variables: TVariables,
+    variables: MutationVariables<TVariables>,
     context?: TContext
   ) => void | Promise<void>
-  onMutate?: (variables: TVariables) => TContext | Promise<TContext>
+  onMutate?: (variables: MutationVariables<TVariables>) => TContext | Promise<TContext>
 }
 
 interface UseMutationResult<TData, TVariables> {
-  mutate: (variables: TVariables) => void
-  mutateAsync: (variables: TVariables) => Promise<TData>
+  mutate: (...args: MutationArgs<TVariables>) => void
+  mutateAsync: (...args: MutationArgs<TVariables>) => Promise<TData>
   isPending: boolean
   isSuccess: boolean
   error: unknown
 }
 
-export function useMutation<TData, TVariables, TContext = unknown>(
+export function useMutation<TData, TVariables = void, TContext = unknown>(
   options: UseMutationOptions<TData, TVariables, TContext>
 ): UseMutationResult<TData, TVariables> {
   const { mutationFn, onSuccess, onError, onSettled, onMutate } = options
@@ -166,16 +168,17 @@ export function useMutation<TData, TVariables, TContext = unknown>(
   const [error, setError] = useState<unknown>(null)
 
   const mutateAsync = useCallback(
-    async (variables: TVariables) => {
+    async (...args: MutationArgs<TVariables>) => {
       setStatus('loading')
       setError(null)
       let context: TContext | undefined
       let data: TData | undefined
       let caughtError: unknown
+      const variables = args[0] as MutationVariables<TVariables>
 
       try {
         context = await onMutate?.(variables)
-        data = await mutationFn(variables)
+        data = await mutationFn(variables as TVariables)
         setStatus('success')
         await onSuccess?.(data, variables, context)
         return data
@@ -193,8 +196,8 @@ export function useMutation<TData, TVariables, TContext = unknown>(
   )
 
   return {
-    mutate: (variables: TVariables) => {
-      mutateAsync(variables).catch(() => null)
+    mutate: (...args: MutationArgs<TVariables>) => {
+      mutateAsync(...args).catch(() => null)
     },
     mutateAsync,
     isPending: status === 'loading',

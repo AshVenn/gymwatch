@@ -7,9 +7,6 @@ import { AuthProvider } from './providers/session-provider'
 import { ReactQueryProvider } from './providers/react-query-provider'
 import { Toaster } from '@/components/ui/sonner'
 
-const geistSans = Geist({ subsets: ['latin'], variable: '--font-geist-sans', display: 'swap' })
-const geistMono = Geist_Mono({ subsets: ['latin'], variable: '--font-geist-mono', display: 'swap' })
-
 const siteUrl = 'https://www.gymwatch.fr'
 
 export const metadata: Metadata = {
@@ -71,8 +68,8 @@ export default function RootLayout({
       <body className="font-sans antialiased">
         <AuthProvider>
           <ReactQueryProvider>
-            {children}
             <Toaster />
+            <main>{children}</main>
           </ReactQueryProvider>
         </AuthProvider>
 

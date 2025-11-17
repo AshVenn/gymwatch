@@ -26,6 +26,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
 import {
   Select,
   SelectContent,
@@ -35,7 +36,7 @@ import {
 } from '@/components/ui/select'
 import { MoreVertical, Trash2, RotateCcw } from 'lucide-react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { toast } from '@/components/ui/sonner'
+import { toast } from 'sonner'
 
 interface Subscription {
   id: string
@@ -162,15 +163,6 @@ export default function SubscriptionsPage() {
 
     if (confirm('Êtes-vous sûr de vouloir supprimer cet abonnement ?')) {
       deleteSubscriptionMutation.mutate(subscriptionId)
-    }
-
-    renewSubscriptionMutation.mutate()
-  }
-
-  const handleRenewalSubmit = () => {
-    if (!renewalForm.planId) {
-      toast.error('Veuillez sélectionner un plan.')
-      return
     }
 
     renewSubscriptionMutation.mutate()
@@ -340,14 +332,14 @@ export default function SubscriptionsPage() {
 
                           <div className="space-y-4">
                             <div>
-                              <Label>Plan</Label>
+                              <Label htmlFor="renew-plan">Plan</Label>
                               <Select
                                 value={renewalForm.planId}
                                 onValueChange={(value) =>
                                   setRenewalForm({ ...renewalForm, planId: value })
                                 }
                               >
-                                <SelectTrigger>
+                                <SelectTrigger id="renew-plan">
                                   <SelectValue placeholder="Sélectionner un plan" />
                                 </SelectTrigger>
 
@@ -362,9 +354,9 @@ export default function SubscriptionsPage() {
                             </div>
 
                             <div>
-                              <Label htmlFor="renewal-date">Date de début</Label>
+                              <Label htmlFor="renew-start-date">Date de début</Label>
                               <Input
-                                id="renewal-date"
+                                id="renew-start-date"
                                 type="date"
                                 value={renewalForm.startDate}
                                 onChange={(e) =>

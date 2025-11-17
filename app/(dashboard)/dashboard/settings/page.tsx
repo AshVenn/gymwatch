@@ -4,9 +4,10 @@ import { useSession } from 'next-auth/react'
 import { useEffect, useMemo, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { toast } from '@/components/ui/sonner'
+import { toast } from 'sonner'
 
 interface GymData {
   id: string

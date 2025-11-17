@@ -6,7 +6,8 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { useMutation } from '@tanstack/react-query'
-import { toast } from '@/components/ui/sonner'
+import { toast } from 'sonner'
+import { Label } from '@/components/ui/label'
 
 export default function RegisterPage() {
   const [formData, setFormData] = useState({
@@ -83,9 +84,9 @@ export default function RegisterPage() {
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <Label htmlFor="gym-name">Nom de la salle</Label>
+              <Label htmlFor="gymName">Nom de la salle</Label>
               <Input
-                id="gym-name"
+                id="gymName"
                 name="gymName"
                 placeholder="FitZone Casablanca"
                 value={formData.gymName}
@@ -96,9 +97,9 @@ export default function RegisterPage() {
             </div>
 
             <div>
-              <Label htmlFor="gym-email">Email de la salle</Label>
+              <Label htmlFor="gymEmail">Email de la salle</Label>
               <Input
-                id="gym-email"
+                id="gymEmail"
                 name="email"
                 type="email"
                 placeholder="contact@salle.ma"
@@ -110,9 +111,9 @@ export default function RegisterPage() {
             </div>
 
             <div>
-              <Label htmlFor="admin-email">Email administrateur</Label>
+              <Label htmlFor="adminEmail">Email administrateur</Label>
               <Input
-                id="admin-email"
+                id="adminEmail"
                 name="adminEmail"
                 type="email"
                 placeholder="admin@salle.ma"
@@ -124,9 +125,9 @@ export default function RegisterPage() {
             </div>
 
             <div>
-              <Label htmlFor="admin-password">Mot de passe</Label>
+              <Label htmlFor="adminPassword">Mot de passe</Label>
               <Input
-                id="admin-password"
+                id="adminPassword"
                 name="adminPassword"
                 type="password"
                 placeholder="••••••••"
@@ -138,9 +139,9 @@ export default function RegisterPage() {
             </div>
 
             <div>
-              <Label htmlFor="admin-password-confirm">Confirmer le mot de passe</Label>
+              <Label htmlFor="confirmPassword">Confirmer le mot de passe</Label>
               <Input
-                id="admin-password-confirm"
+                id="confirmPassword"
                 name="confirmPassword"
                 type="password"
                 placeholder="••••••••"

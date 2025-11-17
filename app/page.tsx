@@ -3,6 +3,7 @@
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
+import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { ArrowRight, CheckCircle2, Menu, ShieldCheck, Sparkles, X } from 'lucide-react'
@@ -79,14 +80,14 @@ export default function Home() {
   return (
     <div className="relative min-h-screen overflow-hidden bg-slate-950 text-white">
       <div className="pointer-events-none absolute inset-0 -z-10">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(56,189,248,0.25),_transparent_55%)]" />
-        <div className="absolute inset-y-0 right-0 w-1/2 bg-gradient-to-b from-transparent via-slate-900/40 to-transparent blur-3xl" />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(56,189,248,0.25),transparent_55%)]" />
+        <div className="absolute inset-y-0 right-0 w-1/2 bg-linear-to-b from-transparent via-slate-900/40 to-transparent blur-3xl" />
       </div>
 
       <header className="sticky top-0 z-30 border-b border-white/10 bg-slate-950/70 backdrop-blur">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-4">
           <div className="flex items-center gap-3">
-            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-cyan-400 to-blue-500 text-xl font-bold text-slate-950">
+            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-linear-to-br from-cyan-400 to-blue-500 text-xl font-bold text-slate-950">
               GW
             </div>
             <div>
@@ -97,9 +98,9 @@ export default function Home() {
 
           <nav className="hidden items-center gap-8 text-sm font-medium text-slate-200 md:flex">
             {navigationLinks.map((link) => (
-              <a key={link.href} href={link.href} className="transition hover:text-white">
+              <Link key={link.href} href={link.href} className="transition hover:text-white">
                 {link.label}
-              </a>
+              </Link>
             ))}
           </nav>
 
@@ -130,14 +131,14 @@ export default function Home() {
             </button>
             <nav className="flex flex-col gap-4 text-lg">
               {navigationLinks.map((link) => (
-                <a
+                <Link
                   key={link.href}
                   href={link.href}
                   className="text-slate-200 hover:text-white"
                   onClick={() => setMenuOpen(false)}
                 >
                   {link.label}
-                </a>
+                </Link>
               ))}
             </nav>
             <div className="mt-auto flex flex-col gap-3">
@@ -185,8 +186,8 @@ export default function Home() {
             </div>
           </div>
 
-          <div className="relative rounded-3xl border border-white/10 bg-gradient-to-br from-slate-900/80 to-slate-800/60 p-6 shadow-2xl">
-            <div className="absolute inset-0 -z-10 rounded-3xl bg-gradient-to-br from-cyan-500/20 to-blue-500/10 blur-3xl" />
+          <div className="relative rounded-3xl border border-white/10 bg-linear-to-br from-slate-900/80 to-slate-800/60 p-6 shadow-2xl">
+            <div className="absolute inset-0 -z-10 rounded-3xl bg-linear-to-br from-cyan-500/20 to-blue-500/10 blur-3xl" />
             <div className="space-y-6">
               <div className="flex items-center gap-3 rounded-2xl bg-white/5 p-4">
                 <ShieldCheck className="text-cyan-300" />
@@ -204,7 +205,7 @@ export default function Home() {
                   </div>
                   <p className="rounded-full bg-emerald-500/20 px-3 py-1 text-sm text-emerald-300">+12% cette semaine</p>
                 </div>
-                <div className="mt-6 h-28 rounded-2xl bg-gradient-to-r from-cyan-400/20 to-blue-500/20" />
+                <div className="mt-6 h-28 rounded-2xl bg-linear-to-r from-cyan-400/20 to-blue-500/20" />
               </div>
               <div className="rounded-2xl border border-white/10 bg-slate-900/70 p-4">
                 <p className="text-sm text-slate-300">Prochaine expiration</p>
@@ -270,7 +271,7 @@ export default function Home() {
           </div>
         </section>
 
-        <section id="contact" className="rounded-3xl border border-white/10 bg-gradient-to-r from-cyan-500/20 to-blue-500/10 p-8 text-center">
+        <section id="contact" className="rounded-3xl border border-white/10 bg-linear-to-r from-cyan-500/20 to-blue-500/10 p-8 text-center">
           <h2 className="text-3xl font-semibold">Prêt à moderniser votre gestion ?</h2>
           <p className="mt-3 text-slate-100">
             Écrivez-nous sur <a className="font-semibold underline" href="mailto:contact@gymwatch.ma">contact@gymwatch.ma</a> et nous activerons votre salle en moins de 24h.

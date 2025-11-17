@@ -25,9 +25,17 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 import { MoreVertical, Plus, Edit2, Trash2 } from 'lucide-react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { toast } from '@/components/ui/sonner'
+import { toast } from 'sonner'
 
 interface Member {
   id: string
@@ -298,27 +306,30 @@ export default function MembersPage() {
 
               {/* PLAN */}
               <div>
-                <label className="block text-sm font-medium mb-2">Plan</label>
-                <select
-                  className="w-full border rounded-md p-2"
+                <Label htmlFor="member-plan">Plan</Label>
+                <Select
                   value={formData.planId}
-                  onChange={(e) => setFormData({ ...formData, planId: e.target.value })}
+                  onValueChange={(value) => setFormData({ ...formData, planId: value })}
                 >
-                  <option value="">Aucun</option>
-                  {plans.map((plan) => (
-                    <option key={plan.id} value={plan.id}>
-                      {plan.name}
-                    </option>
-                  ))}
-                </select>
+                  <SelectTrigger id="member-plan">
+                    <SelectValue placeholder="Aucun" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="">Aucun</SelectItem>
+                    {plans.map((plan) => (
+                      <SelectItem key={plan.id} value={plan.id}>
+                        {plan.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
 
               {/* START DATE */}
               <div>
-                <label className="block text-sm font-medium mb-2">
-                  Date de début
-                </label>
+                <Label htmlFor="member-start-date">Date de début</Label>
                 <Input
+                  id="member-start-date"
                   type="date"
                   value={formData.startDate}
                   onChange={(e) =>

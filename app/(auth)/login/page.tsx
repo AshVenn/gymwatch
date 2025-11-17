@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { signIn } from 'next-auth/react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Label } from '@/components/ui/label'
 import { useToast } from '@/components/ui/use-toast'
@@ -63,9 +64,9 @@ export default function LoginPage() {
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="login-email">Email</Label>
               <Input
-                id="email"
+                id="login-email"
                 type="email"
                 placeholder="admin@fitzone.ma"
                 value={email}
@@ -76,9 +77,9 @@ export default function LoginPage() {
             </div>
 
             <div>
-              <Label htmlFor="password">Mot de passe</Label>
+              <Label htmlFor="login-password">Mot de passe</Label>
               <Input
-                id="password"
+                id="login-password"
                 type="password"
                 placeholder="••••••••"
                 value={password}

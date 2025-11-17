@@ -25,9 +25,11 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Switch } from '@/components/ui/switch'
 import { MoreVertical, Plus, Edit2, Trash2 } from 'lucide-react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { toast } from '@/components/ui/sonner'
+import { toast } from 'sonner'
 
 interface Plan {
   id: string
@@ -250,14 +252,12 @@ export default function PlansPage() {
                 />
               </div>
 
-              <div className="flex items-center justify-between rounded-md border bg-muted/30 px-3 py-2">
-                <div>
-                  <p className="text-sm font-medium">Plan actif</p>
-                  <p className="text-xs text-muted-foreground">
-                    Contrôle la visibilité du plan pour vos équipes.
-                  </p>
-                </div>
+              <div className="flex items-center justify-between">
+                <Label htmlFor="plan-active" className="text-sm font-medium">
+                  Actif
+                </Label>
                 <Switch
+                  id="plan-active"
                   checked={formData.isActive}
                   onCheckedChange={(checked) =>
                     setFormData({ ...formData, isActive: checked })

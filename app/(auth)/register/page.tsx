@@ -19,6 +19,7 @@ export default function RegisterPage() {
   })
   const [error, setError] = useState('')
   const router = useRouter()
+  const { toast } = useToast()
 
   const registerMutation = useMutation({
     mutationFn: async () => {
@@ -82,12 +83,6 @@ export default function RegisterPage() {
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
-            {error && (
-              <div className="bg-destructive/10 text-destructive text-sm p-3 rounded-md">
-                {error}
-              </div>
-            )}
-
             <div>
               <Label htmlFor="gymName">Nom de la salle</Label>
               <Input

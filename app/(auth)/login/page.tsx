@@ -7,19 +7,19 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Label } from '@/components/ui/label'
+import { useToast } from '@/components/ui/use-toast'
 
 export default function LoginPage() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
-  const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
   const router = useRouter()
+  const { toast } = useToast()
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
-    setError('')
-
     try {
       const result = await signIn('credentials', {
         email,
@@ -28,13 +28,25 @@ export default function LoginPage() {
       })
 
       if (result?.error) {
-        setError('Email ou mot de passe incorrect')
+        toast({
+          title: 'Connexion impossible',
+          description: 'Email ou mot de passe incorrect.',
+          variant: 'destructive',
+        })
       } else if (result?.ok) {
+        toast({
+          title: 'Connexion réussie',
+          description: 'Bon retour sur GymWatch !',
+        })
         router.push('/dashboard')
         router.refresh()
       }
     } catch (err) {
-      setError('Une erreur est survenue')
+      toast({
+        title: 'Erreur inattendue',
+        description: 'Veuillez réessayer dans quelques instants.',
+        variant: 'destructive',
+      })
     } finally {
       setLoading(false)
     }
@@ -51,12 +63,6 @@ export default function LoginPage() {
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
-            {error && (
-              <div className="bg-destructive/10 text-destructive text-sm p-3 rounded-md">
-                {error}
-              </div>
-            )}
-            
             <div>
               <Label htmlFor="login-email">Email</Label>
               <Input

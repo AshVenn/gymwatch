@@ -70,6 +70,7 @@ export default function MembersPage() {
 
   const [isOpen, setIsOpen] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const { toast } = useToast()
 
   // 🔒 Authentication checks
   if (status === 'loading') return <div>Chargement de l'utilisateur...</div>
@@ -258,7 +259,6 @@ export default function MembersPage() {
             </DialogHeader>
 
             <div className="space-y-4">
-              {/* FIRST NAME */}
               <div>
                 <Label htmlFor="member-first-name">Prénom</Label>
                 <Input
@@ -270,7 +270,6 @@ export default function MembersPage() {
                 />
               </div>
 
-              {/* LAST NAME */}
               <div>
                 <Label htmlFor="member-last-name">Nom</Label>
                 <Input
@@ -282,7 +281,6 @@ export default function MembersPage() {
                 />
               </div>
 
-              {/* EMAIL */}
               <div>
                 <Label htmlFor="member-email">Email</Label>
                 <Input
@@ -295,7 +293,6 @@ export default function MembersPage() {
                 />
               </div>
 
-              {/* PHONE */}
               <div>
                 <Label htmlFor="member-phone">Téléphone</Label>
                 <Input

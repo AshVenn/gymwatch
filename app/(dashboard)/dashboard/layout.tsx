@@ -12,6 +12,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { LayoutGrid, Users, Calendar, Layers, Settings, LogOut, Menu, X } from 'lucide-react'
+import { cn } from '@/lib/utils'
 
 export default function DashboardLayout({
   children,
@@ -51,19 +52,20 @@ export default function DashboardLayout({
   ]
 
   return (
-    <div className="flex h-screen bg-background">
+    <div className="flex h-screen bg-background text-foreground">
       {/* Sidebar */}
       <aside
-        className={`${
+        className={cn(
+          'fixed inset-y-0 left-0 z-50 w-64 border-r border-border bg-card shadow-lg transition-transform md:relative md:translate-x-0',
           sidebarOpen ? 'translate-x-0' : '-translate-x-full'
-        } fixed inset-y-0 left-0 z-50 w-64 bg-slate-900 text-white transition-transform md:relative md:translate-x-0`}
+        )}
       >
         <div className="flex h-full flex-col">
-          <div className="border-b border-slate-700 p-6 flex justify-between items-center">
-            <h1 className="text-2xl font-bold">GymWatch</h1>
+          <div className="flex items-center justify-between border-b border-border/60 p-6">
+            <h1 className="text-2xl font-semibold">GymWatch</h1>
             <button
               onClick={() => setSidebarOpen(false)}
-              className="md:hidden"
+              className="rounded-md p-1 text-muted-foreground transition hover:bg-muted md:hidden"
             >
               <X size={24} />
             </button>
@@ -75,7 +77,7 @@ export default function DashboardLayout({
                 <Link
                   key={item.href}
                   href={item.href}
-                  className="flex items-center gap-3 rounded-lg px-4 py-3 text-slate-300 hover:bg-slate-800 hover:text-white transition-colors"
+                  className="flex items-center gap-3 rounded-lg px-4 py-3 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
                   onClick={() => setSidebarOpen(false)}
                 >
                   <Icon size={20} />
@@ -84,10 +86,10 @@ export default function DashboardLayout({
               )
             })}
           </nav>
-          <div className="border-t border-slate-700 p-4">
+          <div className="border-t border-border/60 p-4">
             <Button
               variant="ghost"
-              className="w-full justify-start text-slate-300 hover:bg-slate-800 hover:text-white"
+              className="w-full justify-start text-muted-foreground hover:bg-muted hover:text-foreground"
               onClick={() => signOut()}
             >
               <LogOut size={20} className="mr-3" />
@@ -100,10 +102,10 @@ export default function DashboardLayout({
       {/* Main content */}
       <div className="flex-1 flex flex-col overflow-hidden">
         {/* Header */}
-        <header className="border-b border-slate-200 bg-white px-6 py-4 flex justify-between items-center">
+        <header className="flex items-center justify-between border-b border-border bg-background/95 px-6 py-4 backdrop-blur supports-[backdrop-filter]:bg-background/80">
           <button
             onClick={() => setSidebarOpen(!sidebarOpen)}
-            className="md:hidden p-2"
+            className="rounded-md p-2 text-muted-foreground transition hover:bg-muted md:hidden"
           >
             <Menu size={24} />
           </button>

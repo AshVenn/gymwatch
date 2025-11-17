@@ -164,6 +164,8 @@ export default function SubscriptionsPage() {
     if (confirm('Êtes-vous sûr de vouloir supprimer cet abonnement ?')) {
       deleteSubscriptionMutation.mutate(subscriptionId)
     }
+
+    renewSubscriptionMutation.mutate()
   }
 
   const handleRenewalSubmit = () => {
@@ -184,11 +186,15 @@ export default function SubscriptionsPage() {
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'ACTIVE':
-        return <Badge className="bg-green-100 text-green-800">Actif</Badge>
+        return <Badge>Actif</Badge>
       case 'EXPIRES_TODAY':
-        return <Badge className="bg-yellow-100 text-yellow-800">Expire aujourd'hui</Badge>
+        return (
+          <Badge className={cn('bg-amber-100 text-amber-900 dark:bg-amber-400/20 dark:text-amber-50')}>
+            Expire aujourd'hui
+          </Badge>
+        )
       case 'EXPIRED':
-        return <Badge className="bg-red-100 text-red-800">Expiré</Badge>
+        return <Badge variant="destructive">Expiré</Badge>
       default:
         return <Badge>{status ?? '-'}</Badge>
     }

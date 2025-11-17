@@ -51,6 +51,7 @@ export default function PlansPage() {
   })
   const [isOpen, setIsOpen] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const { toast } = useToast()
 
   // 🔒 BLOCK PAGE IF USER IS NOT AUTHENTICATED
   if (status === 'loading') {
@@ -295,15 +296,9 @@ export default function PlansPage() {
                 <TableCell>{plan.durationDays}</TableCell>
                 <TableCell>{plan.price.toLocaleString('fr-FR')}</TableCell>
                 <TableCell>
-                  <span
-                    className={`px-2 py-1 rounded-full text-sm ${
-                      plan.isActive
-                        ? 'bg-green-100 text-green-800'
-                        : 'bg-gray-100 text-gray-800'
-                    }`}
-                  >
+                  <Badge variant={plan.isActive ? 'default' : 'secondary'}>
                     {plan.isActive ? 'Oui' : 'Non'}
-                  </span>
+                  </Badge>
                 </TableCell>
 
                 <TableCell className="text-right">

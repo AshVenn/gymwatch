@@ -10,15 +10,18 @@ export function SubscriptionBanner() {
   const subscriptionStatus = session?.user?.subscriptionStatus
   const expiresAtRaw = session?.user?.subscriptionExpiresAt ?? null
 
-  const { message, tone } = useMemo(() => {
-    if (!subscriptionStatus) return { message: null, tone: null as null | 'warning' | 'danger' }
+  const { message, tone } = useMemo<{
+    message: string | null
+    tone: 'warning' | 'danger' | null
+  }>(() => {
+    if (!subscriptionStatus) return { message: null, tone: null }
 
     const expiresAt = expiresAtRaw ? new Date(expiresAtRaw) : null
     const daysLeft = expiresAt ? Math.ceil((expiresAt.getTime() - Date.now()) / (1000 * 60 * 60 * 24)) : null
 
     if (subscriptionStatus === 'EXPIRED' || (daysLeft !== null && daysLeft < 0)) {
       return {
-        tone: 'danger' as const,
+        tone: 'danger',
         message:
           "Votre abonnement est arrivé à expiration. Merci de renouveler votre plan pour continuer d'utiliser GymWatch.",
       }
@@ -26,12 +29,12 @@ export function SubscriptionBanner() {
 
     if (daysLeft !== null && daysLeft <= 7) {
       return {
-        tone: 'warning' as const,
+        tone: 'warning',
         message: `Votre abonnement expire dans ${daysLeft} jour${daysLeft > 1 ? 's' : ''}. Pensez à le renouveler.`,
       }
     }
 
-    return { message: null, tone: null as const }
+    return { message: null, tone: null }
   }, [expiresAtRaw, subscriptionStatus])
 
   if (!message || !tone) return null

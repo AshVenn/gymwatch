@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useSession } from 'next-auth/react'
 import { useMemo, useState } from 'react'
@@ -28,17 +28,20 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
-import { MoreVertical, Trash2, RotateCcw } from 'lucide-react'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { AlertTriangle, MoreVertical, RotateCcw, Trash2 } from 'lucide-react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import { PaginationControls, usePagination } from '@/components/dashboard/pagination-controls'
+import {
+  SubscriptionSummary,
+  type SubscriptionSummaryMetrics,
+} from '@/components/dashboard/subscriptions/subscription-summary'
+import {
+  SubscriptionFilters,
+  type SortOption,
+  type QuickFilter,
+} from '@/components/dashboard/subscriptions/subscription-filters'
 
 interface Subscription {
   id: string
@@ -51,11 +54,33 @@ interface Subscription {
   pricePaid: number
 }
 
+type StatusCounterKey = Subscription['status'] | 'ALL'
+
+const dateFormatter = new Intl.DateTimeFormat('fr-FR', {
+  day: '2-digit',
+  month: 'short',
+  year: 'numeric',
+})
+
+const currencyFormatter = new Intl.NumberFormat('fr-MA', {
+  style: 'currency',
+  currency: 'MAD',
+  maximumFractionDigits: 0,
+})
+
+const statusQuickFilters: QuickFilter[] = [
+  { label: 'Tous', value: 'ALL', count: 0 },
+  { label: 'Actifs', value: 'ACTIVE', count: 0 },
+  { label: 'Expire ajd.', value: 'EXPIRES_TODAY', count: 0 },
+  { label: 'Expirés', value: 'EXPIRED', count: 0 },
+]
+
 export default function SubscriptionsPage() {
   const { data: session } = useSession()
   const queryClient = useQueryClient()
   const [searchTerm, setSearchTerm] = useState('')
-  const [filterStatus, setFilterStatus] = useState<string>('')
+  const [filterStatus, setFilterStatus] = useState<string>('ALL')
+  const [sortBy, setSortBy] = useState<SortOption>('NEXT_EXPIRY')
   const [renewingId, setRenewingId] = useState<string | null>(null)
   const [renewalForm, setRenewalForm] = useState({
     planId: '',
@@ -119,7 +144,7 @@ export default function SubscriptionsPage() {
       return data
     },
     onSuccess: () => {
-      queryClient.invalidateQueries(subscriptionQueryKey)
+      queryClient.invalidateQueries({ queryKey: subscriptionQueryKey })
       toast.success('Abonnement supprimé avec succès')
     },
     onError: (err) => {
@@ -143,13 +168,13 @@ export default function SubscriptionsPage() {
       const data = await response.json().catch(() => ({}))
 
       if (!response.ok) {
-        throw new Error(data.error || 'Impossible de renouveler l\'abonnement')
+        throw new Error(data.error || "Impossible de renouveler l'abonnement")
       }
 
       return data
     },
     onSuccess: () => {
-      queryClient.invalidateQueries(subscriptionQueryKey)
+      queryClient.invalidateQueries({ queryKey: subscriptionQueryKey })
       setRenewingId(null)
       setRenewalForm({ planId: '', startDate: new Date().toISOString().split('T')[0] })
       toast.success('Abonnement renouvelé avec succès')
@@ -160,14 +185,99 @@ export default function SubscriptionsPage() {
     },
   })
 
+  const summaryMetrics: SubscriptionSummaryMetrics = useMemo(() => {
+    const list = subscriptions ?? []
+    if (!list.length) {
+      return {
+        totalRevenue: 0,
+        active: 0,
+        expired: 0,
+        expiringSoon: 0,
+        avgTicket: 0,
+        retentionRate: 0,
+      }
+    }
+
+    let revenue = 0
+    let active = 0
+    let expired = 0
+    let expiringSoon = 0
+
+    list.forEach((sub) => {
+      revenue += sub.pricePaid ?? 0
+      if (sub.status === 'ACTIVE') active += 1
+      if (sub.status === 'EXPIRED') expired += 1
+      if (sub.daysLeft >= 0 && sub.daysLeft <= 5) expiringSoon += 1
+    })
+
+    return {
+      totalRevenue: revenue,
+      active,
+      expired,
+      expiringSoon,
+      avgTicket: list.length ? revenue / list.length : 0,
+      retentionRate: list.length ? Math.round((active / list.length) * 100) : 0,
+    }
+  }, [subscriptions])
+
+  const statusCounters = useMemo(() => {
+    const initial: Record<StatusCounterKey, number> = {
+      ALL: 0,
+      ACTIVE: 0,
+      EXPIRES_TODAY: 0,
+      EXPIRED: 0,
+    }
+
+    return (subscriptions ?? []).reduce((acc, sub) => {
+      acc.ALL += 1
+      acc[sub.status] = (acc[sub.status] ?? 0) + 1
+      return acc
+    }, initial)
+  }, [subscriptions])
+
+  const quickFilters: QuickFilter[] = statusQuickFilters.map((filter) => ({
+    ...filter,
+    count: filter.value === 'ALL' ? statusCounters.ALL : statusCounters[filter.value as Subscription['status']] ?? 0,
+  }))
+
+  const filteredSubscriptions = useMemo(() => {
+    const normalizedStatus = filterStatus === 'ALL' ? undefined : filterStatus
+    const normalizedSearch = searchTerm.trim().toLowerCase()
+
+    const matches = (value?: string | null) =>
+      !normalizedSearch || value?.toLowerCase().includes(normalizedSearch)
+
+    const list = (subscriptions ?? []).filter((sub) => {
+      const matchesStatus = normalizedStatus ? sub.status === normalizedStatus : true
+      const matchesSearch = matches(sub.memberName) || matches(sub.planName)
+      return matchesStatus && matchesSearch
+    })
+
+    const getTime = (value: string) => {
+      const parsed = new Date(value)
+      return Number.isNaN(parsed.getTime()) ? 0 : parsed.getTime()
+    }
+
+    return list.sort((a, b) => {
+      switch (sortBy) {
+        case 'PRICE_DESC':
+          return (b.pricePaid ?? 0) - (a.pricePaid ?? 0)
+        case 'RECENT_START':
+          return getTime(b.startDate) - getTime(a.startDate)
+        default:
+          return getTime(a.endDate) - getTime(b.endDate)
+      }
+    })
+  }, [subscriptions, filterStatus, searchTerm, sortBy])
+
+  const subscriptionPagination = usePagination(filteredSubscriptions, 10)
+
   const handleDeleteSubscription = (subscriptionId: string) => {
     if (!subscriptionId) return
 
     if (confirm('Êtes-vous sûr de vouloir supprimer cet abonnement ?')) {
       deleteSubscriptionMutation.mutate(subscriptionId)
     }
-
-    renewSubscriptionMutation.mutate()
   }
 
   const handleRenewalSubmit = () => {
@@ -179,225 +289,239 @@ export default function SubscriptionsPage() {
     renewSubscriptionMutation.mutate()
   }
 
-  const safeDate = (d: any) => {
-    if (!d) return '-'
-    const parsed = new Date(d)
-    return isNaN(parsed.getTime()) ? '-' : parsed.toLocaleDateString('fr-FR')
+  const safeDate = (value: string | null | undefined) => {
+    if (!value) return '—'
+    const parsed = new Date(value)
+    if (Number.isNaN(parsed.getTime())) return '—'
+    return dateFormatter.format(parsed)
   }
 
-  const getStatusBadge = (status: string) => {
-    switch (status) {
-      case 'ACTIVE':
-        return <Badge>Actif</Badge>
-      case 'EXPIRES_TODAY':
-        return (
-          <Badge className={cn('bg-amber-100 text-amber-900 dark:bg-amber-400/20 dark:text-amber-50')}>
-            Expire aujourd'hui
-          </Badge>
-        )
-      case 'EXPIRED':
-        return <Badge variant="destructive">Expiré</Badge>
-      default:
-        return <Badge>{status ?? '-'}</Badge>
+  const getStatusBadge = (status: Subscription['status']) => {
+    const base = 'border border-border/60 text-xs font-semibold uppercase tracking-wider'
+
+    if (status === 'ACTIVE') {
+      return <Badge className={cn(base, 'bg-primary/10 text-primary')}>Actif</Badge>
     }
+
+    if (status === 'EXPIRES_TODAY') {
+      return <Badge className={cn(base, 'bg-amber-100 text-amber-900 dark:bg-amber-500/20 dark:text-amber-50')}>Expire aujourd'hui</Badge>
+    }
+
+    if (status === 'EXPIRED') {
+      return <Badge className={cn(base, 'bg-destructive/20 text-destructive')}>Expiré</Badge>
+    }
+
+    return <Badge className={base}>{status}</Badge>
   }
 
   if (isLoading) {
-    return <div>Chargement des abonnements...</div>
+    return (
+      <div className="space-y-6">
+        <div className="h-56 animate-pulse rounded-3xl bg-muted/40" />
+        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+          {Array.from({ length: 4 }).map((_, index) => (
+            <div key={index} className="h-32 animate-pulse rounded-2xl bg-muted/30" />
+          ))}
+        </div>
+        <div className="h-[420px] animate-pulse rounded-3xl bg-muted/30" />
+      </div>
+    )
   }
 
-  const filteredSubscriptions = (subscriptions ?? []).filter((sub) => {
-    const matchesSearch =
-      !searchTerm ||
-      sub.memberName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      sub.planName?.toLowerCase().includes(searchTerm.toLowerCase())
-
-    const matchesFilter = filterStatus === 'ALL' || filterStatus === '' || sub.status === filterStatus
-
-    return matchesSearch && matchesFilter
-  })
-
-  const subscriptionPagination = usePagination(filteredSubscriptions, 10)
-
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold">Abonnements</h1>
-        <p className="text-muted-foreground mt-2">Gérez les abonnements de vos membres</p>
-      </div>
+    <div className="space-y-8">
+      <SubscriptionSummary metrics={summaryMetrics} />
 
       {isError && (
-        <div className="text-red-500">Impossible de charger les abonnements.</div>
+        <div className="flex items-center gap-3 rounded-2xl border border-destructive/40 bg-destructive/5 p-4 text-destructive">
+          Impossible de charger les abonnements.
+        </div>
       )}
 
-      {/* Filters */}
-      <div className="flex flex-col gap-4 md:flex-row md:items-end">
-        <div className="flex-1">
-          <Label htmlFor="subscription-search">Rechercher</Label>
-          <Input
-            id="subscription-search"
-            placeholder="Nom du membre ou du plan..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
-        </div>
+      <SubscriptionFilters
+        searchTerm={searchTerm}
+        onSearch={setSearchTerm}
+        filterStatus={filterStatus}
+        onStatusChange={setFilterStatus}
+        sortBy={sortBy}
+        onSortChange={setSortBy}
+        quickFilters={quickFilters}
+        onQuickFilter={setFilterStatus}
+      />
 
-        <div className="flex-1">
-          <Label htmlFor="subscription-status">Statut</Label>
-          <Select
-            value={filterStatus}
-            onValueChange={(value) => {
-              setFilterStatus(value)
-            }}
-          >
-            <SelectTrigger id="subscription-status">
-              <SelectValue placeholder="Tous" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="ALL">Tous</SelectItem>
-              <SelectItem value="ACTIVE">Actif</SelectItem>
-              <SelectItem value="EXPIRES_TODAY">Expire aujourd'hui</SelectItem>
-              <SelectItem value="EXPIRED">Expiré</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-      </div>
+      <div className="overflow-hidden rounded-3xl border border-border/70 bg-card shadow-sm">
+        {subscriptionPagination.data.length ? (
+          <>
+            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border/60 px-6 py-4 text-sm text-muted-foreground">
+              <span>
+                {filteredSubscriptions.length} abonnement{filteredSubscriptions.length > 1 ? 's' : ''} trouvés
+              </span>
+              <span className="text-xs uppercase tracking-[0.3em] text-muted-foreground">
+                Page {subscriptionPagination.page} / {subscriptionPagination.pageCount}
+              </span>
+            </div>
+            <Table>
+              <TableHeader>
+                <TableRow className="text-muted-foreground">
+                  <TableHead>Adhérent</TableHead>
+                  <TableHead>Plan</TableHead>
+                  <TableHead>Début</TableHead>
+                  <TableHead>Fin</TableHead>
+                  <TableHead>Restant</TableHead>
+                  <TableHead className="text-right">Montant</TableHead>
+                  <TableHead>Statut</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
+                </TableRow>
+              </TableHeader>
 
-      <div className="rounded-lg border overflow-x-auto">
-        <Table>
-          <TableHeader>
-            <TableRow className="bg-slate-50">
-              <TableHead>Membre</TableHead>
-              <TableHead>Plan</TableHead>
-              <TableHead>Date de début</TableHead>
-              <TableHead>Date de fin</TableHead>
-              <TableHead>Jours restants</TableHead>
-              <TableHead>Statut</TableHead>
-              <TableHead className="text-right">Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-
-          <TableBody>
-            {subscriptionPagination.data.map((sub) => (
-              <TableRow key={sub.id}>
-                <TableCell className="font-medium">{sub.memberName ?? '-'}</TableCell>
-                <TableCell>{sub.planName ?? '-'}</TableCell>
-
-                <TableCell>{safeDate(sub.startDate)}</TableCell>
-                <TableCell>{safeDate(sub.endDate)}</TableCell>
-
-                <TableCell>
-                  <span
-                    className={`font-medium ${
-                      sub.daysLeft < 0 ? 'text-red-600' : 'text-green-600'
-                    }`}
+              <TableBody>
+                {subscriptionPagination.data.map((sub) => (
+                  <TableRow
+                    key={sub.id}
+                    className={cn(
+                      'border-border/60 text-foreground transition-colors hover:bg-muted/40',
+                      sub.status === 'EXPIRED' && 'bg-destructive/10',
+                      sub.status === 'EXPIRES_TODAY' && 'bg-amber-100/30 dark:bg-amber-500/10'
+                    )}
                   >
-                    {sub.daysLeft < 0 ? '-' : ''}
-                    {Math.abs(sub.daysLeft ?? 0)}
-                  </span>
-                </TableCell>
-
-                <TableCell>{getStatusBadge(sub.status)}</TableCell>
-
-                <TableCell className="text-right">
-                  {/* Actions */}
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="sm">
-                        <MoreVertical size={16} />
-                      </Button>
-                    </DropdownMenuTrigger>
-
-                    <DropdownMenuContent align="end">
-                      {/* Renew */}
-                      <Dialog
-                        open={renewingId === sub.id}
-                        onOpenChange={(open) => !open && setRenewingId(null)}
+                    <TableCell className="font-semibold">
+                      <div>{sub.memberName ?? '-'}</div>
+                      <div className="text-xs text-muted-foreground">#{sub.id.slice(0, 8)}</div>
+                    </TableCell>
+                    <TableCell>{sub.planName ?? '-'}</TableCell>
+                    <TableCell>{safeDate(sub.startDate)}</TableCell>
+                    <TableCell>{safeDate(sub.endDate)}</TableCell>
+                    <TableCell>
+                      <span
+                        className={cn(
+                          'text-sm font-semibold',
+                          sub.daysLeft < 0
+                            ? 'text-destructive'
+                            : sub.daysLeft <= 5
+                              ? 'text-amber-600 dark:text-amber-300'
+                              : 'text-primary'
+                        )}
                       >
-                        <DialogTrigger asChild>
-                          <DropdownMenuItem
-                            onSelect={(e) => {
-                              e.preventDefault()
-                              setRenewingId(sub.id)
-                              setRenewalForm({
-                                planId: '',
-                                startDate: new Date().toISOString().split('T')[0],
-                              })
-                            }}
-                          >
-                            <RotateCcw className="mr-2" size={16} />
-                            Renouveler
-                          </DropdownMenuItem>
-                        </DialogTrigger>
+                        {sub.daysLeft < 0 ? `${Math.abs(sub.daysLeft)} j de retard` : `${sub.daysLeft} j restants`}
+                      </span>
+                    </TableCell>
+                    <TableCell className="text-right font-semibold">
+                      {sub.pricePaid ? currencyFormatter.format(sub.pricePaid) : '—'}
+                    </TableCell>
+                    <TableCell>{getStatusBadge(sub.status)}</TableCell>
+                    <TableCell className="text-right">
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground">
+                            <MoreVertical size={16} />
+                          </Button>
+                        </DropdownMenuTrigger>
 
-                        <DialogContent>
-                          <DialogHeader>
-                            <DialogTitle>Renouveler l'abonnement</DialogTitle>
-                          </DialogHeader>
-
-                          <div className="space-y-4">
-                            <div>
-                              <Label htmlFor="renew-plan">Plan</Label>
-                              <Select
-                                value={renewalForm.planId}
-                                onValueChange={(value) =>
-                                  setRenewalForm({ ...renewalForm, planId: value })
-                                }
+                        <DropdownMenuContent align="end" className="w-48 border border-border/60 bg-card text-foreground">
+                          <Dialog open={renewingId === sub.id} onOpenChange={(open) => !open && setRenewingId(null)}>
+                            <DialogTrigger asChild>
+                              <DropdownMenuItem
+                                onSelect={(event) => {
+                                  event.preventDefault()
+                                  setRenewingId(sub.id)
+                                  setRenewalForm({
+                                    planId: '',
+                                    startDate: new Date().toISOString().split('T')[0],
+                                  })
+                                }}
                               >
-                                <SelectTrigger id="renew-plan">
-                                  <SelectValue placeholder="Sélectionner un plan" />
-                                </SelectTrigger>
+                                <RotateCcw className="mr-2" size={16} />
+                                Renouveler
+                              </DropdownMenuItem>
+                            </DialogTrigger>
 
-                                <SelectContent>
-                                  {(plans ?? []).map((plan) => (
-                                    <SelectItem key={plan.id} value={plan.id}>
-                                      {plan.name}
-                                    </SelectItem>
-                                  ))}
-                                </SelectContent>
-                              </Select>
-                            </div>
+                            <DialogContent className="border-border/60 bg-card text-foreground">
+                              <DialogHeader>
+                                <DialogTitle>Renouveler l'abonnement</DialogTitle>
+                              </DialogHeader>
 
-                            <div>
-                              <Label htmlFor="renew-start-date">Date de début</Label>
-                              <Input
-                                id="renew-start-date"
-                                type="date"
-                                value={renewalForm.startDate}
-                                onChange={(e) =>
-                                  setRenewalForm({ ...renewalForm, startDate: e.target.value })
-                                }
-                              />
-                            </div>
+                              <div className="space-y-4">
+                                <div>
+                                  <Label htmlFor="renew-plan" className="text-foreground">
+                                    Plan
+                                  </Label>
+                                  <Select
+                                    value={renewalForm.planId}
+                                    onValueChange={(value) => setRenewalForm({ ...renewalForm, planId: value })}
+                                  >
+                                    <SelectTrigger id="renew-plan" className="mt-1">
+                                      <SelectValue placeholder="Sélectionner un plan" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                      {(plans ?? []).map((plan) => (
+                                        <SelectItem key={plan.id} value={plan.id}>
+                                          {plan.name}
+                                        </SelectItem>
+                                      ))}
+                                    </SelectContent>
+                                  </Select>
+                                </div>
 
-                            <Button className="w-full" onClick={handleRenewalSubmit} disabled={renewSubscriptionMutation.isPending}>
-                              {renewSubscriptionMutation.isPending ? 'Renouvellement...' : 'Renouveler'}
-                            </Button>
-                          </div>
-                        </DialogContent>
-                      </Dialog>
+                                <div>
+                                  <Label htmlFor="renew-start-date" className="text-foreground">
+                                    Date de début
+                                  </Label>
+                                  <Input
+                                    id="renew-start-date"
+                                    type="date"
+                                    value={renewalForm.startDate}
+                                    onChange={(e) => setRenewalForm({ ...renewalForm, startDate: e.target.value })}
+                                    className="mt-1"
+                                  />
+                                </div>
 
-                      {/* Delete */}
-                      <DropdownMenuItem
-                        onClick={() => handleDeleteSubscription(sub.id)}
-                        className="text-destructive"
-                      >
-                        <Trash2 className="mr-2" size={16} />
-                        Supprimer
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-        <PaginationControls
-          page={subscriptionPagination.page}
-          pageCount={subscriptionPagination.pageCount}
-          onPageChange={subscriptionPagination.setPage}
-          totalItems={filteredSubscriptions.length}
-        />
+                                <Button
+                                  className="w-full"
+                                  onClick={handleRenewalSubmit}
+                                  disabled={renewSubscriptionMutation.isPending}
+                                >
+                                  {renewSubscriptionMutation.isPending ? 'Renouvellement...' : 'Renouveler'}
+                                </Button>
+                              </div>
+                            </DialogContent>
+                          </Dialog>
+
+                          <DropdownMenuItem
+                            onClick={() => handleDeleteSubscription(sub.id)}
+                            className="text-destructive focus:bg-destructive/10"
+                          >
+                            <Trash2 className="mr-2" size={16} />
+                            Supprimer
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+
+            <div className="border-t border-border/60 px-4 py-4">
+              <PaginationControls
+                page={subscriptionPagination.page}
+                pageCount={subscriptionPagination.pageCount}
+                onPageChange={subscriptionPagination.setPage}
+                totalItems={filteredSubscriptions.length}
+              />
+            </div>
+          </>
+        ) : (
+          <div className="flex flex-col items-center justify-center gap-3 px-10 py-24 text-center text-muted-foreground">
+            <AlertTriangle className="h-10 w-10 text-primary" />
+            <p className="text-lg font-semibold">Aucun abonnement ne correspond à vos filtres.</p>
+            <p className="text-sm text-muted-foreground">
+              Ajustez la recherche ou le statut pour afficher d'autres membres.
+            </p>
+            <Button variant="outline" onClick={() => setFilterStatus('ALL')}>
+              Réinitialiser les filtres
+            </Button>
+          </div>
+        )}
       </div>
     </div>
   )

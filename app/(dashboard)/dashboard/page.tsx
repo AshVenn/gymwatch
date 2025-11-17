@@ -14,7 +14,15 @@ import {
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
+  Dot,
 } from 'recharts'
+import { TrendingUp } from 'lucide-react'
+import {
+  ChartConfig,
+  ChartContainer,
+  ChartTooltip,
+  ChartTooltipContent,
+} from '@/components/ui/chart'
 
 interface DashboardStats {
   monthlyRevenue: number
@@ -74,9 +82,22 @@ export default function DashboardPage() {
     )
   }
 
-  const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444']
+  const COLORS = ['var(--chart-1)', 'var(--chart-2)', 'var(--chart-3)', 'var(--chart-4)']
   const planDistribution = (stats.planDistribution ?? []) as DashboardStats['planDistribution']
   const expiringSoon = (stats.expiringSoon ?? []) as DashboardStats['expiringSoon']
+
+  const revenueChartConfig: ChartConfig = {
+    revenue: {
+      label: 'Revenus',
+      color: 'var(--chart-2)',
+    },
+  }
+
+  const planChartConfig: ChartConfig = {
+    value: {
+      label: 'Abonnements',
+    },
+  }
 
   return (
     <div className="space-y-6">
@@ -149,44 +170,65 @@ export default function DashboardPage() {
         <Card>
           <CardHeader>
             <CardTitle>Revenus des 12 derniers mois</CardTitle>
+            <CardDescription>Tendance mensuelle</CardDescription>
           </CardHeader>
           <CardContent>
-            <ResponsiveContainer width="100%" height={300}>
-              <LineChart data={stats.revenueByMonth ?? []}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="month" />
-                <YAxis />
-                <Tooltip />
-                <Line type="monotone" dataKey="revenue" stroke="#3b82f6" />
-              </LineChart>
-            </ResponsiveContainer>
+            <ChartContainer config={revenueChartConfig}>
+              <ResponsiveContainer width="100%" height={300}>
+                <LineChart data={stats.revenueByMonth ?? []} margin={{ top: 24, left: 24, right: 24 }}>
+                  <CartesianGrid vertical={false} strokeDasharray="3 3" />
+                  <XAxis dataKey="month" />
+                  <YAxis />
+                  <ChartTooltip cursor={false} content={<ChartTooltipContent hideLabel />} />
+                  <Line
+                    type="natural"
+                    dataKey="revenue"
+                    stroke="var(--chart-2)"
+                    strokeWidth={2}
+                    dot={({ payload, ...props }) => (
+                      <Dot
+                        r={5}
+                        cx={props.cx}
+                        cy={props.cy}
+                        fill="var(--chart-2)"
+                        stroke="var(--chart-2)"
+                      />
+                    )}
+                  />
+                </LineChart>
+              </ResponsiveContainer>
+            </ChartContainer>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader>
             <CardTitle>Répartition des abonnements par plan</CardTitle>
+            <CardDescription>Distribution des abonnements actifs</CardDescription>
           </CardHeader>
           <CardContent>
-            <ResponsiveContainer width="100%" height={300}>
-              <PieChart>
-                <Pie
-                  data={planDistribution}
-                  cx="50%"
-                  cy="50%"
-                  labelLine={false}
-                  label={({ name, value }) => `${name}: ${value}`}
-                  outerRadius={80}
-                  fill="#8884d8"
-                  dataKey="value"
-                >
-                  {planDistribution.map((entry, index) => (
-                    <Cell key={`${entry.name}-${index}`} fill={COLORS[index % COLORS.length]} />
-                  ))}
-                </Pie>
-                <Tooltip />
-              </PieChart>
-            </ResponsiveContainer>
+            <ChartContainer config={planChartConfig} className="[&_.recharts-pie-label-text]:fill-foreground mx-auto aspect-square max-h-[300px]">
+              <ResponsiveContainer width="100%" height={300}>
+                <PieChart>
+                  <Pie
+                    data={planDistribution}
+                    cx="50%"
+                    cy="50%"
+                    labelLine={false}
+                    label={({ name, value }) => `${name}: ${value}`}
+                    outerRadius={80}
+                    fill="#8884d8"
+                    dataKey="value"
+                    nameKey="name"
+                  >
+                    {planDistribution.map((entry, index) => (
+                      <Cell key={`${entry.name}-${index}`} fill={COLORS[index % COLORS.length]} />
+                    ))}
+                  </Pie>
+                  <ChartTooltip content={<ChartTooltipContent hideLabel />} />
+                </PieChart>
+              </ResponsiveContainer>
+            </ChartContainer>
           </CardContent>
         </Card>
 
@@ -208,7 +250,7 @@ export default function DashboardPage() {
           ) : (
             <div className="space-y-3">
               {expiringSoon.map((subscription) => (
-                <div key={subscription.id} className="flex justify-between items-center p-3 bg-slate-50 rounded-lg">
+                <div key={subscription.id} className="flex justify-between items-center p-3 bg-muted/50 rounded-lg border border-border/50">
                   <div>
                     <p className="font-medium">{subscription.memberName}</p>
                     <p className="text-sm text-muted-foreground">{subscription.endDate}</p>

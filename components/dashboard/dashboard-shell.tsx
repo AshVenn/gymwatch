@@ -6,8 +6,9 @@ import Link from 'next/link'
 import { useSession, signOut } from 'next-auth/react'
 import { usePathname, useRouter } from 'next/navigation'
 import { UserRole } from '@prisma/client'
-import type { Icon as LucideIcon } from 'lucide-react'
+import type { LucideIcon } from 'lucide-react'
 import { LogOut, Menu, X } from 'lucide-react'
+import { toast } from 'sonner'
 
 import { Button } from '@/components/ui/button'
 import {
@@ -16,6 +17,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
+import { ThemeToggle } from '@/components/theme-toggle'
 import { cn } from '@/lib/utils'
 
 export type NavigationItem = {
@@ -46,9 +48,21 @@ export function DashboardShell({
 
   const isAllowed = useMemo(() => {
     if (!allowedRoles?.length) return true
-    const role = session?.user?.role
-    return role ? allowedRoles.includes(role as UserRole) : false
+    const userRole = session?.user?.role
+    return userRole ? allowedRoles.includes(userRole as UserRole) : false
   }, [allowedRoles, session?.user?.role])
+
+  const subscriptionPastDue = useMemo(() => {
+    if (!session?.user) return false
+    const userRole = session.user.role as UserRole
+    if (userRole === UserRole.SUPER_ADMIN) return false
+    if (session.user.subscriptionStatus === 'EXPIRED') return true
+    const expiresAt = session.user.subscriptionExpiresAt
+    if (!expiresAt) return false
+    const parsed = new Date(expiresAt)
+    if (Number.isNaN(parsed.getTime())) return false
+    return parsed.getTime() < Date.now()
+  }, [session?.user])
 
   useEffect(() => {
     if (status === 'loading') return
@@ -62,12 +76,16 @@ export function DashboardShell({
     }
   }, [allowedRoles, fallbackRoute, isAllowed, router, session?.user, status])
 
+  useEffect(() => {
+    if (!subscriptionPastDue || status !== 'authenticated') return
+    toast.error('Votre abonnement est expiré. Merci de contacter le support.')
+    signOut({ callbackUrl: '/login' })
+  }, [status, subscriptionPastDue])
+
   if (status === 'loading') {
     return (
       <div className="flex h-screen items-center justify-center">
-        <div className="text-center">
-          <div className="text-2xl font-bold">Chargement...</div>
-        </div>
+        <p className="text-lg font-semibold text-muted-foreground">Chargement…</p>
       </div>
     )
   }
@@ -77,28 +95,32 @@ export function DashboardShell({
   }
 
   return (
-    <div className="flex h-screen bg-background text-foreground">
+    <div className="flex min-h-screen bg-background text-foreground">
       <aside
         className={cn(
-          'fixed inset-y-0 left-0 z-50 w-64 border-r border-border bg-card shadow-lg transition-transform md:relative md:translate-x-0',
-          sidebarOpen ? 'translate-x-0' : '-translate-x-full'
+          'fixed inset-y-0 left-0 z-50 w-72 border-r border-sidebar-border bg-sidebar text-sidebar-foreground transition-transform md:relative md:translate-x-0',
+          sidebarOpen ? 'translate-x-0' : '-translate-x-full',
         )}
       >
         <div className="flex h-full flex-col">
-          <div className="flex items-center justify-between border-b border-border/60 p-6">
+          <div className="flex items-center justify-between border-b border-sidebar-border/70 px-6 py-5">
             <div className="flex items-center gap-2">
               <Image src="/GymWatch.svg" alt="GymWatch" width={32} height={32} priority className="rounded" />
-              <span className="text-xl font-semibold">GymWatch</span>
+              <div>
+                <p className="text-xs uppercase tracking-[0.3em] text-sidebar-foreground/70">GymWatch</p>
+                <p className="text-base font-semibold text-sidebar-foreground">Console</p>
+              </div>
             </div>
             <button
               onClick={() => setSidebarOpen(false)}
-              className="rounded-md p-1 text-muted-foreground transition hover:bg-muted md:hidden"
+              className="rounded-md border border-sidebar-border/70 p-1 text-sidebar-foreground/70 transition hover:bg-sidebar-accent hover:text-sidebar-accent-foreground md:hidden"
+              aria-label="Fermer le menu latéral"
             >
-              <X size={24} />
+              <X size={20} />
             </button>
           </div>
 
-          <nav className="flex-1 space-y-2 p-4">
+          <nav className="flex-1 space-y-1 p-4">
             {navigationItems.map((item) => {
               const Icon = item.icon
               const isActive = pathname === item.href || pathname.startsWith(`${item.href}/`)
@@ -107,25 +129,27 @@ export function DashboardShell({
                   key={item.href}
                   href={item.href}
                   className={cn(
-                    'flex items-center gap-3 rounded-lg px-4 py-3 transition-colors hover:bg-muted hover:text-foreground',
-                    isActive ? 'bg-muted text-foreground' : 'text-muted-foreground'
+                    'flex items-center gap-3 rounded-lg px-4 py-2 text-sm transition',
+                    isActive
+                      ? 'bg-sidebar-primary text-sidebar-primary-foreground shadow-sm'
+                      : 'text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground',
                   )}
                   onClick={() => setSidebarOpen(false)}
                 >
-                  <Icon size={20} />
+                  <Icon size={18} />
                   <span>{item.label}</span>
                 </Link>
               )
             })}
           </nav>
 
-          <div className="border-t border-border/60 p-4">
+          <div className="border-t border-sidebar-border/70 p-4">
             <Button
               variant="ghost"
-              className="w-full justify-start text-muted-foreground hover:bg-muted hover:text-foreground"
+              className="w-full justify-start rounded-lg border border-sidebar-border text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
               onClick={() => signOut()}
             >
-              <LogOut size={20} className="mr-3" />
+              <LogOut size={18} className="mr-3" />
               Se déconnecter
             </Button>
           </div>
@@ -133,22 +157,23 @@ export function DashboardShell({
       </aside>
 
       <div className="flex flex-1 flex-col overflow-hidden">
-        <header className="flex items-center justify-between border-b border-border bg-background/95 px-6 py-4 backdrop-blur supports-[backdrop-filter]:bg-background/80">
+        <header className="flex items-center justify-between border-b border-border/60 bg-background/80 px-6 py-4 backdrop-blur supports-backdrop-filter:bg-background/60">
           <button
             onClick={() => setSidebarOpen(!sidebarOpen)}
-            className="rounded-md p-2 text-muted-foreground transition hover:bg-muted md:hidden"
+            className="rounded-full border border-border/80 p-2 text-muted-foreground transition hover:bg-muted/70 md:hidden"
+            aria-label="Ouvrir le menu latéral"
           >
-            <Menu size={24} />
+            <Menu size={22} />
           </button>
-
-          <div className="flex items-center gap-4 ml-auto">
-            <span className="text-sm text-muted-foreground">
-              {session?.user?.email}
+          <div className="ml-auto flex items-center gap-3">
+            <ThemeToggle />
+            <span className="hidden rounded-full border border-border/70 px-4 py-2 text-xs uppercase tracking-[0.3em] text-muted-foreground md:inline-flex">
+              {session.user.email}
             </span>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="outline" className="rounded-full w-10 h-10 p-0">
-                  {session?.user?.name?.charAt(0).toUpperCase()}
+                <Button variant="outline" className="h-10 w-10 rounded-full border-border/70 bg-card text-card-foreground">
+                  {session.user.name?.charAt(0).toUpperCase()}
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
@@ -160,7 +185,7 @@ export function DashboardShell({
           </div>
         </header>
 
-        <main className="flex-1 overflow-auto p-6">
+        <main className="flex-1 overflow-auto bg-background px-6 py-8">
           <div className="space-y-6">
             {topSlot}
             {children}

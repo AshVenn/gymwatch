@@ -124,38 +124,39 @@ export async function listGymsForSuperAdmin() {
     },
   })
 
-  return gyms.map((gym) => {
-    const daysRemaining = gym.subscriptionExpiresAt
-      ? Math.ceil((gym.subscriptionExpiresAt.getTime() - Date.now()) / (1000 * 60 * 60 * 24))
-      : null
+return gyms.map((gym) => {
+  const daysRemaining = gym.subscriptionExpiresAt
+    ? Math.ceil((gym.subscriptionExpiresAt.getTime() - Date.now()) / (1000 * 60 * 60 * 24))
+    : null
 
-    return {
-      id: gym.id,
-      name: gym.name,
-      email: gym.email,
-      city: gym.city,
-      country: gym.country,
-      subscriptionPlan: gym.subscriptionPlan,
-      subscriptionStatus: gym.subscriptionStatus,
-      subscriptionExpiresAt: gym.subscriptionExpiresAt,
-      subscriptionGracePeriodDays: gym.subscriptionGracePeriodDays,
-      analyticsSnapshot: gym.analyticsSnapshot,
-      daysRemaining,
-      memberCount: gym._count.members,
-      activeSubscriptions: gym._count.subscriptions,
-      updatedAt: gym.updatedAt,
-      owner: gym.owner
-        ? {
-            id: gym.owner.id,
-            email: gym.owner.email,
-            firstName: gym.owner.firstName,
-            lastName: gym.owner.lastName,
-          }
-        : null,
-      adminCount: gym.users.length,
-      maxAdminAccounts: gym.maxAdminAccounts,
-    }
-  })
+  return {
+    id: gym.id,
+    name: gym.name,
+    email: gym.email,
+    city: gym.city,
+    country: gym.country,
+    subscriptionPlan: gym.subscriptionPlan,
+    subscriptionStatus: gym.subscriptionStatus,
+    subscriptionExpiresAt: gym.subscriptionExpiresAt,
+    subscriptionGracePeriodDays: gym.subscriptionGracePeriodDays,
+    analyticsSnapshot: gym.analyticsSnapshot ?? undefined,   // ✅ FIX HERE
+    daysRemaining,
+    memberCount: gym._count.members,
+    activeSubscriptions: gym._count.subscriptions,
+    updatedAt: gym.updatedAt,
+    owner: gym.owner
+      ? {
+          id: gym.owner.id,
+          email: gym.owner.email,
+          firstName: gym.owner.firstName,
+          lastName: gym.owner.lastName,
+        }
+      : null,
+    adminCount: gym.users.length,
+    maxAdminAccounts: gym.maxAdminAccounts,
+  }
+})
+
 }
 
 export async function getSuperAdminGymDetail(gymId: string) {
@@ -295,7 +296,7 @@ export async function createGymForSuperAdmin(data: {
         subscriptionStatus: data.subscriptionStatus ?? "ACTIVE",
         subscriptionExpiresAt: data.subscriptionExpiresAt ?? null,
         subscriptionGracePeriodDays: data.subscriptionGracePeriodDays ?? 0,
-        analyticsSnapshot: data.analyticsSnapshot ?? null,
+        analyticsSnapshot: gym.analyticsSnapshot ?? undefined,
         maxAdminAccounts: data.maxAdminAccounts ?? 3,
       },
     })

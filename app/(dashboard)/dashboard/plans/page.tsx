@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useSession } from 'next-auth/react'
 import { useMemo, useState } from 'react'
@@ -17,7 +17,6 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from '@/components/ui/dialog'
 import {
   DropdownMenu,
@@ -32,6 +31,7 @@ import { MoreVertical, Plus, Edit2, Trash2 } from 'lucide-react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import { PaginationControls, usePagination } from '@/components/dashboard/pagination-controls'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 
 interface Plan {
   id: string
@@ -54,8 +54,6 @@ export default function PlansPage() {
   const [isOpen, setIsOpen] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-
-  // 🔒 BLOCK PAGE IF USER IS NOT AUTHENTICATED
   if (status === 'loading') {
     return <div>Chargement de l'utilisateur...</div>
   }
@@ -94,6 +92,12 @@ export default function PlansPage() {
   })
 
   const planPagination = usePagination(plans, 10)
+
+  const planStats = useMemo(() => {
+    const active = plans.filter((plan) => plan.isActive).length
+    const inactive = plans.length - active
+    return { total: plans.length, active, inactive }
+  }, [plans])
 
   const handleAddPlan = () => {
     setEditingId(null)
@@ -141,7 +145,7 @@ export default function PlansPage() {
       setIsOpen(false)
       setFormData({ name: '', durationDays: '', price: '', isActive: true })
       setEditingId(null)
-      queryClient.invalidateQueries(planQueryKey)
+      queryClient.invalidateQueries({ queryKey: planQueryKey })
       toast.success(editingId ? 'Plan mis à jour avec succès' : 'Plan créé avec succès')
     },
     onError: (err) => {
@@ -163,7 +167,7 @@ export default function PlansPage() {
       return data
     },
     onSuccess: () => {
-      queryClient.invalidateQueries(planQueryKey)
+      queryClient.invalidateQueries({ queryKey: planQueryKey })
       toast.success('Plan supprimé avec succès')
     },
     onError: (err) => {
@@ -183,163 +187,168 @@ export default function PlansPage() {
     }
   }
 
-  if (isLoading) {
-    return <div>Chargement des plans...</div>
-  }
-
   return (
     <div className="space-y-6">
-      {(error || isError) && (
-        <div className="text-red-500 font-medium">
-          {error || 'Impossible de charger les plans.'}
+      <Card className="border border-border/70 bg-card">
+        <CardHeader className="flex flex-wrap items-center justify-between gap-4">
+          <div>
+            <CardTitle>Plans d'abonnement</CardTitle>
+            <CardDescription>Contrôlez les offres proposées à vos membres.</CardDescription>
+          </div>
+          <div className="inline-flex gap-4 text-sm text-muted-foreground">
+            <span>
+              <span className="font-semibold text-foreground">{planStats.active}</span> actifs
+            </span>
+            <span>
+              <span className="font-semibold text-foreground">{planStats.inactive}</span> inactifs
+            </span>
+            <span>
+              <span className="font-semibold text-foreground">{planStats.total}</span> plans
+            </span>
+          </div>
+        </CardHeader>
+        <CardContent className="flex flex-wrap items-center justify-between gap-4">
+          <p className="text-sm text-muted-foreground">
+            Ajustez la durée, le prix et le statut de vos plans pour rester aligné avec vos objectifs.
+          </p>
+          <Button onClick={handleAddPlan}>
+            <Plus className="mr-2 h-4 w-4" />
+            Ajouter un plan
+          </Button>
+        </CardContent>
+      </Card>
+
+      <Dialog open={isOpen} onOpenChange={setIsOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>{editingId ? 'Modifier le plan' : 'Ajouter un plan'}</DialogTitle>
+          </DialogHeader>
+
+          {error && <p className="text-sm text-destructive">{error}</p>}
+
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="plan-name">Nom du plan</Label>
+              <Input
+                id="plan-name"
+                value={formData.name}
+                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                placeholder="Ex: Mensuel"
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="plan-duration">Durée en jours</Label>
+              <Input
+                id="plan-duration"
+                type="number"
+                value={formData.durationDays}
+                onChange={(e) => setFormData({ ...formData, durationDays: e.target.value })}
+                placeholder="30"
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="plan-price">Prix (MAD)</Label>
+              <Input
+                id="plan-price"
+                type="number"
+                step="0.01"
+                value={formData.price}
+                onChange={(e) => setFormData({ ...formData, price: e.target.value })}
+                placeholder="300"
+              />
+            </div>
+
+            <div className="flex items-center justify-between">
+              <Label htmlFor="plan-active" className="text-sm font-medium">
+                Actif
+              </Label>
+              <Switch
+                id="plan-active"
+                checked={formData.isActive}
+                onCheckedChange={(checked) => setFormData({ ...formData, isActive: checked })}
+              />
+            </div>
+
+            <Button onClick={handleSubmit} className="w-full" disabled={savePlanMutation.isPending}>
+              {savePlanMutation.isPending
+                ? 'Enregistrement...'
+                : editingId
+                  ? 'Mettre à jour'
+                  : 'Créer'}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {isError ? (
+        <div className="rounded-3xl border border-destructive/40 bg-destructive/5 p-6 text-destructive">
+          Impossible de charger les plans.
+        </div>
+      ) : (
+        <div className="rounded-3xl border border-border/70 bg-card">
+          <Table>
+            <TableHeader>
+              <TableRow className="bg-muted/50 text-muted-foreground">
+                <TableHead>Nom du plan</TableHead>
+                <TableHead>Durée (jours)</TableHead>
+                <TableHead>Prix (MAD)</TableHead>
+                <TableHead>Actif</TableHead>
+                <TableHead className="text-right">Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+
+            <TableBody>
+              {planPagination.data.map((plan) => (
+                <TableRow key={plan.id} className="border-border/60">
+                  <TableCell className="font-medium">{plan.name}</TableCell>
+                  <TableCell>{plan.durationDays}</TableCell>
+                  <TableCell>{plan.price.toLocaleString('fr-FR')}</TableCell>
+                  <TableCell>
+                    <Badge variant={plan.isActive ? 'default' : 'secondary'}>
+                      {plan.isActive ? 'Oui' : 'Non'}
+                    </Badge>
+                  </TableCell>
+
+                  <TableCell className="text-right">
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="sm">
+                          <MoreVertical size={16} />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem onSelect={() => handleEditPlan(plan)}>
+                          <Edit2 className="mr-2" size={16} />
+                          Modifier
+                        </DropdownMenuItem>
+
+                        <DropdownMenuItem
+                          onSelect={() => handleDeletePlan(plan.id)}
+                          className="text-destructive"
+                        >
+                          <Trash2 className="mr-2" size={16} />
+                          Supprimer
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+
+          <div className="border-t border-border/60 px-4 py-4">
+            <PaginationControls
+              page={planPagination.page}
+              pageCount={planPagination.pageCount}
+              onPageChange={planPagination.setPage}
+              totalItems={plans.length}
+            />
+          </div>
         </div>
       )}
-
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-3xl font-bold">Plans d'abonnement</h1>
-          <p className="text-muted-foreground mt-2">Gérez vos plans d'abonnement</p>
-        </div>
-
-        <Dialog open={isOpen} onOpenChange={setIsOpen}>
-          <DialogTrigger asChild>
-            <Button onClick={handleAddPlan}>
-              <Plus className="mr-2" size={20} />
-              Créer un plan
-            </Button>
-          </DialogTrigger>
-
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>
-                {editingId ? 'Modifier le plan' : 'Créer un nouveau plan'}
-              </DialogTitle>
-            </DialogHeader>
-
-            <div className="space-y-4">
-              <div>
-                <Label htmlFor="plan-name">Nom du plan</Label>
-                <Input
-                  id="plan-name"
-                  value={formData.name}
-                  onChange={(e) =>
-                    setFormData({ ...formData, name: e.target.value })
-                  }
-                  placeholder="Ex: Mensuel"
-                />
-              </div>
-
-              <div>
-                <Label htmlFor="plan-duration">Durée en jours</Label>
-                <Input
-                  id="plan-duration"
-                  type="number"
-                  value={formData.durationDays}
-                  onChange={(e) =>
-                    setFormData({ ...formData, durationDays: e.target.value })
-                  }
-                  placeholder="30"
-                />
-              </div>
-
-              <div>
-                <Label htmlFor="plan-price">Prix (MAD)</Label>
-                <Input
-                  id="plan-price"
-                  type="number"
-                  step="0.01"
-                  value={formData.price}
-                  onChange={(e) =>
-                    setFormData({ ...formData, price: e.target.value })
-                  }
-                  placeholder="300"
-                />
-              </div>
-
-              <div className="flex items-center justify-between">
-                <Label htmlFor="plan-active" className="text-sm font-medium">
-                  Actif
-                </Label>
-                <Switch
-                  id="plan-active"
-                  checked={formData.isActive}
-                  onCheckedChange={(checked) =>
-                    setFormData({ ...formData, isActive: checked })
-                  }
-                />
-              </div>
-
-              <Button onClick={handleSubmit} className="w-full" disabled={savePlanMutation.isPending}>
-                {savePlanMutation.isPending
-                  ? 'Enregistrement...'
-                  : editingId
-                    ? 'Mettre à jour'
-                    : 'Créer'}
-              </Button>
-            </div>
-          </DialogContent>
-        </Dialog>
-      </div>
-
-      <div className="rounded-lg border overflow-x-auto">
-        <Table>
-          <TableHeader>
-            <TableRow className="bg-slate-50">
-              <TableHead>Nom du plan</TableHead>
-              <TableHead>Durée (jours)</TableHead>
-              <TableHead>Prix (MAD)</TableHead>
-              <TableHead>Actif</TableHead>
-              <TableHead className="text-right">Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-
-          <TableBody>
-            {planPagination.data.map((plan) => (
-              <TableRow key={plan.id}>
-                <TableCell className="font-medium">{plan.name}</TableCell>
-                <TableCell>{plan.durationDays}</TableCell>
-                <TableCell>{plan.price.toLocaleString('fr-FR')}</TableCell>
-                <TableCell>
-                  <Badge variant={plan.isActive ? 'default' : 'secondary'}>
-                    {plan.isActive ? 'Oui' : 'Non'}
-                  </Badge>
-                </TableCell>
-
-                <TableCell className="text-right">
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="sm">
-                        <MoreVertical size={16} />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuItem onSelect={() => handleEditPlan(plan)}>
-                        <Edit2 className="mr-2" size={16} />
-                        Modifier
-                      </DropdownMenuItem>
-
-                      <DropdownMenuItem
-                        onSelect={() => handleDeletePlan(plan.id)}
-                        className="text-destructive"
-                      >
-                        <Trash2 className="mr-2" size={16} />
-                        Supprimer
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </TableCell>
-
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-        <PaginationControls
-          page={planPagination.page}
-          pageCount={planPagination.pageCount}
-          onPageChange={planPagination.setPage}
-          totalItems={plans.length}
-        />
-      </div>
     </div>
   )
 }

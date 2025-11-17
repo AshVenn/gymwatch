@@ -1,0 +1,313 @@
+'use client'
+
+import { useEffect, useState } from 'react'
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
+import { Input } from '@/components/ui/input'
+import { Button } from '@/components/ui/button'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Plus } from 'lucide-react'
+import { GymSubscriptionPlan, GymSubscriptionStatus } from '@prisma/client'
+import { useForm } from 'react-hook-form'
+import { z } from 'zod'
+import { zodResolver } from '@hookform/resolvers/zod'
+
+import { useCreateGym } from '@/app/(dashboard)/super-admin/hooks'
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form'
+
+const schema = z.object({
+  name: z.string().min(2, 'Nom requis'),
+  email: z.string().email('Email invalide'),
+  city: z.string().optional(),
+  country: z.string().optional(),
+  plan: z.enum(['MONTHLY', 'YEARLY']),
+  status: z.enum(['ACTIVE', 'SUSPENDED', 'EXPIRED']),
+  expiresAt: z.string().optional(),
+  grace: z.coerce.number().min(0).max(30),
+  maxAdmins: z.coerce.number().min(1),
+  ownerEmail: z.string().email('Email invalide'),
+  ownerPassword: z.string().min(6, 'Min. 6 caractères'),
+  ownerFirstName: z.string().optional(),
+  ownerLastName: z.string().optional(),
+})
+
+type CreateGymValues = z.infer<typeof schema>
+
+const defaultValues: CreateGymValues = {
+  name: '',
+  email: '',
+  city: '',
+  country: '',
+  plan: 'MONTHLY',
+  status: 'ACTIVE',
+  expiresAt: '',
+  grace: 5,
+  maxAdmins: 3,
+  ownerEmail: '',
+  ownerPassword: '',
+  ownerFirstName: '',
+  ownerLastName: '',
+}
+
+export function CreateGymDialog() {
+  const [open, setOpen] = useState(false)
+  const form = useForm<CreateGymValues>({
+    resolver: zodResolver(schema),
+    defaultValues,
+  })
+  const createGym = useCreateGym()
+
+  useEffect(() => {
+    if (!open) {
+      form.reset(defaultValues)
+    }
+  }, [open, form])
+
+  const onSubmit = (values: CreateGymValues) => {
+    createGym.mutate(
+      {
+        name: values.name,
+        email: values.email,
+        city: values.city || undefined,
+        country: values.country || undefined,
+        subscriptionPlan: values.plan as GymSubscriptionPlan,
+        subscriptionStatus: values.status as GymSubscriptionStatus,
+        subscriptionExpiresAt: values.expiresAt || undefined,
+        subscriptionGracePeriodDays: values.grace,
+        maxAdminAccounts: values.maxAdmins,
+        owner: {
+          email: values.ownerEmail,
+          password: values.ownerPassword,
+          firstName: values.ownerFirstName || 'Propriétaire',
+          lastName: values.ownerLastName || values.name,
+        },
+      },
+      {
+        onSuccess: () => {
+          form.reset(defaultValues)
+          setOpen(false)
+        },
+      },
+    )
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button className="gap-2">
+          <Plus className="h-4 w-4" /> Ajouter une salle
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="max-w-2xl">
+        <DialogHeader>
+          <DialogTitle>Nouvelle salle</DialogTitle>
+          <DialogDescription>Enregistrez une salle et son propriétaire.</DialogDescription>
+        </DialogHeader>
+
+        <Form {...form}>
+          <form className="space-y-5" onSubmit={form.handleSubmit(onSubmit)}>
+            <div className="grid gap-4 md:grid-cols-2">
+              <FormField
+                control={form.control}
+                name="name"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Nom</FormLabel>
+                    <FormControl>
+                      <Input {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="email"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Email</FormLabel>
+                    <FormControl>
+                      <Input type="email" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+
+            <div className="grid gap-4 md:grid-cols-2">
+              <FormField
+                control={form.control}
+                name="city"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Ville</FormLabel>
+                    <FormControl>
+                      <Input {...field} />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="country"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Pays</FormLabel>
+                    <FormControl>
+                      <Input {...field} />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+            </div>
+
+            <div className="grid gap-4 md:grid-cols-2">
+              <FormField
+                control={form.control}
+                name="plan"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Plan</FormLabel>
+                    <Select onValueChange={field.onChange} value={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="MONTHLY">Mensuel</SelectItem>
+                        <SelectItem value="YEARLY">Annuel</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="status"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Statut</FormLabel>
+                    <Select onValueChange={field.onChange} value={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="ACTIVE">Actif</SelectItem>
+                        <SelectItem value="SUSPENDED">Suspendu</SelectItem>
+                        <SelectItem value="EXPIRED">Expiré</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </FormItem>
+                )}
+              />
+            </div>
+
+            <div className="grid gap-4 md:grid-cols-3">
+              <FormField
+                control={form.control}
+                name="expiresAt"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Expiration</FormLabel>
+                    <FormControl>
+                      <Input type="date" {...field} />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="grace"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Jours de grâce</FormLabel>
+                    <FormControl>
+                      <Input type="number" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="maxAdmins"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Admins autorisés</FormLabel>
+                    <FormControl>
+                      <Input type="number" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+
+            <div className="grid gap-4 md:grid-cols-2">
+              <FormField
+                control={form.control}
+                name="ownerEmail"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Email propriétaire</FormLabel>
+                    <FormControl>
+                      <Input type="email" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="ownerPassword"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Mot de passe initial</FormLabel>
+                    <FormControl>
+                      <Input type="password" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+
+            <div className="grid gap-4 md:grid-cols-2">
+              <FormField
+                control={form.control}
+                name="ownerFirstName"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Prénom propriétaire</FormLabel>
+                    <FormControl>
+                      <Input {...field} />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="ownerLastName"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Nom propriétaire</FormLabel>
+                    <FormControl>
+                      <Input {...field} />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+            </div>
+
+            <Button type="submit" className="w-full" disabled={createGym.isPending}>
+              {createGym.isPending ? 'Création...' : 'Créer'}
+            </Button>
+          </form>
+        </Form>
+      </DialogContent>
+    </Dialog>
+  )
+}

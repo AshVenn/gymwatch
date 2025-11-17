@@ -1,348 +1,365 @@
-"use client"
+﻿"use client"
 
-import { useSession } from "next-auth/react"
-import { useRouter } from "next/navigation"
-import { useEffect, useState } from "react"
-import Link from "next/link"
+import { useEffect, useState } from 'react'
+import Link from 'next/link'
+import Image from 'next/image'
+import { useRouter } from 'next/navigation'
+import { useSession } from 'next-auth/react'
+import { CheckCircle2, ArrowRight, Sparkles, Menu, X, TrendingUp, Users, Zap } from 'lucide-react'
 
-import { Button } from "@/components/ui/button"
-import { Card } from "@/components/ui/card"
-import { Sparkles, Menu, X, CheckCircle2, ArrowRight, ShieldCheck } from "lucide-react"
-import { ThemeToggle } from "@/components/theme-toggle"
+import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { ThemeToggle } from '@/components/theme-toggle'
+import { cn } from '@/lib/utils'
 
 const navigationLinks = [
-  { label: "Fonctionnalités", href: "#services" },
-  { label: "Plans", href: "#plans" },
-  { label: "Contact", href: "#contact" },
+  { label: 'Fonctionnalités', href: '#features' },
+  { label: 'Plans', href: '#plans' },
+  { label: 'Contact', href: '#contact' },
 ]
 
 const services = [
-  {
-    title: "Gestion complète",
-    description: "Suivez vos salles, coaches et membres depuis une seule interface.",
-    icon: "🏋️",
-  },
-  {
-    title: "Automatisation",
-    description: "Alertes d'expiration, relances e-mail et synchronisation des abonnements.",
-    icon: "⚙️",
-  },
-  {
-    title: "Analyses avancées",
-    description: "Visualisez les revenus, la fréquentation et les tendances.",
-    icon: "📈",
-  },
+  { title: 'Pilotage unifié', description: 'Tableau de bord multi-salles, suivi des membres et revenus temps réel.', icon: TrendingUp },
+  { title: 'Automatisations', description: 'Alertes d\'expiration, factures et relances orchestrées pour chaque club.', icon: Zap },
+  { title: 'Analyses avancées', description: 'Revenus, fréquentation et comparatifs pour guider vos décisions.', icon: Users },
 ]
 
 const plans = [
   {
-    name: "Essentiel",
-    price: "299 MAD",
-    description: "Parfait pour les nouvelles salles",
-    features: ["Tableau de bord unifié", "Gestion des membres", "Support e-mail"],
-    highlight: false,
+    name: 'Essentiel',
+    price: '299 MAD',
+    description: 'Parfait pour une salle unique',
+    features: ['Gestion des membres', 'Alertes d\'échéance', 'Support email'],
   },
   {
-    name: "Business",
-    price: "499 MAD",
-    description: "Idéal pour les réseaux multi-sites",
-    features: [
-      "Automatisation des renouvellements",
-      "Rapports personnalisés",
-      "Support prioritaire",
-    ],
+    name: 'Business',
+    price: '499 MAD',
+    description: 'Pensé pour les réseaux multi-sites',
+    features: ['Automatisation avancée', 'Rapports personnalisés', 'Support prioritaire'],
     highlight: true,
   },
   {
-    name: "Enterprise",
-    price: "Sur devis",
-    description: "Pour les franchises et groupes",
-    features: ["SLA dédié", "Audit sécurité", "Onboarding personnalisé"],
-    highlight: false,
+    name: 'Enterprise',
+    price: 'Sur devis',
+    description: 'Accompagnement premium pour groupes',
+    features: ['SLA dédié', 'Audit sécurité', 'Onboarding personnalisé'],
   },
 ]
 
-const stats = [
-  { label: "Salles accompagnées", value: "+120" },
-  { label: "Membres gérés", value: "38k" },
-  { label: "Taux de satisfaction", value: "98%" },
+const carouselSlides = [
+  {
+    title: 'Pilotage multi-salles',
+    description: 'Vue consolidée des membres, paiements et incidents pour chaque site.',
+  },
+  {
+    title: 'Alertes automatisées',
+    description: 'Notifications intelligentes avant les expirations et incidents critiques.',
+  },
+  {
+    title: 'Analyses financières',
+    description: 'Prévisions et tendances pour guider vos décisions d\'investissements.',
+  },
 ]
 
 export default function Home() {
   const { data: session, status } = useSession()
   const router = useRouter()
   const [menuOpen, setMenuOpen] = useState(false)
+  const [currentSlide, setCurrentSlide] = useState(0)
+  const [isScrolled, setIsScrolled] = useState(false)
+  const [parallaxOffset, setParallaxOffset] = useState(0)
+  const [hoveredDevice, setHoveredDevice] = useState<string | null>(null)
 
-  // ✅ FIXED INFINITE LOOP — only reacts to status changes
   useEffect(() => {
-    if (status === "authenticated" && session?.user) {
-      router.push("/dashboard")
+    if (status === 'authenticated' && session?.user) {
+      router.push('/dashboard')
     }
-  }, [status])
+  }, [router, session?.user, status])
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentSlide((prev) => (prev + 1) % carouselSlides.length)
+    }, 5000)
+    return () => clearInterval(timer)
+  }, [])
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 50)
+      const heroSection = document.getElementById('hero-section')
+      if (heroSection) {
+        const rect = heroSection.getBoundingClientRect()
+        const scrolled = window.scrollY
+        const offset = (scrolled - (rect.top + window.scrollY)) * 0.5
+        setParallaxOffset(offset)
+      }
+    }
+    window.addEventListener('scroll', handleScroll)
+    return () => window.removeEventListener('scroll', handleScroll)
+  }, [])
 
   return (
-    <div className="relative min-h-screen overflow-hidden bg-slate-950 text-white">
-
-      {/* Glow Background */}
-      <div className="pointer-events-none absolute inset-0 -z-10">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(56,189,248,0.25),transparent_55%)]" />
-        <div className="absolute inset-y-0 right-0 w-1/2 bg-linear-to-b from-transparent via-slate-900/40 to-transparent blur-3xl" />
-      </div>
-
-      {/* Header */}
-      <header className="sticky top-0 z-30 border-b border-white/10 bg-slate-950/70 backdrop-blur">
+    <div className="min-h-screen bg-background text-foreground">
+      <header className={cn(
+        "sticky top-0 z-30 transition-all duration-500",
+        isScrolled ? "border-b border-border/40 bg-background/80 backdrop-blur-xl shadow-sm" : "border-b border-border/20 bg-background/50 backdrop-blur"
+      )}>
         <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-4">
-          {/* Logo */}
-          <div className="flex items-center gap-3">
-            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-linear-to-br from-cyan-400 to-blue-500 text-xl font-bold text-slate-950">
-              GW
+          <div className="group flex items-center gap-3 transition-transform hover:scale-105">
+            <div className="relative overflow-hidden rounded-lg">
+              <Image src="/GymWatch.svg" alt="GymWatch" width={56} height={56} priority className="transition-transform group-hover:scale-110" />
             </div>
             <div>
-              <p className="text-sm uppercase tracking-[0.3em] text-cyan-200/80">GymWatch</p>
-              <p className="text-xs text-slate-300">Saas pour salles modernes</p>
+              <p className="text-xs uppercase tracking-[0.3em] text-muted-foreground">GymWatch</p>
+              <p className="text-base font-semibold">Gestion moderne des salles</p>
             </div>
           </div>
 
-          {/* Desktop Nav */}
-          <nav className="hidden items-center gap-8 text-sm font-medium text-slate-200 md:flex">
+          <nav className="hidden items-center gap-8 text-sm font-medium text-muted-foreground md:flex">
             {navigationLinks.map((link) => (
-              <Link key={link.href} href={link.href} className="transition hover:text-white">
+              <Link key={link.href} href={link.href} className="relative transition hover:text-foreground group">
                 {link.label}
+                <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-primary group-hover:w-full transition-all duration-300" />
               </Link>
             ))}
           </nav>
 
-          {/* Desktop buttons */}
-          <div className="hidden items-center gap-3 md:flex">
+          <div className="hidden items-center gap-2 md:flex">
             <ThemeToggle />
-            <Button variant="ghost" onClick={() => router.push("/login")}>
+            <Button variant="ghost" onClick={() => router.push('/login')} className="transition hover:text-primary">
               Se connecter
             </Button>
-            <Button onClick={() => router.push("/register")}>Créer un compte</Button>
+            <Button onClick={() => router.push('/register')} className="transition hover:scale-105 hover:shadow-lg">
+              Créer un compte
+            </Button>
           </div>
 
-          {/* Mobile Menu Button */}
-          <button
-            className="rounded-lg border border-white/10 p-2 text-white md:hidden"
-            onClick={() => setMenuOpen(true)}
-          >
-            <Menu size={20} />
-          </button>
+          <div className="flex items-center gap-2 md:hidden">
+            <ThemeToggle />
+            <Button variant="ghost" size="icon" onClick={() => setMenuOpen(true)} aria-label="Ouvrir le menu">
+              <Menu className="h-5 w-5" />
+            </Button>
+          </div>
         </div>
-      </header>
-
-      {/* Mobile Menu */}
-      {menuOpen && (
-        <div className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm md:hidden">
-          <div className="ml-auto flex h-full w-72 flex-col gap-6 border-l border-white/10 bg-slate-950 p-6">
-            <button
-              className="self-end rounded-full border border-white/20 p-2"
-              onClick={() => setMenuOpen(false)}
-            >
-              <X size={18} />
-            </button>
-
-            <nav className="flex flex-col gap-4 text-lg">
+        {menuOpen && (
+          <div className="border-t border-border/60 bg-background md:hidden animate-in slide-in-from-top">
+            <div className="flex items-center justify-between px-4 py-3">
+              <p className="text-sm font-medium">Navigation</p>
+              <Button variant="ghost" size="icon" onClick={() => setMenuOpen(false)} aria-label="Fermer le menu">
+                <X className="h-5 w-5" />
+              </Button>
+            </div>
+            <div className="space-y-2 px-4 pb-4">
               {navigationLinks.map((link) => (
                 <Link
                   key={link.href}
                   href={link.href}
+                  className="block rounded-lg border border-border/60 px-4 py-2 text-sm transition hover:bg-primary/10"
                   onClick={() => setMenuOpen(false)}
-                  className="text-slate-200 hover:text-white"
                 >
                   {link.label}
                 </Link>
               ))}
-            </nav>
-
-            <div className="mt-auto flex flex-col gap-3">
-              <ThemeToggle />
-              <Button variant="ghost" onClick={() => router.push("/login")}>
+              <Button className="w-full transition hover:scale-105" onClick={() => router.push('/register')}>
+                Démarrer
+              </Button>
+              <Button variant="ghost" className="w-full transition hover:text-primary" onClick={() => router.push('/login')}>
                 Se connecter
               </Button>
-              <Button onClick={() => router.push("/register")}>Créer un compte</Button>
             </div>
           </div>
-        </div>
-      )}
+        )}
+      </header>
 
-      {/* Main */}
-      <main className="mx-auto flex max-w-6xl flex-col gap-24 px-4 py-16">
+      <main className="mx-auto flex max-w-6xl flex-col gap-16 px-4 py-12">
+        <section id="hero-section" className="relative overflow-hidden rounded-3xl border border-border/50 bg-gradient-to-br from-card to-card/50 p-8 md:p-12 shadow-lg">
+          <div className="floating-orb-primary left-1/4 top-0" />
+          <div className="floating-orb-secondary right-0 top-1/2" />
+          <div className="floating-orb-tertiary left-0 bottom-0" />
+          
+          <div className="relative grid gap-12 lg:grid-cols-2 items-center">
+            <div className="space-y-8 animate-fade-in">
+              <span className="inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/5 px-4 py-2 text-xs uppercase tracking-[0.3em] text-primary font-semibold animate-bounce-subtle">
+                <Sparkles className="h-4 w-4" /> Plateforme multi-salles
+              </span>
 
-        {/* HERO */}
-        <section className="grid gap-10 lg:grid-cols-[1.1fr_0.9fr]" id="hero">
-          <div className="space-y-8">
-            <p className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-1 text-xs uppercase tracking-[0.3em] text-cyan-200">
-              <Sparkles size={14} /> Plateforme SaaS 100% marocaine
-            </p>
-
-            <div className="space-y-6">
-              <h1 className="text-4xl font-bold leading-tight md:text-5xl lg:text-6xl">
-                Une plateforme moderne pour piloter toutes vos salles de sport
+              <h1 className="text-5xl md:text-6xl font-bold leading-tight text-balance">
+                L'OS de vos salles de sport <span className="bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">multi-sites</span>
               </h1>
-              <p className="text-lg text-slate-300">
-                Automatiser les renouvellements, suivre vos encaissements et offrir une expérience fluide.
+
+              <p className="text-lg text-muted-foreground leading-relaxed max-w-lg">
+                GymWatch centralise vos abonnements, vos équipes et vos finances dans une expérience unique, optimisée pour les réseaux de salles ambitieuses.
               </p>
-            </div>
 
-            <div className="flex flex-wrap gap-4">
-              <Button size="lg" onClick={() => router.push("/register")}>
-                Démarrer gratuitement <ArrowRight className="ml-2" size={18} />
-              </Button>
-              <Button size="lg" variant="outline" onClick={() => router.push("/login")}>
-                Accéder à mon espace
-              </Button>
-            </div>
-
-            <div className="grid gap-4 sm:grid-cols-3">
-              {stats.map((stat) => (
-                <Card key={stat.label} className="border-white/10 bg-white/5 p-4 text-center">
-                  <p className="text-2xl font-bold text-white">{stat.value}</p>
-                  <p className="text-xs uppercase tracking-widest text-slate-300">{stat.label}</p>
-                </Card>
-              ))}
-            </div>
-          </div>
-
-          {/* Fake dashboard card */}
-          <div className="relative rounded-3xl border border-white/10 bg-linear-to-br from-slate-900/80 to-slate-800/60 p-6 shadow-2xl">
-            <div className="absolute inset-0 -z-10 rounded-3xl bg-linear-to-br from-cyan-500/20 to-blue-500/10 blur-3xl" />
-
-            <div className="space-y-6">
-              <div className="flex items-center gap-3 rounded-2xl bg-white/5 p-4">
-                <ShieldCheck className="text-cyan-300" />
-                <div>
-                  <p className="text-sm font-semibold">Super administrateur</p>
-                  <p className="text-xs text-slate-300">Contrôle total</p>
-                </div>
+              <div className="flex flex-wrap gap-4 pt-4">
+                <Button size="lg" onClick={() => router.push('/register')} className="group transition-all hover:scale-105 hover:shadow-xl">
+                  Demander une démo <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />
+                </Button>
+                <Button size="lg" variant="outline" onClick={() => router.push('/login')} className="transition hover:bg-primary/10">
+                  Accéder au tableau de bord
+                </Button>
               </div>
 
-              <div className="rounded-2xl border border-white/10 bg-slate-900/70 p-4">
-                <p className="text-sm text-slate-400">Temps réel</p>
-                <div className="mt-3 flex items-end justify-between">
-                  <div>
-                    <p className="text-4xl font-bold">1 248</p>
-                    <p className="text-sm text-slate-400">Abonnements actifs</p>
+              <div className="flex flex-wrap gap-8 pt-6 border-t border-border/20">
+                <div className="group animate-slide-up" style={{ animationDelay: '0.1s' }}>
+                  <p className="text-3xl font-bold text-foreground">+120</p>
+                  <p className="text-sm text-muted-foreground">Salles accompagnées</p>
+                </div>
+                <div className="group animate-slide-up" style={{ animationDelay: '0.2s' }}>
+                  <p className="text-3xl font-bold text-foreground">38k</p>
+                  <p className="text-sm text-muted-foreground">Membres suivis</p>
+                </div>
+                <div className="group animate-slide-up" style={{ animationDelay: '0.3s' }}>
+                  <p className="text-3xl font-bold text-foreground">98%</p>
+                  <p className="text-sm text-muted-foreground">Clients satisfaits</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="relative h-full min-h-96 flex items-center justify-center animate-fade-in" style={{ animationDelay: '0.2s' }}>
+              <div className="relative w-full h-full perspective">
+                <div 
+                  className="relative w-full h-full transition-all duration-700 ease-out hover-lift"
+                  style={{
+                    transform: `translateY(${parallaxOffset * -0.3}px) ${hoveredDevice ? 'scale(1.05)' : 'scale(1)'}`,
+                  }}
+                  onMouseEnter={() => setHoveredDevice('devices')}
+                  onMouseLeave={() => setHoveredDevice(null)}
+                >
+                  <Image 
+                    src="/featured-plateforme.png"
+                    alt="GymWatch Platform - Desktop and Mobile Showcase"
+                    width={800}
+                    height={600}
+                    quality={95}
+                    priority
+                    className={cn(
+                      "w-full h-auto object-contain transition-all duration-700 drop-shadow-2xl",
+                      hoveredDevice === 'devices' ? 'brightness-110 drop-shadow-[0_20px_40px_rgba(59,130,246,0.3)]' : 'drop-shadow-lg'
+                    )}
+                  />
+                  
+                  <div className={cn(
+                    "absolute inset-0 rounded-lg bg-gradient-to-tr from-transparent via-white/5 to-transparent opacity-0 transition-opacity duration-500",
+                    hoveredDevice === 'devices' && 'opacity-100 animate-shine'
+                  )} />
+
+                  <div className="absolute top-4 -left-6 animate-float-left">
+                    <div className="bg-primary/90 text-primary-foreground px-3 py-1 rounded-full text-xs font-semibold shadow-lg backdrop-blur-sm">
+                      ✓ Multi-salles
+                    </div>
                   </div>
-                  <p className="rounded-full bg-emerald-500/20 px-3 py-1 text-sm text-emerald-300">
-                    +12% cette semaine
-                  </p>
-                </div>
-                <div className="mt-6 h-28 rounded-2xl bg-linear-to-r from-cyan-400/20 to-blue-500/20" />
-              </div>
 
-              <div className="rounded-2xl border border-white/10 bg-slate-900/70 p-4">
-                <p className="text-sm text-slate-300">Prochaine expiration</p>
-                <p className="text-xl font-semibold text-white">Gym Atlas - 4 jours restants</p>
-                <p className="text-xs text-slate-400">Rappel automatique envoyé</p>
+                  <div className="absolute bottom-8 -right-8 animate-float-right">
+                    <div className="bg-primary/90 text-primary-foreground px-3 py-1 rounded-full text-xs font-semibold shadow-lg backdrop-blur-sm">
+                      ✓ Temps réel
+                    </div>
+                  </div>
+
+                  <div className="absolute top-1/2 -translate-y-1/2 -right-12 animate-float-up">
+                    <div className="bg-primary/90 text-primary-foreground px-3 py-1 rounded-full text-xs font-semibold shadow-lg backdrop-blur-sm">
+                      ✓ Analytics
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
         </section>
 
-        {/* SERVICES */}
-        <section id="services" className="space-y-10">
-          <div className="space-y-2 text-center">
-            <p className="text-sm uppercase tracking-[0.3em] text-cyan-200/80">Services</p>
-            <h2 className="text-3xl font-semibold">Ce que GymWatch automatise pour vous</h2>
-            <p className="text-slate-300">Du suivi aux relances intelligentes.</p>
+        <section id="features" className="space-y-8 animate-fade-in" style={{ animationDelay: '0.3s' }}>
+          <div className="space-y-4">
+            <h2 className="text-4xl font-bold">Tout ce qu'il faut pour une exploitation sereine</h2>
+            <p className="text-lg text-muted-foreground">Des modules pensés pour les réseaux multi-sites.</p>
           </div>
-
           <div className="grid gap-6 md:grid-cols-3">
-            {services.map((service) => (
-              <Card key={service.title} className="border-white/10 bg-white/5 p-6">
-                <div className="text-4xl">{service.icon}</div>
-                <h3 className="mt-4 text-xl font-semibold">{service.title}</h3>
-                <p className="mt-2 text-slate-300">{service.description}</p>
-              </Card>
-            ))}
+            {services.map((service, index) => {
+              const Icon = service.icon
+              return (
+                <Card 
+                  key={service.title} 
+                  className="group relative overflow-hidden transition-all duration-500 hover:shadow-lg hover:border-primary/50 animate-slide-up"
+                  style={{ animationDelay: `${0.1 + index * 0.1}s` }}
+                >
+                  <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                  <CardHeader>
+                    <div className="mb-2 inline-block p-2 rounded-lg bg-primary/10 group-hover:bg-primary/20 transition-colors">
+                      <Icon className="h-6 w-6 text-primary" />
+                    </div>
+                    <CardTitle className="group-hover:text-primary transition-colors">{service.title}</CardTitle>
+                    <CardDescription>{service.description}</CardDescription>
+                  </CardHeader>
+                </Card>
+              )
+            })}
           </div>
         </section>
 
-        {/* PLANS */}
-        <section id="plans" className="space-y-10">
-          <div className="space-y-2 text-center">
-            <p className="text-sm uppercase tracking-[0.3em] text-cyan-200/80">Plans</p>
-            <h2 className="text-3xl font-semibold">Choisissez votre formule</h2>
-            <p className="text-slate-300">Contactez-nous pour activer votre salle.</p>
+        <section id="plans" className="space-y-8 animate-fade-in" style={{ animationDelay: '0.4s' }}>
+          <div className="flex flex-wrap items-center justify-between gap-4">
+            <div>
+              <h2 className="text-4xl font-bold">Plans transparents</h2>
+              <p className="text-lg text-muted-foreground">Choisissez la formule adaptée à votre réseau.</p>
+            </div>
+            <Button variant="outline" onClick={() => router.push('/contact')} className="transition hover:bg-primary/10">
+              Contacter l'équipe commerciale
+            </Button>
           </div>
-
-          <div className="grid gap-6 lg:grid-cols-3">
-            {plans.map((plan) => (
-              <Card
-                key={plan.name}
-                className={`flex flex-col border ${
-                  plan.highlight
-                    ? "border-cyan-400 bg-slate-900/80 shadow-cyan-500/20 shadow-2xl"
-                    : "border-white/10 bg-white/5"
-                }`}
+          <div className="grid gap-6 md:grid-cols-3">
+            {plans.map((plan, index) => (
+              <Card 
+                key={plan.name} 
+                className={cn(
+                  'relative overflow-hidden transition-all duration-500 hover:shadow-xl animate-slide-up',
+                  plan.highlight ? 'border-2 border-primary shadow-lg md:scale-105' : 'hover:border-primary/30'
+                )}
+                style={{ animationDelay: `${0.1 + index * 0.1}s` }}
               >
-                <div className="p-6">
-                  <p className="text-sm uppercase tracking-[0.3em] text-cyan-200/80">{plan.name}</p>
-                  <p className="mt-4 text-4xl font-bold">{plan.price}</p>
-                  <p className="text-sm text-slate-300">{plan.description}</p>
-                </div>
-
-                <div className="flex flex-1 flex-col gap-3 border-t border-white/10 p-6">
+                {plan.highlight && <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent pointer-events-none" />}
+                <CardHeader>
+                  <CardTitle className="flex items-center justify-between">
+                    {plan.name}
+                    {plan.highlight && (
+                      <span className="rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold text-primary animate-pulse">Populaire</span>
+                    )}
+                  </CardTitle>
+                  <CardDescription>{plan.description}</CardDescription>
+                  <div className="text-4xl font-bold text-foreground pt-2">{plan.price}</div>
+                </CardHeader>
+                <CardContent className="space-y-4 text-sm">
                   {plan.features.map((feature) => (
-                    <div key={feature} className="flex items-center gap-2 text-sm text-slate-200">
-                      <CheckCircle2 className="text-cyan-300" size={18} /> {feature}
+                    <div key={feature} className="flex items-center gap-3 text-muted-foreground">
+                      <CheckCircle2 className="h-5 w-5 text-primary flex-shrink-0" />
+                      <span>{feature}</span>
                     </div>
                   ))}
-                </div>
-
-                <div className="border-t border-white/10 p-6">
-                  <Button
-                    variant={plan.highlight ? "default" : "outline"}
-                    className="w-full"
-                    onClick={() => router.push("/register")}
-                  >
-                    Discuter avec l'équipe
+                  <Button className="mt-6 w-full transition hover:scale-105" variant={plan.highlight ? 'default' : 'outline'}>
+                    Choisir {plan.name}
                   </Button>
-                </div>
+                </CardContent>
               </Card>
             ))}
           </div>
         </section>
 
-        {/* CONTACT */}
-        <section
-          id="contact"
-          className="rounded-3xl border border-white/10 bg-linear-to-r from-cyan-500/20 to-blue-500/10 p-8 text-center"
-        >
-          <h2 className="text-3xl font-semibold">Prêt à moderniser votre gestion ?</h2>
-          <p className="mt-3 text-slate-100">
-            Écrivez-nous sur{" "}
-            <a className="font-semibold underline" href="mailto:contact@gymwatch.ma">
-              contact@gymwatch.ma
-            </a>{" "}
-            – activation en moins de 24h.
-          </p>
-
-          <div className="mt-6 flex flex-wrap justify-center gap-4">
-            <Button onClick={() => router.push("/register")}>Créer mon espace</Button>
-            <Button variant="outline" onClick={() => router.push("/login")}>
-              Déjà client ? Se connecter
-            </Button>
+        <section id="contact" className="rounded-3xl border border-primary/20 bg-gradient-to-br from-card to-card/50 px-8 py-12 md:px-12 shadow-lg animate-fade-in" style={{ animationDelay: '0.5s' }}>
+          <div className="flex flex-col md:flex-row items-center justify-between gap-6">
+            <div className="flex-1">
+              <p className="text-xs uppercase tracking-[0.3em] text-primary font-semibold">Support</p>
+              <h2 className="text-3xl md:text-4xl font-bold mt-2">Besoin d'un plan sur-mesure ?</h2>
+              <p className="text-muted-foreground mt-2">Notre équipe vous répond sous 24h pour cadrer vos besoins.</p>
+            </div>
+            <div className="flex flex-wrap gap-3">
+              <Button variant="secondary" onClick={() => router.push('mailto:hello@gymwatch.ma')} className="transition hover:scale-105">
+                hello@gymwatch.ma
+              </Button>
+              <Button onClick={() => router.push('/register')} className="transition hover:scale-105 hover:shadow-lg">
+                Commencer maintenant
+              </Button>
+            </div>
           </div>
         </section>
       </main>
-
-      {/* FOOTER */}
-      <footer className="border-t border-white/20 py-8">
-        <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-4 px-4 text-sm text-slate-400 sm:flex-row">
-          <p>© {new Date().getFullYear()} GymWatch. Tous droits réservés.</p>
-
-          <div className="flex gap-4">
-            <Link href="/legal" className="hover:text-white">
-              Mentions légales
-            </Link>
-            <Link href="#contact" className="hover:text-white">
-              Support
-            </Link>
-          </div>
-        </div>
-      </footer>
     </div>
   )
 }

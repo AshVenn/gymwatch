@@ -5,9 +5,20 @@ import { Analytics } from '@vercel/analytics/next'
 import './globals.css'
 import { AuthProvider } from './providers/session-provider'
 import { ReactQueryProvider } from './providers/react-query-provider'
+import { ThemeProvider } from './providers/theme-provider'
 import { Toaster } from '@/components/ui/sonner'
 
 const siteUrl = 'https://www.gymwatch.ma'
+
+const geistSans = Geist({
+  subsets: ['latin'],
+  variable: '--font-geist-sans',
+})
+
+const geistMono = Geist_Mono({
+  subsets: ['latin'],
+  variable: '--font-geist-mono',
+})
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
@@ -64,14 +75,16 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="fr">
-      <body className="font-sans antialiased">
-        <AuthProvider>
-          <ReactQueryProvider>
-            <Toaster />
-            <main>{children}</main>
-          </ReactQueryProvider>
-        </AuthProvider>
+    <html lang="fr" suppressHydrationWarning>
+      <body className={`${geistSans.variable} ${geistMono.variable} font-sans antialiased`}>
+        <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
+          <AuthProvider>
+            <ReactQueryProvider>
+              <Toaster />
+              <main>{children}</main>
+            </ReactQueryProvider>
+          </AuthProvider>
+        </ThemeProvider>
 
         <Analytics />
       </body>

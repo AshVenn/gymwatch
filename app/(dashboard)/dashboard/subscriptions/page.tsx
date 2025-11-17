@@ -35,6 +35,9 @@ import {
 } from '@/components/ui/select'
 import { MoreVertical, Trash2, RotateCcw } from 'lucide-react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { Label } from '@/components/ui/label'
+import { useToast } from '@/components/ui/use-toast'
+import { cn } from '@/lib/utils'
 
 interface Subscription {
   id: string
@@ -57,6 +60,7 @@ export default function SubscriptionsPage() {
     planId: '',
     startDate: new Date().toISOString().split('T')[0],
   })
+  const { toast } = useToast()
 
   const gymId = session?.user?.gymId
 
@@ -116,6 +120,17 @@ export default function SubscriptionsPage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries(subscriptionQueryKey)
+      toast({
+        title: 'Abonnement supprimé',
+        description: "L'abonnement a été retiré avec succès.",
+      })
+    },
+    onError: (err) => {
+      toast({
+        title: 'Suppression impossible',
+        description: err instanceof Error ? err.message : 'Une erreur est survenue.',
+        variant: 'destructive',
+      })
     },
   })
 
@@ -143,6 +158,17 @@ export default function SubscriptionsPage() {
       queryClient.invalidateQueries(subscriptionQueryKey)
       setRenewingId(null)
       setRenewalForm({ planId: '', startDate: new Date().toISOString().split('T')[0] })
+      toast({
+        title: 'Abonnement renouvelé',
+        description: 'Les dates ont été mises à jour.',
+      })
+    },
+    onError: (err) => {
+      toast({
+        title: 'Renouvellement impossible',
+        description: err instanceof Error ? err.message : 'Veuillez réessayer.',
+        variant: 'destructive',
+      })
     },
   })
 
@@ -156,7 +182,11 @@ export default function SubscriptionsPage() {
 
   const handleRenewalSubmit = () => {
     if (!renewalForm.planId) {
-      alert('Veuillez sélectionner un plan.')
+      toast({
+        title: 'Plan requis',
+        description: 'Sélectionnez un plan pour renouveler cet abonnement.',
+        variant: 'destructive',
+      })
       return
     }
 
@@ -172,11 +202,15 @@ export default function SubscriptionsPage() {
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'ACTIVE':
-        return <Badge className="bg-green-100 text-green-800">Actif</Badge>
+        return <Badge>Actif</Badge>
       case 'EXPIRES_TODAY':
-        return <Badge className="bg-yellow-100 text-yellow-800">Expire aujourd'hui</Badge>
+        return (
+          <Badge className={cn('bg-amber-100 text-amber-900 dark:bg-amber-400/20 dark:text-amber-50')}>
+            Expire aujourd'hui
+          </Badge>
+        )
       case 'EXPIRED':
-        return <Badge className="bg-red-100 text-red-800">Expiré</Badge>
+        return <Badge variant="destructive">Expiré</Badge>
       default:
         return <Badge>{status ?? '-'}</Badge>
     }
@@ -210,8 +244,9 @@ export default function SubscriptionsPage() {
       {/* Filters */}
       <div className="flex flex-col gap-4 md:flex-row md:items-end">
         <div className="flex-1">
-          <label className="block text-sm font-medium mb-2">Rechercher</label>
+          <Label htmlFor="subscription-search">Rechercher</Label>
           <Input
+            id="subscription-search"
             placeholder="Nom du membre ou du plan..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
@@ -219,14 +254,14 @@ export default function SubscriptionsPage() {
         </div>
 
         <div className="flex-1">
-          <label className="block text-sm font-medium mb-2">Statut</label>
+          <Label htmlFor="subscription-status">Statut</Label>
           <Select
             value={filterStatus}
             onValueChange={(value) => {
               setFilterStatus(value)
             }}
           >
-            <SelectTrigger>
+            <SelectTrigger id="subscription-status">
               <SelectValue placeholder="Tous" />
             </SelectTrigger>
             <SelectContent>
@@ -313,7 +348,7 @@ export default function SubscriptionsPage() {
 
                           <div className="space-y-4">
                             <div>
-                              <label className="block text-sm font-medium mb-2">Plan</label>
+                              <Label>Plan</Label>
                               <Select
                                 value={renewalForm.planId}
                                 onValueChange={(value) =>
@@ -335,10 +370,9 @@ export default function SubscriptionsPage() {
                             </div>
 
                             <div>
-                              <label className="block text-sm font-medium mb-2">
-                                Date de début
-                              </label>
+                              <Label htmlFor="renewal-date">Date de début</Label>
                               <Input
+                                id="renewal-date"
                                 type="date"
                                 value={renewalForm.startDate}
                                 onChange={(e) =>

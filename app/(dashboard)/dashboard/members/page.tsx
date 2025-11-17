@@ -27,6 +27,15 @@ import {
 import { Input } from '@/components/ui/input'
 import { MoreVertical, Plus, Edit2, Trash2 } from 'lucide-react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { Label } from '@/components/ui/label'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
+import { useToast } from '@/components/ui/use-toast'
 
 interface Member {
   id: string
@@ -61,6 +70,7 @@ export default function MembersPage() {
 
   const [isOpen, setIsOpen] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const { toast } = useToast()
 
   // 🔒 Authentication checks
   if (status === 'loading') return <div>Chargement de l'utilisateur...</div>
@@ -144,9 +154,18 @@ export default function MembersPage() {
       })
       setEditingId(null)
       setError(null)
+      toast({
+        title: editingId ? 'Membre mis à jour' : 'Membre ajouté',
+        description: 'Les informations du membre ont été sauvegardées.',
+      })
     },
     onError: (err) => {
       setError(err instanceof Error ? err.message : 'Erreur lors de la sauvegarde.')
+      toast({
+        title: 'Impossible de sauvegarder',
+        description: err instanceof Error ? err.message : 'Veuillez réessayer.',
+        variant: 'destructive',
+      })
     },
   })
 
@@ -163,6 +182,17 @@ export default function MembersPage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries(membersQueryKey)
+      toast({
+        title: 'Membre supprimé',
+        description: 'Le membre a été retiré de votre salle.',
+      })
+    },
+    onError: (err) => {
+      toast({
+        title: 'Suppression impossible',
+        description: err instanceof Error ? err.message : 'Une erreur est survenue.',
+        variant: 'destructive',
+      })
     },
   })
 
@@ -194,7 +224,11 @@ export default function MembersPage() {
 
   const handleSubmit = () => {
     if (!formData.firstName || !formData.lastName) {
-      alert('Prénom et Nom obligatoires.')
+      toast({
+        title: 'Champs obligatoires',
+        description: 'Prénom et Nom sont requis pour créer un membre.',
+        variant: 'destructive',
+      })
       return
     }
 
@@ -241,10 +275,10 @@ export default function MembersPage() {
             </DialogHeader>
 
             <div className="space-y-4">
-              {/* FIRST NAME */}
               <div>
-                <label className="block text-sm font-medium mb-2">Prénom</label>
+                <Label htmlFor="member-first-name">Prénom</Label>
                 <Input
+                  id="member-first-name"
                   value={formData.firstName}
                   onChange={(e) =>
                     setFormData({ ...formData, firstName: e.target.value })
@@ -252,10 +286,10 @@ export default function MembersPage() {
                 />
               </div>
 
-              {/* LAST NAME */}
               <div>
-                <label className="block text-sm font-medium mb-2">Nom</label>
+                <Label htmlFor="member-last-name">Nom</Label>
                 <Input
+                  id="member-last-name"
                   value={formData.lastName}
                   onChange={(e) =>
                     setFormData({ ...formData, lastName: e.target.value })
@@ -263,10 +297,10 @@ export default function MembersPage() {
                 />
               </div>
 
-              {/* EMAIL */}
               <div>
-                <label className="block text-sm font-medium mb-2">Email</label>
+                <Label htmlFor="member-email">Email</Label>
                 <Input
+                  id="member-email"
                   type="email"
                   value={formData.email}
                   onChange={(e) =>
@@ -275,10 +309,10 @@ export default function MembersPage() {
                 />
               </div>
 
-              {/* PHONE */}
               <div>
-                <label className="block text-sm font-medium mb-2">Téléphone</label>
+                <Label htmlFor="member-phone">Téléphone</Label>
                 <Input
+                  id="member-phone"
                   value={formData.phone}
                   onChange={(e) =>
                     setFormData({ ...formData, phone: e.target.value })
@@ -286,29 +320,32 @@ export default function MembersPage() {
                 />
               </div>
 
-              {/* PLAN */}
               <div>
-                <label className="block text-sm font-medium mb-2">Plan</label>
-                <select
-                  className="w-full border rounded-md p-2"
+                <Label>Plan</Label>
+                <Select
                   value={formData.planId}
-                  onChange={(e) => setFormData({ ...formData, planId: e.target.value })}
+                  onValueChange={(value) =>
+                    setFormData({ ...formData, planId: value })
+                  }
                 >
-                  <option value="">Aucun</option>
-                  {plans.map((plan) => (
-                    <option key={plan.id} value={plan.id}>
-                      {plan.name}
-                    </option>
-                  ))}
-                </select>
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Aucun" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="">Aucun</SelectItem>
+                    {plans.map((plan) => (
+                      <SelectItem key={plan.id} value={plan.id}>
+                        {plan.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
 
-              {/* START DATE */}
               <div>
-                <label className="block text-sm font-medium mb-2">
-                  Date de début
-                </label>
+                <Label htmlFor="member-start-date">Date de début</Label>
                 <Input
+                  id="member-start-date"
                   type="date"
                   value={formData.startDate}
                   onChange={(e) =>

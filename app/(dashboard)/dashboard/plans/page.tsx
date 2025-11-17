@@ -49,6 +49,7 @@ export default function PlansPage() {
   })
   const [isOpen, setIsOpen] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const { toast } = useToast()
 
   // 🔒 BLOCK PAGE IF USER IS NOT AUTHENTICATED
   if (status === 'loading') {
@@ -211,8 +212,9 @@ export default function PlansPage() {
 
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium mb-2">Nom du plan</label>
+                <Label htmlFor="plan-name">Nom du plan</Label>
                 <Input
+                  id="plan-name"
                   value={formData.name}
                   onChange={(e) =>
                     setFormData({ ...formData, name: e.target.value })
@@ -222,10 +224,9 @@ export default function PlansPage() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium mb-2">
-                  Durée en jours
-                </label>
+                <Label htmlFor="plan-duration">Durée en jours</Label>
                 <Input
+                  id="plan-duration"
                   type="number"
                   value={formData.durationDays}
                   onChange={(e) =>
@@ -236,8 +237,9 @@ export default function PlansPage() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium mb-2">Prix (MAD)</label>
+                <Label htmlFor="plan-price">Prix (MAD)</Label>
                 <Input
+                  id="plan-price"
                   type="number"
                   step="0.01"
                   value={formData.price}
@@ -248,16 +250,19 @@ export default function PlansPage() {
                 />
               </div>
 
-              <div className="flex items-center gap-2">
-                <input
-                  type="checkbox"
+              <div className="flex items-center justify-between rounded-md border bg-muted/30 px-3 py-2">
+                <div>
+                  <p className="text-sm font-medium">Plan actif</p>
+                  <p className="text-xs text-muted-foreground">
+                    Contrôle la visibilité du plan pour vos équipes.
+                  </p>
+                </div>
+                <Switch
                   checked={formData.isActive}
-                  onChange={(e) =>
-                    setFormData({ ...formData, isActive: e.target.checked })
+                  onCheckedChange={(checked) =>
+                    setFormData({ ...formData, isActive: checked })
                   }
-                  className="rounded"
                 />
-                <label className="text-sm font-medium">Actif</label>
               </div>
 
               <Button onClick={handleSubmit} className="w-full" disabled={savePlanMutation.isPending}>
@@ -291,15 +296,9 @@ export default function PlansPage() {
                 <TableCell>{plan.durationDays}</TableCell>
                 <TableCell>{plan.price.toLocaleString('fr-FR')}</TableCell>
                 <TableCell>
-                  <span
-                    className={`px-2 py-1 rounded-full text-sm ${
-                      plan.isActive
-                        ? 'bg-green-100 text-green-800'
-                        : 'bg-gray-100 text-gray-800'
-                    }`}
-                  >
+                  <Badge variant={plan.isActive ? 'default' : 'secondary'}>
                     {plan.isActive ? 'Oui' : 'Non'}
-                  </span>
+                  </Badge>
                 </TableCell>
 
                 <TableCell className="text-right">

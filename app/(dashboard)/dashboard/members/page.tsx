@@ -62,6 +62,7 @@ export default function MembersPage() {
 
   const [isOpen, setIsOpen] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const { toast } = useToast()
 
   // 🔒 Authentication checks
   if (status === 'loading') return <div>Chargement de l'utilisateur...</div>
@@ -250,10 +251,10 @@ export default function MembersPage() {
             </DialogHeader>
 
             <div className="space-y-4">
-              {/* FIRST NAME */}
               <div>
-                <label className="block text-sm font-medium mb-2">Prénom</label>
+                <Label htmlFor="member-first-name">Prénom</Label>
                 <Input
+                  id="member-first-name"
                   value={formData.firstName}
                   onChange={(e) =>
                     setFormData({ ...formData, firstName: e.target.value })
@@ -261,10 +262,10 @@ export default function MembersPage() {
                 />
               </div>
 
-              {/* LAST NAME */}
               <div>
-                <label className="block text-sm font-medium mb-2">Nom</label>
+                <Label htmlFor="member-last-name">Nom</Label>
                 <Input
+                  id="member-last-name"
                   value={formData.lastName}
                   onChange={(e) =>
                     setFormData({ ...formData, lastName: e.target.value })
@@ -272,10 +273,10 @@ export default function MembersPage() {
                 />
               </div>
 
-              {/* EMAIL */}
               <div>
-                <label className="block text-sm font-medium mb-2">Email</label>
+                <Label htmlFor="member-email">Email</Label>
                 <Input
+                  id="member-email"
                   type="email"
                   value={formData.email}
                   onChange={(e) =>
@@ -284,10 +285,10 @@ export default function MembersPage() {
                 />
               </div>
 
-              {/* PHONE */}
               <div>
-                <label className="block text-sm font-medium mb-2">Téléphone</label>
+                <Label htmlFor="member-phone">Téléphone</Label>
                 <Input
+                  id="member-phone"
                   value={formData.phone}
                   onChange={(e) =>
                     setFormData({ ...formData, phone: e.target.value })

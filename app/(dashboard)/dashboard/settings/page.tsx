@@ -120,8 +120,9 @@ export default function SettingsPage() {
           )}
 
           <div>
-            <label className="block text-sm font-medium mb-2">Nom de la salle</label>
+            <Label htmlFor="gym-name">Nom de la salle</Label>
             <Input
+              id="gym-name"
               name="name"
               value={formData.name}
               onChange={handleInputChange}
@@ -130,8 +131,9 @@ export default function SettingsPage() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium mb-2">Email</label>
+            <Label htmlFor="gym-email">Email</Label>
             <Input
+              id="gym-email"
               type="email"
               name="email"
               value={formData.email}
@@ -141,8 +143,9 @@ export default function SettingsPage() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium mb-2">Téléphone</label>
+            <Label htmlFor="gym-phone">Téléphone</Label>
             <Input
+              id="gym-phone"
               name="phone"
               value={formData.phone}
               onChange={handleInputChange}
@@ -151,8 +154,9 @@ export default function SettingsPage() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium mb-2">Adresse</label>
+            <Label htmlFor="gym-address">Adresse</Label>
             <Input
+              id="gym-address"
               name="address"
               value={formData.address}
               onChange={handleInputChange}
@@ -161,8 +165,9 @@ export default function SettingsPage() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium mb-2">Ville</label>
+            <Label htmlFor="gym-city">Ville</Label>
             <Input
+              id="gym-city"
               name="city"
               value={formData.city}
               onChange={handleInputChange}
@@ -171,8 +176,9 @@ export default function SettingsPage() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium mb-2">Pays</label>
+            <Label htmlFor="gym-country">Pays</Label>
             <Input
+              id="gym-country"
               name="country"
               value={formData.country}
               onChange={handleInputChange}

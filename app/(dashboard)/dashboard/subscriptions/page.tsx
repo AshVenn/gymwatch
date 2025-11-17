@@ -1,7 +1,7 @@
 'use client'
 
 import { useSession } from 'next-auth/react'
-import { useEffect, useState } from 'react'
+import { useMemo, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import {
   Table,
@@ -34,6 +34,8 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { MoreVertical, Trash2, RotateCcw } from 'lucide-react'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { toast } from '@/components/ui/sonner'
 
 interface Subscription {
   id: string
@@ -48,8 +50,7 @@ interface Subscription {
 
 export default function SubscriptionsPage() {
   const { data: session } = useSession()
-  const [subscriptions, setSubscriptions] = useState<Subscription[]>([])
-  const [loading, setLoading] = useState(true)
+  const queryClient = useQueryClient()
   const [searchTerm, setSearchTerm] = useState('')
   const [filterStatus, setFilterStatus] = useState<string>('')
   const [renewingId, setRenewingId] = useState<string | null>(null)
@@ -57,84 +58,120 @@ export default function SubscriptionsPage() {
     planId: '',
     startDate: new Date().toISOString().split('T')[0],
   })
-  const [plans, setPlans] = useState<{ id: string; name: string }[]>([])
 
-  useEffect(() => {
-    if (session?.user?.gymId) {
-      fetchSubscriptions()
-      fetchPlans()
-    }
-  }, [session])
+  const gymId = session?.user?.gymId
 
-  const fetchSubscriptions = async () => {
-    try {
+  const subscriptionQueryKey = useMemo(
+    () => ['subscriptions', gymId, { searchTerm, filterStatus }] as const,
+    [gymId, searchTerm, filterStatus]
+  )
+  const plansQueryKey = useMemo(() => ['plans', gymId] as const, [gymId])
+
+  const {
+    data: subscriptions = [],
+    isLoading,
+    isError,
+  } = useQuery<Subscription[]>({
+    queryKey: subscriptionQueryKey,
+    enabled: Boolean(gymId),
+    queryFn: async () => {
       const params = new URLSearchParams()
       if (searchTerm) params.append('search', searchTerm)
-      if (filterStatus) params.append('status', filterStatus)
+      const normalizedStatus = filterStatus === 'ALL' ? '' : filterStatus
+      if (normalizedStatus) params.append('status', normalizedStatus)
 
-      const response = await fetch(`/api/subscriptions?${params}`)
-      const data = await response.json()
-
-      setSubscriptions(Array.isArray(data) ? data : [])
-    } catch (error) {
-      console.error('Failed to fetch subscriptions:', error)
-      setSubscriptions([])
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  const fetchPlans = async () => {
-    try {
-      const response = await fetch('/api/plans')
-      const data = await response.json()
-
-      setPlans(Array.isArray(data) ? data : [])
-    } catch (error) {
-      console.error('Failed to fetch plans:', error)
-      setPlans([])
-    }
-  }
-
-  const handleDeleteSubscription = async (subscriptionId: string) => {
-    if (!subscriptionId) return
-
-    if (confirm('Êtes-vous sûr de vouloir supprimer cet abonnement ?')) {
-      try {
-        const response = await fetch(`/api/subscriptions/${subscriptionId}`, { method: 'DELETE' })
-        if (response.ok) {
-          fetchSubscriptions()
-        }
-      } catch (error) {
-        console.error('Failed to delete subscription:', error)
+      const response = await fetch(`/api/subscriptions?${params.toString()}`)
+      if (!response.ok) {
+        throw new Error('Impossible de charger les abonnements')
       }
-    }
-  }
 
-  const handleRenewalSubmit = async () => {
-    if (!renewingId) return
-    if (!renewalForm.planId) {
-      alert('Veuillez sélectionner un plan.')
-      return
-    }
+      const data = await response.json()
+      return Array.isArray(data) ? data : []
+    },
+  })
 
-    try {
+  const { data: plans = [] } = useQuery<{ id: string; name: string }[]>({
+    queryKey: plansQueryKey,
+    enabled: Boolean(gymId),
+    queryFn: async () => {
+      const response = await fetch('/api/plans')
+      if (!response.ok) {
+        throw new Error('Impossible de charger les plans')
+      }
+
+      const data = await response.json()
+      return Array.isArray(data) ? data : []
+    },
+  })
+
+  const deleteSubscriptionMutation = useMutation({
+    mutationFn: async (subscriptionId: string) => {
+      const response = await fetch(`/api/subscriptions/${subscriptionId}`, { method: 'DELETE' })
+      const data = await response.json().catch(() => ({}))
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Impossible de supprimer cet abonnement')
+      }
+
+      return data
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries(subscriptionQueryKey)
+      toast.success('Abonnement supprimé avec succès')
+    },
+    onError: (err) => {
+      const message = err instanceof Error ? err.message : 'Impossible de supprimer cet abonnement'
+      toast.error(message)
+    },
+  })
+
+  const renewSubscriptionMutation = useMutation({
+    mutationFn: async () => {
+      if (!renewingId) {
+        throw new Error('Aucun abonnement sélectionné')
+      }
+
       const response = await fetch(`/api/subscriptions/${renewingId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          planId: renewalForm.planId,
-          startDate: renewalForm.startDate,
-        }),
+        body: JSON.stringify(renewalForm),
       })
 
-      if (response.ok) {
-        fetchSubscriptions()
-        setRenewingId(null)
+      const data = await response.json().catch(() => ({}))
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Impossible de renouveler l\'abonnement')
       }
-    } catch (error) {
-      console.error('Failed to renew subscription:', error)
+
+      return data
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries(subscriptionQueryKey)
+      setRenewingId(null)
+      setRenewalForm({ planId: '', startDate: new Date().toISOString().split('T')[0] })
+      toast.success('Abonnement renouvelé avec succès')
+    },
+    onError: (err) => {
+      const message = err instanceof Error ? err.message : "Impossible de renouveler l'abonnement"
+      toast.error(message)
+    },
+  })
+
+  const handleDeleteSubscription = (subscriptionId: string) => {
+    if (!subscriptionId) return
+
+    if (confirm('Êtes-vous sûr de vouloir supprimer cet abonnement ?')) {
+      deleteSubscriptionMutation.mutate(subscriptionId)
     }
+  }
+
+  const handleRenewalSubmit = () => {
+    if (!renewalForm.planId) {
+      toast.error('Veuillez sélectionner un plan.')
+      return
+    }
+
+    renewSubscriptionMutation.mutate()
   }
 
   const safeDate = (d: any) => {
@@ -156,7 +193,7 @@ export default function SubscriptionsPage() {
     }
   }
 
-  if (loading) {
+  if (isLoading) {
     return <div>Chargement des abonnements...</div>
   }
 
@@ -165,7 +202,7 @@ export default function SubscriptionsPage() {
       sub.memberName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       sub.planName?.toLowerCase().includes(searchTerm.toLowerCase())
 
-    const matchesFilter = filterStatus === "ALL" || filterStatus === "" || sub.status === filterStatus
+    const matchesFilter = filterStatus === 'ALL' || filterStatus === '' || sub.status === filterStatus
 
     return matchesSearch && matchesFilter
   })
@@ -177,6 +214,10 @@ export default function SubscriptionsPage() {
         <p className="text-muted-foreground mt-2">Gérez les abonnements de vos membres</p>
       </div>
 
+      {isError && (
+        <div className="text-red-500">Impossible de charger les abonnements.</div>
+      )}
+
       {/* Filters */}
       <div className="flex flex-col gap-4 md:flex-row md:items-end">
         <div className="flex-1">
@@ -185,7 +226,6 @@ export default function SubscriptionsPage() {
             placeholder="Nom du membre ou du plan..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            onBlur={fetchSubscriptions}
           />
         </div>
 
@@ -195,7 +235,6 @@ export default function SubscriptionsPage() {
             value={filterStatus}
             onValueChange={(value) => {
               setFilterStatus(value)
-              fetchSubscriptions()
             }}
           >
             <SelectTrigger>
@@ -319,8 +358,8 @@ export default function SubscriptionsPage() {
                               />
                             </div>
 
-                            <Button className="w-full" onClick={handleRenewalSubmit}>
-                              Renouveler
+                            <Button className="w-full" onClick={handleRenewalSubmit} disabled={renewSubscriptionMutation.isPending}>
+                              {renewSubscriptionMutation.isPending ? 'Renouvellement...' : 'Renouveler'}
                             </Button>
                           </div>
                         </DialogContent>

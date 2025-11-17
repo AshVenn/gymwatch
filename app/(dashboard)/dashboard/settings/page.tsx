@@ -5,9 +5,8 @@ import { useEffect, useMemo, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Label } from '@/components/ui/label'
-import { useToast } from '@/components/ui/use-toast'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { toast } from '@/components/ui/sonner'
 
 interface GymData {
   id: string
@@ -30,7 +29,6 @@ export default function SettingsPage() {
     city: '',
     country: '',
   })
-  const { toast } = useToast()
 
   const gymKey = useMemo(() => ['gym', session?.user?.gymId ?? 'no-gym'] as const, [session?.user?.gymId])
 
@@ -82,18 +80,11 @@ export default function SettingsPage() {
       return data
     },
     onSuccess: () => {
-      toast({
-        title: 'Paramètres mis à jour',
-        description: 'Les informations de votre salle ont été enregistrées.',
-      })
+      toast.success('Paramètres mis à jour avec succès')
       queryClient.invalidateQueries(gymKey)
     },
     onError: (error) => {
-      toast({
-        title: 'Mise à jour impossible',
-        description: error instanceof Error ? error.message : 'Une erreur est survenue',
-        variant: 'destructive',
-      })
+      toast.error(error instanceof Error ? error.message : 'Une erreur est survenue')
     },
   })
 
@@ -123,9 +114,9 @@ export default function SettingsPage() {
         </CardHeader>
         <CardContent className="space-y-4">
           {isError && (
-            <p className="rounded-md border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive">
-              Une erreur est survenue lors du chargement des paramètres.
-            </p>
+            <div className="p-3 rounded-md text-sm bg-red-100 text-red-800">
+              Une erreur est survenue lors du chargement
+            </div>
           )}
 
           <div>

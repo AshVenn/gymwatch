@@ -27,10 +27,7 @@ import {
 import { Input } from '@/components/ui/input'
 import { MoreVertical, Plus, Edit2, Trash2 } from 'lucide-react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Label } from '@/components/ui/label'
-import { Switch } from '@/components/ui/switch'
-import { Badge } from '@/components/ui/badge'
-import { useToast } from '@/components/ui/use-toast'
+import { toast } from '@/components/ui/sonner'
 
 interface Plan {
   id: string
@@ -139,18 +136,12 @@ export default function PlansPage() {
       setFormData({ name: '', durationDays: '', price: '', isActive: true })
       setEditingId(null)
       queryClient.invalidateQueries(planQueryKey)
-      toast({
-        title: editingId ? 'Plan mis à jour' : 'Plan créé',
-        description: 'Les détails du plan ont été enregistrés.',
-      })
+      toast.success(editingId ? 'Plan mis à jour avec succès' : 'Plan créé avec succès')
     },
     onError: (err) => {
-      setError(err instanceof Error ? err.message : 'Erreur lors de la sauvegarde.')
-      toast({
-        title: 'Impossible de sauvegarder le plan',
-        description: err instanceof Error ? err.message : 'Veuillez réessayer.',
-        variant: 'destructive',
-      })
+      const message = err instanceof Error ? err.message : 'Erreur lors de la sauvegarde.'
+      setError(message)
+      toast.error(message)
     },
   })
 
@@ -167,18 +158,12 @@ export default function PlansPage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries(planQueryKey)
-      toast({
-        title: 'Plan supprimé',
-        description: 'Le plan a été supprimé de votre catalogue.',
-      })
+      toast.success('Plan supprimé avec succès')
     },
     onError: (err) => {
-      setError(err instanceof Error ? err.message : 'Erreur lors de la suppression.')
-      toast({
-        title: 'Suppression impossible',
-        description: err instanceof Error ? err.message : 'Une erreur est survenue.',
-        variant: 'destructive',
-      })
+      const message = err instanceof Error ? err.message : 'Erreur lors de la suppression.'
+      setError(message)
+      toast.error(message)
     },
   })
 

@@ -1,113 +1,74 @@
 "use client"
 
-import Image from "next/image"
-import Link from "next/link"
-import { useSession } from "next-auth/react"
-import { useRouter } from "next/navigation"
-import { useEffect } from "react"
-import {
-  Check,
-  Dumbbell,
-  LineChart,
-  Mail,
-  Phone,
-  Shield,
-  Sparkles,
-  Users,
-} from "lucide-react"
+import { useSession } from 'next-auth/react'
+import { useRouter } from 'next/navigation'
+import { useEffect, useState } from 'react'
+import { Button } from '@/components/ui/button'
+import { Card } from '@/components/ui/card'
+import { ArrowRight, CheckCircle2, Menu, ShieldCheck, Sparkles, X } from 'lucide-react'
 
-import { ThemeToggle } from "@/components/theme-toggle"
-import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
-import { Card } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
+const navigationLinks = [
+  { label: 'Fonctionnalités', href: '#services' },
+  { label: 'Plans', href: '#plans' },
+  { label: 'Contact', href: '#contact' },
+]
 
 const services = [
   {
-    title: "Pilotage en temps réel",
-    description:
-      "Suivez vos ventes, revenus récurrents et retards de paiement depuis un tableau de bord unique.",
-    icon: LineChart,
+    title: 'Gestion complète',
+    description: 'Suivez vos salles, coaches et membres depuis une seule interface.',
+    icon: '🏋️',
   },
   {
-    title: "Gestion des membres",
-    description:
-      "Centralisez les profils, contrats et présences pour mieux accompagner chaque sportif.",
-    icon: Users,
+    title: 'Automatisation',
+    description: 'Alertes d\'expiration, relances e-mail et synchronisation des abonnements.',
+    icon: '⚙️',
   },
   {
-    title: "Automatisations",
-    description:
-      "Rappels d'échéances, emails intelligents et scénarios d'onboarding prêts à l'emploi.",
-    icon: Sparkles,
-  },
-  {
-    title: "Accès sécurisé",
-    description: "Contrôlez les accès aux clubs et sécurisez la donnée sensible de vos adhérents.",
-    icon: Shield,
-  },
-  {
-    title: "Multi-sites",
-    description: "Administrez plusieurs salles et suivez leurs performances dans une seule interface.",
-    icon: Dumbbell,
-  },
-  {
-    title: "API ouverte",
-    description: "Connectez GymWatch à votre site, votre CRM ou vos outils marketing préférés.",
-    icon: Sparkles,
+    title: 'Analyses avancées',
+    description: 'Visualisez les revenus, la fréquentation et les tendances.',
+    icon: '📈',
   },
 ]
 
 const plans = [
   {
-    title: "Essentiel",
-    price: "59€",
-    cadence: "par mois",
-    description: "Pour lancer la digitalisation d'une salle unique.",
+    name: 'Essentiel',
+    price: '299 MAD',
+    description: 'Parfait pour les nouvelles salles',
+    features: ['Tableau de bord unifié', 'Gestion des membres', 'Support e-mail'],
     highlight: false,
-    features: [
-      "Jusqu'à 500 membres",
-      "Support email",
-      "Facturation récurrente",
-      "Application membre en marque blanche",
-    ],
   },
   {
-    title: "Croissance",
-    price: "129€",
-    cadence: "par mois",
-    description: "Idéal pour les réseaux en expansion.",
+    name: 'Business',
+    price: '499 MAD',
+    description: 'Idéal pour les réseaux multi-sites',
+    features: [
+      'Automatisation des renouvellements',
+      'Rapports personnalisés',
+      'Support prioritaire',
+    ],
     highlight: true,
-    features: [
-      "Membres illimités",
-      "Support prioritaire",
-      "Automatisations avancées",
-      "API + webhooks",
-    ],
   },
   {
-    title: "Enterprise",
-    price: "Sur devis",
-    cadence: "",
-    description: "Accompagnement dédié pour groupes multi-marques.",
+    name: 'Enterprise',
+    price: 'Sur devis',
+    description: 'Pour les franchises et groupes',
+    features: ['SLA dédié', 'Audit sécurité', 'Onboarding personnalisé'],
     highlight: false,
-    features: [
-      "Chef de projet dédié",
-      "SLA contractuel",
-      "Intégration SSO",
-      "Connecteurs BI",
-    ],
   },
 ]
 
-const contacts = [
-  { label: "Email", value: "bonjour@gymwatch.fr", icon: Mail, href: "mailto:bonjour@gymwatch.fr" },
-  { label: "Téléphone", value: "+33 1 84 88 99 00", icon: Phone, href: "tel:+33184889900" },
+const stats = [
+  { label: 'Salles accompagnées', value: '+120' },
+  { label: 'Membres gérés', value: '38k' },
+  { label: 'Taux de satisfaction', value: '98%' },
 ]
 
 export default function Home() {
-  const { data: session, status } = useSession()
+  const { status } = useSession()
   const router = useRouter()
+  const [menuOpen, setMenuOpen] = useState(false)
 
   useEffect(() => {
     if (status === "authenticated" && session) {
@@ -116,223 +77,209 @@ export default function Home() {
   }, [status, session, router])
 
   return (
-    <div className="relative min-h-screen bg-background text-foreground">
-      <div className="hero-parallax absolute inset-0 -z-10 opacity-70" aria-hidden="true" />
-      <div className="absolute inset-0 -z-10 bg-gradient-to-b from-primary/5 via-transparent to-background" aria-hidden="true" />
+    <div className="relative min-h-screen overflow-hidden bg-slate-950 text-white">
+      <div className="pointer-events-none absolute inset-0 -z-10">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(56,189,248,0.25),_transparent_55%)]" />
+        <div className="absolute inset-y-0 right-0 w-1/2 bg-gradient-to-b from-transparent via-slate-900/40 to-transparent blur-3xl" />
+      </div>
 
-      <header className="sticky top-0 z-20 bg-background/80 backdrop-blur border-b border-border/50">
+      <header className="sticky top-0 z-30 border-b border-white/10 bg-slate-950/70 backdrop-blur">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-4">
-          <Link href="#hero" className="flex items-center gap-2 font-semibold tracking-tight">
-            <span className="text-primary">GymWatch</span>
-            <span className="text-muted-foreground hidden sm:inline">Gestion des clubs</span>
-          </Link>
-          <nav
-            aria-label="Navigation principale"
-            className="flex flex-wrap items-center justify-end gap-2 text-sm font-medium sm:gap-4"
-          >
-            <Link href="#services" className="text-muted-foreground transition hover:text-foreground">
-              Services
-            </Link>
-            <Link href="#plans" className="text-muted-foreground transition hover:text-foreground">
-              Plans
-            </Link>
-            <Link href="#contact" className="text-muted-foreground transition hover:text-foreground">
-              Contact
-            </Link>
-            <ThemeToggle />
-            <Button variant="ghost" onClick={() => router.push("/login")}>Se connecter</Button>
-            <Button onClick={() => router.push("/register")}>Créer un compte</Button>
+          <div className="flex items-center gap-3">
+            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-cyan-400 to-blue-500 text-xl font-bold text-slate-950">
+              GW
+            </div>
+            <div>
+              <p className="text-sm uppercase tracking-[0.3em] text-cyan-200/80">GymWatch</p>
+              <p className="text-xs text-slate-300">SaaS pour salles de sport modernes</p>
+            </div>
+          </div>
+
+          <nav className="hidden items-center gap-8 text-sm font-medium text-slate-200 md:flex">
+            {navigationLinks.map((link) => (
+              <a key={link.href} href={link.href} className="transition hover:text-white">
+                {link.label}
+              </a>
+            ))}
           </nav>
+
+          <div className="hidden items-center gap-3 md:flex">
+            <Button variant="ghost" onClick={() => router.push('/login')}>
+              Se connecter
+            </Button>
+            <Button onClick={() => router.push('/register')}>
+              Créer un compte
+            </Button>
+          </div>
+
+          <button
+            className="rounded-lg border border-white/10 p-2 text-white md:hidden"
+            onClick={() => setMenuOpen(true)}
+            aria-label="Ouvrir le menu"
+          >
+            <Menu size={20} />
+          </button>
         </div>
       </header>
 
-      <main className="mx-auto flex max-w-6xl flex-col gap-24 px-4 py-16 sm:py-24" id="hero">
-        <section className="relative overflow-hidden rounded-3xl border border-border/60 bg-card/80 p-10 text-center shadow-lg shadow-primary/5 lg:text-left">
-          <div className="absolute inset-0 bg-gradient-to-br from-primary/15 via-transparent to-secondary/20" aria-hidden="true" />
-          <div className="relative grid gap-12 lg:grid-cols-[1.1fr_0.9fr]">
+      {menuOpen && (
+        <div className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm md:hidden">
+          <div className="ml-auto flex h-full w-72 flex-col gap-6 border-l border-white/10 bg-slate-950 p-6">
+            <button className="self-end rounded-full border border-white/20 p-2" onClick={() => setMenuOpen(false)}>
+              <X size={18} />
+            </button>
+            <nav className="flex flex-col gap-4 text-lg">
+              {navigationLinks.map((link) => (
+                <a
+                  key={link.href}
+                  href={link.href}
+                  className="text-slate-200 hover:text-white"
+                  onClick={() => setMenuOpen(false)}
+                >
+                  {link.label}
+                </a>
+              ))}
+            </nav>
+            <div className="mt-auto flex flex-col gap-3">
+              <Button variant="ghost" onClick={() => router.push('/login')}>
+                Se connecter
+              </Button>
+              <Button onClick={() => router.push('/register')}>
+                Créer un compte
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <main className="mx-auto flex max-w-6xl flex-col gap-24 px-4 py-16">
+        <section className="grid gap-10 lg:grid-cols-[1.1fr_0.9fr]" id="hero">
+          <div className="space-y-8">
+            <p className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-1 text-xs uppercase tracking-[0.3em] text-cyan-200">
+              <Sparkles size={14} /> Plateforme SaaS 100% marocaine
+            </p>
             <div className="space-y-6">
-              <Badge variant="secondary" className="inline-flex items-center gap-2 text-sm">
-                <Sparkles className="h-4 w-4 text-primary" aria-hidden="true" />
-                Plateforme SaaS française
-              </Badge>
-              <h1 className="text-4xl font-semibold leading-tight tracking-tight text-balance sm:text-5xl">
-                Simplifiez la gestion de vos abonnements et engagez vos communautés sportives.
+              <h1 className="text-4xl font-bold leading-tight md:text-5xl lg:text-6xl">
+                Une plateforme moderne pour piloter toutes vos salles de sport
               </h1>
-              <p className="text-lg text-muted-foreground">
-                Suivez vos ventes, automatisez vos encaissements et collaborez avec vos équipes depuis un espace unique, pensé
-                pour les réseaux de fitness modernes.
-              </p>
-              <div className="flex flex-wrap items-center gap-3 justify-center lg:justify-start">
-                <Button size="lg" onClick={() => router.push("/register")}>Essayer gratuitement</Button>
-                <Button size="lg" variant="outline" onClick={() => router.push("/login")}>Voir un démo live</Button>
-              </div>
-              <p className="text-sm text-muted-foreground">
-                14 jours d'essai • Aucune carte bancaire requise • Assistance en français
+              <p className="text-lg text-slate-300">
+                Automatiser les renouvellements, suivre vos encaissements et offrir une expérience fluide à vos membres sans ajouter de paiement en ligne.
               </p>
             </div>
-            <Card className="relative overflow-hidden border-border/60 bg-background/80 p-6 shadow-xl backdrop-blur">
-              <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(255,255,255,0.25),_transparent_65%)] dark:bg-[radial-gradient(circle_at_top,_rgba(255,255,255,0.05),_transparent_70%)]" aria-hidden="true" />
-              <div className="relative space-y-4">
-                <div className="flex items-center justify-between text-sm text-muted-foreground">
-                  <span>Performance globale</span>
-                  <span>+18% ce mois</span>
-                </div>
-                <Image
-                  src="/window.svg"
-                  width={520}
-                  height={320}
-                  alt="Aperçu du tableau de bord GymWatch"
-                  className="h-auto w-full rounded-2xl border border-border/50 bg-card/40 p-4"
-                />
-                <div className="grid grid-cols-2 gap-4 text-left">
-                  <div>
-                    <p className="text-xs uppercase text-muted-foreground">Membres actifs</p>
-                    <p className="text-2xl font-semibold">1 842</p>
-                  </div>
-                  <div>
-                    <p className="text-xs uppercase text-muted-foreground">Revenus récurrents</p>
-                    <p className="text-2xl font-semibold">76 500 €</p>
-                  </div>
-                </div>
-                <div className="rounded-2xl border border-primary/30 bg-primary/10 p-4 text-left">
-                  <p className="text-sm font-medium">Alertes intelligentes</p>
-                  <p className="text-sm text-muted-foreground">
-                    GymWatch propose automatiquement les actions prioritaires pour relancer les adhérents ou ouvrir une nouvelle
-                    session.
-                  </p>
+            <div className="flex flex-wrap gap-4">
+              <Button size="lg" onClick={() => router.push('/register')}>
+                Démarrer gratuitement
+                <ArrowRight className="ml-2" size={18} />
+              </Button>
+              <Button size="lg" variant="outline" onClick={() => router.push('/login')}>
+                Accéder à mon espace
+              </Button>
+            </div>
+            <div className="grid gap-4 sm:grid-cols-3">
+              {stats.map((stat) => (
+                <Card key={stat.label} className="border-white/10 bg-white/5 p-4 text-center">
+                  <p className="text-2xl font-bold text-white">{stat.value}</p>
+                  <p className="text-xs uppercase tracking-widest text-slate-300">{stat.label}</p>
+                </Card>
+              ))}
+            </div>
+          </div>
+
+          <div className="relative rounded-3xl border border-white/10 bg-gradient-to-br from-slate-900/80 to-slate-800/60 p-6 shadow-2xl">
+            <div className="absolute inset-0 -z-10 rounded-3xl bg-gradient-to-br from-cyan-500/20 to-blue-500/10 blur-3xl" />
+            <div className="space-y-6">
+              <div className="flex items-center gap-3 rounded-2xl bg-white/5 p-4">
+                <ShieldCheck className="text-cyan-300" />
+                <div>
+                  <p className="text-sm font-semibold">Super administrateur</p>
+                  <p className="text-xs text-slate-300">Contrôle total sur les gyms, abonnements et membres</p>
                 </div>
               </div>
-            </Card>
+              <div className="rounded-2xl border border-white/10 bg-slate-900/70 p-4">
+                <p className="text-sm text-slate-400">Temps réel</p>
+                <div className="mt-3 flex items-end justify-between">
+                  <div>
+                    <p className="text-4xl font-bold">1 248</p>
+                    <p className="text-sm text-slate-400">Abonnements actifs</p>
+                  </div>
+                  <p className="rounded-full bg-emerald-500/20 px-3 py-1 text-sm text-emerald-300">+12% cette semaine</p>
+                </div>
+                <div className="mt-6 h-28 rounded-2xl bg-gradient-to-r from-cyan-400/20 to-blue-500/20" />
+              </div>
+              <div className="rounded-2xl border border-white/10 bg-slate-900/70 p-4">
+                <p className="text-sm text-slate-300">Prochaine expiration</p>
+                <p className="text-xl font-semibold text-white">Gym Atlas - 4 jours restants</p>
+                <p className="text-xs text-slate-400">Rappel automatique envoyé</p>
+              </div>
+            </div>
           </div>
         </section>
 
-        <section id="services" aria-labelledby="services-title" className="space-y-8">
-          <div className="text-center space-y-3">
-            <Badge variant="outline">Services</Badge>
-            <h2 id="services-title" className="text-3xl font-semibold tracking-tight">Tout pour orchestrer votre réseau</h2>
-            <p className="text-lg text-muted-foreground">
-              Des outils conçus avec les responsables de clubs pour gagner du temps chaque semaine.
-            </p>
+        <section id="services" className="space-y-10">
+          <div className="space-y-2 text-center">
+            <p className="text-sm uppercase tracking-[0.3em] text-cyan-200/80">Services</p>
+            <h2 className="text-3xl font-semibold">Ce que GymWatch automatise pour vous</h2>
+            <p className="text-slate-300">Du suivi des abonnements aux relances intelligentes, tout est pensé pour vos équipes.</p>
           </div>
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+          <div className="grid gap-6 md:grid-cols-3">
             {services.map((service) => (
-              <Card key={service.title} className="flex flex-col gap-4 border-border/60 bg-card/70 p-6">
-                <service.icon className="h-10 w-10 text-primary" aria-hidden="true" />
-                <div className="space-y-2">
-                  <h3 className="text-xl font-semibold">{service.title}</h3>
-                  <p className="text-muted-foreground">{service.description}</p>
-                </div>
+              <Card key={service.title} className="border-white/10 bg-white/5 p-6">
+                <div className="text-4xl">{service.icon}</div>
+                <h3 className="mt-4 text-xl font-semibold">{service.title}</h3>
+                <p className="mt-2 text-slate-300">{service.description}</p>
               </Card>
             ))}
           </div>
         </section>
 
-        <section id="plans" aria-labelledby="plans-title" className="space-y-8">
-          <div className="text-center space-y-3">
-            <Badge variant="outline">Plans tarifaires</Badge>
-            <h2 id="plans-title" className="text-3xl font-semibold tracking-tight">Choisissez un plan adapté à votre croissance</h2>
-            <p className="text-lg text-muted-foreground">
-              Tous nos plans incluent les mises à jour produit, la sécurité et les exports illimités.
-            </p>
+        <section id="plans" className="space-y-10">
+          <div className="space-y-2 text-center">
+            <p className="text-sm uppercase tracking-[0.3em] text-cyan-200/80">Plans</p>
+            <h2 className="text-3xl font-semibold">Choisissez la formule qui vous correspond</h2>
+            <p className="text-slate-300">Contactez-nous pour activer votre salle, sans paiement en ligne.</p>
           </div>
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+          <div className="grid gap-6 lg:grid-cols-3">
             {plans.map((plan) => (
               <Card
-                key={plan.title}
-                className={`flex flex-col gap-6 border ${plan.highlight ? 'border-primary shadow-xl shadow-primary/20' : 'border-border/60'} bg-card/80 p-6`}
+                key={plan.name}
+                className={`flex flex-col border ${plan.highlight ? 'border-cyan-400 bg-slate-900/80 shadow-cyan-500/20 shadow-2xl' : 'border-white/10 bg-white/5'}`}
               >
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <h3 className="text-2xl font-semibold">{plan.title}</h3>
-                    {plan.highlight && <Badge className="bg-primary text-primary-foreground">Populaire</Badge>}
-                  </div>
-                  <p className="text-muted-foreground">{plan.description}</p>
+                <div className="p-6">
+                  <p className="text-sm uppercase tracking-[0.3em] text-cyan-200/80">{plan.name}</p>
+                  <p className="mt-4 text-4xl font-bold">{plan.price}</p>
+                  <p className="text-sm text-slate-300">{plan.description}</p>
                 </div>
-                <div>
-                  <span className="text-4xl font-bold">{plan.price}</span>
-                  {plan.cadence && <span className="text-muted-foreground"> / {plan.cadence}</span>}
-                </div>
-                <ul className="space-y-3 text-sm">
+                <div className="flex flex-1 flex-col gap-3 border-t border-white/10 p-6">
                   {plan.features.map((feature) => (
-                    <li key={feature} className="flex items-start gap-2">
-                      <Check className="mt-0.5 h-4 w-4 text-primary" aria-hidden="true" />
-                      <span>{feature}</span>
-                    </li>
+                    <div key={feature} className="flex items-center gap-2 text-sm text-slate-200">
+                      <CheckCircle2 className="text-cyan-300" size={18} /> {feature}
+                    </div>
                   ))}
-                </ul>
-                <Button variant={plan.highlight ? "default" : "outline"} className="mt-auto" onClick={() => router.push('/register')}>
-                  Démarrer
-                </Button>
+                </div>
+                <div className="border-t border-white/10 p-6">
+                  <Button
+                    variant={plan.highlight ? 'default' : 'outline'}
+                    className="w-full"
+                    onClick={() => router.push('/register')}
+                  >
+                    Discuter avec l'équipe
+                  </Button>
+                </div>
               </Card>
             ))}
           </div>
         </section>
 
-        <section id="contact" aria-labelledby="contact-title" className="space-y-8">
-          <div className="text-center space-y-3">
-            <Badge variant="outline">Contact</Badge>
-            <h2 id="contact-title" className="text-3xl font-semibold tracking-tight">Parlons de votre projet</h2>
-            <p className="text-lg text-muted-foreground">
-              Réservez une démonstration ou écrivez-nous pour construire un déploiement sur-mesure.
-            </p>
-          </div>
-          <div className="grid gap-6 lg:grid-cols-2">
-            <Card className="space-y-6 border-border/60 bg-card/80 p-6">
-              <form className="space-y-4" aria-label="Formulaire de contact">
-                <div className="space-y-2">
-                  <label htmlFor="name" className="text-sm font-medium">
-                    Nom complet
-                  </label>
-                  <Input id="name" placeholder="Sophie Durand" required />
-                </div>
-                <div className="space-y-2">
-                  <label htmlFor="email" className="text-sm font-medium">
-                    Email professionnel
-                  </label>
-                  <Input id="email" type="email" placeholder="vous@entreprise.com" required />
-                </div>
-                <div className="space-y-2">
-                  <label htmlFor="message" className="text-sm font-medium">
-                    Message
-                  </label>
-                  <textarea
-                    id="message"
-                    required
-                    rows={4}
-                    className="w-full rounded-xl border border-border/70 bg-background/80 px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
-                    placeholder="Dites-nous en plus sur vos salles et vos objectifs."
-                  />
-                </div>
-                <Button type="submit" className="w-full">Envoyer ma demande</Button>
-              </form>
-            </Card>
-            <Card className="space-y-6 border-border/60 bg-card/80 p-6">
-              <div>
-                <h3 className="text-2xl font-semibold">Équipe Customer Success</h3>
-                <p className="text-muted-foreground">
-                  Nous répondons sous 24h ouvrées et planifions un atelier de cadrage gratuit.
-                </p>
-              </div>
-              <dl className="space-y-4">
-                {contacts.map((contact) => (
-                  <div key={contact.label} className="flex items-center gap-4 rounded-2xl border border-border/60 p-4">
-                    <contact.icon className="h-5 w-5 text-primary" aria-hidden="true" />
-                    <div>
-                      <dt className="text-sm text-muted-foreground">{contact.label}</dt>
-                      <dd>
-                        <Link href={contact.href} className="font-medium hover:underline">
-                          {contact.value}
-                        </Link>
-                      </dd>
-                    </div>
-                  </div>
-                ))}
-              </dl>
-              <div className="rounded-2xl border border-primary/40 bg-primary/10 p-4 text-sm text-muted-foreground">
-                <p className="font-medium text-foreground">Disponible dans toute l'Europe</p>
-                <p>Nos experts vous accompagnent dans la mise en conformité RGPD et les intégrations locales.</p>
-              </div>
-            </Card>
+        <section id="contact" className="rounded-3xl border border-white/10 bg-gradient-to-r from-cyan-500/20 to-blue-500/10 p-8 text-center">
+          <h2 className="text-3xl font-semibold">Prêt à moderniser votre gestion ?</h2>
+          <p className="mt-3 text-slate-100">
+            Écrivez-nous sur <a className="font-semibold underline" href="mailto:contact@gymwatch.ma">contact@gymwatch.ma</a> et nous activerons votre salle en moins de 24h.
+          </p>
+          <div className="mt-6 flex flex-wrap justify-center gap-4">
+            <Button onClick={() => router.push('/register')}>Créer mon espace</Button>
+            <Button variant="outline" onClick={() => router.push('/login')}>
+              Déjà client ? Se connecter
+            </Button>
           </div>
         </section>
       </main>

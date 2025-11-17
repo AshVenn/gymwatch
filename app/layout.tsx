@@ -3,6 +3,9 @@ import { Geist, Geist_Mono } from 'next/font/google'
 import { Analytics } from '@vercel/analytics/next'
 
 import './globals.css'
+import { AuthProvider } from './providers/session-provider'
+import { ReactQueryProvider } from './providers/react-query-provider'
+import { Toaster } from '@/components/ui/sonner'
 
 import { AuthProvider } from './providers/session-provider'
 import { ReactQueryProvider } from './providers/react-query-provider'
@@ -70,14 +73,15 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="fr" suppressHydrationWarning>
-      <body className={cn('font-sans antialiased min-h-screen bg-background', geistSans.variable, geistMono.variable)}>
-        <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
-          <AuthProvider>
-            <ReactQueryProvider>{children}</ReactQueryProvider>
-          </AuthProvider>
-        </ThemeProvider>
-        <Toaster />
+    <html lang="fr">
+      <body className="font-sans antialiased">
+        <AuthProvider>
+          <ReactQueryProvider>
+            {children}
+            <Toaster />
+          </ReactQueryProvider>
+        </AuthProvider>
+
         <Analytics />
       </body>
     </html>

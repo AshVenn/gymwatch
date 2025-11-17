@@ -35,9 +35,7 @@ import {
 } from '@/components/ui/select'
 import { MoreVertical, Trash2, RotateCcw } from 'lucide-react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Label } from '@/components/ui/label'
-import { useToast } from '@/components/ui/use-toast'
-import { cn } from '@/lib/utils'
+import { toast } from '@/components/ui/sonner'
 
 interface Subscription {
   id: string
@@ -60,7 +58,6 @@ export default function SubscriptionsPage() {
     planId: '',
     startDate: new Date().toISOString().split('T')[0],
   })
-  const { toast } = useToast()
 
   const gymId = session?.user?.gymId
 
@@ -120,17 +117,11 @@ export default function SubscriptionsPage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries(subscriptionQueryKey)
-      toast({
-        title: 'Abonnement supprimé',
-        description: "L'abonnement a été retiré avec succès.",
-      })
+      toast.success('Abonnement supprimé avec succès')
     },
     onError: (err) => {
-      toast({
-        title: 'Suppression impossible',
-        description: err instanceof Error ? err.message : 'Une erreur est survenue.',
-        variant: 'destructive',
-      })
+      const message = err instanceof Error ? err.message : 'Impossible de supprimer cet abonnement'
+      toast.error(message)
     },
   })
 
@@ -158,17 +149,11 @@ export default function SubscriptionsPage() {
       queryClient.invalidateQueries(subscriptionQueryKey)
       setRenewingId(null)
       setRenewalForm({ planId: '', startDate: new Date().toISOString().split('T')[0] })
-      toast({
-        title: 'Abonnement renouvelé',
-        description: 'Les dates ont été mises à jour.',
-      })
+      toast.success('Abonnement renouvelé avec succès')
     },
     onError: (err) => {
-      toast({
-        title: 'Renouvellement impossible',
-        description: err instanceof Error ? err.message : 'Veuillez réessayer.',
-        variant: 'destructive',
-      })
+      const message = err instanceof Error ? err.message : "Impossible de renouveler l'abonnement"
+      toast.error(message)
     },
   })
 
@@ -178,15 +163,13 @@ export default function SubscriptionsPage() {
     if (confirm('Êtes-vous sûr de vouloir supprimer cet abonnement ?')) {
       deleteSubscriptionMutation.mutate(subscriptionId)
     }
+
+    renewSubscriptionMutation.mutate()
   }
 
   const handleRenewalSubmit = () => {
     if (!renewalForm.planId) {
-      toast({
-        title: 'Plan requis',
-        description: 'Sélectionnez un plan pour renouveler cet abonnement.',
-        variant: 'destructive',
-      })
+      toast.error('Veuillez sélectionner un plan.')
       return
     }
 

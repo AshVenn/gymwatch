@@ -6,8 +6,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { useMutation } from '@tanstack/react-query'
-import { Label } from '@/components/ui/label'
-import { useToast } from '@/components/ui/use-toast'
+import { toast } from '@/components/ui/sonner'
 
 export default function RegisterPage() {
   const [formData, setFormData] = useState({
@@ -17,6 +16,7 @@ export default function RegisterPage() {
     adminPassword: '',
     confirmPassword: '',
   })
+  const [error, setError] = useState('')
   const router = useRouter()
   const { toast } = useToast()
 
@@ -42,18 +42,13 @@ export default function RegisterPage() {
       return data
     },
     onSuccess: () => {
-      toast({
-        title: 'Compte créé',
-        description: 'Connectez-vous pour commencer à utiliser GymWatch.',
-      })
+      toast.success('Compte créé avec succès !')
       router.push('/login?registered=true')
     },
     onError: (error) => {
-      toast({
-        title: 'Inscription impossible',
-        description: error instanceof Error ? error.message : 'Une erreur est survenue',
-        variant: 'destructive',
-      })
+      const message = error instanceof Error ? error.message : 'Une erreur est survenue'
+      setError(message)
+      toast.error(message)
     },
   })
 
@@ -64,12 +59,12 @@ export default function RegisterPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    setError('')
+
     if (formData.adminPassword !== formData.confirmPassword) {
-      toast({
-        title: 'Mot de passe invalide',
-        description: 'Les mots de passe doivent correspondre.',
-        variant: 'destructive',
-      })
+      const mismatchMessage = 'Les mots de passe ne correspondent pas'
+      setError(mismatchMessage)
+      toast.error(mismatchMessage)
       return
     }
 

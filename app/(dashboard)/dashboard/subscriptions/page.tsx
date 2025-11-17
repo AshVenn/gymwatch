@@ -163,6 +163,8 @@ export default function SubscriptionsPage() {
     if (confirm('Êtes-vous sûr de vouloir supprimer cet abonnement ?')) {
       deleteSubscriptionMutation.mutate(subscriptionId)
     }
+
+    renewSubscriptionMutation.mutate()
   }
 
   const handleRenewalSubmit = () => {
@@ -183,11 +185,15 @@ export default function SubscriptionsPage() {
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'ACTIVE':
-        return <Badge className="bg-green-100 text-green-800">Actif</Badge>
+        return <Badge>Actif</Badge>
       case 'EXPIRES_TODAY':
-        return <Badge className="bg-yellow-100 text-yellow-800">Expire aujourd'hui</Badge>
+        return (
+          <Badge className={cn('bg-amber-100 text-amber-900 dark:bg-amber-400/20 dark:text-amber-50')}>
+            Expire aujourd'hui
+          </Badge>
+        )
       case 'EXPIRED':
-        return <Badge className="bg-red-100 text-red-800">Expiré</Badge>
+        return <Badge variant="destructive">Expiré</Badge>
       default:
         return <Badge>{status ?? '-'}</Badge>
     }
@@ -221,8 +227,9 @@ export default function SubscriptionsPage() {
       {/* Filters */}
       <div className="flex flex-col gap-4 md:flex-row md:items-end">
         <div className="flex-1">
-          <label className="block text-sm font-medium mb-2">Rechercher</label>
+          <Label htmlFor="subscription-search">Rechercher</Label>
           <Input
+            id="subscription-search"
             placeholder="Nom du membre ou du plan..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
@@ -230,14 +237,14 @@ export default function SubscriptionsPage() {
         </div>
 
         <div className="flex-1">
-          <label className="block text-sm font-medium mb-2">Statut</label>
+          <Label htmlFor="subscription-status">Statut</Label>
           <Select
             value={filterStatus}
             onValueChange={(value) => {
               setFilterStatus(value)
             }}
           >
-            <SelectTrigger>
+            <SelectTrigger id="subscription-status">
               <SelectValue placeholder="Tous" />
             </SelectTrigger>
             <SelectContent>
@@ -324,7 +331,7 @@ export default function SubscriptionsPage() {
 
                           <div className="space-y-4">
                             <div>
-                              <label className="block text-sm font-medium mb-2">Plan</label>
+                              <Label>Plan</Label>
                               <Select
                                 value={renewalForm.planId}
                                 onValueChange={(value) =>
@@ -346,10 +353,9 @@ export default function SubscriptionsPage() {
                             </div>
 
                             <div>
-                              <label className="block text-sm font-medium mb-2">
-                                Date de début
-                              </label>
+                              <Label htmlFor="renewal-date">Date de début</Label>
                               <Input
+                                id="renewal-date"
                                 type="date"
                                 value={renewalForm.startDate}
                                 onChange={(e) =>

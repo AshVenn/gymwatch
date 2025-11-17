@@ -1,4 +1,4 @@
-'use client'
+"use client"
 
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
@@ -71,10 +71,10 @@ export default function Home() {
   const [menuOpen, setMenuOpen] = useState(false)
 
   useEffect(() => {
-    if (status === 'authenticated') {
-      router.push('/dashboard')
+    if (status === "authenticated" && session) {
+      router.push("/dashboard")
     }
-  }, [status, router])
+  }, [status, session, router])
 
   return (
     <div className="relative min-h-screen overflow-hidden bg-slate-950 text-white">
@@ -283,6 +283,20 @@ export default function Home() {
           </div>
         </section>
       </main>
+
+      <footer className="border-t border-border/60 bg-background/80 py-8">
+        <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-4 px-4 text-sm text-muted-foreground sm:flex-row">
+          <p>© {new Date().getFullYear()} GymWatch. Tous droits réservés.</p>
+          <div className="flex gap-4">
+            <Link href="/legal" className="hover:text-foreground">
+              Mentions légales
+            </Link>
+            <Link href="#contact" className="hover:text-foreground">
+              Support
+            </Link>
+          </div>
+        </div>
+      </footer>
     </div>
   )
 }

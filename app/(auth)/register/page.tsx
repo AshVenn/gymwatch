@@ -18,6 +18,7 @@ export default function RegisterPage() {
   })
   const [error, setError] = useState('')
   const router = useRouter()
+  const { toast } = useToast()
 
   const registerMutation = useMutation({
     mutationFn: async () => {
@@ -81,15 +82,10 @@ export default function RegisterPage() {
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
-            {error && (
-              <div className="bg-destructive/10 text-destructive text-sm p-3 rounded-md">
-                {error}
-              </div>
-            )}
-
             <div>
-              <label className="block text-sm font-medium mb-2">Nom de la salle</label>
+              <Label htmlFor="gym-name">Nom de la salle</Label>
               <Input
+                id="gym-name"
                 name="gymName"
                 placeholder="FitZone Casablanca"
                 value={formData.gymName}
@@ -100,8 +96,9 @@ export default function RegisterPage() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium mb-2">Email de la salle</label>
+              <Label htmlFor="gym-email">Email de la salle</Label>
               <Input
+                id="gym-email"
                 name="email"
                 type="email"
                 placeholder="contact@salle.ma"
@@ -113,8 +110,9 @@ export default function RegisterPage() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium mb-2">Email administrateur</label>
+              <Label htmlFor="admin-email">Email administrateur</Label>
               <Input
+                id="admin-email"
                 name="adminEmail"
                 type="email"
                 placeholder="admin@salle.ma"
@@ -126,8 +124,9 @@ export default function RegisterPage() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium mb-2">Mot de passe</label>
+              <Label htmlFor="admin-password">Mot de passe</Label>
               <Input
+                id="admin-password"
                 name="adminPassword"
                 type="password"
                 placeholder="••••••••"
@@ -139,8 +138,9 @@ export default function RegisterPage() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium mb-2">Confirmer le mot de passe</label>
+              <Label htmlFor="admin-password-confirm">Confirmer le mot de passe</Label>
               <Input
+                id="admin-password-confirm"
                 name="confirmPassword"
                 type="password"
                 placeholder="••••••••"

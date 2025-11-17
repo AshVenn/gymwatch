@@ -36,6 +36,7 @@ import {
 import { MoreVertical, Plus, Edit2, Trash2 } from 'lucide-react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
+import { PaginationControls, usePagination } from '@/components/dashboard/pagination-controls'
 
 interface Member {
   id: string
@@ -107,6 +108,8 @@ export default function MembersPage() {
       return Array.isArray(data) ? data : []
     },
   })
+
+  const memberPagination = usePagination(members, 10)
 
   const { data: plans = [] } = useQuery<Plan[]>({
     queryKey: plansQueryKey,
@@ -366,7 +369,7 @@ export default function MembersPage() {
           </TableHeader>
 
           <TableBody>
-            {members.map((member) => (
+            {memberPagination.data.map((member) => (
               <TableRow key={member.id}>
                 <TableCell className="font-medium">{member.firstName}</TableCell>
                 <TableCell>{member.lastName}</TableCell>
@@ -401,6 +404,12 @@ export default function MembersPage() {
             ))}
           </TableBody>
         </Table>
+        <PaginationControls
+          page={memberPagination.page}
+          pageCount={memberPagination.pageCount}
+          onPageChange={memberPagination.setPage}
+          totalItems={members.length}
+        />
       </div>
     </div>
   )

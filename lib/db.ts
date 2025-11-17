@@ -1,5 +1,6 @@
 // lib/db.ts
 import { prisma } from "./prisma"
+import type { GymSubscriptionPlan } from "@prisma/client"
 
 export const db = {
   // 🔹 Users
@@ -22,6 +23,26 @@ export const db = {
 
   getGymById: async (id: string) => {
     return prisma.gym.findUnique({ where: { id } })
+  },
+
+  createGym: async (data: {
+    name: string
+    email: string
+    city?: string | null
+    country?: string | null
+    subscriptionPlan?: GymSubscriptionPlan
+    maxAdminAccounts?: number
+  }) => {
+    return prisma.gym.create({
+      data: {
+        name: data.name,
+        email: data.email,
+        city: data.city ?? null,
+        country: data.country ?? null,
+        subscriptionPlan: data.subscriptionPlan ?? "MONTHLY",
+        maxAdminAccounts: data.maxAdminAccounts ?? 3,
+      },
+    })
   },
 
   updateGym: async (

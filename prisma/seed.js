@@ -1,5 +1,4 @@
-// prisma/seed.js
-const { PrismaClient } = require('@prisma/client')
+const { PrismaClient, UserRole } = require('@prisma/client')
 const bcrypt = require('bcrypt')
 
 const prisma = new PrismaClient()
@@ -9,7 +8,48 @@ async function hashPassword(password) {
   return bcrypt.hash(password, salt)
 }
 
-// small helper for dates
+async function ensurePreference(userId, overrides = {}) {
+  const payload = {
+    theme: overrides.theme ?? 'system',
+    locale: overrides.locale ?? 'fr',
+    notifications: overrides.notifications ?? true,
+    weeklySummary: overrides.weeklySummary ?? true,
+    lastChangedAt: new Date(),
+  }
+
+  await prisma.userPreference.upsert({
+    where: { userId },
+    update: payload,
+    create: { userId, ...payload },
+  })
+}
+
+function addDays(baseDate, days) {
+  const date = new Date(baseDate)
+  date.setDate(date.getDate() + days)
+  return date
+}
+
+function buildAnalyticsSnapshot(baseRevenue = 10000) {
+  const months = Array.from({ length: 6 }, (_, idx) => {
+    const cursor = new Date()
+    cursor.setMonth(cursor.getMonth() - (5 - idx))
+    return cursor.toLocaleString('fr-MA', { month: 'short' })
+  })
+
+  return {
+    revenueTrend: months.map((month, idx) => ({
+      month,
+      revenue: Math.max(baseRevenue + idx * 450, 0),
+    })),
+    memberTrend: months.map((month, idx) => ({
+      month,
+      members: 150 + idx * 12,
+    })),
+    retentionRate: 0.92,
+  }
+}
+
 function getDates(durationDays, type, extraOffset = 0) {
   const today = new Date()
   today.setHours(0, 0, 0, 0)
@@ -22,7 +62,6 @@ function getDates(durationDays, type, extraOffset = 0) {
     end.setDate(end.getDate() + (20 - extraOffset))
   } else if (type === 'EXPIRES_TODAY') {
     start.setDate(start.getDate() - durationDays)
-    // end stays today
   } else {
     start.setDate(start.getDate() - durationDays - (5 + extraOffset))
     end.setDate(end.getDate() - (5 + extraOffset))
@@ -65,26 +104,102 @@ async function createSubscriptions(members, gym, plans, extraOffset = 0) {
   }
 }
 
-async function main() {
-  // 1. SUPER_ADMIN
+async function upsertOwner({ email, password, firstName, lastName, gymId }) {
+  const hashed = await hashPassword(password)
+
+  const owner = await prisma.user.upsert({
+    where: { email },
+    update: {
+      password: hashed,
+      role: UserRole.GYM_OWNER,
+      gymId,
+      firstName,
+      lastName,
+    },
+    create: {
+      email,
+      password: hashed,
+      role: UserRole.GYM_OWNER,
+      firstName,
+      lastName,
+      gymId,
+    },
+  })
+
+  await ensurePreference(owner.id, { theme: 'dark' })
+  return owner
+}
+
+async function upsertAdmin({ email, password, firstName, lastName, gymId }) {
+  const hashed = await hashPassword(password)
+
+  const admin = await prisma.user.upsert({
+    where: { email },
+    update: {
+      password: hashed,
+      role: UserRole.GYM_ADMIN,
+      gymId,
+      firstName,
+      lastName,
+    },
+    create: {
+      email,
+      password: hashed,
+      role: UserRole.GYM_ADMIN,
+      firstName,
+      lastName,
+      gymId,
+    },
+  })
+
+  await ensurePreference(admin.id)
+  return admin
+}
+
+async function runSeed() {
+  console.log('Seeding GymWatch data...')
+
+  await prisma.$transaction([
+    prisma.payment.deleteMany(),
+    prisma.subscription.deleteMany(),
+    prisma.member.deleteMany(),
+    prisma.membershipPlan.deleteMany(),
+    prisma.userPreference.deleteMany(),
+    prisma.user.deleteMany(),
+    prisma.gym.deleteMany(),
+  ])
+  console.log('Database cleared')
+
   const adminPassword = await hashPassword('Admin123!')
   const superAdmin = await prisma.user.upsert({
     where: { email: 'admin@gymwatch.com' },
-    update: {},
+    update: {
+      password: adminPassword,
+    },
     create: {
       email: 'admin@gymwatch.com',
       password: adminPassword,
-      role: 'SUPER_ADMIN',
+      role: UserRole.SUPER_ADMIN,
       firstName: 'Admin',
       lastName: 'GymWatch',
     },
   })
+  await ensurePreference(superAdmin.id)
   console.log('Created super admin:', superAdmin.email)
 
-  // 2. Gyms
+  const today = new Date()
+
   const gym1 = await prisma.gym.upsert({
     where: { id: 'gym-fitzone' },
-    update: {},
+    update: {
+      analyticsSnapshot: buildAnalyticsSnapshot(13500),
+      subscriptionStatus: 'ACTIVE',
+      subscriptionExpiresAt: addDays(today, 5),
+      subscriptionStartedAt: addDays(today, -24),
+      subscriptionGracePeriodDays: 3,
+      maxAdminAccounts: 5,
+      lastSettingsUpdateAt: today,
+    },
     create: {
       id: 'gym-fitzone',
       name: 'FitZone Casablanca',
@@ -93,13 +208,27 @@ async function main() {
       country: 'Maroc',
       subscriptionPlan: 'MONTHLY',
       subscriptionStatus: 'ACTIVE',
+      subscriptionStartedAt: addDays(today, -24),
+      subscriptionExpiresAt: addDays(today, 5),
+      subscriptionGracePeriodDays: 3,
+      maxAdminAccounts: 5,
+      lastSettingsUpdateAt: today,
+      analyticsSnapshot: buildAnalyticsSnapshot(13500),
     },
   })
   console.log('Created gym 1:', gym1.name)
 
   const gym2 = await prisma.gym.upsert({
     where: { id: 'gym-powergym' },
-    update: {},
+    update: {
+      analyticsSnapshot: buildAnalyticsSnapshot(9800),
+      subscriptionStatus: 'SUSPENDED',
+      subscriptionExpiresAt: addDays(today, -3),
+      subscriptionStartedAt: addDays(today, -300),
+      subscriptionGracePeriodDays: 7,
+      maxAdminAccounts: 3,
+      lastSettingsUpdateAt: today,
+    },
     create: {
       id: 'gym-powergym',
       name: 'PowerGym Rabat',
@@ -107,43 +236,71 @@ async function main() {
       city: 'Rabat',
       country: 'Maroc',
       subscriptionPlan: 'YEARLY',
-      subscriptionStatus: 'ACTIVE',
+      subscriptionStatus: 'SUSPENDED',
+      subscriptionStartedAt: addDays(today, -300),
+      subscriptionExpiresAt: addDays(today, -3),
+      subscriptionGracePeriodDays: 7,
+      maxAdminAccounts: 3,
+      lastSettingsUpdateAt: today,
+      analyticsSnapshot: buildAnalyticsSnapshot(9800),
     },
   })
   console.log('Created gym 2:', gym2.name)
 
-  // 3. Gym admins
-  const fitZoneAdminPassword = await hashPassword('Password123!')
-  const fitZoneAdmin = await prisma.user.upsert({
-    where: { email: 'admin@fitzone.ma' },
-    update: {},
-    create: {
+  const fitZoneOwner = await upsertOwner({
+    email: 'owner@fitzone.ma',
+    password: 'Owner123!',
+    firstName: 'Sanae',
+    lastName: 'Belkadi',
+    gymId: gym1.id,
+  })
+  await prisma.gym.update({ where: { id: gym1.id }, data: { ownerId: fitZoneOwner.id } })
+
+  const powerGymOwner = await upsertOwner({
+    email: 'owner@powergym.ma',
+    password: 'Owner123!',
+    firstName: 'Yassine',
+    lastName: 'Haddad',
+    gymId: gym2.id,
+  })
+  await prisma.gym.update({ where: { id: gym2.id }, data: { ownerId: powerGymOwner.id } })
+
+  const fitZoneAdmins = await Promise.all([
+    upsertAdmin({
       email: 'admin@fitzone.ma',
-      password: fitZoneAdminPassword,
-      role: 'GYM_ADMIN',
+      password: 'Password123!',
       firstName: 'Manager',
       lastName: 'FitZone',
       gymId: gym1.id,
-    },
-  })
-  console.log('Created gym1 admin:', fitZoneAdmin.email)
+    }),
+    upsertAdmin({
+      email: 'coach@fitzone.ma',
+      password: 'Password123!',
+      firstName: 'Coach',
+      lastName: 'Casablanca',
+      gymId: gym1.id,
+    }),
+  ])
+  console.log('Created gym1 admins:', fitZoneAdmins.map((a) => a.email).join(', '))
 
-  const powerGymAdminPassword = await hashPassword('Password123!')
-  const powerGymAdmin = await prisma.user.upsert({
-    where: { email: 'admin@powergym.ma' },
-    update: {},
-    create: {
+  const powerGymAdmins = await Promise.all([
+    upsertAdmin({
       email: 'admin@powergym.ma',
-      password: powerGymAdminPassword,
-      role: 'GYM_ADMIN',
+      password: 'Password123!',
       firstName: 'Manager',
       lastName: 'PowerGym',
       gymId: gym2.id,
-    },
-  })
-  console.log('Created gym2 admin:', powerGymAdmin.email)
+    }),
+    upsertAdmin({
+      email: 'coach@powergym.ma',
+      password: 'Password123!',
+      firstName: 'Coach',
+      lastName: 'Rabat',
+      gymId: gym2.id,
+    }),
+  ])
+  console.log('Created gym2 admins:', powerGymAdmins.map((a) => a.email).join(', '))
 
-  // 4. Plans Gym 1
   const plans1 = await Promise.all([
     prisma.membershipPlan.upsert({
       where: { id: `plan-${gym1.id}-monthly` },
@@ -169,22 +326,9 @@ async function main() {
         isActive: true,
       },
     }),
-    prisma.membershipPlan.upsert({
-      where: { id: `plan-${gym1.id}-annual` },
-      update: {},
-      create: {
-        id: `plan-${gym1.id}-annual`,
-        gymId: gym1.id,
-        name: 'Annuel',
-        durationDays: 365,
-        price: 2500,
-        isActive: true,
-      },
-    }),
   ])
   console.log('Created membership plans for Gym 1')
 
-  // 5. Plans Gym 2
   const plans2 = await Promise.all([
     prisma.membershipPlan.upsert({
       where: { id: `plan-${gym2.id}-monthly` },
@@ -195,18 +339,6 @@ async function main() {
         name: 'Mensuel',
         durationDays: 30,
         price: 350,
-        isActive: true,
-      },
-    }),
-    prisma.membershipPlan.upsert({
-      where: { id: `plan-${gym2.id}-quarterly` },
-      update: {},
-      create: {
-        id: `plan-${gym2.id}-quarterly`,
-        gymId: gym2.id,
-        name: 'Trimestriel',
-        durationDays: 90,
-        price: 900,
         isActive: true,
       },
     }),
@@ -225,7 +357,6 @@ async function main() {
   ])
   console.log('Created membership plans for Gym 2')
 
-  // 6. Members Gym 1
   const members1 = await Promise.all([
     prisma.member.create({
       data: {
@@ -275,7 +406,6 @@ async function main() {
   ])
   console.log('Created members for Gym 1')
 
-  // 7. Members Gym 2
   const members2 = await Promise.all([
     prisma.member.create({
       data: {
@@ -325,19 +455,26 @@ async function main() {
   ])
   console.log('Created members for Gym 2')
 
-  // 8. Subscriptions + payments
   await createSubscriptions(members1, gym1, plans1)
   await createSubscriptions(members2, gym2, plans2, 5)
+  console.log('?? Created subscriptions and payments')
 
-  console.log('✅ Created subscriptions and payments')
+  return {
+    gymsSeeded: 2,
+    membersSeeded: members1.length + members2.length,
+  }
 }
 
-main()
-  .then(async () => {
-    await prisma.$disconnect()
-  })
-  .catch(async (e) => {
-    console.error(e)
-    await prisma.$disconnect()
-    process.exit(1)
-  })
+module.exports = { runSeed }
+
+if (require.main === module) {
+  runSeed()
+    .then(async () => {
+      await prisma.$disconnect()
+    })
+    .catch(async (e) => {
+      console.error(e)
+      await prisma.$disconnect()
+      process.exit(1)
+    })
+}

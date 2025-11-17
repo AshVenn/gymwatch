@@ -13,6 +13,7 @@ datasource db {
 
 enum UserRole {
   SUPER_ADMIN
+  GYM_OWNER
   GYM_ADMIN
 }
 
@@ -46,32 +47,54 @@ model User {
   lastName  String?
   gymId     String?
   gym       Gym?     @relation(fields: [gymId], references: [id], onDelete: SetNull)
+  ownedGym  Gym?     @relation("GymOwner")
+  preferences UserPreference?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
 
 model Gym {
-  id                   String                 @id @default(cuid())
-  name                 String
-  email                String                 @unique  
-  phone                String?
-  address              String?
-  city                 String?
-  country              String?
-  logoUrl              String?
-  subscriptionPlan     GymSubscriptionPlan
-  subscriptionStatus   GymSubscriptionStatus  @default(ACTIVE)
-  users                User[]
-  membershipPlans      MembershipPlan[]
-  members              Member[]
-  subscriptions        Subscription[]
-  payments             Payment[]
-  createdAt            DateTime               @default(now())
-  updatedAt            DateTime               @updatedAt
+  id                     String                 @id @default(cuid())
+  name                   String
+  email                  String                 @unique
+  phone                  String?
+  address                String?
+  city                   String?
+  country                String?
+  logoUrl                String?
+  subscriptionPlan       GymSubscriptionPlan
+  subscriptionStatus     GymSubscriptionStatus  @default(ACTIVE)
+  subscriptionStartedAt  DateTime               @default(now())
+  subscriptionExpiresAt  DateTime?
+  subscriptionGracePeriodDays Int               @default(0)
+  maxAdminAccounts       Int                    @default(3)
+  lastSettingsUpdateAt   DateTime?
+  ownerId                String?                @unique
+  owner                  User?                  @relation("GymOwner", fields: [ownerId], references: [id])
+  analyticsSnapshot      Json?
+  users                  User[]
+  membershipPlans        MembershipPlan[]
+  members                Member[]
+  subscriptions          Subscription[]
+  payments               Payment[]
+  createdAt              DateTime               @default(now())
+  updatedAt              DateTime               @updatedAt
 }
 
 
+model UserPreference {
+  id            String   @id @default(cuid())
+  userId        String   @unique
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  theme         String   @default("system")
+  locale        String   @default("fr")
+  notifications Boolean  @default(true)
+  weeklySummary Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  lastChangedAt DateTime @default(now())
+}
 model MembershipPlan {
   id            String           @id @default(cuid())
   gymId         String
@@ -152,3 +175,5 @@ model Payment {
   @@index([gymId])
   @@index([paymentDate])
 }
+
+

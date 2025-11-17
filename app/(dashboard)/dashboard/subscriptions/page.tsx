@@ -38,6 +38,7 @@ import {
 import { MoreVertical, Trash2, RotateCcw } from 'lucide-react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
+import { PaginationControls, usePagination } from '@/components/dashboard/pagination-controls'
 
 interface Subscription {
   id: string
@@ -207,6 +208,7 @@ export default function SubscriptionsPage() {
 
   const filteredSubscriptions = (subscriptions ?? []).filter((sub) => {
     const matchesSearch =
+      !searchTerm ||
       sub.memberName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       sub.planName?.toLowerCase().includes(searchTerm.toLowerCase())
 
@@ -214,6 +216,8 @@ export default function SubscriptionsPage() {
 
     return matchesSearch && matchesFilter
   })
+
+  const subscriptionPagination = usePagination(filteredSubscriptions, 10)
 
   return (
     <div className="space-y-6">
@@ -274,7 +278,7 @@ export default function SubscriptionsPage() {
           </TableHeader>
 
           <TableBody>
-            {(filteredSubscriptions ?? []).map((sub) => (
+            {subscriptionPagination.data.map((sub) => (
               <TableRow key={sub.id}>
                 <TableCell className="font-medium">{sub.memberName ?? '-'}</TableCell>
                 <TableCell>{sub.planName ?? '-'}</TableCell>
@@ -388,6 +392,12 @@ export default function SubscriptionsPage() {
             ))}
           </TableBody>
         </Table>
+        <PaginationControls
+          page={subscriptionPagination.page}
+          pageCount={subscriptionPagination.pageCount}
+          onPageChange={subscriptionPagination.setPage}
+          totalItems={filteredSubscriptions.length}
+        />
       </div>
     </div>
   )

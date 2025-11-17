@@ -31,6 +31,7 @@ import { Switch } from '@/components/ui/switch'
 import { MoreVertical, Plus, Edit2, Trash2 } from 'lucide-react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
+import { PaginationControls, usePagination } from '@/components/dashboard/pagination-controls'
 
 interface Plan {
   id: string
@@ -91,6 +92,8 @@ export default function PlansPage() {
       return Array.isArray(data) ? data : []
     },
   })
+
+  const planPagination = usePagination(plans, 10)
 
   const handleAddPlan = () => {
     setEditingId(null)
@@ -291,7 +294,7 @@ export default function PlansPage() {
           </TableHeader>
 
           <TableBody>
-            {plans.map((plan) => (
+            {planPagination.data.map((plan) => (
               <TableRow key={plan.id}>
                 <TableCell className="font-medium">{plan.name}</TableCell>
                 <TableCell>{plan.durationDays}</TableCell>
@@ -330,6 +333,12 @@ export default function PlansPage() {
             ))}
           </TableBody>
         </Table>
+        <PaginationControls
+          page={planPagination.page}
+          pageCount={planPagination.pageCount}
+          onPageChange={planPagination.setPage}
+          totalItems={plans.length}
+        />
       </div>
     </div>
   )

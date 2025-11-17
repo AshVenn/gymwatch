@@ -7,12 +7,6 @@ import { AuthProvider } from './providers/session-provider'
 import { ReactQueryProvider } from './providers/react-query-provider'
 import { Toaster } from '@/components/ui/sonner'
 
-import { AuthProvider } from './providers/session-provider'
-import { ReactQueryProvider } from './providers/react-query-provider'
-import { ThemeProvider } from './providers/theme-provider'
-import { cn } from '@/lib/utils'
-import { Toaster } from '@/components/ui/toaster'
-
 const geistSans = Geist({ subsets: ['latin'], variable: '--font-geist-sans', display: 'swap' })
 const geistMono = Geist_Mono({ subsets: ['latin'], variable: '--font-geist-mono', display: 'swap' })
 

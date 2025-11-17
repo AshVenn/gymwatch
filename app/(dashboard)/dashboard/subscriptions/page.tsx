@@ -176,6 +176,15 @@ export default function SubscriptionsPage() {
     renewSubscriptionMutation.mutate()
   }
 
+  const handleRenewalSubmit = () => {
+    if (!renewalForm.planId) {
+      toast.error('Veuillez sélectionner un plan.')
+      return
+    }
+
+    renewSubscriptionMutation.mutate()
+  }
+
   const safeDate = (d: any) => {
     if (!d) return '-'
     const parsed = new Date(d)

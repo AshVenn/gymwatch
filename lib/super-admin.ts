@@ -1,4 +1,4 @@
-import { Prisma, GymSubscriptionStatus, UserRole } from "@prisma/client"
+import { GymSubscriptionStatus, UserRole } from "@prisma/client"
 import { prisma } from "./prisma"
 import { hashPassword } from "./auth"
 import { resolvePlanPrice } from "./subscription-plans"
@@ -118,6 +118,8 @@ export async function listGymsForSuperAdmin() {
       id: true,
       name: true,
       email: true,
+      phone: true,
+      address: true,
       city: true,
       country: true,
       subscriptionPlan: true,
@@ -151,6 +153,8 @@ export async function listGymsForSuperAdmin() {
       id: gym.id,
       name: gym.name,
       email: gym.email,
+      phone: gym.phone,
+      address: gym.address,
       city: gym.city,
       country: gym.country,
       subscriptionPlan: gym.subscriptionPlan,
@@ -185,6 +189,8 @@ export async function getSuperAdminGymDetail(gymId: string) {
       id: true,
       name: true,
       email: true,
+      phone: true,
+      address: true,
       city: true,
       country: true,
       subscriptionPlan: true,
@@ -254,6 +260,8 @@ export async function getSuperAdminGymDetail(gymId: string) {
     id: gym.id,
     name: gym.name,
     email: gym.email,
+    phone: gym.phone,
+    address: gym.address,
     city: gym.city,
     country: gym.country,
     subscriptionPlan: gym.subscriptionPlan,
@@ -280,6 +288,12 @@ export async function getSuperAdminGymDetail(gymId: string) {
 export async function updateGymFromSuperAdmin(
   gymId: string,
   data: {
+    name?: string
+    email?: string
+    phone?: string | null
+    city?: string | null
+    country?: string | null
+    address?: string | null
     subscriptionStatus: GymSubscriptionStatus
     subscriptionPlan?: GymPlanTier
     billingInterval?: GymBillingInterval
@@ -305,6 +319,12 @@ export async function updateGymFromSuperAdmin(
   return prisma.gym.update({
     where: { id: gymId },
     data: {
+      name: data.name ?? undefined,
+      email: data.email ?? undefined,
+      phone: data.phone ?? undefined,
+      city: data.city ?? undefined,
+      country: data.country ?? undefined,
+      address: data.address ?? undefined,
       subscriptionStatus: data.subscriptionStatus,
       subscriptionPlan: data.subscriptionPlan ?? undefined,
       billingInterval: data.billingInterval ?? undefined,
@@ -320,6 +340,7 @@ export async function updateGymFromSuperAdmin(
 export async function createGymForSuperAdmin(data: {
   name: string
   email: string
+  phone: string
   city?: string | null
   country?: string | null
   subscriptionPlan: GymPlanTier
@@ -345,6 +366,7 @@ export async function createGymForSuperAdmin(data: {
       data: {
         name: data.name,
         email: data.email,
+        phone: data.phone,
         city: data.city ?? null,
         country: data.country ?? null,
         subscriptionPlan: data.subscriptionPlan,

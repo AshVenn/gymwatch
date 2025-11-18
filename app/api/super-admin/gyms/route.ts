@@ -11,6 +11,7 @@ import { GymBillingInterval, GymPlanTier, GymSubscriptionStatus } from "@prisma/
 const createGymSchema = z.object({
   name: z.string().min(2),
   email: z.string().email(),
+  phone: z.string().min(6),
   city: z.string().optional(),
   country: z.string().optional(),
   subscriptionPlan: z.nativeEnum(GymPlanTier),
@@ -62,6 +63,7 @@ export async function POST(req: Request) {
     const created = await createGymForSuperAdmin({
       name: payload.name,
       email: payload.email,
+      phone: payload.phone,
       city: payload.city,
       country: payload.country,
       subscriptionPlan: payload.subscriptionPlan,

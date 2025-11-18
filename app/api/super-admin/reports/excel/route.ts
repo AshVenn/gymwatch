@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { getServerSession } from "next-auth"
 import { z } from "zod"
+import { utils, write } from "xlsx"
 import { authOptions } from "@/lib/auth-middleware"
 import { prisma } from "@/lib/prisma"
 
@@ -9,21 +10,11 @@ const querySchema = z.object({
   gymId: z.string().optional(),
 })
 
-function toCsv(rows: Array<Array<string | number>>) {
-  return rows
-    .map((row) =>
-      row
-        .map((value) => {
-          const normalized = value ?? ""
-          const stringified = typeof normalized === "string" ? normalized : normalized.toString()
-          if (stringified.includes(",") || stringified.includes('"')) {
-            return `"${stringified.replace(/"/g, '""')}"`
-          }
-          return stringified
-        })
-        .join(","),
-    )
-    .join("\n")
+function rowsToWorkbook(rows: Array<Array<string | number>>) {
+  const worksheet = utils.aoa_to_sheet(rows)
+  const workbook = utils.book_new()
+  utils.book_append_sheet(workbook, worksheet, "Rapport")
+  return write(workbook, { type: "buffer", bookType: "xlsx" })
 }
 
 export async function GET(request: NextRequest) {
@@ -43,8 +34,8 @@ export async function GET(request: NextRequest) {
 
   const { scope, gymId } = parsed.data
   const formatter = new Intl.NumberFormat("fr-MA", { style: "currency", currency: "MAD" })
-  let csv = ""
   const filenameParts = ["super-admin", scope]
+  let rows: Array<Array<string | number>> = []
 
   if (scope === "global") {
     const gyms = await prisma.gym.findMany({
@@ -58,7 +49,7 @@ export async function GET(request: NextRequest) {
       _sum: { amount: true },
     })
     const revenueLookup = new Map(revenueByGym.map((entry) => [entry.gymId, entry._sum.amount ?? 0]))
-    const rows: Array<Array<string | number>> = [
+    rows = [
       ["Salle", "Plan", "Facturation", "Statut", "Membres", "Abonnements actifs", "Revenus"],
     ]
     gyms.forEach((gym) => {
@@ -72,7 +63,6 @@ export async function GET(request: NextRequest) {
         formatter.format(revenueLookup.get(gym.id) ?? 0),
       ])
     })
-    csv = toCsv(rows)
   } else if (scope === "gym" && gymId) {
     const gym = await prisma.gym.findUnique({
       where: { id: gymId },
@@ -92,28 +82,27 @@ export async function GET(request: NextRequest) {
       _sum: { amount: true },
     })
 
-    const rows: Array<Array<string | number>> = [
+    rows = [
       ["Champ", "Valeur"],
       ["Salle", gym.name],
       ["Plan", gym.subscriptionPlan],
       ["Facturation", gym.billingInterval],
       ["Statut", gym.subscriptionStatus],
-      ["Propriétaire", gym.owner?.email ?? "—"],
+      ["Propriétaire", gym.owner?.email ?? "--"],
       ["Membres", gym._count.members],
       ["Abonnements actifs", gym._count.subscriptions],
-      ["Revenus cumules", formatter.format(payments._sum.amount ?? 0)],
+      ["Revenus cumulés", formatter.format(payments._sum.amount ?? 0)],
     ]
-
-    csv = toCsv(rows)
   } else {
     return NextResponse.json({ error: "Paramètres manquants" }, { status: 400 })
   }
 
-  const filename = `${filenameParts.join("-")}-${Date.now()}.csv`
+  const filename = `${filenameParts.join("-")}-${Date.now()}.xlsx`
+  const payload = rowsToWorkbook(rows)
 
-  return new NextResponse(csv, {
+  return new NextResponse(payload, {
     headers: {
-      "Content-Type": "text/csv; charset=utf-8",
+      "Content-Type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
       "Content-Disposition": `attachment; filename=${filename}`,
     },
   })

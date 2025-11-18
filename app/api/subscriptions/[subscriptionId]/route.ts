@@ -37,7 +37,7 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
 
     const status = computeSubscriptionStatus(end)
 
-    // 1) Mettre à jour l’abonnement
+    // 1) Mettre à jour l'abonnement
     const subscription = await prisma.subscription.update({
       where: { id: params.subscriptionId },
       data: {

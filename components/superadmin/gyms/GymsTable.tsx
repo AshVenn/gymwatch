@@ -1,3 +1,7 @@
+'use client'
+
+import { BarChart3, ClipboardList, FileCog, PenSquare, Users } from 'lucide-react'
+import type { SuperAdminGym } from '@/app/(dashboard)/super-admin/hooks'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import {
@@ -8,8 +12,15 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
-import type { SuperAdminGym } from '@/app/(dashboard)/super-admin/hooks'
 import { PaginationControls } from '@/components/dashboard/pagination-controls'
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip'
+
+export type GymAction = 'overview' | 'team' | 'plans' | 'subscription' | 'edit'
 
 type Props = {
   gyms: SuperAdminGym[]
@@ -20,7 +31,7 @@ type Props = {
     setPage: (page: number) => void
   }
   totalItems: number
-  onOpenDetails: (gymId: string) => void
+  onAction: (gymId: string, action: GymAction) => void
 }
 
 const STATUS_LABEL: Record<string, string> = {
@@ -39,7 +50,15 @@ const INTERVAL_LABEL: Record<string, string> = {
   ANNUAL: 'annuel',
 }
 
-export function GymsTable({ gyms, isLoading, pagination, totalItems, onOpenDetails }: Props) {
+const ROW_ACTIONS: Array<{ type: GymAction; icon: React.ComponentType<{ size?: number }>; label: string }> = [
+  { type: 'overview', icon: BarChart3, label: "Vue d'ensemble" },
+  { type: 'team', icon: Users, label: 'Administrateurs' },
+  { type: 'plans', icon: ClipboardList, label: 'Plans' },
+  { type: 'subscription', icon: FileCog, label: 'Abonnement' },
+  { type: 'edit', icon: PenSquare, label: 'Modifier' },
+]
+
+export function GymsTable({ gyms, isLoading, pagination, totalItems, onAction }: Props) {
   if (isLoading) {
     return <div className="py-10 text-center text-muted-foreground">Chargement des salles…</div>
   }
@@ -76,8 +95,8 @@ export function GymsTable({ gyms, isLoading, pagination, totalItems, onOpenDetai
                 </Badge>
 
                 <p className="text-xs text-muted-foreground">
-                  Plan {PLAN_LABEL[gym.subscriptionPlan] ?? gym.subscriptionPlan} •{' '}
-                  {INTERVAL_LABEL[gym.billingInterval] ?? gym.billingInterval} •{' '}
+                  Plan {PLAN_LABEL[gym.subscriptionPlan] ?? gym.subscriptionPlan} ·{' '}
+                  {INTERVAL_LABEL[gym.billingInterval] ?? gym.billingInterval} ·{' '}
                   {gym.subscriptionPrice.toLocaleString('fr-MA', {
                     style: 'currency',
                     currency: 'MAD',
@@ -97,17 +116,32 @@ export function GymsTable({ gyms, isLoading, pagination, totalItems, onOpenDetai
 
                 {typeof gym.daysRemaining === 'number' && (
                   <p className="text-xs text-muted-foreground">
-                    {gym.daysRemaining > 0
-                      ? `${gym.daysRemaining} j restants`
-                      : 'Expiré'}
+                    {gym.daysRemaining > 0 ? `${gym.daysRemaining} j restants` : 'Expiré'}
                   </p>
                 )}
               </TableCell>
 
-              <TableCell className="text-right">
-                <Button size="sm" variant="outline" onClick={() => onOpenDetails(gym.id)}>
-                  Voir
-                </Button>
+              <TableCell>
+                <TooltipProvider>
+                  <div className="flex justify-end gap-1">
+                    {ROW_ACTIONS.map(({ type, icon: Icon, label }) => (
+                      <Tooltip key={type}>
+                        <TooltipTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-8 w-8"
+                            onClick={() => onAction(gym.id, type)}
+                            aria-label={label}
+                          >
+                            <Icon size={16} />
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>{label}</TooltipContent>
+                      </Tooltip>
+                    ))}
+                  </div>
+                </TooltipProvider>
               </TableCell>
             </TableRow>
           ))}

@@ -4,8 +4,8 @@ import { ChartContainer, ChartTooltip, ChartTooltipContent, type ChartConfig } f
 import { ResponsiveContainer, LineChart, Line, CartesianGrid, PieChart, Pie, Cell, Dot } from 'recharts'
 
 const STATUS_COLORS: Record<string, string> = {
-  ACTIVE: 'oklch(var(--chart-1))',
-  SUSPENDED: 'oklch(var(--chart-2))',
+  ACTIVE: 'hsl(var(--primary))',
+  SUSPENDED: 'hsl(var(--accent))',
   EXPIRED: 'oklch(var(--chart-3))',
   EXPIRES_TODAY: 'oklch(var(--chart-4))',
 }
@@ -84,7 +84,7 @@ export function GymAnalytics({ gym }: Props) {
         <CardContent>
           <ChartContainer config={expiryChartConfig}>
             <ResponsiveContainer width="100%" height={240}>
-              <LineChart data={expiryTrend.map((item) => ({ ...item, fill: 'var(--chart-4)' }))} margin={{ left: 16, right: 16 }}>
+              <LineChart data={expiryTrend.map((item) => ({ ...item, fill: 'hsl(var(--primary))' }))} margin={{ left: 16, right: 16 }}>
                 <CartesianGrid vertical={false} strokeDasharray="3 3" />
                 <ChartTooltip
                   cursor={false}
@@ -93,16 +93,17 @@ export function GymAnalytics({ gym }: Props) {
                 <Line
                   dataKey="value"
                   type="natural"
-                  stroke="var(--chart-4)"
+                  stroke="hsl(var(--primary))"
                   strokeWidth={2}
+                  connectNulls
                   dot={({ payload, ...props }) => (
                     <Dot
                       key={payload.label}
                       r={5}
                       cx={props.cx}
                       cy={props.cy}
-                      fill="var(--chart-4)"
-                      stroke="var(--chart-4)"
+                      fill="hsl(var(--primary))"
+                      stroke="hsl(var(--primary))"
                     />
                   )}
                 />
@@ -146,7 +147,7 @@ export function GymAnalytics({ gym }: Props) {
                 </div>
               ))
             ) : (
-              <p className="text-muted-foreground">Pas d’expiration immédiate.</p>
+              <p className="text-muted-foreground">Pas d'expiration immédiate.</p>
             )}
           </div>
         </CardContent>

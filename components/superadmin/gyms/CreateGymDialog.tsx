@@ -18,6 +18,7 @@ import { PLAN_PRICING } from '@/lib/subscription-plans'
 const schema = z.object({
   name: z.string().min(2, 'Nom requis'),
   email: z.string().email('Email invalide'),
+  phone: z.string().min(6, 'Numéro requis'),
   city: z.string().optional(),
   country: z.string().optional(),
   tier: z.enum(['BASIC', 'PRO']),
@@ -37,6 +38,7 @@ type CreateGymValues = z.infer<typeof schema>
 const defaultValues: CreateGymValues = {
   name: '',
   email: '',
+  phone: '',
   city: '',
   country: '',
   tier: 'BASIC',
@@ -74,6 +76,7 @@ export function CreateGymDialog() {
       {
         name: values.name,
         email: values.email,
+        phone: values.phone,
         city: values.city || undefined,
         country: values.country || undefined,
         subscriptionPlan: values.tier as GymPlanTier,
@@ -141,6 +144,19 @@ export function CreateGymDialog() {
                 )}
               />
             </div>
+            <FormField
+              control={form.control}
+              name="phone"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Téléphone</FormLabel>
+                  <FormControl>
+                    <Input {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
             <div className="grid gap-4 md:grid-cols-2">
               <FormField

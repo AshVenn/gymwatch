@@ -86,7 +86,7 @@ export default function SuperAdminSettingsPage() {
     <div className="space-y-6">
       <div>
         <h1 className="text-3xl font-semibold">Paramètres</h1>
-        <p className="text-muted-foreground">Pilotez l’identité et les alertes de la plateforme GymWatch.</p>
+        <p className="text-muted-foreground">Pilotez l'identité et les alertes de la plateforme GymWatch.</p>
       </div>
 
       <div className="grid gap-6 lg:grid-cols-2">
@@ -163,7 +163,7 @@ export default function SuperAdminSettingsPage() {
                   render={({ field }) => (
                     <FormItem className="flex items-center justify-between rounded-lg border p-3">
                       <div>
-                        <FormLabel>Alertes d’expiration</FormLabel>
+                        <FormLabel>Alertes d'expiration</FormLabel>
                         <FormDescription>Prévenez les salles 10 jours avant la fin de leur abonnement.</FormDescription>
                       </div>
                       <FormControl>
@@ -196,7 +196,7 @@ export default function SuperAdminSettingsPage() {
                     <FormItem className="flex items-center justify-between rounded-lg border p-3">
                       <div>
                         <FormLabel>Alertes critiques</FormLabel>
-                        <FormDescription>Pannes d’API, erreurs de paiement, incidents sensibles.</FormDescription>
+                        <FormDescription>Pannes d'API, erreurs de paiement, incidents sensibles.</FormDescription>
                       </div>
                       <FormControl>
                         <Switch checked={field.value} onCheckedChange={field.onChange} />

@@ -2,9 +2,9 @@
 import { prisma } from "./prisma"
 import type { Prisma } from "@prisma/client"
 import { resolvePlanPrice } from "./subscription-plans"
+import { GymPlanTier } from "@prisma/client"
+import { GymBillingInterval } from "@prisma/client"
 
-type GymPlanTier = Prisma.GymPlanTier
-type GymBillingInterval = Prisma.GymBillingInterval
 
 export const db = {
   // 🔹 Users
@@ -215,6 +215,31 @@ export const db = {
       activeMembers,
       newMembers,
       monthlyRevenue: monthlyRevenue._sum.pricePaid || 0,
+    }
+  },
+  touchUserSession: async (userId: string) => {
+    try {
+      const updated = await prisma.user.update({
+        where: { id: userId },
+        data: { sessionVersion: { increment: 1 } },
+        select: { sessionVersion: true },
+      })
+      return updated.sessionVersion ?? 0
+    } catch (error) {
+      console.warn('[session-version] fallback engaged', error)
+      return 0
+    }
+  },
+  getUserSessionVersion: async (userId: string) => {
+    try {
+      const user = await prisma.user.findUnique({
+        where: { id: userId },
+        select: { sessionVersion: true },
+      })
+      return user?.sessionVersion ?? null
+    } catch (error) {
+      console.warn('[session-version] unable to read version, assuming null', error)
+      return null
     }
   },
 }

@@ -21,6 +21,16 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog'
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog'
+import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
@@ -37,7 +47,6 @@ import {
 } from '@/components/ui/select'
 import { MoreVertical, Plus, Edit2, Trash2, QrCode, FileDown } from 'lucide-react'
 import QRCode from 'qrcode'
-import type { IDetectedBarcode } from '@yudiel/react-qr-scanner/dist/types'
 import type { IScannerProps } from '@yudiel/react-qr-scanner/dist/components/Scanner'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
@@ -77,13 +86,13 @@ export default function MembersPage() {
     lastName: '',
     email: '',
     phone: '',
-    planId: '',
+    planId: 'none',
     startDate: '',
   })
 
   const [isOpen, setIsOpen] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const { hasQrTools, hasQrDownloads, hasCsvReports } = usePlanFeatures()
+  const { hasQrTools, hasQrDownloads, hasExcelReports } = usePlanFeatures()
   const [qrMember, setQrMember] = useState<Member | null>(null)
   const [qrImage, setQrImage] = useState<string>('')
   const [scannerEnabled, setScannerEnabled] = useState(false)
@@ -91,6 +100,7 @@ export default function MembersPage() {
   const lastTokenRef = useRef<string | null>(null)
   const audioRef = useRef<AudioContext | null>(null)
   const [memberReportLoading, setMemberReportLoading] = useState<string | null>(null)
+  const [memberToDelete, setMemberToDelete] = useState<Member | null>(null)
 
   useEffect(() => {
     if (!qrMember) return
@@ -155,15 +165,14 @@ export default function MembersPage() {
       setTimeout(() => {
         lastTokenRef.current = null
       }, 1500)
-    }
-  }
+    }}
 
   const toggleScanner = () => setScannerEnabled((prev) => !prev)
 
   const downloadMemberReport = async (memberId: string) => {
     try {
       setMemberReportLoading(memberId)
-      const response = await fetch(`/api/reports/csv?type=member&memberId=${memberId}`)
+      const response = await fetch(`/api/reports/excel?type=member&memberId=${memberId}`)
       if (!response.ok) {
         throw new Error('Export impossible')
       }
@@ -171,15 +180,14 @@ export default function MembersPage() {
       const url = URL.createObjectURL(blob)
       const anchor = document.createElement('a')
       anchor.href = url
-      anchor.download = `member-${memberId}-${Date.now()}.csv`
+      anchor.download = `member-${memberId}-${Date.now()}.xlsx`
       anchor.click()
       URL.revokeObjectURL(url)
     } catch {
       toast.error('Impossible de telecharger le rapport membre')
     } finally {
       setMemberReportLoading(null)
-    }
-  }
+    }}
 
   const downloadQrImage = () => {
     if (!qrMember || !qrImage) return
@@ -188,7 +196,6 @@ export default function MembersPage() {
     anchor.download = `${qrMember.firstName}-${qrMember.lastName}-qr.png`
     anchor.click()
   }
-
 
   // 🔒 Authentication checks
   if (status === 'loading') return <div>Chargement de l'utilisateur...</div>
@@ -246,11 +253,16 @@ export default function MembersPage() {
     mutationFn: async () => {
       const method = editingId ? 'PUT' : 'POST'
       const url = editingId ? `/api/members/${editingId}` : '/api/members'
+      const payload = {
+        ...formData,
+        planId: formData.planId === 'none' ? null : formData.planId,
+        startDate: formData.planId === 'none' ? null : formData.startDate,
+      }
 
       const response = await fetch(url, {
         method,
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData),
+        body: JSON.stringify(payload),
       })
 
       const data = await response.json().catch(() => ({}))
@@ -297,7 +309,8 @@ export default function MembersPage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: membersQueryKey })
-      toast.success('Membre supprimé avec succès')
+      toast.success('Membre supprime avec succes')
+      setMemberToDelete(null)
     },
     onError: (err) => {
       const message = err instanceof Error ? err.message : 'Impossible de supprimer le membre'
@@ -312,7 +325,7 @@ export default function MembersPage() {
       lastName: '',
       email: '',
       phone: '',
-      planId: '',
+      planId: 'none',
       startDate: '',
     })
     setIsOpen(true)
@@ -325,7 +338,7 @@ export default function MembersPage() {
       lastName: member.lastName ?? '',
       email: member.email ?? '',
       phone: member.phone ?? '',
-      planId: '',
+      planId: 'none',
       startDate: '',
     })
     setIsOpen(true)
@@ -340,9 +353,13 @@ export default function MembersPage() {
     saveMemberMutation.mutate()
   }
 
-  const handleDeleteMember = (memberId: string) => {
-    if (confirm('Êtes-vous sûr de vouloir supprimer ce membre ?')) {
-      deleteMemberMutation.mutate(memberId)
+  const handleDeleteMember = (member: Member) => {
+    setMemberToDelete(member)
+  }
+
+  const confirmDeleteMember = () => {
+    if (memberToDelete) {
+      deleteMemberMutation.mutate(memberToDelete.id)
     }
   }
 
@@ -524,77 +541,90 @@ export default function MembersPage() {
         </div>
       )}
 
-      <div className="rounded-lg border overflow-x-auto">
-        <Table>
-          <TableHeader>
-            <TableRow className="bg-slate-50">
-              <TableHead>Prénom</TableHead>
-              <TableHead>Nom</TableHead>
-              <TableHead>Email</TableHead>
-              <TableHead>Téléphone</TableHead>
-              <TableHead>Date d'inscription</TableHead>
-              <TableHead className="text-right">Actions</TableHead>
-            </TableRow>
-          </TableHeader>
+      
+      <div className="rounded-2xl border border-border/70 bg-card">
+        <div className="overflow-x-auto">
+          <Table>
+            <TableHeader>
+              <TableRow className="bg-muted/60 text-muted-foreground">
+                <TableHead>Pr?nom</TableHead>
+                <TableHead>Nom</TableHead>
+                <TableHead>Email</TableHead>
+                <TableHead>T?l?phone</TableHead>
+                <TableHead>Date d'inscription</TableHead>
+                <TableHead className="text-right">Actions</TableHead>
+              </TableRow>
+            </TableHeader>
 
-          <TableBody>
-            {memberPagination.data.map((member) => (
-              <TableRow key={member.id}>
-                <TableCell className="font-medium">{member.firstName}</TableCell>
-                <TableCell>{member.lastName}</TableCell>
-                <TableCell>{member.email || '-'}</TableCell>
-                <TableCell>{member.phone || '-'}</TableCell>
-                <TableCell>
-                  {new Date(member.createdAt).toLocaleDateString('fr-FR')}
-                </TableCell>
-                <TableCell className="text-right">
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="sm">
-                        <MoreVertical size={16} />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuItem onSelect={() => handleEditMember(member)}>
-                        <Edit2 className="mr-2" size={16} />
-                        Modifier
-                      </DropdownMenuItem>
-                      {hasQrTools && (
-                        <DropdownMenuItem onSelect={() => setQrMember(member)}>
+            <TableBody>
+              {memberPagination.data.map((member) => (
+                <TableRow key={member.id}>
+                  <TableCell className="font-medium">{member.firstName}</TableCell>
+                  <TableCell>{member.lastName}</TableCell>
+                  <TableCell>{member.email || '-'}</TableCell>
+                  <TableCell>{member.phone || '-'}</TableCell>
+                  <TableCell>
+                    {new Date(member.createdAt).toLocaleDateString('fr-FR')}
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="sm">
+                          <MoreVertical size={16} />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem onSelect={() => handleEditMember(member)}>
+                          <Edit2 className="mr-2" size={16} />
+                          Modifier
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          disabled={!hasQrTools}
+                          onSelect={(event) => {
+                            event.preventDefault()
+                            if (!hasQrTools) {
+                              toast.error('QR code reserve au plan Pro')
+                              return
+                            }
+                            setQrMember(member)
+                          }}
+                        >
                           <QrCode className="mr-2" size={16} />
                           QR code membre
                         </DropdownMenuItem>
-                      )}
-                      {hasCsvReports && (
+                        {hasExcelReports && (
+                          <DropdownMenuItem
+                            disabled={memberReportLoading === member.id}
+                            onSelect={() => downloadMemberReport(member.id)}
+                          >
+                            <FileDown className="mr-2" size={16} />
+                            {memberReportLoading === member.id ? 'Export...' : 'Stats Excel'}
+                          </DropdownMenuItem>
+                        )}
                         <DropdownMenuItem
-                          disabled={memberReportLoading === member.id}
-                          onSelect={() => downloadMemberReport(member.id)}
+                          className="text-destructive"
+                          onSelect={() => handleDeleteMember(member)}
                         >
-                          <FileDown className="mr-2" size={16} />
-                          {memberReportLoading === member.id ? 'Export...' : 'Stats CSV'}
+                          <Trash2 className="mr-2" size={16} />
+                          Supprimer
                         </DropdownMenuItem>
-                      )}
-                      <DropdownMenuItem
-                        className="text-destructive"
-                        onSelect={() => handleDeleteMember(member.id)}
-                      >
-                        <Trash2 className="mr-2" size={16} />
-                        Supprimer
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      <PaginationControls
-        page={memberPagination.page}
-        pageCount={memberPagination.pageCount}
-        onPageChange={memberPagination.setPage}
-        totalItems={members.length}
-      />
-    </div>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
+        <div className="border-t border-border/70 px-4 py-4">
+          <PaginationControls
+            page={memberPagination.page}
+            pageCount={memberPagination.pageCount}
+            onPageChange={memberPagination.setPage}
+            totalItems={members.length}
+          />
+        </div>
+      </div>
 
       <Dialog open={Boolean(qrMember)} onOpenChange={(open) => !open && setQrMember(null)}>
         <DialogContent className="max-w-md">
@@ -621,6 +651,34 @@ export default function MembersPage() {
           </div>
         </DialogContent>
       </Dialog>
+      <AlertDialog
+        open={Boolean(memberToDelete)}
+        onOpenChange={(open) => {
+          if (!open && !deleteMemberMutation.isPending) {
+            setMemberToDelete(null)
+          }
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Supprimer le membre</AlertDialogTitle>
+            <AlertDialogDescription>
+              {memberToDelete
+                ? `Cette action supprimera ${memberToDelete.firstName} ${memberToDelete.lastName}. Les abonnements actifs resteront conserves.`
+                : 'Confirmez la suppression du membre.'}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleteMemberMutation.isPending}>Annuler</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmDeleteMember}
+              disabled={deleteMemberMutation.isPending}
+            >
+              {deleteMemberMutation.isPending ? 'Suppression...' : 'Supprimer'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }

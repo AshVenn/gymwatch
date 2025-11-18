@@ -3,10 +3,7 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog'
 import { useSuperAdminGym } from '@/app/(dashboard)/super-admin/hooks'
 import { GymStats } from './GymStats'
-import { GymTeam } from './GymTeam'
-import { GymPlans } from './GymPlans'
 import { GymAnalytics } from './GymAnalytics'
-import { GymSubscriptionSettings } from './GymSubscriptionSettings'
 
 const PLAN_LABEL: Record<string, string> = {
   BASIC: 'Basic',
@@ -53,16 +50,12 @@ export function GymDetailDialog({ gymId, onClose }: Props) {
 
             <GymStats gym={gym} />
 
-            <div className="grid gap-6 lg:grid-cols-[1.4fr,1fr]">
-              <div className="space-y-6">
-                <GymTeam gym={gym} />
-                <GymPlans gym={gym} />
-              </div>
-
-              <div className="space-y-6">
-                <GymAnalytics gym={gym} />
-                <GymSubscriptionSettings gym={gym} />
-              </div>
+            <div className="space-y-6">
+              <p className="rounded-xl border border-dashed border-border/60 bg-muted/30 px-4 py-3 text-sm text-muted-foreground">
+                Utilisez les actions rapides du tableau pour gérer l'équipe, les plans et les paramètres
+                d'abonnement de cette salle.
+              </p>
+              <GymAnalytics gym={gym} />
             </div>
           </>
         )}

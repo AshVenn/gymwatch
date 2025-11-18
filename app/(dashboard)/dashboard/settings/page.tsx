@@ -30,6 +30,7 @@ export default function SettingsPage() {
     city: '',
     country: '',
   })
+  const lockedFields = new Set(['name', 'email', 'address', 'city', 'country'])
 
   const gymKey = useMemo(() => ['gym', session?.user?.gymId ?? 'no-gym'] as const, [session?.user?.gymId])
 
@@ -69,7 +70,7 @@ export default function SettingsPage() {
       const response = await fetch('/api/gym', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData),
+        body: JSON.stringify({ phone: formData.phone }),
       })
 
       const data = await response.json().catch(() => ({}))
@@ -128,6 +129,8 @@ export default function SettingsPage() {
               value={formData.name}
               onChange={handleInputChange}
               placeholder="Nom de la salle de sport"
+              disabled={lockedFields.has('name')}
+              readOnly={lockedFields.has('name')}
             />
           </div>
 
@@ -140,6 +143,8 @@ export default function SettingsPage() {
               value={formData.email}
               onChange={handleInputChange}
               placeholder="contact@salle.ma"
+              disabled={lockedFields.has('email')}
+              readOnly={lockedFields.has('email')}
             />
           </div>
 
@@ -162,6 +167,8 @@ export default function SettingsPage() {
               value={formData.address}
               onChange={handleInputChange}
               placeholder="Adresse complète"
+              disabled={lockedFields.has('address')}
+              readOnly={lockedFields.has('address')}
             />
           </div>
 
@@ -173,6 +180,8 @@ export default function SettingsPage() {
               value={formData.city}
               onChange={handleInputChange}
               placeholder="Ville"
+              disabled={lockedFields.has('city')}
+              readOnly={lockedFields.has('city')}
             />
           </div>
 
@@ -184,6 +193,8 @@ export default function SettingsPage() {
               value={formData.country}
               onChange={handleInputChange}
               placeholder="Pays"
+              disabled={lockedFields.has('country')}
+              readOnly={lockedFields.has('country')}
             />
           </div>
 

@@ -1,6 +1,6 @@
 'use client'
 import { useSession } from 'next-auth/react'
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import {
@@ -23,6 +23,7 @@ import {
 } from '@/components/ui/chart'
 import { Button } from '@/components/ui/button'
 import { usePlanFeatures } from '@/app/hooks/use-plan-features'
+import { PaginationControls } from '@/components/dashboard/pagination-controls'
 import { toast } from 'sonner'
 
 interface DashboardStats {
@@ -37,7 +38,7 @@ interface DashboardStats {
 
 export default function DashboardPage() {
   const { data: session } = useSession()
-  const { hasCsvReports } = usePlanFeatures()
+  const { hasExcelReports } = usePlanFeatures()
   const [downloading, setDownloading] = useState<string | null>(null)
 
   const defaultStats = useMemo<DashboardStats>(() => ({
@@ -72,6 +73,12 @@ export default function DashboardPage() {
       } satisfies DashboardStats
     },
   })
+  const expiringSoon = (stats.expiringSoon ?? []) as DashboardStats['expiringSoon']
+  const [expiringPage, setExpiringPage] = useState(1)
+    useEffect(() => {
+    setExpiringPage(1)
+  }, [expiringSoon.length])
+
 
   if (isLoading) {
     return <div className="text-center py-10">Chargement des statistiques...</div>
@@ -85,9 +92,13 @@ export default function DashboardPage() {
     )
   }
 
-  const COLORS = ['var(--chart-1)', 'var(--chart-2)', 'var(--chart-3)', 'var(--chart-4)']
+  const COLORS = ['hsl(var(--primary))', 'hsl(var(--accent))', 'oklch(var(--chart-3))', 'oklch(var(--chart-4))']
   const planDistribution = (stats.planDistribution ?? []) as DashboardStats['planDistribution']
-  const expiringSoon = (stats.expiringSoon ?? []) as DashboardStats['expiringSoon']
+ 
+  const expiringPageSize = 5
+  const expiringPageCount = Math.max(1, Math.ceil(Math.max(expiringSoon.length, 1) / expiringPageSize))
+  const visibleExpiring = expiringSoon.slice((expiringPage - 1) * expiringPageSize, expiringPage * expiringPageSize)
+
 
   const revenueChartConfig: ChartConfig = {
     revenue: {
@@ -102,10 +113,10 @@ export default function DashboardPage() {
     },
   }
 
-  const downloadCsv = async (type: 'earnings' | 'top-members' | 'loyal-members') => {
+  const downloadExcel = async (type: 'earnings' | 'top-members' | 'loyal-members') => {
     try {
       setDownloading(type)
-      const response = await fetch(`/api/reports/csv?type=${type}`)
+      const response = await fetch(`/api/reports/excel?type=${type}`)
       if (!response.ok) {
         throw new Error('Impossible de telecharger le rapport')
       }
@@ -113,7 +124,7 @@ export default function DashboardPage() {
       const url = URL.createObjectURL(blob)
       const anchor = document.createElement('a')
       anchor.href = url
-      anchor.download = `rapport-${type}-${Date.now()}.csv`
+      anchor.download = `rapport-${type}-${Date.now()}.xlsx`
       anchor.click()
       URL.revokeObjectURL(url)
     } catch (error) {
@@ -201,21 +212,28 @@ export default function DashboardPage() {
               <ResponsiveContainer width="100%" height={300}>
                 <LineChart data={stats.revenueByMonth ?? []} margin={{ top: 24, left: 24, right: 24 }}>
                   <CartesianGrid vertical={false} strokeDasharray="3 3" />
-                  <XAxis dataKey="month" />
+                  <XAxis
+                    dataKey="month"
+                    tickLine={false}
+                    axisLine={false}
+                    tickMargin={8}
+                    tickFormatter={(value) => (typeof value === 'string' ? value.slice(0, 3) : value)}
+                  />
                   <YAxis />
                   <ChartTooltip cursor={false} content={<ChartTooltipContent hideLabel />} />
                   <Line
                     type="natural"
                     dataKey="revenue"
-                    stroke="var(--chart-2)"
+                    stroke="hsl(var(--primary))"
                     strokeWidth={2}
+                    connectNulls
                     dot={(props) => (
                       <Dot
                         r={5}
                         cx={props.cx}
                         cy={props.cy}
-                        fill="var(--chart-2)"
-                        stroke="var(--chart-2)"
+                        fill="hsl(var(--primary))"
+                        stroke="hsl(var(--primary))"
                       />
                     )}
                   />
@@ -263,28 +281,38 @@ export default function DashboardPage() {
         <CardHeader>
           <CardTitle>Abonnements expirant dans les 7 prochains jours</CardTitle>
           <CardDescription>
-            {expiringSoon.length ?? 0} abonnements expireront bientôt
+            {expiringSoon.length} abonnements expireront bientôt
           </CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="space-y-4">
           {expiringSoon.length === 0 ? (
             <p className="text-muted-foreground text-center py-4">
               Aucun abonnement n'expire dans les 7 prochains jours
             </p>
           ) : (
-            <div className="space-y-3">
-              {expiringSoon.map((subscription) => (
-                <div key={subscription.id} className="flex justify-between items-center p-3 bg-muted/50 rounded-lg border border-border/50">
-                  <div>
-                    <p className="font-medium">{subscription.memberName}</p>
-                    <p className="text-sm text-muted-foreground">{subscription.endDate}</p>
+            <>
+              <div className="space-y-3">
+                {visibleExpiring.map((subscription) => (
+                  <div key={subscription.id} className="flex justify-between items-center p-3 bg-muted/50 rounded-lg border border-border/50">
+                    <div>
+                      <p className="font-medium">{subscription.memberName}</p>
+                      <p className="text-sm text-muted-foreground">{subscription.endDate}</p>
+                    </div>
+                    <div className="text-right">
+                      <p className="font-medium">{subscription.daysLeft} jours</p>
+                    </div>
                   </div>
-                  <div className="text-right">
-                    <p className="font-medium">{subscription.daysLeft} jours</p>
-                  </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+              {expiringSoon.length > expiringPageSize && (
+                <PaginationControls
+                  page={expiringPage}
+                  pageCount={expiringPageCount}
+                  onPageChange={setExpiringPage}
+                  totalItems={expiringSoon.length}
+                />
+              )}
+            </>
           )}
         </CardContent>
       </Card>
@@ -293,39 +321,39 @@ export default function DashboardPage() {
         <CardHeader>
           <CardTitle>Rapports et exports</CardTitle>
           <CardDescription>
-            {hasCsvReports
-              ? 'Téléchargez vos rapports avancés au format CSV'
-              : 'Passez au plan Pro pour activer les exports CSV'}
+            {hasExcelReports
+              ? 'Téléchargez vos rapports avancés au format Excel'
+              : 'Passez au plan Pro pour activer les exports Excel'}
           </CardDescription>
         </CardHeader>
         <CardContent>
-          {hasCsvReports ? (
+          {hasExcelReports ? (
             <div className="flex flex-wrap gap-3">
               <Button
                 variant="outline"
-                onClick={() => downloadCsv('earnings')}
+                onClick={() => downloadExcel('earnings')}
                 disabled={downloading === 'earnings'}
               >
-                {downloading === 'earnings' ? 'Export...' : 'Revenus CSV'}
+                {downloading === 'earnings' ? 'Export...' : 'Revenus Excel'}
               </Button>
               <Button
                 variant="outline"
-                onClick={() => downloadCsv('top-members')}
+                onClick={() => downloadExcel('top-members')}
                 disabled={downloading === 'top-members'}
               >
-                {downloading === 'top-members' ? 'Export...' : 'Top membres'}
+                {downloading === 'top-members' ? 'Export...' : 'Top membres Excel'}
               </Button>
               <Button
                 variant="outline"
-                onClick={() => downloadCsv('loyal-members')}
+                onClick={() => downloadExcel('loyal-members')}
                 disabled={downloading === 'loyal-members'}
               >
-                {downloading === 'loyal-members' ? 'Export...' : 'Membres fidèles'}
+                {downloading === 'loyal-members' ? 'Export...' : 'Membres fideles Excel'}
               </Button>
             </div>
           ) : (
             <p className="text-sm text-muted-foreground">
-              Les exports CSV (revenus, top membres, fidélité) sont réservés au plan Pro.
+              Les exports Excel (revenus, Top membres Excel, fidélité) sont réservés au plan Pro.
             </p>
           )}
         </CardContent>

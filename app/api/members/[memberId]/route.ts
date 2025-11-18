@@ -1,11 +1,18 @@
-import { getServerSession } from "next-auth"
-import { authOptions } from "@/lib/auth-middleware"
 import { NextRequest, NextResponse } from "next/server"
+import { getServerSession } from "next-auth"
+import { z } from "zod"
+import { authOptions } from "@/lib/auth-middleware"
 import { db } from "@/lib/db"
 import { prisma } from "@/lib/prisma"
-import { computeSubscriptionStatus } from "@/lib/subscription-status"
 
-export async function POST(request: NextRequest) {
+const updateSchema = z.object({
+  firstName: z.string().min(1),
+  lastName: z.string().min(1),
+  email: z.string().email().optional().or(z.literal("").transform(() => undefined)),
+  phone: z.string().optional().or(z.literal("").transform(() => undefined)),
+})
+
+export async function PUT(request: NextRequest, { params }: { params: { memberId: string } }) {
   try {
     const session = await getServerSession(authOptions)
 
@@ -13,70 +20,67 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const { firstName, lastName, email, phone, planId, startDate } = await request.json()
+    const payload = updateSchema.parse(await request.json())
 
-    // 1️⃣ Create Member
-    const member = await db.createMember({
-      gymId: session.user.gymId,
-      firstName,
-      lastName,
-      email: email || null,
-      phone: phone || null,
+    const member = await prisma.member.findFirst({
+      where: { id: params.memberId, gymId: session.user.gymId },
     })
 
-    // 2️⃣ If no plan selected → return member only
-    if (!planId || !startDate) {
-      return NextResponse.json(member, { status: 201 })
+    if (!member) {
+      return NextResponse.json({ error: "Member not found" }, { status: 404 })
     }
 
-    // 3️⃣ Fetch plan
-    const plan = await prisma.membershipPlan.findUnique({
-      where: { id: planId },
+    const updated = await db.updateMember(params.memberId, {
+      firstName: payload.firstName,
+      lastName: payload.lastName,
+      email: payload.email ?? null,
+      phone: payload.phone ?? null,
     })
 
-    if (!plan) {
-      return NextResponse.json({ error: "Plan not found" }, { status: 404 })
-    }
-
-    const start = new Date(startDate)
-    const end = new Date(start)
-    end.setDate(end.getDate() + plan.durationDays)
-
-    const status = computeSubscriptionStatus(end)
-
-    // 4️⃣ Create subscription
-    const subscription = await prisma.subscription.create({
-      data: {
-        memberId: member.id,
-        gymId: session.user.gymId,
-        planId,
-        startDate: start,
-        endDate: end,
-        pricePaid: plan.price,
-        status,
-      },
-    })
-
-    // 5️⃣ Create payment
-    const payment = await prisma.payment.create({
-      data: {
-        gymId: session.user.gymId,
-        amount: plan.price,
-        currency: "MAD",
-        paymentDate: start,
-        subscriptions: {
-          connect: { id: subscription.id },
-        },
-      },
-    })
-
-    return NextResponse.json({ member, subscription, payment }, { status: 201 })
-
+    return NextResponse.json(updated)
   } catch (error) {
-    console.error(error)
-    return NextResponse.json(
-      { error: "Failed to create member" },
-      { status: 500 }
-    )
+    if (error instanceof z.ZodError) {
+      return NextResponse.json({ error: "Invalid payload" }, { status: 400 })
+    }
+    console.error("members.put", error)
+    return NextResponse.json({ error: "Failed to update member" }, { status: 500 })
+  }
+}
+
+export async function DELETE(_request: NextRequest, { params }: { params: { memberId: string } }) {
+  try {
+    const session = await getServerSession(authOptions)
+
+    if (!session?.user?.gymId) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    }
+
+    const member = await prisma.member.findFirst({
+      where: { id: params.memberId, gymId: session.user.gymId },
+    })
+
+    if (!member) {
+      return NextResponse.json({ error: "Member not found" }, { status: 404 })
+    }
+
+    const activeSubscriptions = await prisma.subscription.count({
+      where: {
+        memberId: params.memberId,
+        status: { in: ["ACTIVE", "EXPIRES_TODAY"] },
+      },
+    })
+
+    if (activeSubscriptions > 0) {
+      return NextResponse.json(
+        { error: "Ce membre possede encore des abonnements actifs" },
+        { status: 409 },
+      )
+    }
+
+    await db.deleteMember(params.memberId)
+    return NextResponse.json({ success: true })
+  } catch (error) {
+    console.error("members.delete", error)
+    return NextResponse.json({ error: "Failed to delete member" }, { status: 500 })
   }
 }

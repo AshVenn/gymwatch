@@ -12,9 +12,13 @@ export async function GET() {
 
   try {
     const stats = await getSuperAdminOverview()
+
+    console.log("📊 SUPER ADMIN STATS RETURNED:", JSON.stringify(stats, null, 2))
+
     return NextResponse.json(stats)
   } catch (error) {
     console.error("[super-admin][stats]", error)
     return NextResponse.json({ error: "Unable to load stats" }, { status: 500 })
   }
+
 }

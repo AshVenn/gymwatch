@@ -1,6 +1,7 @@
-﻿import { NextRequest, NextResponse } from "next/server"
+import { NextRequest, NextResponse } from "next/server"
 import { getServerSession } from "next-auth"
 import { z } from "zod"
+import { utils, write } from "xlsx"
 import { authOptions } from "@/lib/auth-middleware"
 import { prisma } from "@/lib/prisma"
 import { hasPlanFeature } from "@/lib/subscription-plans"
@@ -10,21 +11,11 @@ const querySchema = z.object({
   memberId: z.string().optional(),
 })
 
-function toCsv(rows: Array<Array<string | number>>) {
-  return rows
-    .map((row) =>
-      row
-        .map((value) => {
-          const normalized = value ?? ""
-          const stringified = typeof normalized === "string" ? normalized : normalized.toString()
-          if (stringified.includes(",") || stringified.includes('"')) {
-            return `"${stringified.replace(/"/g, '""')}"`
-          }
-          return stringified
-        })
-        .join(","),
-    )
-    .join("\n")
+function rowsToWorkbook(rows: Array<Array<string | number>>) {
+  const worksheet = utils.aoa_to_sheet(rows)
+  const workbook = utils.book_new()
+  utils.book_append_sheet(workbook, worksheet, "Rapport")
+  return write(workbook, { bookType: "xlsx", type: "buffer" })
 }
 
 export async function GET(request: NextRequest) {
@@ -36,7 +27,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
   }
 
-  if (!hasPlanFeature(tier, "csvReports")) {
+  if (!hasPlanFeature(tier, "excelReports")) {
     return NextResponse.json({ error: "Plan PRO requis" }, { status: 403 })
   }
 
@@ -55,12 +46,12 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: "memberId requis" }, { status: 400 })
   }
 
-  let csv = ""
+  let rows: Array<Array<string | number>> = []
   const now = new Date()
   const formatter = new Intl.NumberFormat("fr-MA", { style: "currency", currency: "MAD" })
 
   if (type === "earnings") {
-    const rows: Array<Array<string | number>> = [["Mois", "Total"]]
+    rows = [["Mois", "Total"]]
     for (let i = 11; i >= 0; i--) {
       const start = new Date(now.getFullYear(), now.getMonth() - i, 1)
       const end = new Date(now.getFullYear(), now.getMonth() - i + 1, 0, 23, 59, 59, 999)
@@ -73,7 +64,6 @@ export async function GET(request: NextRequest) {
         formatter.format(agg._sum.amount ?? 0),
       ])
     }
-    csv = toCsv(rows)
   } else if (type === "top-members" || type === "loyal-members") {
     const aggregated = await prisma.subscription.groupBy({
       by: ["memberId"],
@@ -93,9 +83,7 @@ export async function GET(request: NextRequest) {
     })
 
     const memberLookup = new Map(memberMap.map((m) => [m.id, m]))
-    const rows: Array<Array<string | number>> = [
-      ["Membre", "Email", "Total paye", "Nombre d'abonnements"],
-    ]
+    rows = [["Membre", "Email", "Total paye", "Nombre d'abonnements"]]
 
     aggregated.forEach((entry) => {
       const member = memberLookup.get(entry.memberId)
@@ -107,8 +95,6 @@ export async function GET(request: NextRequest) {
         entry._count?._all ?? 0,
       ])
     })
-
-    csv = toCsv(rows)
   } else if (type === "member" && memberId) {
     const member = await prisma.member.findFirst({
       where: { id: memberId, gymId },
@@ -124,7 +110,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Membre introuvable" }, { status: 404 })
     }
 
-    const rows: Array<Array<string | number>> = [
+    rows = [
       ["Champ", "Valeur"],
       ["Nom", `${member.firstName} ${member.lastName}`.trim()],
       ["Email", member.email ?? "--"],
@@ -141,15 +127,14 @@ export async function GET(request: NextRequest) {
         `${new Date(sub.startDate).toLocaleDateString("fr-FR")} -> ${new Date(sub.endDate).toLocaleDateString("fr-FR")} (${formatter.format(sub.pricePaid)})`,
       ])
     })
-
-    csv = toCsv(rows)
   }
 
-  const filename = `gym-report-${type}-${Date.now()}.csv`
+  const filename = `gym-report-${type}-${Date.now()}.xlsx`
+  const payload = rowsToWorkbook(rows)
 
-  return new NextResponse(csv, {
+  return new NextResponse(payload, {
     headers: {
-      "Content-Type": "text/csv; charset=utf-8",
+      "Content-Type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
       "Content-Disposition": `attachment; filename=${filename}`,
     },
   })

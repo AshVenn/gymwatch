@@ -6,9 +6,11 @@ import type { GymPlanTier, GymSubscriptionStatus } from '@prisma/client'
 import { useSuperAdminGyms } from '../hooks'
 import { GymSummaryCards } from '@/components/superadmin/gyms/GymSummaryCards'
 import { GymFilters } from '@/components/superadmin/gyms/GymFilters'
-import { GymsTable } from '@/components/superadmin/gyms/GymsTable'
+import { GymsTable, type GymAction } from '@/components/superadmin/gyms/GymsTable'
 import { GymDetailDialog } from '@/components/superadmin/gyms/GymDetailDialog/GymDetailDialog'
 import { CreateGymDialog } from '@/components/superadmin/gyms/CreateGymDialog'
+import { GymActionSheet } from '@/components/superadmin/gyms/GymActionSheet'
+import { EditGymDialog } from '@/components/superadmin/gyms/EditGymDialog'
 import { usePagination } from '@/components/dashboard/pagination-controls'
 
 export default function SuperAdminGymsPage() {
@@ -16,7 +18,10 @@ export default function SuperAdminGymsPage() {
   const [searchTerm, setSearchTerm] = useState('')
   const [statusFilter, setStatusFilter] = useState<'ALL' | GymSubscriptionStatus>('ALL')
   const [planFilter, setPlanFilter] = useState<'ALL' | GymPlanTier>('ALL')
-  const [detailId, setDetailId] = useState<string | null>(null)
+  const [currentAction, setCurrentAction] = useState<{ gymId: string | null; type: GymAction | null }>({
+    gymId: null,
+    type: null,
+  })
 
   const filteredGyms = useMemo(() => {
     const query = searchTerm.trim().toLowerCase()
@@ -33,6 +38,14 @@ export default function SuperAdminGymsPage() {
   }, [gyms, planFilter, searchTerm, statusFilter])
 
   const pagination = usePagination(filteredGyms, 8)
+
+  const handleAction = (gymId: string, type: GymAction) => {
+    setCurrentAction({ gymId, type })
+  }
+
+  const closeAction = () => {
+    setCurrentAction({ gymId: null, type: null })
+  }
 
   return (
     <div className="space-y-6">
@@ -64,10 +77,32 @@ export default function SuperAdminGymsPage() {
           setPage: pagination.setPage,
         }}
         totalItems={filteredGyms.length}
-        onOpenDetails={setDetailId}
+        onAction={handleAction}
       />
 
-      <GymDetailDialog gymId={detailId} onClose={() => setDetailId(null)} />
+      <GymDetailDialog
+        gymId={currentAction.type === 'overview' ? currentAction.gymId : null}
+        onClose={closeAction}
+      />
+
+      <GymActionSheet
+        gymId={
+          currentAction.type && ['team', 'plans', 'subscription'].includes(currentAction.type)
+            ? currentAction.gymId
+            : null
+        }
+        type={
+          currentAction.type && ['team', 'plans', 'subscription'].includes(currentAction.type)
+            ? (currentAction.type as 'team' | 'plans' | 'subscription')
+            : null
+        }
+        onClose={closeAction}
+      />
+
+      <EditGymDialog
+        gymId={currentAction.type === 'edit' ? currentAction.gymId : null}
+        onClose={closeAction}
+      />
     </div>
   )
 }

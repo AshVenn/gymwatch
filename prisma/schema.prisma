@@ -54,6 +54,7 @@ model User {
   gym       Gym?     @relation(fields: [gymId], references: [id], onDelete: SetNull)
   ownedGym  Gym?     @relation("GymOwner")
   preferences UserPreference?
+  sessionVersion Int @default(0)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

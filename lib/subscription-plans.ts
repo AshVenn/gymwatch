@@ -1,8 +1,6 @@
-import type { Prisma } from "@prisma/client"
-
 import { GymPlanTier, GymBillingInterval } from "@prisma/client"
 
-export type PlanFeatureKey = "qrTools" | "qrDownloads" | "csvReports"
+export type PlanFeatureKey = "qrTools" | "qrDownloads" | "excelReports"
 
 export interface PlanCatalogEntry {
   tier: GymPlanTier
@@ -30,12 +28,12 @@ const FEATURE_MATRIX: Record<GymPlanTier, Record<PlanFeatureKey, boolean>> = {
   BASIC: {
     qrTools: false,
     qrDownloads: false,
-    csvReports: false,
+    excelReports: false,
   },
   PRO: {
     qrTools: true,
     qrDownloads: true,
-    csvReports: true,
+    excelReports: true,
   },
 }
 
@@ -59,13 +57,13 @@ export const PLAN_CATALOG: Record<GymPlanTier, PlanCatalogEntry> = {
     name: "Pro",
     description: "Automatisations, QR codes et exports avances",
     highlight: true,
-    badges: ["QR codes", "Exports CSV"],
+    badges: ["QR codes", "Exports Excel"],
     features: [
       "Tout le plan Basic",
       "QR codes membres (generation + scan)",
       "Alertes audio succes/echec",
-      "Exports CSV revenus & fidelite",
-      "Exports PDF/CSV multi-salles",
+      "Exports Excel revenus & fidelite",
+      "Exports PDF/Excel multi-salles",
     ],
     monthlyPrice: PLAN_PRICING.PRO.MONTHLY,
     annualPrice: PLAN_PRICING.PRO.ANNUAL,

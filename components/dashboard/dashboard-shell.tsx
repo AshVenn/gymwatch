@@ -56,7 +56,7 @@ export function DashboardShell({
     if (!session?.user) return false
     const userRole = session.user.role as UserRole
     if (userRole === UserRole.SUPER_ADMIN) return false
-    if (session.user.subscriptionStatus === 'EXPIRED') return true
+    if (session.user.subscriptionStatus === 'EXPIRED' || session.user.subscriptionStatus === 'SUSPENDED') return true
     const expiresAt = session.user.subscriptionExpiresAt
     if (!expiresAt) return false
     const parsed = new Date(expiresAt)
@@ -78,7 +78,7 @@ export function DashboardShell({
 
   useEffect(() => {
     if (!subscriptionPastDue || status !== 'authenticated') return
-    toast.error('Votre abonnement est expiré. Merci de contacter le support.')
+    toast.error('Votre abonnement est suspendu ou expiré. Merci de contacter le support.')
     signOut({ callbackUrl: '/login' })
   }, [status, subscriptionPastDue])
 
@@ -96,16 +96,22 @@ export function DashboardShell({
 
   return (
     <div className="flex min-h-screen bg-background text-foreground">
+      {sidebarOpen ? (
+        <div
+          className="fixed inset-0 z-40 bg-background/80 backdrop-blur-sm md:hidden"
+          onClick={() => setSidebarOpen(false)}
+        />
+      ) : null}
       <aside
         className={cn(
-          'fixed inset-y-0 left-0 z-50 w-72 border-r border-sidebar-border bg-sidebar text-sidebar-foreground transition-transform md:relative md:translate-x-0',
+          'fixed inset-y-0 left-0 z-50 w-72 border-r border-sidebar-border bg-sidebar/95 text-sidebar-foreground shadow-xl transition-transform md:relative md:translate-x-0 md:shadow-none',
           sidebarOpen ? 'translate-x-0' : '-translate-x-full',
         )}
       >
         <div className="flex h-full flex-col">
           <div className="flex items-center justify-between border-b border-sidebar-border/70 px-6 py-5">
-            <div className="flex items-center gap-2">
-              <Image src="/GymWatch.svg" alt="GymWatch" width={32} height={32} priority className="rounded" />
+            <div className="flex items-center gap-3">
+              <Image src="/GymWatch.svg" alt="GymWatch" width={44} height={44} priority className="rounded-lg" />
               <div>
                 <p className="text-xs uppercase tracking-[0.3em] text-sidebar-foreground/70">GymWatch</p>
                 <p className="text-base font-semibold text-sidebar-foreground">Console</p>

@@ -1,4 +1,4 @@
-﻿'use client'
+'use client'
 
 import { useState } from 'react'
 import { useSuperAdminStats } from './hooks'
@@ -33,12 +33,14 @@ import {
 import { ChartContainer, ChartTooltip, ChartTooltipContent, type ChartConfig } from '@/components/ui/chart'
 import Link from 'next/link'
 import { toast } from 'sonner'
+
 const currencyFormatter = new Intl.NumberFormat('fr-MA', {
   style: 'currency',
   currency: 'MAD',
 })
 
-const STATUS_COLORS = ['var(--chart-1)', 'var(--chart-2)', 'var(--chart-3)']
+const STATUS_COLORS = ['hsl(var(--primary))', 'hsl(var(--accent))', 'oklch(var(--chart-3))']
+
 const STATUS_LABELS: Record<string, string> = {
   ACTIVE: 'Actif',
   SUSPENDED: 'Suspendu',
@@ -68,26 +70,25 @@ export default function SuperAdminOverviewPage() {
   const { data: stats, isLoading, isError } = useSuperAdminStats()
   const [downloading, setDownloading] = useState<string | null>(null)
 
-  const downloadReport = async (format: 'csv' | 'pdf') => {
+  const downloadReport = async (format: 'excel' | 'pdf') => {
     try {
       setDownloading(format)
       const endpoint =
-        format === 'csv'
-          ? '/api/super-admin/reports/csv?scope=global'
+        format === 'excel'
+          ? '/api/super-admin/reports/excel?scope=global'
           : '/api/super-admin/reports/pdf?scope=global'
       const response = await fetch(endpoint)
-      if (!response.ok) {
-        throw new Error('Export impossible')
-      }
+      if (!response.ok) throw new Error('Export impossible')
+
       const blob = await response.blob()
       const url = URL.createObjectURL(blob)
-      const anchor = document.createElement('a')
-      anchor.href = url
-      anchor.download = `super-admin-global-${Date.now()}.${format}`
-      anchor.click()
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `super-admin-global-${Date.now()}.${format === 'excel' ? 'xlsx' : 'pdf'}`
+      a.click()
       URL.revokeObjectURL(url)
     } catch (error) {
-      toast.error((error as Error).message ?? 'Erreur lors du telechargement')
+      toast.error((error as Error).message ?? 'Erreur lors du téléchargement')
     } finally {
       setDownloading(null)
     }
@@ -119,9 +120,12 @@ export default function SuperAdminOverviewPage() {
     fill: STATUS_COLORS[index % STATUS_COLORS.length],
   }))
 
-  const activeShare = stats.totalGyms ? Math.round((stats.activeGyms / stats.totalGyms) * 100) : 0
+  const activeShare = stats.totalGyms
+    ? Math.round((stats.activeGyms / stats.totalGyms) * 100)
+    : 0
 
-
+  
+    
   return (
     <div className="space-y-6">
       <div>
@@ -135,23 +139,16 @@ export default function SuperAdminOverviewPage() {
           <CardDescription>Rapports consolidés pour toutes les salles.</CardDescription>
         </CardHeader>
         <CardContent className="flex flex-wrap gap-3">
-          <Button
-            variant="outline"
-            onClick={() => downloadReport('csv')}
-            disabled={downloading === 'csv'}
-          >
-            {downloading === 'csv' ? 'Export...' : 'Rapport CSV'}
+          <Button variant="outline" onClick={() => downloadReport('excel')} disabled={downloading === 'excel'}>
+            {downloading === 'excel' ? 'Export...' : 'Rapport Excel'}
           </Button>
-          <Button
-            variant="outline"
-            onClick={() => downloadReport('pdf')}
-            disabled={downloading === 'pdf'}
-          >
+          <Button variant="outline" onClick={() => downloadReport('pdf')} disabled={downloading === 'pdf'}>
             {downloading === 'pdf' ? 'Export...' : 'Rapport PDF'}
           </Button>
         </CardContent>
       </Card>
 
+      {/* KPI CARDS */}
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
         <Card>
           <CardHeader className="pb-2">
@@ -162,6 +159,7 @@ export default function SuperAdminOverviewPage() {
             </CardTitle>
           </CardHeader>
         </Card>
+
         <Card>
           <CardHeader className="pb-2">
             <CardDescription>Abonnés actifs</CardDescription>
@@ -171,6 +169,7 @@ export default function SuperAdminOverviewPage() {
             </CardTitle>
           </CardHeader>
         </Card>
+
         <Card>
           <CardHeader className="pb-2">
             <CardDescription>Membres (toutes salles)</CardDescription>
@@ -180,6 +179,7 @@ export default function SuperAdminOverviewPage() {
             </CardTitle>
           </CardHeader>
         </Card>
+
         <Card>
           <CardHeader className="pb-2">
             <CardDescription>Revenus ce mois-ci</CardDescription>
@@ -191,6 +191,7 @@ export default function SuperAdminOverviewPage() {
         </Card>
       </div>
 
+      {/* LINE CHART */}
       <div className="grid gap-4 lg:grid-cols-3">
         <Card className="lg:col-span-2">
           <CardHeader className="pb-0">
@@ -200,27 +201,38 @@ export default function SuperAdminOverviewPage() {
           <CardContent>
             <ChartContainer config={revenueChartConfig}>
               <ResponsiveContainer width="100%" height={320}>
-                <LineChart data={stats.revenueTrend.map((point) => ({ ...point, fill: 'var(--chart-2)' }))} margin={{ top: 24, left: 24, right: 24 }}>
+                <LineChart
+                  data={stats.revenueTrend.map((point) => ({
+                    ...point,
+                    fill: 'hsl(var(--primary))',
+                  }))}
+                  margin={{ top: 24, left: 24, right: 24 }}
+                >
                   <CartesianGrid vertical={false} strokeDasharray="3 3" />
-                  <XAxis dataKey="month" />
-                  <YAxis />
-                  <ChartTooltip
-                    cursor={false}
-                    content={<ChartTooltipContent hideLabel />}
+                  <XAxis
+                    dataKey="month"
+                    tickLine={false}
+                    axisLine={false}
+                    tickMargin={8}
+                    tickFormatter={(value) => value}
+
                   />
+                  <YAxis />
+                  <ChartTooltip cursor={false} content={<ChartTooltipContent hideLabel />} />
                   <Line
                     dataKey="revenue"
-                    type="natural"
-                    stroke="var(--chart-2)"
+                    type="monotone"
+                    stroke="hsl(var(--primary))"
                     strokeWidth={2}
+                    connectNulls
                     dot={({ payload, ...props }) => (
                       <Dot
                         key={payload.month}
                         r={5}
                         cx={props.cx}
                         cy={props.cy}
-                        fill="var(--chart-2)"
-                        stroke="var(--chart-2)"
+                        fill="hsl(var(--primary))"
+                        stroke="hsl(var(--primary))"
                       />
                     )}
                   />
@@ -229,9 +241,12 @@ export default function SuperAdminOverviewPage() {
             </ChartContainer>
           </CardContent>
           <CardFooter className="text-sm text-muted-foreground">
-            <TrendingUp className="mr-2 h-4 w-4 text-primary" /> Croissance continue observée ce semestre.
+            <TrendingUp className="mr-2 h-4 w-4 text-primary" />
+            Croissance continue observée ce semestre.
           </CardFooter>
         </Card>
+
+        {/* PIE CHART */}
         <Card>
           <CardHeader className="pb-0">
             <CardTitle>Répartition des statuts</CardTitle>
@@ -241,10 +256,10 @@ export default function SuperAdminOverviewPage() {
             <ChartContainer config={statusChartConfig}>
               <ResponsiveContainer width="100%" height={280}>
                 <PieChart>
-                  <Pie 
-                    data={statusChartData} 
-                    dataKey="value" 
-                    nameKey="label" 
+                  <Pie
+                    data={statusChartData}
+                    dataKey="value"
+                    nameKey="label"
                     cx="50%"
                     cy="50%"
                     innerRadius={70}
@@ -264,6 +279,7 @@ export default function SuperAdminOverviewPage() {
         </Card>
       </div>
 
+      {/* RADIAL CHART */}
       <div className="grid gap-4 lg:grid-cols-2">
         <Card className="flex flex-col">
           <CardHeader className="items-center pb-0">
@@ -272,24 +288,26 @@ export default function SuperAdminOverviewPage() {
           </CardHeader>
           <CardContent className="flex-1 pb-0">
             <ChartContainer config={radialChartConfig} className="mx-auto aspect-square max-h-[260px]">
-              <RadialBarChart data={[{ segment: 'actives', value: activeShare, fill: 'var(--chart-1)' }]} endAngle={120} innerRadius={80} outerRadius={140}>
-                <PolarGrid gridType="circle" radialLines={false} stroke="none" className="first:fill-muted last:fill-background" polarRadius={[86, 74]} />
+              <RadialBarChart
+                data={[{ segment: 'actives', value: activeShare, fill: 'var(--chart-1)' }]}
+                endAngle={120}
+                innerRadius={80}
+                outerRadius={140}
+              >
+                <PolarGrid gridType="circle" radialLines={false} stroke="none" />
                 <RadialBar dataKey="value" background cornerRadius={8} />
-                <PolarRadiusAxis tick={false} tickLine={false} axisLine={false}>
+                <PolarRadiusAxis tick={false} axisLine={false}>
                   <Label
                     content={({ viewBox }) => {
-                      if (viewBox && 'cx' in viewBox && 'cy' in viewBox) {
-                        return (
-                          <text x={viewBox.cx} y={viewBox.cy} textAnchor="middle" dominantBaseline="middle">
-                            <tspan className="fill-foreground text-4xl font-bold" x={viewBox.cx} y={viewBox.cy}>
-                              {activeShare}%
-                            </tspan>
-                            <tspan className="fill-muted-foreground" x={viewBox.cx} y={(viewBox.cy || 0) + 24}>
-                              Actives
-                            </tspan>
-                          </text>
-                        )
-                      }
+                      if (!viewBox || !('cx' in viewBox)) return null
+                      return (
+                        <text x={viewBox.cx} y={viewBox.cy} textAnchor="middle">
+                          <tspan className="fill-foreground text-4xl font-bold">{activeShare}%</tspan>
+                          <tspan className="fill-muted-foreground" x={viewBox.cx} y={(viewBox.cy || 0) + 24}>
+                            Actives
+                          </tspan>
+                        </text>
+                      )
                     }}
                   />
                 </PolarRadiusAxis>
@@ -300,10 +318,11 @@ export default function SuperAdminOverviewPage() {
             <div className="flex items-center gap-2">
               <span className="font-medium text-foreground">{stats.activeGyms}</span> salles actives actuellement
             </div>
-            <div>Objectif: maintenir plus de 80% d'activité.</div>
+            <div>Objectif : maintenir plus de 80% d'activité.</div>
           </CardFooter>
         </Card>
 
+        {/* EXPIRING GYMS */}
         <Card>
           <CardHeader className="flex flex-row items-center justify-between">
             <div>
@@ -317,7 +336,10 @@ export default function SuperAdminOverviewPage() {
               <p className="text-sm text-muted-foreground">Aucune salle n'approche de l'échéance.</p>
             ) : (
               stats.expiringGyms.map((gym) => (
-                <div key={gym.id} className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-border/60 p-3">
+                <div
+                  key={gym.id}
+                  className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-border/60 p-3"
+                >
                   <div>
                     <p className="font-medium">{gym.name}</p>
                     <p className="text-sm text-muted-foreground">
@@ -339,4 +361,3 @@ export default function SuperAdminOverviewPage() {
     </div>
   )
 }
-

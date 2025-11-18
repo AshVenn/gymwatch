@@ -9,6 +9,12 @@ import {
 import { GymBillingInterval, GymPlanTier, GymSubscriptionStatus } from "@prisma/client"
 
 const updateGymSchema = z.object({
+  name: z.string().min(2).optional(),
+  email: z.string().email().optional(),
+  phone: z.string().min(3).optional(),
+  city: z.string().optional(),
+  country: z.string().optional(),
+  address: z.string().optional(),
   subscriptionStatus: z.nativeEnum(GymSubscriptionStatus),
   subscriptionPlan: z.nativeEnum(GymPlanTier).optional(),
   billingInterval: z.nativeEnum(GymBillingInterval).optional(),
@@ -55,6 +61,12 @@ export async function PATCH(
   try {
     const payload = updateGymSchema.parse(await req.json())
     const updated = await updateGymFromSuperAdmin(params.gymId, {
+      name: payload.name,
+      email: payload.email,
+      phone: payload.phone,
+      city: payload.city,
+      country: payload.country,
+      address: payload.address,
       subscriptionStatus: payload.subscriptionStatus,
       subscriptionPlan: payload.subscriptionPlan,
       billingInterval: payload.billingInterval,

@@ -26,6 +26,8 @@ export interface SuperAdminGym {
   id: string
   name: string
   email: string
+  phone?: string | null
+  address?: string | null
   city: string | null
   country: string | null
   subscriptionPlan: GymPlanTier
@@ -200,6 +202,38 @@ export function useCreateGymAdmin() {
       queryClient.invalidateQueries({ queryKey: ['super-admin', 'gym', variables.gymId] })
       queryClient.invalidateQueries({ queryKey: ['super-admin', 'gyms'] })
       toast.success('Administrateur ajoute')
+    },
+    onError: (error: Error) => {
+      toast.error(error.message)
+    },
+  })
+}
+
+export function useUpdateGymProfile() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: async (payload: {
+      gymId: string
+      data: {
+        name: string
+        email: string
+        phone: string
+        city: string
+        country: string
+        address?: string
+      }
+    }) => {
+      return fetchJSON(`/api/super-admin/gyms/${payload.gymId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload.data),
+      })
+    },
+    onSuccess: (_data, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['super-admin', 'gyms'] })
+      queryClient.invalidateQueries({ queryKey: ['super-admin', 'gym', variables.gymId] })
+      toast.success('Salle mise à jour')
     },
     onError: (error: Error) => {
       toast.error(error.message)

@@ -51,7 +51,7 @@ export function SubscriptionSummary({ metrics }: { metrics: SubscriptionSummaryM
           <p className="text-xs uppercase tracking-[0.3em] text-muted-foreground">Flux d'abonnements</p>
           <h1 className="mt-2 text-3xl font-semibold">Abonnements</h1>
           <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
-            Vision temps réel des membres, revenus et échéances afin d’agir avant les expirations.
+            Vision temps réel des membres, revenus et échéances afin d'agir avant les expirations.
           </p>
         </div>
         <span className="inline-flex items-center gap-2 rounded-full border border-border/60 px-4 py-2 text-xs uppercase tracking-[0.3em] text-muted-foreground">

@@ -27,6 +27,7 @@ type SubscriptionValues = z.infer<typeof schema>
 
 export function GymSubscriptionSettings({ gym }: Props) {
   const updateGym = useUpdateGym()
+
   const form = useForm<SubscriptionValues>({
     resolver: zodResolver(schema),
     defaultValues: {
@@ -38,6 +39,7 @@ export function GymSubscriptionSettings({ gym }: Props) {
       maxAdmins: gym.maxAdminAccounts,
     },
   })
+
   const [downloading, setDownloading] = useState<string | null>(null)
 
   useEffect(() => {
@@ -65,17 +67,17 @@ export function GymSubscriptionSettings({ gym }: Props) {
     })
   }
 
-  const downloadReport = async (format: 'csv' | 'pdf') => {
+  const downloadReport = async (format: 'excel' | 'pdf') => {
     try {
       setDownloading(format)
       const endpoint =
-        format === 'csv'
-          ? `/api/super-admin/reports/csv?scope=gym&gymId=${gym.id}`
+        format === 'excel'
+          ? `/api/super-admin/reports/excel?scope=gym&gymId=${gym.id}`
           : `/api/super-admin/reports/pdf?scope=gym&gymId=${gym.id}`
+
       const response = await fetch(endpoint)
-      if (!response.ok) {
-        throw new Error('Export impossible')
-      }
+      if (!response.ok) throw new Error('Export impossible')
+
       const blob = await response.blob()
       const url = URL.createObjectURL(blob)
       const anchor = document.createElement('a')
@@ -93,12 +95,14 @@ export function GymSubscriptionSettings({ gym }: Props) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>ParamÃ¨tres dâ€™abonnement</CardTitle>
-        <CardDescription>Mettez Ã  jour le plan ou la capacitÃ©.</CardDescription>
+        <CardTitle>Paramètres d'abonnement</CardTitle>
+        <CardDescription>Mettez à jour le plan ou la capacité.</CardDescription>
       </CardHeader>
+
       <CardContent>
         <Form {...form}>
           <form className="space-y-4" onSubmit={form.handleSubmit(onSubmit)}>
+            {/* Status */}
             <FormField
               control={form.control}
               name="status"
@@ -114,13 +118,14 @@ export function GymSubscriptionSettings({ gym }: Props) {
                     <SelectContent>
                       <SelectItem value="ACTIVE">Actif</SelectItem>
                       <SelectItem value="SUSPENDED">Suspendu</SelectItem>
-                      <SelectItem value="EXPIRED">ExpirÃ©</SelectItem>
+                      <SelectItem value="EXPIRED">Expiré</SelectItem>
                     </SelectContent>
                   </Select>
                 </FormItem>
               )}
             />
 
+            {/* Plan + Interval */}
             <div className="grid gap-4 md:grid-cols-2">
               <FormField
                 control={form.control}
@@ -142,6 +147,7 @@ export function GymSubscriptionSettings({ gym }: Props) {
                   </FormItem>
                 )}
               />
+
               <FormField
                 control={form.control}
                 name="interval"
@@ -164,12 +170,13 @@ export function GymSubscriptionSettings({ gym }: Props) {
               />
             </div>
 
+            {/* Expiration */}
             <FormField
               control={form.control}
               name="expiresAt"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Date dâ€™expiration</FormLabel>
+                  <FormLabel>Date d'expiration</FormLabel>
                   <FormControl>
                     <Input type="date" {...field} />
                   </FormControl>
@@ -177,13 +184,14 @@ export function GymSubscriptionSettings({ gym }: Props) {
               )}
             />
 
+            {/* Grace + Max Admins */}
             <div className="grid gap-4 md:grid-cols-2">
               <FormField
                 control={form.control}
                 name="grace"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Jours de grÃ¢ce</FormLabel>
+                    <FormLabel>Jours de grâce</FormLabel>
                     <FormControl>
                       <Input type="number" {...field} />
                     </FormControl>
@@ -191,12 +199,13 @@ export function GymSubscriptionSettings({ gym }: Props) {
                   </FormItem>
                 )}
               />
+
               <FormField
                 control={form.control}
                 name="maxAdmins"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Admins autorisÃ©s</FormLabel>
+                    <FormLabel>Admins autorisés</FormLabel>
                     <FormControl>
                       <Input type="number" {...field} />
                     </FormControl>
@@ -205,6 +214,8 @@ export function GymSubscriptionSettings({ gym }: Props) {
                 )}
               />
             </div>
+
+            {/* Exports */}
             <div className="rounded-lg border border-dashed border-border/60 p-4">
               <p className="text-sm font-semibold">Exports du gymnase</p>
               <div className="mt-2 flex flex-wrap gap-3">
@@ -212,11 +223,12 @@ export function GymSubscriptionSettings({ gym }: Props) {
                   type="button"
                   variant="outline"
                   size="sm"
-                  onClick={() => downloadReport('csv')}
-                  disabled={downloading === 'csv'}
+                  onClick={() => downloadReport('excel')}
+                  disabled={downloading === 'excel'}
                 >
-                  {downloading === 'csv' ? 'Export...' : 'Rapport CSV'}
+                  {downloading === 'excel' ? 'Export...' : 'Rapport Excel'}
                 </Button>
+
                 <Button
                   type="button"
                   variant="outline"
@@ -228,8 +240,9 @@ export function GymSubscriptionSettings({ gym }: Props) {
                 </Button>
               </div>
             </div>
+
             <Button type="submit" className="w-full" disabled={updateGym.isPending}>
-              {updateGym.isPending ? 'Sauvegardeâ€¦' : 'Mettre Ã  jour'}
+              {updateGym.isPending ? 'Sauvegarde…' : 'Mettre à jour'}
             </Button>
           </form>
         </Form>
@@ -237,4 +250,3 @@ export function GymSubscriptionSettings({ gym }: Props) {
     </Card>
   )
 }
-

@@ -1,0 +1,196 @@
+'use client'
+
+import { useEffect } from 'react'
+import { z } from 'zod'
+import { useForm } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
+import { Button } from '@/components/ui/button'
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from '@/components/ui/form'
+import { Input } from '@/components/ui/input'
+import { useSuperAdminGym, useUpdateGymProfile } from '@/app/(dashboard)/super-admin/hooks'
+
+const schema = z.object({
+  name: z.string().min(2, 'Nom requis'),
+  email: z.string().email('Email invalide'),
+  phone: z.string().min(6, 'Numéro requis'),
+  city: z.string().min(2, 'Ville requise'),
+  country: z.string().min(2, 'Pays requis'),
+  address: z.string().optional(),
+})
+
+type FormValues = z.infer<typeof schema>
+
+type Props = {
+  gymId: string | null
+  onClose: () => void
+}
+
+export function EditGymDialog({ gymId, onClose }: Props) {
+  const open = Boolean(gymId)
+  const { data: gym, isLoading } = useSuperAdminGym(gymId)
+  const updateGym = useUpdateGymProfile()
+
+  const form = useForm<FormValues>({
+    resolver: zodResolver(schema),
+    defaultValues: {
+      name: '',
+      email: '',
+      phone: '',
+      city: '',
+      country: '',
+      address: '',
+    },
+  })
+
+  useEffect(() => {
+    if (gym) {
+      form.reset({
+        name: gym.name,
+        email: gym.email,
+        phone: gym.phone ?? '',
+        city: gym.city ?? '',
+        country: gym.country ?? '',
+        address: gym.address ?? '',
+      })
+    }
+  }, [gym, form])
+
+  const handleSubmit = (values: FormValues) => {
+    if (!gymId) return
+    updateGym.mutate(
+      {
+        gymId,
+        data: {
+          name: values.name,
+          email: values.email,
+          phone: values.phone,
+          city: values.city,
+          country: values.country,
+          address: values.address ?? '',
+        },
+      },
+      {
+        onSuccess: () => {
+          onClose()
+        },
+      },
+    )
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={(value) => !value && !updateGym.isPending && onClose()}>
+      <DialogContent className="sm:max-w-lg">
+        <DialogHeader>
+          <DialogTitle>Modifier la salle</DialogTitle>
+          <DialogDescription>Mettez à jour les informations publiques.</DialogDescription>
+        </DialogHeader>
+
+        {isLoading && !gym ? (
+          <div className="py-8 text-center text-muted-foreground">Chargement…</div>
+        ) : (
+          <Form {...form}>
+            <form className="space-y-4" onSubmit={form.handleSubmit(handleSubmit)}>
+              <FormField
+                control={form.control}
+                name="name"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Nom</FormLabel>
+                    <FormControl>
+                      <Input {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="email"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Email</FormLabel>
+                    <FormControl>
+                      <Input type="email" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="phone"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Téléphone</FormLabel>
+                    <FormControl>
+                      <Input {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <div className="grid gap-4 md:grid-cols-2">
+                <FormField
+                  control={form.control}
+                  name="city"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Ville</FormLabel>
+                      <FormControl>
+                        <Input {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="country"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Pays</FormLabel>
+                      <FormControl>
+                        <Input {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+              <FormField
+                control={form.control}
+                name="address"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Adresse</FormLabel>
+                    <FormControl>
+                      <Input {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <Button type="submit" className="w-full" disabled={updateGym.isPending}>
+                {updateGym.isPending ? 'Enregistrement…' : 'Enregistrer'}
+              </Button>
+            </form>
+          </Form>
+        )}
+      </DialogContent>
+    </Dialog>
+  )
+}

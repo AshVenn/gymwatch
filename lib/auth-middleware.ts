@@ -10,7 +10,7 @@ function isGymSubscriptionInactive(gym?: {
   subscriptionGracePeriodDays: number
 } | null) {
   if (!gym) return false
-  if (gym.subscriptionStatus === "EXPIRED") return true
+  if (gym.subscriptionStatus === "EXPIRED" || gym.subscriptionStatus === "SUSPENDED") return true
   if (!gym.subscriptionExpiresAt) return false
 
   const graceEnd = new Date(gym.subscriptionExpiresAt)
@@ -52,9 +52,11 @@ export const authOptions: NextAuthOptions = {
           }
 
           if (isGymSubscriptionInactive(gym)) {
-            throw new Error("PLAN_EXPIRED")
+            throw new Error("PLAN_INACTIVE")
           }
         }
+
+        const sessionVersion = await db.touchUserSession(user.id)
 
         return {
           id: user.id,
@@ -66,6 +68,7 @@ export const authOptions: NextAuthOptions = {
           subscriptionPlan: gym?.subscriptionPlan ?? null,
           billingInterval: gym?.billingInterval ?? null,
           subscriptionExpiresAt: gym?.subscriptionExpiresAt?.toISOString() ?? null,
+          sessionVersion,
         } as any
       },
     }),
@@ -88,12 +91,22 @@ export const authOptions: NextAuthOptions = {
         ;(token as any).subscriptionPlan = (user as any).subscriptionPlan
         ;(token as any).billingInterval = (user as any).billingInterval
         ;(token as any).subscriptionExpiresAt = (user as any).subscriptionExpiresAt
+        ;(token as any).sessionVersion = (user as any).sessionVersion
+        ;(token as any).sessionRevoked = false
+      } else if (token.sub) {
+        const latestVersion = await db.getUserSessionVersion(token.sub)
+        if (latestVersion !== null && latestVersion !== (token as any).sessionVersion) {
+          ;(token as any).sessionRevoked = true
+        }
       }
       return token
     },
 
     async session({ session, token }) {
       if (session.user) {
+        if ((token as any).sessionRevoked) {
+          return null
+        }
         ;(session.user as any).role = (token as any).role
         ;(session.user as any).gymId = (token as any).gymId
         ;(session.user as any).subscriptionStatus = (token as any).subscriptionStatus

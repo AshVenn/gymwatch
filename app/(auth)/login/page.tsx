@@ -46,8 +46,8 @@ export default function LoginPage() {
 
       if (result?.error) {
         const message =
-          result.error === 'PLAN_EXPIRED'
-            ? 'Plan terminé, veuillez renouveler votre abonnement.'
+          result.error === 'PLAN_INACTIVE'
+            ? 'Votre abonnement est inactif. Merci de le renouveler !'
             : 'Identifiants incorrects.'
         setError(message)
         toast.error(message)
@@ -105,7 +105,7 @@ export default function LoginPage() {
               />
             </div>
 
-            {error && <p className="text-sm text-red-500">{error}</p>}
+            {error && <div className="rounded-md border border-destructive/50 bg-destructive/10 px-3 py-2 text-sm text-destructive">{error}</div>}
 
             <Button type="submit" className="w-full" disabled={isSubmitting}>
               {isSubmitting ? 'Connexion...' : 'Se connecter'}

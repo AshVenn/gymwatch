@@ -10,6 +10,6 @@ export function usePlanFeatures() {
     tier,
     hasQrTools: hasPlanFeature(tier, "qrTools"),
     hasQrDownloads: hasPlanFeature(tier, "qrDownloads"),
-    hasCsvReports: hasPlanFeature(tier, "csvReports"),
+    hasExcelReports: hasPlanFeature(tier, "excelReports"),
   }
 }

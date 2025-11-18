@@ -36,7 +36,7 @@ export async function PUT(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    if (session.user.role !== 'GYM_OWNER') {
+    if (!['GYM_OWNER', 'GYM_ADMIN'].includes(session.user.role as string)) {
       return NextResponse.json({ error: 'Action réservée au propriétaire' }, { status: 403 })
     }
 
@@ -60,17 +60,12 @@ export async function PUT(request: NextRequest) {
       }
     }
 
-    const payload = await request.json()
+    const payload = await request.json().catch(() => ({}))
 
     const gym = await prisma.gym.update({
       where: { id: session.user.gymId },
       data: {
-        name: payload.name,
-        email: payload.email,
         phone: payload.phone || null,
-        address: payload.address || null,
-        city: payload.city || null,
-        country: payload.country || null,
         lastSettingsUpdateAt: new Date(),
       },
     })

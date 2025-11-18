@@ -29,17 +29,25 @@ export async function GET(request: NextRequest) {
   const formatter = new Intl.NumberFormat("fr-MA", { style: "currency", currency: "MAD" })
 
   const pdf = await PDFDocument.create()
-  const page = pdf.addPage([595, 842])
+  let page = pdf.addPage([595, 842])
   const font = await pdf.embedFont(StandardFonts.Helvetica)
   const bold = await pdf.embedFont(StandardFonts.HelveticaBold)
   let cursorY = 792
+  const ensureSpace = (needed: number) => {
+    if (cursorY - needed < 60) {
+      page = pdf.addPage([595, 842])
+      cursorY = 792
+    }
+  }
 
   const drawTitle = (text: string) => {
+    ensureSpace(40)
     page.drawText(text, { x: 48, y: cursorY, size: 18, font: bold, color: rgb(0.14, 0.22, 0.36) })
     cursorY -= 28
   }
 
   const drawLine = (label: string, value: string) => {
+    ensureSpace(24)
     page.drawText(label, { x: 48, y: cursorY, size: 12, font, color: rgb(0.2, 0.2, 0.2) })
     page.drawText(value, { x: 280, y: cursorY, size: 12, font: bold, color: rgb(0.1, 0.1, 0.1) })
     cursorY -= 18

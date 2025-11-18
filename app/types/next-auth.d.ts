@@ -1,5 +1,5 @@
-import NextAuth, { DefaultSession, DefaultUser } from "next-auth"
-import { UserRole } from "@prisma/client"
+import type { DefaultSession, DefaultUser } from "next-auth"
+import type { GymBillingInterval, GymPlanTier, UserRole } from "@prisma/client"
 
 declare module "next-auth" {
   interface User extends DefaultUser {
@@ -7,6 +7,8 @@ declare module "next-auth" {
     gymId?: string
     subscriptionStatus?: string | null
     subscriptionExpiresAt?: string | null
+    subscriptionPlan?: GymPlanTier | null
+    billingInterval?: GymBillingInterval | null
   }
 
   interface Session {
@@ -15,6 +17,8 @@ declare module "next-auth" {
       gymId?: string
       subscriptionStatus?: string | null
       subscriptionExpiresAt?: string | null
+      subscriptionPlan?: GymPlanTier | null
+      billingInterval?: GymBillingInterval | null
     } & DefaultSession["user"]
   }
 }
@@ -25,5 +29,7 @@ declare module "next-auth/jwt" {
     gymId?: string
     subscriptionStatus?: string | null
     subscriptionExpiresAt?: string | null
+    subscriptionPlan?: GymPlanTier | null
+    billingInterval?: GymBillingInterval | null
   }
 }

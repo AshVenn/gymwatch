@@ -1,6 +1,8 @@
-import { GymSubscriptionPlan, GymSubscriptionStatus, UserRole } from "@prisma/client"
+import { Prisma, GymSubscriptionStatus, UserRole } from "@prisma/client"
 import { prisma } from "./prisma"
 import { hashPassword } from "./auth"
+import { resolvePlanPrice } from "./subscription-plans"
+import { GymPlanTier, GymBillingInterval } from "@prisma/client"
 
 function getMonthBoundaries(offset: number) {
   const reference = new Date()
@@ -26,6 +28,7 @@ export async function getSuperAdminOverview() {
         subscriptionStatus: true,
         subscriptionExpiresAt: true,
         subscriptionPlan: true,
+        billingInterval: true,
         subscriptionGracePeriodDays: true,
       },
     }),
@@ -73,6 +76,7 @@ export async function getSuperAdminOverview() {
         name: gym.name,
         status: gym.subscriptionStatus,
         plan: gym.subscriptionPlan,
+        billingInterval: gym.billingInterval,
         daysRemaining,
         expiresAt: gym.subscriptionExpiresAt,
       }
@@ -110,7 +114,21 @@ export async function getSuperAdminOverview() {
 export async function listGymsForSuperAdmin() {
   const gyms = await prisma.gym.findMany({
     orderBy: { createdAt: "desc" },
-    include: {
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      city: true,
+      country: true,
+      subscriptionPlan: true,
+      billingInterval: true,
+      subscriptionPrice: true,
+      subscriptionStatus: true,
+      subscriptionExpiresAt: true,
+      subscriptionGracePeriodDays: true,
+      analyticsSnapshot: true,
+      updatedAt: true,
+      maxAdminAccounts: true,
       owner: {
         select: { id: true, email: true, firstName: true, lastName: true },
       },
@@ -124,45 +142,61 @@ export async function listGymsForSuperAdmin() {
     },
   })
 
-return gyms.map((gym) => {
-  const daysRemaining = gym.subscriptionExpiresAt
-    ? Math.ceil((gym.subscriptionExpiresAt.getTime() - Date.now()) / (1000 * 60 * 60 * 24))
-    : null
+  return gyms.map((gym) => {
+    const daysRemaining = gym.subscriptionExpiresAt
+      ? Math.ceil((gym.subscriptionExpiresAt.getTime() - Date.now()) / (1000 * 60 * 60 * 24))
+      : null
 
-  return {
-    id: gym.id,
-    name: gym.name,
-    email: gym.email,
-    city: gym.city,
-    country: gym.country,
-    subscriptionPlan: gym.subscriptionPlan,
-    subscriptionStatus: gym.subscriptionStatus,
-    subscriptionExpiresAt: gym.subscriptionExpiresAt,
-    subscriptionGracePeriodDays: gym.subscriptionGracePeriodDays,
-    analyticsSnapshot: gym.analyticsSnapshot ?? undefined,   // ✅ FIX HERE
-    daysRemaining,
-    memberCount: gym._count.members,
-    activeSubscriptions: gym._count.subscriptions,
-    updatedAt: gym.updatedAt,
-    owner: gym.owner
-      ? {
-          id: gym.owner.id,
-          email: gym.owner.email,
-          firstName: gym.owner.firstName,
-          lastName: gym.owner.lastName,
-        }
-      : null,
-    adminCount: gym.users.length,
-    maxAdminAccounts: gym.maxAdminAccounts,
-  }
-})
-
+    return {
+      id: gym.id,
+      name: gym.name,
+      email: gym.email,
+      city: gym.city,
+      country: gym.country,
+      subscriptionPlan: gym.subscriptionPlan,
+      billingInterval: gym.billingInterval,
+      subscriptionPrice: gym.subscriptionPrice,
+      subscriptionStatus: gym.subscriptionStatus,
+      subscriptionExpiresAt: gym.subscriptionExpiresAt,
+      subscriptionGracePeriodDays: gym.subscriptionGracePeriodDays,
+      analyticsSnapshot: gym.analyticsSnapshot ?? undefined,
+      daysRemaining,
+      memberCount: gym._count.members,
+      activeSubscriptions: gym._count.subscriptions,
+      updatedAt: gym.updatedAt,
+      owner: gym.owner
+        ? {
+            id: gym.owner.id,
+            email: gym.owner.email,
+            firstName: gym.owner.firstName,
+            lastName: gym.owner.lastName,
+          }
+        : null,
+      adminCount: gym.users.length,
+      maxAdminAccounts: gym.maxAdminAccounts,
+    }
+  })
 }
 
 export async function getSuperAdminGymDetail(gymId: string) {
   const gym = await prisma.gym.findUnique({
     where: { id: gymId },
-    include: {
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      city: true,
+      country: true,
+      subscriptionPlan: true,
+      billingInterval: true,
+      subscriptionPrice: true,
+      subscriptionStatus: true,
+      subscriptionExpiresAt: true,
+      subscriptionGracePeriodDays: true,
+      analyticsSnapshot: true,
+      createdAt: true,
+      updatedAt: true,
+      maxAdminAccounts: true,
       owner: {
         select: { id: true, email: true, firstName: true, lastName: true },
       },
@@ -223,6 +257,8 @@ export async function getSuperAdminGymDetail(gymId: string) {
     city: gym.city,
     country: gym.country,
     subscriptionPlan: gym.subscriptionPlan,
+    billingInterval: gym.billingInterval,
+    subscriptionPrice: gym.subscriptionPrice,
     subscriptionStatus: gym.subscriptionStatus,
     subscriptionExpiresAt: gym.subscriptionExpiresAt,
     subscriptionGracePeriodDays: gym.subscriptionGracePeriodDays,
@@ -245,18 +281,34 @@ export async function updateGymFromSuperAdmin(
   gymId: string,
   data: {
     subscriptionStatus: GymSubscriptionStatus
-    subscriptionPlan?: GymSubscriptionPlan
+    subscriptionPlan?: GymPlanTier
+    billingInterval?: GymBillingInterval
     subscriptionExpiresAt?: Date | null
     subscriptionGracePeriodDays?: number
     analyticsSnapshot?: unknown
     maxAdminAccounts?: number
   },
 ) {
+  let subscriptionPrice: number | undefined
+
+  if (data.subscriptionPlan || data.billingInterval) {
+    const current = await prisma.gym.findUnique({
+      where: { id: gymId },
+      select: { subscriptionPlan: true, billingInterval: true },
+    })
+
+    const plan = data.subscriptionPlan ?? current?.subscriptionPlan ?? "BASIC"
+    const interval = data.billingInterval ?? current?.billingInterval ?? "MONTHLY"
+    subscriptionPrice = resolvePlanPrice(plan, interval)
+  }
+
   return prisma.gym.update({
     where: { id: gymId },
     data: {
       subscriptionStatus: data.subscriptionStatus,
       subscriptionPlan: data.subscriptionPlan ?? undefined,
+      billingInterval: data.billingInterval ?? undefined,
+      subscriptionPrice,
       subscriptionExpiresAt: data.subscriptionExpiresAt ?? null,
       subscriptionGracePeriodDays: data.subscriptionGracePeriodDays ?? undefined,
       analyticsSnapshot: data.analyticsSnapshot ?? undefined,
@@ -270,7 +322,8 @@ export async function createGymForSuperAdmin(data: {
   email: string
   city?: string | null
   country?: string | null
-  subscriptionPlan: GymSubscriptionPlan
+  subscriptionPlan: GymPlanTier
+  billingInterval?: GymBillingInterval
   subscriptionStatus?: GymSubscriptionStatus
   subscriptionExpiresAt?: Date | null
   subscriptionGracePeriodDays?: number
@@ -284,6 +337,8 @@ export async function createGymForSuperAdmin(data: {
   }
 }) {
   const hashedPassword = await hashPassword(data.owner.password)
+  const interval = data.billingInterval ?? "MONTHLY"
+  const subscriptionPrice = resolvePlanPrice(data.subscriptionPlan, interval)
 
   return prisma.$transaction(async (tx) => {
     const gym = await tx.gym.create({
@@ -293,10 +348,12 @@ export async function createGymForSuperAdmin(data: {
         city: data.city ?? null,
         country: data.country ?? null,
         subscriptionPlan: data.subscriptionPlan,
+        billingInterval: interval,
+        subscriptionPrice,
         subscriptionStatus: data.subscriptionStatus ?? "ACTIVE",
         subscriptionExpiresAt: data.subscriptionExpiresAt ?? null,
         subscriptionGracePeriodDays: data.subscriptionGracePeriodDays ?? 0,
-        analyticsSnapshot: gym.analyticsSnapshot ?? undefined,
+        analyticsSnapshot: data.analyticsSnapshot ?? undefined,
         maxAdminAccounts: data.maxAdminAccounts ?? 3,
       },
     })

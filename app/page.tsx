@@ -1,4 +1,4 @@
-﻿"use client"
+"use client"
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
@@ -11,6 +11,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { ThemeToggle } from '@/components/theme-toggle'
 import { cn } from '@/lib/utils'
+import { getPlanCatalogAsList } from '@/lib/subscription-plans'
 
 const navigationLinks = [
   { label: 'Fonctionnalités', href: '#features' },
@@ -24,64 +25,22 @@ const services = [
   { title: 'Analyses avancées', description: 'Revenus, fréquentation et comparatifs pour guider vos décisions.', icon: Users },
 ]
 
-const plans = [
-  {
-    name: 'Essentiel',
-    price: '299 MAD',
-    description: 'Parfait pour une salle unique',
-    features: ['Gestion des membres', 'Alertes d\'échéance', 'Support email'],
-  },
-  {
-    name: 'Business',
-    price: '499 MAD',
-    description: 'Pensé pour les réseaux multi-sites',
-    features: ['Automatisation avancée', 'Rapports personnalisés', 'Support prioritaire'],
-    highlight: true,
-  },
-  {
-    name: 'Enterprise',
-    price: 'Sur devis',
-    description: 'Accompagnement premium pour groupes',
-    features: ['SLA dédié', 'Audit sécurité', 'Onboarding personnalisé'],
-  },
-]
-
-const carouselSlides = [
-  {
-    title: 'Pilotage multi-salles',
-    description: 'Vue consolidée des membres, paiements et incidents pour chaque site.',
-  },
-  {
-    title: 'Alertes automatisées',
-    description: 'Notifications intelligentes avant les expirations et incidents critiques.',
-  },
-  {
-    title: 'Analyses financières',
-    description: 'Prévisions et tendances pour guider vos décisions d\'investissements.',
-  },
-]
-
+const planCatalog = getPlanCatalogAsList()
 export default function Home() {
   const { data: session, status } = useSession()
   const router = useRouter()
   const [menuOpen, setMenuOpen] = useState(false)
-  const [currentSlide, setCurrentSlide] = useState(0)
   const [isScrolled, setIsScrolled] = useState(false)
   const [parallaxOffset, setParallaxOffset] = useState(0)
   const [hoveredDevice, setHoveredDevice] = useState<string | null>(null)
+  const [billingCycle, setBillingCycle] = useState<'MONTHLY' | 'ANNUAL'>('MONTHLY')
+  const priceFormatter = new Intl.NumberFormat('fr-MA', { style: 'currency', currency: 'MAD' })
 
   useEffect(() => {
     if (status === 'authenticated' && session?.user) {
       router.push('/dashboard')
     }
   }, [router, session?.user, status])
-
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setCurrentSlide((prev) => (prev + 1) % carouselSlides.length)
-    }, 5000)
-    return () => clearInterval(timer)
-  }, [])
 
   useEffect(() => {
     const handleScroll = () => {
@@ -295,50 +254,75 @@ export default function Home() {
           </div>
         </section>
 
-        <section id="plans" className="space-y-8 animate-fade-in" style={{ animationDelay: '0.4s' }}>
-          <div className="flex flex-wrap items-center justify-between gap-4">
-            <div>
-              <h2 className="text-4xl font-bold">Plans transparents</h2>
-              <p className="text-lg text-muted-foreground">Choisissez la formule adaptée à votre réseau.</p>
-            </div>
-            <Button variant="outline" onClick={() => router.push('/contact')} className="transition hover:bg-primary/10">
-              Contacter l'équipe commerciale
-            </Button>
+                        <section id="plans" className="rounded-3xl border border-primary/10 bg-card/70 px-6 py-12 shadow-lg backdrop-blur-sm">
+          <div className="text-center space-y-3">
+            <p className="text-sm uppercase tracking-[0.3em] text-primary/80">Plans</p>
+            <h2 className="text-3xl font-bold">Deux offres, zero compromis</h2>
+            <p className="text-muted-foreground max-w-2xl mx-auto">
+              Choisissez un rythme mensuel ou annuel. Le plan Pro debloque les QR codes, exports CSV/PDF et outils avances.
+            </p>
           </div>
-          <div className="grid gap-6 md:grid-cols-3">
-            {plans.map((plan, index) => (
-              <Card 
-                key={plan.name} 
-                className={cn(
-                  'relative overflow-hidden transition-all duration-500 hover:shadow-xl animate-slide-up',
-                  plan.highlight ? 'border-2 border-primary shadow-lg md:scale-105' : 'hover:border-primary/30'
-                )}
-                style={{ animationDelay: `${0.1 + index * 0.1}s` }}
-              >
-                {plan.highlight && <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent pointer-events-none" />}
-                <CardHeader>
-                  <CardTitle className="flex items-center justify-between">
-                    {plan.name}
-                    {plan.highlight && (
-                      <span className="rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold text-primary animate-pulse">Populaire</span>
-                    )}
-                  </CardTitle>
-                  <CardDescription>{plan.description}</CardDescription>
-                  <div className="text-4xl font-bold text-foreground pt-2">{plan.price}</div>
-                </CardHeader>
-                <CardContent className="space-y-4 text-sm">
-                  {plan.features.map((feature) => (
-                    <div key={feature} className="flex items-center gap-3 text-muted-foreground">
-                      <CheckCircle2 className="h-5 w-5 text-primary flex-shrink-0" />
-                      <span>{feature}</span>
+          <div className="mt-6 flex items-center justify-center gap-3 text-sm">
+            <button
+              className={cn(
+                'rounded-full border px-4 py-1 font-medium transition',
+                billingCycle === 'MONTHLY' ? 'bg-primary text-white border-primary' : 'border-border'
+              )}
+              onClick={() => setBillingCycle('MONTHLY')}
+            >
+              Mensuel
+            </button>
+            <button
+              className={cn(
+                'rounded-full border px-4 py-1 font-medium transition',
+                billingCycle === 'ANNUAL' ? 'bg-primary text-white border-primary' : 'border-border'
+              )}
+              onClick={() => setBillingCycle('ANNUAL')}
+            >
+              Annuel (-15%)
+            </button>
+          </div>
+          <div className="mt-8 grid gap-6 md:grid-cols-2">
+            {planCatalog.map((plan) => {
+              const price = billingCycle === 'MONTHLY' ? plan.monthlyPrice : plan.annualPrice
+              const cadenceLabel = billingCycle === 'MONTHLY' ? 'mois' : 'an'
+              return (
+                <Card
+                  key={plan.tier}
+                  className={cn(
+                    'relative overflow-hidden border border-border/60 transition hover:shadow-lg',
+                    plan.highlight ? 'border-primary/50 bg-gradient-to-br from-primary/5 to-primary/10' : 'bg-card'
+                  )}
+                >
+                  {plan.highlight && (
+                    <span className="absolute right-4 top-4 rounded-full bg-primary/90 px-3 py-1 text-xs uppercase tracking-[0.3em] text-white">
+                      Pro
+                    </span>
+                  )}
+                  <CardHeader>
+                    <CardTitle className="flex items-center justify-between text-2xl">
+                      {plan.name}
+                    </CardTitle>
+                    <CardDescription>{plan.description}</CardDescription>
+                    <div className="text-4xl font-bold text-foreground pt-2">
+                      {priceFormatter.format(price)}
+                      <span className="text-base font-normal text-muted-foreground"> / {cadenceLabel}</span>
                     </div>
-                  ))}
-                  <Button className="mt-6 w-full transition hover:scale-105" variant={plan.highlight ? 'default' : 'outline'}>
-                    Choisir {plan.name}
-                  </Button>
-                </CardContent>
-              </Card>
-            ))}
+                  </CardHeader>
+                  <CardContent className="space-y-4 text-sm">
+                    {plan.features.map((feature) => (
+                      <div key={feature} className="flex items-center gap-3 text-muted-foreground">
+                        <CheckCircle2 className="h-4 w-4 text-primary" />
+                        {feature}
+                      </div>
+                    ))}
+                    <Button className="w-full" variant={plan.highlight ? 'default' : 'outline'}>
+                      Commencer
+                    </Button>
+                  </CardContent>
+                </Card>
+              )
+            })}
           </div>
         </section>
 
@@ -363,3 +347,12 @@ export default function Home() {
     </div>
   )
 }
+
+
+
+
+
+
+
+
+

@@ -17,9 +17,14 @@ enum UserRole {
   GYM_ADMIN
 }
 
-enum GymSubscriptionPlan {
+enum GymPlanTier {
+  BASIC
+  PRO
+}
+
+enum GymBillingInterval {
   MONTHLY
-  YEARLY
+  ANNUAL
 }
 
 enum GymSubscriptionStatus {
@@ -55,31 +60,33 @@ model User {
 }
 
 model Gym {
-  id                     String                 @id @default(cuid())
-  name                   String
-  email                  String                 @unique
-  phone                  String?
-  address                String?
-  city                   String?
-  country                String?
-  logoUrl                String?
-  subscriptionPlan       GymSubscriptionPlan
-  subscriptionStatus     GymSubscriptionStatus  @default(ACTIVE)
-  subscriptionStartedAt  DateTime               @default(now())
-  subscriptionExpiresAt  DateTime?
-  subscriptionGracePeriodDays Int               @default(0)
-  maxAdminAccounts       Int                    @default(3)
-  lastSettingsUpdateAt   DateTime?
-  ownerId                String?                @unique
-  owner                  User?                  @relation("GymOwner", fields: [ownerId], references: [id])
-  analyticsSnapshot      Json?
-  users                  User[]
-  membershipPlans        MembershipPlan[]
-  members                Member[]
-  subscriptions          Subscription[]
-  payments               Payment[]
-  createdAt              DateTime               @default(now())
-  updatedAt              DateTime               @updatedAt
+  id                         String                 @id @default(cuid())
+  name                       String
+  email                      String                 @unique
+  phone                      String?
+  address                    String?
+  city                       String?
+  country                    String?
+  logoUrl                    String?
+  subscriptionPlan           GymPlanTier            @default(BASIC)
+  billingInterval            GymBillingInterval     @default(MONTHLY)
+  subscriptionPrice          Float                  @default(0)
+  subscriptionStatus         GymSubscriptionStatus  @default(ACTIVE)
+  subscriptionStartedAt      DateTime               @default(now())
+  subscriptionExpiresAt      DateTime?
+  subscriptionGracePeriodDays Int                   @default(0)
+  maxAdminAccounts           Int                    @default(3)
+  lastSettingsUpdateAt       DateTime?
+  ownerId                    String?                @unique
+  owner                      User?                  @relation("GymOwner", fields: [ownerId], references: [id])
+  analyticsSnapshot          Json?
+  users                      User[]
+  membershipPlans            MembershipPlan[]
+  members                    Member[]
+  subscriptions              Subscription[]
+  payments                   Payment[]
+  createdAt                  DateTime               @default(now())
+  updatedAt                  DateTime               @updatedAt
 }
 
 
@@ -120,6 +127,8 @@ model Member {
   lastName      String
   email         String?
   phone         String?
+  qrToken       String           @unique @default(dbgenerated("encode(gen_random_bytes(16), 'hex')"))
+  qrGeneratedAt DateTime         @default(now())
 
   subscriptions Subscription[]
 

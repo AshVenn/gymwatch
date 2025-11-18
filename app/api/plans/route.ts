@@ -16,7 +16,7 @@ export async function GET() {
     const plans = await db.getPlans(session.user.gymId as string)
 
     return NextResponse.json(plans)
-  } catch (error) {
+  } catch {
     return NextResponse.json(
       { error: "Failed to fetch plans" },
       { status: 500 }
@@ -43,7 +43,7 @@ export async function POST(request: NextRequest) {
     })
 
     return NextResponse.json(plan, { status: 201 })
-  } catch (error) {
+  } catch {
     return NextResponse.json(
       { error: "Failed to create plan" },
       { status: 500 }

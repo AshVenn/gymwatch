@@ -1,6 +1,6 @@
 'use client'
 import { useSession } from 'next-auth/react'
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import {
@@ -12,17 +12,18 @@ import {
   XAxis,
   YAxis,
   CartesianGrid,
-  Tooltip,
   ResponsiveContainer,
   Dot,
 } from 'recharts'
-import { TrendingUp } from 'lucide-react'
 import {
   ChartConfig,
   ChartContainer,
   ChartTooltip,
   ChartTooltipContent,
 } from '@/components/ui/chart'
+import { Button } from '@/components/ui/button'
+import { usePlanFeatures } from '@/app/hooks/use-plan-features'
+import { toast } from 'sonner'
 
 interface DashboardStats {
   monthlyRevenue: number
@@ -36,6 +37,8 @@ interface DashboardStats {
 
 export default function DashboardPage() {
   const { data: session } = useSession()
+  const { hasCsvReports } = usePlanFeatures()
+  const [downloading, setDownloading] = useState<string | null>(null)
 
   const defaultStats = useMemo<DashboardStats>(() => ({
     monthlyRevenue: 0,
@@ -97,6 +100,27 @@ export default function DashboardPage() {
     value: {
       label: 'Abonnements',
     },
+  }
+
+  const downloadCsv = async (type: 'earnings' | 'top-members' | 'loyal-members') => {
+    try {
+      setDownloading(type)
+      const response = await fetch(`/api/reports/csv?type=${type}`)
+      if (!response.ok) {
+        throw new Error('Impossible de telecharger le rapport')
+      }
+      const blob = await response.blob()
+      const url = URL.createObjectURL(blob)
+      const anchor = document.createElement('a')
+      anchor.href = url
+      anchor.download = `rapport-${type}-${Date.now()}.csv`
+      anchor.click()
+      URL.revokeObjectURL(url)
+    } catch (error) {
+      toast.error((error as Error).message ?? 'Export impossible')
+    } finally {
+      setDownloading(null)
+    }
   }
 
   return (
@@ -185,7 +209,7 @@ export default function DashboardPage() {
                     dataKey="revenue"
                     stroke="var(--chart-2)"
                     strokeWidth={2}
-                    dot={({ payload, ...props }) => (
+                    dot={(props) => (
                       <Dot
                         r={5}
                         cx={props.cx}
@@ -261,6 +285,48 @@ export default function DashboardPage() {
                 </div>
               ))}
             </div>
+          )}
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Rapports et exports</CardTitle>
+          <CardDescription>
+            {hasCsvReports
+              ? 'Téléchargez vos rapports avancés au format CSV'
+              : 'Passez au plan Pro pour activer les exports CSV'}
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          {hasCsvReports ? (
+            <div className="flex flex-wrap gap-3">
+              <Button
+                variant="outline"
+                onClick={() => downloadCsv('earnings')}
+                disabled={downloading === 'earnings'}
+              >
+                {downloading === 'earnings' ? 'Export...' : 'Revenus CSV'}
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => downloadCsv('top-members')}
+                disabled={downloading === 'top-members'}
+              >
+                {downloading === 'top-members' ? 'Export...' : 'Top membres'}
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => downloadCsv('loyal-members')}
+                disabled={downloading === 'loyal-members'}
+              >
+                {downloading === 'loyal-members' ? 'Export...' : 'Membres fidèles'}
+              </Button>
+            </div>
+          ) : (
+            <p className="text-sm text-muted-foreground">
+              Les exports CSV (revenus, top membres, fidélité) sont réservés au plan Pro.
+            </p>
           )}
         </CardContent>
       </Card>

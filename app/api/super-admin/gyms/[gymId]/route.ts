@@ -6,11 +6,12 @@ import {
   getSuperAdminGymDetail,
   updateGymFromSuperAdmin,
 } from "@/lib/super-admin"
-import { GymSubscriptionPlan, GymSubscriptionStatus } from "@prisma/client"
+import { GymBillingInterval, GymPlanTier, GymSubscriptionStatus } from "@prisma/client"
 
 const updateGymSchema = z.object({
   subscriptionStatus: z.nativeEnum(GymSubscriptionStatus),
-  subscriptionPlan: z.nativeEnum(GymSubscriptionPlan).optional(),
+  subscriptionPlan: z.nativeEnum(GymPlanTier).optional(),
+  billingInterval: z.nativeEnum(GymBillingInterval).optional(),
   subscriptionExpiresAt: z.string().nullable().optional(),
   subscriptionGracePeriodDays: z.number().int().min(0).max(365).optional(),
   analyticsSnapshot: z.any().optional(),
@@ -56,6 +57,7 @@ export async function PATCH(
     const updated = await updateGymFromSuperAdmin(params.gymId, {
       subscriptionStatus: payload.subscriptionStatus,
       subscriptionPlan: payload.subscriptionPlan,
+      billingInterval: payload.billingInterval,
       subscriptionExpiresAt: payload.subscriptionExpiresAt
         ? new Date(payload.subscriptionExpiresAt)
         : null,

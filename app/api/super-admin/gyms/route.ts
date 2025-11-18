@@ -6,14 +6,15 @@ import {
   createGymForSuperAdmin,
   listGymsForSuperAdmin,
 } from "@/lib/super-admin"
-import { GymSubscriptionPlan, GymSubscriptionStatus } from "@prisma/client"
+import { GymBillingInterval, GymPlanTier, GymSubscriptionStatus } from "@prisma/client"
 
 const createGymSchema = z.object({
   name: z.string().min(2),
   email: z.string().email(),
   city: z.string().optional(),
   country: z.string().optional(),
-  subscriptionPlan: z.nativeEnum(GymSubscriptionPlan),
+  subscriptionPlan: z.nativeEnum(GymPlanTier),
+  billingInterval: z.nativeEnum(GymBillingInterval).optional(),
   subscriptionStatus: z.nativeEnum(GymSubscriptionStatus).optional(),
   subscriptionExpiresAt: z.string().optional(),
   subscriptionGracePeriodDays: z.number().int().min(0).max(365).optional(),
@@ -64,6 +65,7 @@ export async function POST(req: Request) {
       city: payload.city,
       country: payload.country,
       subscriptionPlan: payload.subscriptionPlan,
+      billingInterval: payload.billingInterval,
       subscriptionStatus: payload.subscriptionStatus,
       subscriptionExpiresAt: payload.subscriptionExpiresAt
         ? new Date(payload.subscriptionExpiresAt)

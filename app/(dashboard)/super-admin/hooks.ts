@@ -1,6 +1,6 @@
 ﻿import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
-import { GymSubscriptionPlan, GymSubscriptionStatus } from '@prisma/client'
+import type { GymBillingInterval, GymPlanTier, GymSubscriptionStatus } from '@prisma/client'
 
 export interface SuperAdminStats {
   totalGyms: number
@@ -15,7 +15,8 @@ export interface SuperAdminStats {
     id: string
     name: string
     status: GymSubscriptionStatus
-    plan: GymSubscriptionPlan
+    plan: GymPlanTier
+    billingInterval: GymBillingInterval
     daysRemaining: number
     expiresAt: string
   }[]
@@ -27,7 +28,9 @@ export interface SuperAdminGym {
   email: string
   city: string | null
   country: string | null
-  subscriptionPlan: GymSubscriptionPlan
+  subscriptionPlan: GymPlanTier
+  billingInterval: GymBillingInterval
+  subscriptionPrice: number
   subscriptionStatus: GymSubscriptionStatus
   subscriptionExpiresAt: string | null
   subscriptionGracePeriodDays: number
@@ -107,7 +110,8 @@ export function useUpdateGym() {
       gymId: string
       data: {
         subscriptionStatus: GymSubscriptionStatus
-        subscriptionPlan?: GymSubscriptionPlan
+      subscriptionPlan?: GymPlanTier
+      billingInterval?: GymBillingInterval
         subscriptionExpiresAt?: string | null
         subscriptionGracePeriodDays?: number
         maxAdminAccounts?: number
@@ -140,7 +144,8 @@ export function useCreateGym() {
       email: string
       city?: string
       country?: string
-      subscriptionPlan: GymSubscriptionPlan
+      subscriptionPlan: GymPlanTier
+      billingInterval?: GymBillingInterval
       subscriptionStatus?: GymSubscriptionStatus
       subscriptionExpiresAt?: string
       subscriptionGracePeriodDays?: number

@@ -23,7 +23,7 @@ export async function PUT(
     })
 
     return NextResponse.json(plan)
-  } catch (error) {
+  } catch {
     return NextResponse.json({ error: 'Failed to update plan' }, { status: 500 })
   }
 }
@@ -42,7 +42,7 @@ export async function DELETE(
     await db.deletePlan(params.planId)
 
     return NextResponse.json({ success: true })
-  } catch (error) {
+  } catch {
     return NextResponse.json({ error: 'Failed to delete plan' }, { status: 500 })
   }
 }

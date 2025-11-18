@@ -63,6 +63,8 @@ export const authOptions: NextAuthOptions = {
           role: user.role,
           gymId: user.gymId ?? undefined,
           subscriptionStatus: gym?.subscriptionStatus ?? null,
+          subscriptionPlan: gym?.subscriptionPlan ?? null,
+          billingInterval: gym?.billingInterval ?? null,
           subscriptionExpiresAt: gym?.subscriptionExpiresAt?.toISOString() ?? null,
         } as any
       },
@@ -83,6 +85,8 @@ export const authOptions: NextAuthOptions = {
         ;(token as any).role = (user as any).role
         ;(token as any).gymId = (user as any).gymId
         ;(token as any).subscriptionStatus = (user as any).subscriptionStatus
+        ;(token as any).subscriptionPlan = (user as any).subscriptionPlan
+        ;(token as any).billingInterval = (user as any).billingInterval
         ;(token as any).subscriptionExpiresAt = (user as any).subscriptionExpiresAt
       }
       return token
@@ -93,6 +97,8 @@ export const authOptions: NextAuthOptions = {
         ;(session.user as any).role = (token as any).role
         ;(session.user as any).gymId = (token as any).gymId
         ;(session.user as any).subscriptionStatus = (token as any).subscriptionStatus
+        ;(session.user as any).subscriptionPlan = (token as any).subscriptionPlan
+        ;(session.user as any).billingInterval = (token as any).billingInterval
         ;(session.user as any).subscriptionExpiresAt = (token as any).subscriptionExpiresAt
       }
       return session

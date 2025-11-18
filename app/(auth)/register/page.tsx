@@ -17,7 +17,6 @@ export default function RegisterPage() {
     adminPassword: '',
     confirmPassword: '',
   })
-  const [error, setError] = useState('')
   const router = useRouter()
 
   const registerMutation = useMutation({
@@ -47,7 +46,6 @@ export default function RegisterPage() {
     },
     onError: (error) => {
       const message = error instanceof Error ? error.message : 'Une erreur est survenue'
-      setError(message)
       toast.error(message)
     },
   })
@@ -59,11 +57,9 @@ export default function RegisterPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    setError('')
 
     if (formData.adminPassword !== formData.confirmPassword) {
       const mismatchMessage = 'Les mots de passe ne correspondent pas'
-      setError(mismatchMessage)
       toast.error(mismatchMessage)
       return
     }

@@ -1,5 +1,6 @@
 ﻿'use client'
 
+import { useState } from 'react'
 import { useSuperAdminStats } from './hooks'
 import {
   Card,
@@ -31,6 +32,7 @@ import {
 } from 'recharts'
 import { ChartContainer, ChartTooltip, ChartTooltipContent, type ChartConfig } from '@/components/ui/chart'
 import Link from 'next/link'
+import { toast } from 'sonner'
 const currencyFormatter = new Intl.NumberFormat('fr-MA', {
   style: 'currency',
   currency: 'MAD',
@@ -64,6 +66,32 @@ const radialChartConfig: ChartConfig = {
 
 export default function SuperAdminOverviewPage() {
   const { data: stats, isLoading, isError } = useSuperAdminStats()
+  const [downloading, setDownloading] = useState<string | null>(null)
+
+  const downloadReport = async (format: 'csv' | 'pdf') => {
+    try {
+      setDownloading(format)
+      const endpoint =
+        format === 'csv'
+          ? '/api/super-admin/reports/csv?scope=global'
+          : '/api/super-admin/reports/pdf?scope=global'
+      const response = await fetch(endpoint)
+      if (!response.ok) {
+        throw new Error('Export impossible')
+      }
+      const blob = await response.blob()
+      const url = URL.createObjectURL(blob)
+      const anchor = document.createElement('a')
+      anchor.href = url
+      anchor.download = `super-admin-global-${Date.now()}.${format}`
+      anchor.click()
+      URL.revokeObjectURL(url)
+    } catch (error) {
+      toast.error((error as Error).message ?? 'Erreur lors du telechargement')
+    } finally {
+      setDownloading(null)
+    }
+  }
 
   if (isError) {
     return (
@@ -93,12 +121,6 @@ export default function SuperAdminOverviewPage() {
 
   const activeShare = stats.totalGyms ? Math.round((stats.activeGyms / stats.totalGyms) * 100) : 0
 
-  const MONTH_ORDER = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-
-  const sortedTrend = stats.revenueTrend
-  .map((p) => ({ ...p, fill: "var(--chart-2)" }))
-  .sort((a, b) => MONTH_ORDER.indexOf(a.month) - MONTH_ORDER.indexOf(b.month));
-
 
   return (
     <div className="space-y-6">
@@ -106,6 +128,29 @@ export default function SuperAdminOverviewPage() {
         <h1 className="text-3xl font-semibold">Vue d'ensemble</h1>
         <p className="text-muted-foreground">Suivi consolidé des salles et abonnements.</p>
       </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Exports globaux</CardTitle>
+          <CardDescription>Rapports consolidés pour toutes les salles.</CardDescription>
+        </CardHeader>
+        <CardContent className="flex flex-wrap gap-3">
+          <Button
+            variant="outline"
+            onClick={() => downloadReport('csv')}
+            disabled={downloading === 'csv'}
+          >
+            {downloading === 'csv' ? 'Export...' : 'Rapport CSV'}
+          </Button>
+          <Button
+            variant="outline"
+            onClick={() => downloadReport('pdf')}
+            disabled={downloading === 'pdf'}
+          >
+            {downloading === 'pdf' ? 'Export...' : 'Rapport PDF'}
+          </Button>
+        </CardContent>
+      </Card>
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
         <Card>
@@ -294,3 +339,4 @@ export default function SuperAdminOverviewPage() {
     </div>
   )
 }
+

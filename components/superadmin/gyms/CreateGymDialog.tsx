@@ -6,20 +6,22 @@ import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Plus } from 'lucide-react'
-import { GymSubscriptionPlan, GymSubscriptionStatus } from '@prisma/client'
+import type { Prisma, GymSubscriptionStatus } from '@prisma/client'
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
 import { zodResolver } from '@hookform/resolvers/zod'
 
 import { useCreateGym } from '@/app/(dashboard)/super-admin/hooks'
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form'
+import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form'
+import { PLAN_PRICING } from '@/lib/subscription-plans'
 
 const schema = z.object({
   name: z.string().min(2, 'Nom requis'),
   email: z.string().email('Email invalide'),
   city: z.string().optional(),
   country: z.string().optional(),
-  plan: z.enum(['MONTHLY', 'YEARLY']),
+  tier: z.enum(['BASIC', 'PRO']),
+  interval: z.enum(['MONTHLY', 'ANNUAL']),
   status: z.enum(['ACTIVE', 'SUSPENDED', 'EXPIRED']),
   expiresAt: z.string().optional(),
   grace: z.coerce.number().min(0).max(30),
@@ -37,7 +39,8 @@ const defaultValues: CreateGymValues = {
   email: '',
   city: '',
   country: '',
-  plan: 'MONTHLY',
+  tier: 'BASIC',
+  interval: 'MONTHLY',
   status: 'ACTIVE',
   expiresAt: '',
   grace: 5,
@@ -56,6 +59,10 @@ export function CreateGymDialog() {
   })
   const createGym = useCreateGym()
 
+  const selectedTier = form.watch('tier') as GymPlanTier
+  const selectedInterval = form.watch('interval') as GymBillingInterval
+  const estimatedPrice = PLAN_PRICING[selectedTier][selectedInterval]
+
   useEffect(() => {
     if (!open) {
       form.reset(defaultValues)
@@ -69,7 +76,8 @@ export function CreateGymDialog() {
         email: values.email,
         city: values.city || undefined,
         country: values.country || undefined,
-        subscriptionPlan: values.plan as GymSubscriptionPlan,
+        subscriptionPlan: values.tier as GymPlanTier,
+        billingInterval: values.interval as GymBillingInterval,
         subscriptionStatus: values.status as GymSubscriptionStatus,
         subscriptionExpiresAt: values.expiresAt || undefined,
         subscriptionGracePeriodDays: values.grace,
@@ -164,7 +172,7 @@ export function CreateGymDialog() {
             <div className="grid gap-4 md:grid-cols-2">
               <FormField
                 control={form.control}
-                name="plan"
+                name="tier"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Plan</FormLabel>
@@ -175,10 +183,33 @@ export function CreateGymDialog() {
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="MONTHLY">Mensuel</SelectItem>
-                        <SelectItem value="YEARLY">Annuel</SelectItem>
+                        <SelectItem value="BASIC">Basic</SelectItem>
+                        <SelectItem value="PRO">Pro</SelectItem>
                       </SelectContent>
                     </Select>
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="interval"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Facturation</FormLabel>
+                    <Select onValueChange={field.onChange} value={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="MONTHLY">Mensuel</SelectItem>
+                        <SelectItem value="ANNUAL">Annuel</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormDescription>
+                      Tarif estimatif: {estimatedPrice.toLocaleString('fr-MA', { style: 'currency', currency: 'MAD' })}
+                    </FormDescription>
                   </FormItem>
                 )}
               />
@@ -311,3 +342,5 @@ export function CreateGymDialog() {
     </Dialog>
   )
 }
+type GymPlanTier = Prisma.GymPlanTier
+type GymBillingInterval = Prisma.GymBillingInterval

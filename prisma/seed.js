@@ -192,6 +192,9 @@ async function runSeed() {
   const gym1 = await prisma.gym.upsert({
     where: { id: 'gym-fitzone' },
     update: {
+      subscriptionPlan: 'PRO',
+      billingInterval: 'MONTHLY',
+      subscriptionPrice: 350,
       analyticsSnapshot: buildAnalyticsSnapshot(13500),
       subscriptionStatus: 'ACTIVE',
       subscriptionExpiresAt: addDays(today, 5),
@@ -206,7 +209,9 @@ async function runSeed() {
       email: 'contact@fitzone.ma',
       city: 'Casablanca',
       country: 'Maroc',
-      subscriptionPlan: 'MONTHLY',
+      subscriptionPlan: 'PRO',
+      billingInterval: 'MONTHLY',
+      subscriptionPrice: 350,
       subscriptionStatus: 'ACTIVE',
       subscriptionStartedAt: addDays(today, -24),
       subscriptionExpiresAt: addDays(today, 5),
@@ -221,6 +226,9 @@ async function runSeed() {
   const gym2 = await prisma.gym.upsert({
     where: { id: 'gym-powergym' },
     update: {
+      subscriptionPlan: 'BASIC',
+      billingInterval: 'ANNUAL',
+      subscriptionPrice: 2000,
       analyticsSnapshot: buildAnalyticsSnapshot(9800),
       subscriptionStatus: 'SUSPENDED',
       subscriptionExpiresAt: addDays(today, -3),
@@ -235,7 +243,9 @@ async function runSeed() {
       email: 'contact@powergym.ma',
       city: 'Rabat',
       country: 'Maroc',
-      subscriptionPlan: 'YEARLY',
+      subscriptionPlan: 'BASIC',
+      billingInterval: 'ANNUAL',
+      subscriptionPrice: 2000,
       subscriptionStatus: 'SUSPENDED',
       subscriptionStartedAt: addDays(today, -300),
       subscriptionExpiresAt: addDays(today, -3),

@@ -1,6 +1,10 @@
 // lib/db.ts
 import { prisma } from "./prisma"
-import type { GymSubscriptionPlan } from "@prisma/client"
+import type { Prisma } from "@prisma/client"
+import { resolvePlanPrice } from "./subscription-plans"
+
+type GymPlanTier = Prisma.GymPlanTier
+type GymBillingInterval = Prisma.GymBillingInterval
 
 export const db = {
   // 🔹 Users
@@ -30,16 +34,21 @@ export const db = {
     email: string
     city?: string | null
     country?: string | null
-    subscriptionPlan?: GymSubscriptionPlan
+    subscriptionPlan?: GymPlanTier
+    billingInterval?: GymBillingInterval
     maxAdminAccounts?: number
   }) => {
+    const plan: GymPlanTier = data.subscriptionPlan ?? "BASIC"
+    const interval: GymBillingInterval = data.billingInterval ?? "MONTHLY"
     return prisma.gym.create({
       data: {
         name: data.name,
         email: data.email,
         city: data.city ?? null,
         country: data.country ?? null,
-        subscriptionPlan: data.subscriptionPlan ?? "MONTHLY",
+        subscriptionPlan: plan,
+        billingInterval: interval,
+        subscriptionPrice: resolvePlanPrice(plan, interval),
         maxAdminAccounts: data.maxAdminAccounts ?? 3,
       },
     })

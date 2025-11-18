@@ -16,7 +16,7 @@ export async function GET() {
     const members = await db.getMembers(session.user.gymId as string)
 
     return NextResponse.json(members)
-  } catch (error) {
+  } catch {
     return NextResponse.json(
       { error: "Failed to fetch members" },
       { status: 500 }
@@ -44,7 +44,7 @@ export async function POST(request: NextRequest) {
     })
 
     return NextResponse.json(member, { status: 201 })
-  } catch (error) {
+  } catch {
     return NextResponse.json(
       { error: "Failed to create member" },
       { status: 500 }

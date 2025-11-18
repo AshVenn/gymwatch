@@ -68,11 +68,7 @@ export default function PlansPage() {
 
   const planQueryKey = useMemo(() => ['plans', session.user.gymId] as const, [session.user.gymId])
 
-  const {
-    data: plans = [],
-    isLoading,
-    isError,
-  } = useQuery<Plan[]>({
+  const { data: plans = [], isError } = useQuery<Plan[]>({
     queryKey: planQueryKey,
     enabled: status === 'authenticated',
     queryFn: async () => {

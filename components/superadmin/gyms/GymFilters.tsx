@@ -1,7 +1,7 @@
 import { Input } from '@/components/ui/input'
 import { Search } from 'lucide-react'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { GymSubscriptionPlan, GymSubscriptionStatus } from '@prisma/client'
+import type { GymPlanTier, GymSubscriptionStatus } from '@prisma/client'
 import { ReactNode } from 'react'
 
 type Props = {
@@ -9,8 +9,8 @@ type Props = {
   onSearch: (value: string) => void
   statusFilter: 'ALL' | GymSubscriptionStatus
   onStatusChange: (value: 'ALL' | GymSubscriptionStatus) => void
-  planFilter: 'ALL' | GymSubscriptionPlan
-  onPlanChange: (value: 'ALL' | GymSubscriptionPlan) => void
+  planFilter: 'ALL' | GymPlanTier
+  onPlanChange: (value: 'ALL' | GymPlanTier) => void
   actionSlot?: ReactNode
 }
 
@@ -46,14 +46,14 @@ export function GymFilters({
             <SelectItem value="EXPIRED">Expirés</SelectItem>
           </SelectContent>
         </Select>
-        <Select value={planFilter} onValueChange={(value) => onPlanChange(value as 'ALL' | GymSubscriptionPlan)}>
+        <Select value={planFilter} onValueChange={(value) => onPlanChange(value as 'ALL' | GymPlanTier)}>
           <SelectTrigger>
             <SelectValue placeholder="Plan" />
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="ALL">Tous les plans</SelectItem>
-            <SelectItem value="MONTHLY">Mensuel</SelectItem>
-            <SelectItem value="YEARLY">Annuel</SelectItem>
+            <SelectItem value="BASIC">Basic</SelectItem>
+            <SelectItem value="PRO">Pro</SelectItem>
           </SelectContent>
         </Select>
       </div>

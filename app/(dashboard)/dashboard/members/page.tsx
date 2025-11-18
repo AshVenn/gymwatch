@@ -1,7 +1,8 @@
 'use client'
 
 import { useSession } from 'next-auth/react'
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
+import dynamic from 'next/dynamic'
 import { Button } from '@/components/ui/button'
 import {
   Table,
@@ -15,6 +16,7 @@ import {
   Dialog,
   DialogContent,
   DialogHeader,
+  DialogDescription,
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog'
@@ -33,10 +35,19 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { MoreVertical, Plus, Edit2, Trash2 } from 'lucide-react'
+import { MoreVertical, Plus, Edit2, Trash2, QrCode, FileDown } from 'lucide-react'
+import QRCode from 'qrcode'
+import type { IDetectedBarcode } from '@yudiel/react-qr-scanner/dist/types'
+import type { IScannerProps } from '@yudiel/react-qr-scanner/dist/components/Scanner'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import { PaginationControls, usePagination } from '@/components/dashboard/pagination-controls'
+import { usePlanFeatures } from '@/app/hooks/use-plan-features'
+
+const Scanner = dynamic<IScannerProps>(
+  () => import('@yudiel/react-qr-scanner').then((mod) => mod.Scanner),
+  { ssr: false },
+)
 
 interface Member {
   id: string
@@ -45,6 +56,7 @@ interface Member {
   email?: string
   phone?: string
   createdAt: string
+  qrToken: string
 }
 
 interface Plan {
@@ -71,6 +83,111 @@ export default function MembersPage() {
 
   const [isOpen, setIsOpen] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const { hasQrTools, hasQrDownloads, hasCsvReports } = usePlanFeatures()
+  const [qrMember, setQrMember] = useState<Member | null>(null)
+  const [qrImage, setQrImage] = useState<string>('')
+  const [scannerEnabled, setScannerEnabled] = useState(false)
+  const [scanStatus, setScanStatus] = useState<{ status: 'success' | 'error'; message: string } | null>(null)
+  const lastTokenRef = useRef<string | null>(null)
+  const audioRef = useRef<AudioContext | null>(null)
+  const [memberReportLoading, setMemberReportLoading] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (!qrMember) return
+    let active = true
+    setQrImage('')
+    QRCode.toDataURL(qrMember.qrToken, { width: 320, margin: 2 }).then((url: string) => {
+      if (active) {
+        setQrImage(url)
+      }
+    })
+    return () => {
+      active = false
+    }
+  }, [qrMember])
+
+  const playTone = (frequency: number) => {
+    if (typeof window === 'undefined') return
+    if (!audioRef.current) {
+      audioRef.current = new AudioContext()
+    }
+    const ctx = audioRef.current
+    if (!ctx) return
+    if (ctx.state === 'suspended') {
+      ctx.resume()
+    }
+    const oscillator = ctx.createOscillator()
+    const gain = ctx.createGain()
+    oscillator.frequency.value = frequency
+    gain.gain.value = 0.08
+    oscillator.connect(gain).connect(ctx.destination)
+    oscillator.start()
+    oscillator.stop(ctx.currentTime + 0.2)
+  }
+
+  const handleScan = async (token: string | null) => {
+    if (!token || token.length < 10) return
+    if (lastTokenRef.current === token) return
+    lastTokenRef.current = token
+    try {
+      const response = await fetch('/api/qr/verify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token }),
+      })
+      if (!response.ok) {
+        throw new Error('Scan invalide')
+      }
+      const payload = await response.json()
+      const fullName = `${payload.member?.firstName ?? ''} ${payload.member?.lastName ?? ''}`.trim()
+      const success = Boolean(payload.active)
+      setScanStatus({
+        status: success ? 'success' : 'error',
+        message: success
+          ? `Acces valide pour ${fullName || 'ce membre'}.`
+          : `Abonnement inactif pour ${fullName || 'ce membre'}.`,
+      })
+      playTone(success ? 880 : 240)
+    } catch {
+      setScanStatus({ status: 'error', message: 'QR invalide ou membre introuvable.' })
+      playTone(180)
+    } finally {
+      setTimeout(() => {
+        lastTokenRef.current = null
+      }, 1500)
+    }
+  }
+
+  const toggleScanner = () => setScannerEnabled((prev) => !prev)
+
+  const downloadMemberReport = async (memberId: string) => {
+    try {
+      setMemberReportLoading(memberId)
+      const response = await fetch(`/api/reports/csv?type=member&memberId=${memberId}`)
+      if (!response.ok) {
+        throw new Error('Export impossible')
+      }
+      const blob = await response.blob()
+      const url = URL.createObjectURL(blob)
+      const anchor = document.createElement('a')
+      anchor.href = url
+      anchor.download = `member-${memberId}-${Date.now()}.csv`
+      anchor.click()
+      URL.revokeObjectURL(url)
+    } catch {
+      toast.error('Impossible de telecharger le rapport membre')
+    } finally {
+      setMemberReportLoading(null)
+    }
+  }
+
+  const downloadQrImage = () => {
+    if (!qrMember || !qrImage) return
+    const anchor = document.createElement('a')
+    anchor.href = qrImage
+    anchor.download = `${qrMember.firstName}-${qrMember.lastName}-qr.png`
+    anchor.click()
+  }
 
 
   // 🔒 Authentication checks
@@ -247,13 +364,13 @@ export default function MembersPage() {
           </p>
         </div>
 
-        <Dialog open={isOpen} onOpenChange={setIsOpen}>
-          <DialogTrigger asChild>
-            <Button onClick={handleAddMember}>
-              <Plus className="mr-2" size={20} />
-              Ajouter un membre
-            </Button>
-          </DialogTrigger>
+      <Dialog open={isOpen} onOpenChange={setIsOpen}>
+        <DialogTrigger asChild>
+          <Button onClick={handleAddMember}>
+            <Plus className="mr-2" size={20} />
+            Ajouter un membre
+          </Button>
+        </DialogTrigger>
 
           <DialogContent>
             <DialogHeader>
@@ -355,6 +472,58 @@ export default function MembersPage() {
         </Dialog>
       </div>
 
+      {hasQrTools ? (
+        <div className="rounded-2xl border border-border/70 bg-card/70 p-5 shadow-sm">
+          <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+            <div>
+              <p className="text-lg font-semibold">QR codes membres</p>
+              <p className="text-sm text-muted-foreground">
+                Scannez un membre pour verifier instantanement son abonnement.
+              </p>
+            </div>
+            <Button variant="outline" onClick={toggleScanner}>
+              {scannerEnabled ? 'Masquer le scanner' : 'Activer le scanner'}
+            </Button>
+          </div>
+          {scannerEnabled && (
+            <div className="mt-4 grid gap-4 lg:grid-cols-[320px,1fr]">
+              <div className="rounded-xl border bg-black/80 p-2">
+                  <Scanner
+                    onScan={(results) => handleScan(results[0]?.rawValue ?? null)}
+                    onError={(error) => console.error(error)}
+                    styles={{
+                      container: {
+                        width: "100%",
+                      },
+                    }}
+                  />
+              </div>
+              <div className="rounded-xl border bg-background/80 p-4">
+                {scanStatus ? (
+                  <div
+                    className={`rounded-lg border px-4 py-3 text-sm font-semibold ${
+                      scanStatus.status === 'success'
+                        ? 'border-emerald-300 bg-emerald-50 text-emerald-900'
+                        : 'border-red-300 bg-red-50 text-red-900'
+                    }`}
+                  >
+                    {scanStatus.message}
+                  </div>
+                ) : (
+                  <p className="text-sm text-muted-foreground">
+                    Positionnez un QR code devant la camera pour voir le resultat du scan.
+                  </p>
+                )}
+              </div>
+            </div>
+          )}
+        </div>
+      ) : (
+        <div className="rounded-2xl border border-dashed border-amber-300/60 bg-amber-500/10 p-4 text-sm text-amber-900">
+          L outil de generation et de scan de QR codes est reserve au plan Pro.
+        </div>
+      )}
+
       <div className="rounded-lg border overflow-x-auto">
         <Table>
           <TableHeader>
@@ -390,6 +559,21 @@ export default function MembersPage() {
                         <Edit2 className="mr-2" size={16} />
                         Modifier
                       </DropdownMenuItem>
+                      {hasQrTools && (
+                        <DropdownMenuItem onSelect={() => setQrMember(member)}>
+                          <QrCode className="mr-2" size={16} />
+                          QR code membre
+                        </DropdownMenuItem>
+                      )}
+                      {hasCsvReports && (
+                        <DropdownMenuItem
+                          disabled={memberReportLoading === member.id}
+                          onSelect={() => downloadMemberReport(member.id)}
+                        >
+                          <FileDown className="mr-2" size={16} />
+                          {memberReportLoading === member.id ? 'Export...' : 'Stats CSV'}
+                        </DropdownMenuItem>
+                      )}
                       <DropdownMenuItem
                         className="text-destructive"
                         onSelect={() => handleDeleteMember(member.id)}
@@ -404,13 +588,39 @@ export default function MembersPage() {
             ))}
           </TableBody>
         </Table>
-        <PaginationControls
-          page={memberPagination.page}
-          pageCount={memberPagination.pageCount}
-          onPageChange={memberPagination.setPage}
-          totalItems={members.length}
-        />
-      </div>
+      <PaginationControls
+        page={memberPagination.page}
+        pageCount={memberPagination.pageCount}
+        onPageChange={memberPagination.setPage}
+        totalItems={members.length}
+      />
+    </div>
+
+      <Dialog open={Boolean(qrMember)} onOpenChange={(open) => !open && setQrMember(null)}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>QR membre</DialogTitle>
+            <DialogDescription>
+              {qrMember ? `${qrMember.firstName} ${qrMember.lastName}` : 'QR code membre'}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex flex-col items-center gap-4">
+            {qrImage ? (
+              <img src={qrImage} alt="QR membre" className="rounded-xl border bg-white p-3" />
+            ) : (
+              <p className="text-sm text-muted-foreground">Generation du QR en cours...</p>
+            )}
+            {qrMember && (
+              <p className="text-xs text-muted-foreground break-all">Token: {qrMember.qrToken}</p>
+            )}
+            {hasQrDownloads && (
+              <Button onClick={downloadQrImage} disabled={!qrImage}>
+                Telecharger le QR
+              </Button>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

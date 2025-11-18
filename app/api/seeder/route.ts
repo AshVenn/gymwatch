@@ -1,21 +1,8 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextResponse } from 'next/server'
 import path from 'node:path'
 import { pathToFileURL } from 'node:url'
 
-const SEED_TOKEN = process.env.SEEDER_TOKEN
-
-export async function POST(request: NextRequest) {
-  if (!SEED_TOKEN) {
-    return NextResponse.json({ error: 'Seeder disabled' }, { status: 503 })
-  }
-
-  const authHeader = request.headers.get('authorization') ?? ''
-  const token = authHeader.replace('Bearer ', '').trim()
-
-  if (token !== SEED_TOKEN) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  }
-
+export async function POST() {
   try {
     const seedModule = await import(pathToFileURL(path.join(process.cwd(), 'prisma', 'seed.js')).href)
     const runSeed: (() => Promise<unknown>) | undefined =

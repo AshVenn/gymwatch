@@ -1,7 +1,7 @@
 'use client'
 
 import { useMemo, useState } from 'react'
-import { GymSubscriptionPlan, GymSubscriptionStatus } from '@prisma/client'
+import type { GymPlanTier, GymSubscriptionStatus } from '@prisma/client'
 
 import { useSuperAdminGyms } from '../hooks'
 import { GymSummaryCards } from '@/components/superadmin/gyms/GymSummaryCards'
@@ -15,7 +15,7 @@ export default function SuperAdminGymsPage() {
   const { data: gyms = [], isLoading } = useSuperAdminGyms()
   const [searchTerm, setSearchTerm] = useState('')
   const [statusFilter, setStatusFilter] = useState<'ALL' | GymSubscriptionStatus>('ALL')
-  const [planFilter, setPlanFilter] = useState<'ALL' | GymSubscriptionPlan>('ALL')
+  const [planFilter, setPlanFilter] = useState<'ALL' | GymPlanTier>('ALL')
   const [detailId, setDetailId] = useState<string | null>(null)
 
   const filteredGyms = useMemo(() => {

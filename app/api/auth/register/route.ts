@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { Prisma } from '@prisma/client'
 import { db } from '@/lib/db'
 import { hashPassword } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
@@ -32,7 +33,7 @@ export async function POST(request: NextRequest) {
 
     const hashedPassword = await hashPassword(adminPassword)
 
-    const { gym, owner } = await prisma.$transaction(async (tx) => {
+    const { gym, owner } = await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
       const subscriptionPlan = 'BASIC'
       const billingInterval = 'MONTHLY'
       const createdGym = await tx.gym.create({

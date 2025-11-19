@@ -12,25 +12,22 @@ const updateSchema = z.object({
   phone: z.string().optional().or(z.literal("").transform(() => undefined)),
 })
 
-type MemberRouteContext = {
-  params: {
-    memberId: string | string[]
-  }
-}
-
 function resolveMemberId(raw: string | string[]) {
   return Array.isArray(raw) ? raw[0] : raw
 }
 
-export async function PUT(request: NextRequest, context: MemberRouteContext) {
+export async function PUT(
+  request: NextRequest,
+  context: { params: { memberId: string | string[] } }
+) {
   try {
     const session = await getServerSession(authOptions)
 
     if (!session?.user?.gymId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
-    const memberId = resolveMemberId(context.params.memberId)
 
+    const memberId = resolveMemberId(context.params.memberId)
     const payload = updateSchema.parse(await request.json())
 
     const member = await prisma.member.findFirst({
@@ -58,13 +55,17 @@ export async function PUT(request: NextRequest, context: MemberRouteContext) {
   }
 }
 
-export async function DELETE(_request: NextRequest, context: MemberRouteContext) {
+export async function DELETE(
+  _request: NextRequest,
+  context: { params: { memberId: string | string[] } }
+) {
   try {
     const session = await getServerSession(authOptions)
 
     if (!session?.user?.gymId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
+
     const memberId = resolveMemberId(context.params.memberId)
 
     const member = await prisma.member.findFirst({
@@ -85,7 +86,7 @@ export async function DELETE(_request: NextRequest, context: MemberRouteContext)
     if (activeSubscriptions > 0) {
       return NextResponse.json(
         { error: "Ce membre possede encore des abonnements actifs" },
-        { status: 409 },
+        { status: 409 }
       )
     }
 

@@ -12,25 +12,36 @@ const updateSchema = z.object({
   phone: z.string().optional().or(z.literal("").transform(() => undefined)),
 })
 
-export async function PUT(request: NextRequest, { params }: { params: { memberId: string } }) {
+type MemberRouteContext = {
+  params: {
+    memberId: string | string[]
+  }
+}
+
+function resolveMemberId(raw: string | string[]) {
+  return Array.isArray(raw) ? raw[0] : raw
+}
+
+export async function PUT(request: NextRequest, context: MemberRouteContext) {
   try {
     const session = await getServerSession(authOptions)
 
     if (!session?.user?.gymId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
+    const memberId = resolveMemberId(context.params.memberId)
 
     const payload = updateSchema.parse(await request.json())
 
     const member = await prisma.member.findFirst({
-      where: { id: params.memberId, gymId: session.user.gymId },
+      where: { id: memberId, gymId: session.user.gymId },
     })
 
     if (!member) {
       return NextResponse.json({ error: "Member not found" }, { status: 404 })
     }
 
-    const updated = await db.updateMember(params.memberId, {
+    const updated = await db.updateMember(memberId, {
       firstName: payload.firstName,
       lastName: payload.lastName,
       email: payload.email ?? null,
@@ -47,16 +58,17 @@ export async function PUT(request: NextRequest, { params }: { params: { memberId
   }
 }
 
-export async function DELETE(_request: NextRequest, { params }: { params: { memberId: string } }) {
+export async function DELETE(_request: NextRequest, context: MemberRouteContext) {
   try {
     const session = await getServerSession(authOptions)
 
     if (!session?.user?.gymId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
+    const memberId = resolveMemberId(context.params.memberId)
 
     const member = await prisma.member.findFirst({
-      where: { id: params.memberId, gymId: session.user.gymId },
+      where: { id: memberId, gymId: session.user.gymId },
     })
 
     if (!member) {
@@ -65,7 +77,7 @@ export async function DELETE(_request: NextRequest, { params }: { params: { memb
 
     const activeSubscriptions = await prisma.subscription.count({
       where: {
-        memberId: params.memberId,
+        memberId,
         status: { in: ["ACTIVE", "EXPIRES_TODAY"] },
       },
     })
@@ -77,7 +89,7 @@ export async function DELETE(_request: NextRequest, { params }: { params: { memb
       )
     }
 
-    await db.deleteMember(params.memberId)
+    await db.deleteMember(memberId)
     return NextResponse.json({ success: true })
   } catch (error) {
     console.error("members.delete", error)

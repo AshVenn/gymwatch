@@ -1,7 +1,7 @@
 'use client'
 
 import { useMemo, useState } from 'react'
-import type { GymPlanTier, GymSubscriptionStatus } from '@prisma/client'
+import type { GymPlanTier, GymSubscriptionStatus } from '../hooks'
 
 import { useSuperAdminGyms } from '../hooks'
 import { GymSummaryCards } from '@/components/superadmin/gyms/GymSummaryCards'

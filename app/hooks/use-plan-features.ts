@@ -1,6 +1,7 @@
 import { useSession } from "next-auth/react"
-import type { GymPlanTier } from "@prisma/client"
 import { hasPlanFeature } from "@/lib/subscription-plans"
+
+type GymPlanTier = "BASIC" | "PRO"
 
 export function usePlanFeatures() {
   const { data: session } = useSession()

@@ -1,6 +1,9 @@
 ﻿import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
-import type { GymBillingInterval, GymPlanTier, GymSubscriptionStatus } from '@prisma/client'
+
+export type GymPlanTier = 'BASIC' | 'PRO'
+export type GymSubscriptionStatus = 'ACTIVE' | 'SUSPENDED' | 'EXPIRED'
+export type GymBillingInterval = 'MONTHLY' | 'ANNUAL'
 
 export interface SuperAdminStats {
   totalGyms: number
@@ -144,6 +147,7 @@ export function useCreateGym() {
     mutationFn: async (payload: {
       name: string
       email: string
+      phone?: string
       city?: string
       country?: string
       subscriptionPlan: GymPlanTier

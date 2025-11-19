@@ -78,7 +78,7 @@ export async function GET(request: NextRequest) {
     })
 
     const memberMap = await prisma.member.findMany({
-      where: { id: { in: aggregated.map((entry) => entry.memberId) } },
+      where: { id: { in: aggregated.map((entry: { memberId: string }) => entry.memberId) } },
       select: { id: true, firstName: true, lastName: true, email: true },
     })
 

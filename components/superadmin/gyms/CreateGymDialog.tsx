@@ -109,7 +109,7 @@ export function CreateGymDialog() {
           <Plus className="h-4 w-4" /> Ajouter une salle
         </Button>
       </DialogTrigger>
-      <DialogContent className="w-[min(100vw-1rem,48rem)] max-w-3xl space-y-6 overflow-y-auto rounded-2xl px-4 py-6 sm:max-h-[90vh] sm:px-8">
+      <DialogContent className="max-w-md sm:max-w-lg md:max-w-3xl w-[95vw] max-h-[90vh] overflow-y-auto space-y-6 rounded-2xl px-4 py-6 sm:px-8">
         <DialogHeader>
           <DialogTitle>Nouvelle salle</DialogTitle>
           <DialogDescription>Enregistrez une salle et son propriétaire.</DialogDescription>
@@ -359,4 +359,3 @@ export function CreateGymDialog() {
     </Dialog>
   )
 }
-

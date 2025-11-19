@@ -209,7 +209,7 @@ export default function Home() {
                     </div>
                   </div>
 
-                  <div className="absolute bottom-8 -right-8 animate-float-right">
+                  <div className="absolute top-1/3 -right-8 animate-float-right">
                     <div className="bg-primary/90 text-primary-foreground px-3 py-1 rounded-full text-xs font-semibold shadow-lg backdrop-blur-sm">
                       ✓ Temps réel
                     </div>
@@ -254,7 +254,7 @@ export default function Home() {
           </div>
         </section>
 
-                        <section id="plans" className="rounded-3xl border border-primary/10 bg-card/70 px-6 py-12 shadow-lg backdrop-blur-sm">
+        <section id="plans" className="rounded-3xl border border-primary/10 bg-card/70 px-6 py-12 shadow-lg backdrop-blur-sm">
           <div className="text-center space-y-3">
             <p className="text-sm uppercase tracking-[0.3em] text-primary/80">Plans</p>
             <h2 className="text-3xl font-bold">Deux offres, zero compromis</h2>
@@ -347,12 +347,3 @@ export default function Home() {
     </div>
   )
 }
-
-
-
-
-
-
-
-
-

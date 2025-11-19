@@ -48,6 +48,10 @@ export async function POST(request: NextRequest) {
   const isActive =
     latestSubscription !== null &&
     (status === "ACTIVE" || (status === "EXPIRES_TODAY" && latestSubscription.endDate >= now))
+  const daysRemaining =
+    latestSubscription?.endDate instanceof Date
+      ? Math.max(Math.ceil((latestSubscription.endDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)), 0)
+      : null
 
   return NextResponse.json({
     member: {
@@ -59,5 +63,6 @@ export async function POST(request: NextRequest) {
     },
     status,
     active: isActive,
+    daysRemaining,
   })
 }

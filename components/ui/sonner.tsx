@@ -1,7 +1,7 @@
 "use client"
 
 import type { CSSProperties } from "react"
-import { CircleCheckIcon, InfoIcon, Loader2Icon, OctagonXIcon, TriangleAlertIcon } from "lucide-react"
+import { CircleCheckIcon, InfoIcon, Loader2Icon, OctagonXIcon, TriangleAlertIcon } from 'lucide-react'
 import { useTheme } from "next-themes"
 import { Toaster as Sonner, type ToasterProps } from "sonner"
 
@@ -21,6 +21,18 @@ const Toaster = ({ ...props }: ToasterProps) => {
       }}
       style={
         {
+          "--success-bg": "hsl(var(--primary) / 0.15)",
+          "--success-text": "var(--primary-foreground)",
+          "--success-border": "hsl(var(--primary) / 0.5)",
+          "--error-bg": "hsl(var(--destructive) / 0.2)",
+          "--error-text": "var(--destructive-foreground)",
+          "--error-border": "hsl(var(--destructive) / 0.55)",
+          "--warning-bg": "hsl(var(--accent) / 0.18)",
+          "--warning-text": "var(--accent-foreground)",
+          "--warning-border": "hsl(var(--accent) / 0.5)",
+          "--info-bg": "hsl(var(--secondary) / 0.18)",
+          "--info-text": "var(--secondary-foreground)",
+          "--info-border": "hsl(var(--secondary) / 0.55)",
           "--normal-bg": "var(--popover)",
           "--normal-text": "var(--popover-foreground)",
           "--normal-border": "var(--border)",

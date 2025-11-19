@@ -7,7 +7,7 @@ import { useSession, signOut } from 'next-auth/react'
 import { usePathname, useRouter } from 'next/navigation'
 import { UserRole } from '@prisma/client'
 import type { LucideIcon } from 'lucide-react'
-import { LogOut, Menu, X } from 'lucide-react'
+import { LogOut, Menu, X, User } from 'lucide-react'
 import { toast } from 'sonner'
 
 import { Button } from '@/components/ui/button'
@@ -32,6 +32,13 @@ interface DashboardShellProps {
   allowedRoles?: UserRole[]
   fallbackRoute?: string
   topSlot?: ReactNode
+}
+
+const roleLabels: Record<string, string> = {
+  SUPER_ADMIN: 'Super Admin',
+  ADMIN: 'Admin',
+  OWNER: 'Propriétaire',
+  USER: 'Utilisateur',
 }
 
 export function DashboardShell({
@@ -93,6 +100,10 @@ export function DashboardShell({
   if (!session?.user || (allowedRoles?.length && !isAllowed)) {
     return null
   }
+
+  const userDisplayName = session.user.name || session.user.email || 'Utilisateur'
+  const userRole = roleLabels[session.user.role as string] || session.user.role || 'Utilisateur'
+  const userInitial = userDisplayName.charAt(0).toUpperCase()
 
   return (
     <div className="flex min-h-screen bg-background text-foreground">
@@ -171,19 +182,33 @@ export function DashboardShell({
           >
             <Menu size={22} />
           </button>
-          <div className="ml-auto flex items-center gap-3">
+          <div className="ml-auto flex items-center gap-4">
             <ThemeToggle />
-            <span className="hidden rounded-full border border-border/70 px-4 py-2 text-xs uppercase tracking-[0.3em] text-muted-foreground md:inline-flex">
-              {session.user.email}
-            </span>
+            
+            <div className="hidden flex-col items-end md:flex">
+              <p className="text-sm font-semibold text-foreground">{userDisplayName}</p>
+              <p className="text-xs text-muted-foreground">{userRole}</p>
+            </div>
+
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="outline" className="h-10 w-10 rounded-full border-border/70 bg-card text-card-foreground">
-                  {session.user.name?.charAt(0).toUpperCase()}
+                  {userInitial}
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
+              <DropdownMenuContent align="end" className="w-56">
+                <div className="flex items-center gap-3 px-2 py-3 text-sm">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10">
+                    <User size={16} className="text-primary" />
+                  </div>
+                  <div className="flex flex-col gap-0.5">
+                    <p className="font-semibold">{userDisplayName}</p>
+                    <p className="text-xs text-muted-foreground">{userRole}</p>
+                  </div>
+                </div>
+                <div className="border-t border-border/60" />
                 <DropdownMenuItem onClick={() => signOut()}>
+                  <LogOut size={16} className="mr-2" />
                   Se déconnecter
                 </DropdownMenuItem>
               </DropdownMenuContent>

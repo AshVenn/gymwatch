@@ -26,7 +26,7 @@ export function GymDetailDialog({ gymId, onClose }: Props) {
 
   return (
     <Dialog open={open} onOpenChange={(value) => !value && onClose()}>
-      <DialogContent className="w-[min(100vw-1rem,72rem)] max-w-5xl space-y-6 overflow-y-auto rounded-2xl bg-card px-4 py-6 text-card-foreground sm:max-h-[85vh] sm:px-8">
+      <DialogContent className="max-w-md sm:max-w-lg md:max-w-4xl w-[95vw] max-h-[90vh] overflow-y-auto space-y-6 rounded-2xl bg-card px-4 py-6 sm:px-8">
         {isLoading || !gym ? (
           <div className="py-12 text-center text-muted-foreground">Chargement des détails...</div>
         ) : (

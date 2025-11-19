@@ -93,7 +93,7 @@ export function EditGymDialog({ gymId, onClose }: Props) {
 
   return (
     <Dialog open={open} onOpenChange={(value) => !value && !updateGym.isPending && onClose()}>
-      <DialogContent className="sm:max-w-lg">
+      <DialogContent className="max-w-md sm:max-w-lg md:max-w-2xl w-[95vw] max-h-[90vh] overflow-y-auto rounded-2xl">
         <DialogHeader>
           <DialogTitle>Modifier la salle</DialogTitle>
           <DialogDescription>Mettez à jour les informations publiques.</DialogDescription>

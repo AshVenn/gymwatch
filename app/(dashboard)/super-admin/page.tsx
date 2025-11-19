@@ -12,7 +12,7 @@ import {
 } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Activity, AlertTriangle, Building2, Gauge, TrendingUp, Users2 } from 'lucide-react'
+import { Activity, AlertTriangle, Building2, Gauge, TrendingUp, Users2, Download } from 'lucide-react'
 import {
   CartesianGrid,
   Cell,
@@ -22,7 +22,6 @@ import {
   LineChart,
   Pie,
   PieChart,
-  PolarGrid,
   PolarRadiusAxis,
   RadialBar,
   RadialBarChart,
@@ -39,7 +38,7 @@ const currencyFormatter = new Intl.NumberFormat('fr-MA', {
   currency: 'MAD',
 })
 
-const STATUS_COLORS = ['hsl(var(--primary))', 'hsl(var(--accent))', 'hsl(var(--secondary))']
+const STATUS_COLORS = ['oklch(0.488 0.243 264.376)', 'oklch(0.967 0.001 286.375)', 'oklch(0.705 0.015 286.067)']
 
 const STATUS_LABELS: Record<string, string> = {
   ACTIVE: 'Actif',
@@ -50,7 +49,7 @@ const STATUS_LABELS: Record<string, string> = {
 const revenueChartConfig: ChartConfig = {
   revenue: {
     label: 'Revenus',
-    color: 'hsl(var(--primary))',
+    color: 'oklch(0.488 0.243 264.376)',
   },
 }
 
@@ -61,9 +60,17 @@ const statusChartConfig: ChartConfig = {
 }
 
 const radialChartConfig: ChartConfig = {
-  value: {
-    label: 'Part active',
+  active: {
+    label: 'Actives',
     color: 'hsl(var(--primary))',
+  },
+  suspended: {
+    label: 'Suspendues',
+    color: 'hsl(var(--accent))',
+  },
+  expired: {
+    label: 'Expirées',
+    color: 'hsl(var(--secondary))',
   },
 }
 
@@ -78,18 +85,43 @@ export default function SuperAdminOverviewPage() {
         format === 'excel'
           ? '/api/super-admin/reports/excel?scope=global'
           : '/api/super-admin/reports/pdf?scope=global'
+      
       const response = await fetch(endpoint)
-      if (!response.ok) throw new Error('Export impossible')
+      
+      if (!response.ok) {
+        const errorData = await response.text().catch(() => 'Erreur inconnue')
+        throw new Error(errorData || `HTTP ${response.status}: Export impossible`)
+      }
+
+      const contentType = response.headers.get('content-type')
+      const expectedType = format === 'excel' 
+        ? 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+        : 'application/pdf'
+      
+      if (!contentType?.includes(expectedType.split('/')[0])) {
+        throw new Error(`Type de fichier invalide reçu: ${contentType}`)
+      }
 
       const blob = await response.blob()
+      
+      if (blob.size === 0) {
+        throw new Error('Le fichier reçu est vide')
+      }
+
       const url = URL.createObjectURL(blob)
       const a = document.createElement('a')
       a.href = url
       a.download = `super-admin-global-${Date.now()}.${format === 'excel' ? 'xlsx' : 'pdf'}`
+      document.body.appendChild(a)
       a.click()
+      document.body.removeChild(a)
       URL.revokeObjectURL(url)
+      
+      toast.success(`Rapport ${format.toUpperCase()} téléchargé avec succès`)
     } catch (error) {
-      toast.error((error as Error).message ?? 'Erreur lors du téléchargement')
+      const message = error instanceof Error ? error.message : 'Erreur lors du téléchargement'
+      toast.error(message)
+      console.error('[PDF/Excel Export Error]', error)
     } finally {
       setDownloading(null)
     }
@@ -97,7 +129,7 @@ export default function SuperAdminOverviewPage() {
 
   if (isError) {
     return (
-      <Card>
+      <Card className="border-destructive/40">
         <CardContent className="py-10 text-center text-destructive">
           Impossible de charger les statistiques globales.
         </CardContent>
@@ -125,6 +157,20 @@ export default function SuperAdminOverviewPage() {
     ? Math.round((stats.activeGyms / stats.totalGyms) * 100)
     : 0
 
+  const radialExpired = Math.max(stats.totalGyms - stats.activeGyms - stats.suspendedGyms, 0)
+  const radialChartData = [
+    {
+      segment: 'Répartition',
+      active: stats.activeGyms,
+      suspended: stats.suspendedGyms,
+      expired: radialExpired,
+    },
+  ]
+  const totalGymsRadial = Math.max(
+    radialChartData[0].active + radialChartData[0].suspended + radialChartData[0].expired,
+    1,
+  )
+
   const revenueChartData = (stats.revenueTrend ?? []).map((point, index) => {
     const originalLabel = point.month ?? `M${index + 1}`
     const normalized = originalLabel
@@ -144,7 +190,6 @@ export default function SuperAdminOverviewPage() {
   const monthLabelLookup = new Map(revenueChartData.map((entry) => [entry.month, entry.label]))
 
   
-    
   return (
     <div className="space-y-6">
       <div>
@@ -152,24 +197,36 @@ export default function SuperAdminOverviewPage() {
         <p className="text-muted-foreground">Suivi consolidé des salles et abonnements.</p>
       </div>
 
-      <Card>
+      <Card className="border-border/70">
         <CardHeader>
           <CardTitle>Exports globaux</CardTitle>
           <CardDescription>Rapports consolidés pour toutes les salles.</CardDescription>
         </CardHeader>
         <CardContent className="flex flex-wrap gap-3">
-          <Button variant="outline" onClick={() => downloadReport('excel')} disabled={downloading === 'excel'}>
-            {downloading === 'excel' ? 'Export...' : 'Rapport Excel'}
+          <Button 
+            variant="outline" 
+            onClick={() => downloadReport('excel')} 
+            disabled={downloading === 'excel'}
+            className="gap-2"
+          >
+            <Download size={16} />
+            {downloading === 'excel' ? 'Export en cours...' : 'Rapport Excel'}
           </Button>
-          <Button variant="outline" onClick={() => downloadReport('pdf')} disabled={downloading === 'pdf'}>
-            {downloading === 'pdf' ? 'Export...' : 'Rapport PDF'}
+          <Button 
+            variant="outline" 
+            onClick={() => downloadReport('pdf')} 
+            disabled={downloading === 'pdf'}
+            className="gap-2"
+          >
+            <Download size={16} />
+            {downloading === 'pdf' ? 'Export en cours...' : 'Rapport PDF'}
           </Button>
         </CardContent>
       </Card>
 
       {/* KPI CARDS */}
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
-        <Card>
+        <Card className="border-border/70">
           <CardHeader className="pb-2">
             <CardDescription>Nombre total de salles</CardDescription>
             <CardTitle className="flex items-center gap-2 text-3xl">
@@ -179,7 +236,7 @@ export default function SuperAdminOverviewPage() {
           </CardHeader>
         </Card>
 
-        <Card>
+        <Card className="border-border/70">
           <CardHeader className="pb-2">
             <CardDescription>Abonnés actifs</CardDescription>
             <CardTitle className="flex items-center gap-2 text-3xl">
@@ -189,7 +246,7 @@ export default function SuperAdminOverviewPage() {
           </CardHeader>
         </Card>
 
-        <Card>
+        <Card className="border-border/70">
           <CardHeader className="pb-2">
             <CardDescription>Membres (toutes salles)</CardDescription>
             <CardTitle className="flex items-center gap-2 text-3xl">
@@ -199,7 +256,7 @@ export default function SuperAdminOverviewPage() {
           </CardHeader>
         </Card>
 
-        <Card>
+        <Card className="border-border/70">
           <CardHeader className="pb-2">
             <CardDescription>Revenus ce mois-ci</CardDescription>
             <CardTitle className="flex items-center gap-2 text-3xl">
@@ -212,7 +269,7 @@ export default function SuperAdminOverviewPage() {
 
       {/* LINE CHART */}
       <div className="grid gap-4 lg:grid-cols-3">
-        <Card className="lg:col-span-2">
+        <Card className="lg:col-span-2 border-border/70">
           <CardHeader className="pb-0">
             <CardTitle>Évolution des revenus</CardTitle>
             <CardDescription>Six derniers mois</CardDescription>
@@ -234,7 +291,7 @@ export default function SuperAdminOverviewPage() {
                   <Line
                     dataKey="revenue"
                     type="monotone"
-                    stroke="hsl(var(--primary))"
+                    stroke="oklch(0.488 0.243 264.376)"
                     strokeWidth={2}
                     connectNulls
                     dot={({ payload, ...props }) => (
@@ -243,8 +300,8 @@ export default function SuperAdminOverviewPage() {
                         r={5}
                         cx={props.cx}
                         cy={props.cy}
-                        fill="hsl(var(--primary))"
-                        stroke="hsl(var(--primary))"
+                        fill="oklch(0.488 0.243 264.376)"
+                        stroke="oklch(0.488 0.243 264.376)"
                       />
                     )}
                   />
@@ -259,7 +316,7 @@ export default function SuperAdminOverviewPage() {
         </Card>
 
         {/* PIE CHART */}
-        <Card>
+        <Card className="border-border/70">
           <CardHeader className="pb-0">
             <CardTitle>Répartition des statuts</CardTitle>
             <CardDescription>Salles actives vs. suspendues</CardDescription>
@@ -293,29 +350,33 @@ export default function SuperAdminOverviewPage() {
 
       {/* RADIAL CHART */}
       <div className="grid gap-4 lg:grid-cols-2">
-        <Card className="flex flex-col">
-          <CardHeader className="items-center pb-0">
+        <Card className="flex flex-col border-border/70">
+          <CardHeader className="items-center pb-0 text-center">
             <CardTitle>Taux de salles actives</CardTitle>
             <CardDescription>Sur l'ensemble du parc</CardDescription>
           </CardHeader>
-          <CardContent className="flex-1 pb-0">
-            <ChartContainer config={radialChartConfig} className="mx-auto aspect-square max-h-[260px]">
-              <RadialBarChart
-                data={[{ segment: 'actives', value: activeShare, fill: 'hsl(var(--primary))' }]}
-                endAngle={120}
-                innerRadius={80}
-                outerRadius={140}
-              >
-                <PolarGrid gridType="circle" radialLines={false} stroke="none" />
-                <RadialBar dataKey="value" background cornerRadius={8} />
-                <PolarRadiusAxis tick={false} axisLine={false}>
+          <CardContent className="flex flex-1 items-center pb-0">
+            <ChartContainer config={radialChartConfig} className="mx-auto aspect-square w-full max-w-[280px]">
+              <RadialBarChart data={radialChartData} endAngle={180} innerRadius={80} outerRadius={130}>
+                <ChartTooltip cursor={false} content={<ChartTooltipContent hideLabel />} />
+                <PolarRadiusAxis tick={false} tickLine={false} axisLine={false}>
                   <Label
                     content={({ viewBox }) => {
-                      if (!viewBox || !('cx' in viewBox)) return null
+                      if (!viewBox || !('cx' in viewBox) || !('cy' in viewBox)) return null
                       return (
                         <text x={viewBox.cx} y={viewBox.cy} textAnchor="middle">
-                          <tspan className="fill-foreground text-4xl font-bold">{activeShare}%</tspan>
-                          <tspan className="fill-muted-foreground" x={viewBox.cx} y={(viewBox.cy || 0) + 24}>
+                          <tspan
+                            x={viewBox.cx}
+                            y={(viewBox.cy || 0) - 10}
+                            className="fill-foreground text-4xl font-bold"
+                          >
+                            {activeShare}%
+                          </tspan>
+                          <tspan
+                            x={viewBox.cx}
+                            y={(viewBox.cy || 0) + 16}
+                            className="fill-muted-foreground text-sm"
+                          >
                             Actives
                           </tspan>
                         </text>
@@ -323,19 +384,53 @@ export default function SuperAdminOverviewPage() {
                     }}
                   />
                 </PolarRadiusAxis>
+                <RadialBar
+                  dataKey="active"
+                  stackId="share"
+                  cornerRadius={8}
+                  fill="hsl(var(--primary))"
+                  className="stroke-transparent stroke-2"
+                />
+                <RadialBar
+                  dataKey="suspended"
+                  stackId="share"
+                  cornerRadius={8}
+                  fill="hsl(var(--accent))"
+                  className="stroke-transparent stroke-2"
+                />
+                <RadialBar
+                  dataKey="expired"
+                  stackId="share"
+                  cornerRadius={8}
+                  fill="hsl(var(--secondary))"
+                  className="stroke-transparent stroke-2"
+                />
               </RadialBarChart>
             </ChartContainer>
           </CardContent>
-          <CardFooter className="flex-col gap-2 text-sm text-muted-foreground">
+          <CardFooter className="grid gap-2 text-sm text-muted-foreground">
             <div className="flex items-center gap-2">
-              <span className="font-medium text-foreground">{stats.activeGyms}</span> salles actives actuellement
+              <span className="inline-flex size-2 rounded-full bg-primary" />
+              <span className="text-foreground font-medium">{stats.activeGyms}</span>
+              <span>actives</span>
             </div>
-            <div>Objectif : maintenir plus de 80% d'activité.</div>
+            <div className="flex items-center gap-2">
+              <span className="inline-flex size-2 rounded-full bg-accent" />
+              <span className="text-foreground font-medium">{stats.suspendedGyms}</span>
+              <span>suspendues</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="inline-flex size-2 rounded-full bg-secondary" />
+              <span className="text-foreground font-medium">{radialExpired}</span>
+              <span>expirees</span>
+            </div>
+            <div className="text-xs text-muted-foreground">
+              Objectif : maintenir plus de 80% d'activite sur {totalGymsRadial} salles.
+            </div>
           </CardFooter>
         </Card>
-
         {/* EXPIRING GYMS */}
-        <Card>
+        <Card className="border-border/70">
           <CardHeader className="flex flex-row items-center justify-between">
             <div>
               <CardTitle>Abonnements proches d'échéance</CardTitle>
@@ -350,7 +445,7 @@ export default function SuperAdminOverviewPage() {
               stats.expiringGyms.map((gym) => (
                 <div
                   key={gym.id}
-                  className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-border/60 p-3"
+                  className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-border/60 p-3 hover:bg-muted/50 transition"
                 >
                   <div>
                     <p className="font-medium">{gym.name}</p>

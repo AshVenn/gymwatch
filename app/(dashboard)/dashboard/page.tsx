@@ -75,10 +75,9 @@ export default function DashboardPage() {
   })
   const expiringSoon = (stats.expiringSoon ?? []) as DashboardStats['expiringSoon']
   const [expiringPage, setExpiringPage] = useState(1)
-    useEffect(() => {
+  useEffect(() => {
     setExpiringPage(1)
   }, [expiringSoon.length])
-
 
   if (isLoading) {
     return <div className="text-center py-10">Chargement des statistiques...</div>
@@ -92,18 +91,23 @@ export default function DashboardPage() {
     )
   }
 
-  const COLORS = ['hsl(var(--primary))', 'hsl(var(--accent))', 'oklch(var(--chart-3))', 'oklch(var(--chart-4))']
   const planDistribution = (stats.planDistribution ?? []) as DashboardStats['planDistribution']
  
   const expiringPageSize = 5
   const expiringPageCount = Math.max(1, Math.ceil(Math.max(expiringSoon.length, 1) / expiringPageSize))
   const visibleExpiring = expiringSoon.slice((expiringPage - 1) * expiringPageSize, expiringPage * expiringPageSize)
 
+  const computedColors = [
+    'oklch(0.488 0.243 264.376)',
+    'oklch(0.967 0.001 286.375)',
+    'oklch(0.552 0.016 285.938)',
+    'oklch(0.92 0.004 286.32)',
+  ]
 
   const revenueChartConfig: ChartConfig = {
     revenue: {
       label: 'Revenus',
-      color: 'var(--chart-2)',
+      color: 'oklch(0.488 0.243 264.376)',
     },
   }
 
@@ -224,16 +228,17 @@ export default function DashboardPage() {
                   <Line
                     type="natural"
                     dataKey="revenue"
-                    stroke="hsl(var(--primary))"
+                    stroke="oklch(0.488 0.243 264.376)"
                     strokeWidth={2}
                     connectNulls
                     dot={(props) => (
                       <Dot
+                        key={`revenue-dot-${props.payload?.month ?? props.cx ?? props.cy}`}
                         r={5}
                         cx={props.cx}
                         cy={props.cy}
-                        fill="hsl(var(--primary))"
-                        stroke="hsl(var(--primary))"
+                        fill="oklch(0.488 0.243 264.376)"
+                        stroke="oklch(0.488 0.243 264.376)"
                       />
                     )}
                   />
@@ -264,7 +269,7 @@ export default function DashboardPage() {
                     nameKey="name"
                   >
                     {planDistribution.map((entry, index) => (
-                      <Cell key={`${entry.name}-${index}`} fill={COLORS[index % COLORS.length]} />
+                      <Cell key={`${entry.name}-${index}`} fill={computedColors[index % computedColors.length]} />
                     ))}
                   </Pie>
                   <ChartTooltip content={<ChartTooltipContent hideLabel />} />
@@ -291,6 +296,14 @@ export default function DashboardPage() {
             </p>
           ) : (
             <>
+              <div className="flex flex-wrap items-center justify-between gap-3 text-sm text-muted-foreground mb-4">
+                <span>
+                  {expiringSoon.length} abonnement{expiringSoon.length > 1 ? 's' : ''} total
+                </span>
+                <span className="text-xs uppercase tracking-[0.3em] text-muted-foreground">
+                  Page {expiringPage} / {expiringPageCount}
+                </span>
+              </div>
               <div className="space-y-3">
                 {visibleExpiring.map((subscription) => (
                   <div key={subscription.id} className="flex justify-between items-center p-3 bg-muted/50 rounded-lg border border-border/50">

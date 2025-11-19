@@ -52,6 +52,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import { PaginationControls, usePagination } from '@/components/dashboard/pagination-controls'
 import { usePlanFeatures } from '@/app/hooks/use-plan-features'
+import { QrSuccessErrorAnimation } from '@/components/dashboard/qr-success-error-animation'
 
 const Scanner = dynamic<IScannerProps>(
   () => import('@yudiel/react-qr-scanner').then((mod) => mod.Scanner),
@@ -96,7 +97,7 @@ export default function MembersPage() {
   const [qrMember, setQrMember] = useState<Member | null>(null)
   const [qrImage, setQrImage] = useState<string>('')
   const [scannerEnabled, setScannerEnabled] = useState(false)
-  const [scanStatus, setScanStatus] = useState<{ status: 'success' | 'error'; message: string } | null>(null)
+  const [scanStatus, setScanStatus] = useState<{ status: 'success' | 'error'; message: string; memberName: string; daysRemaining?: number } | null>(null)
   const lastTokenRef = useRef<string | null>(null)
   const audioRef = useRef<AudioContext | null>(null)
   const [memberReportLoading, setMemberReportLoading] = useState<string | null>(null)
@@ -151,21 +152,35 @@ export default function MembersPage() {
       const payload = await response.json()
       const fullName = `${payload.member?.firstName ?? ''} ${payload.member?.lastName ?? ''}`.trim()
       const success = Boolean(payload.active)
+      const daysRemaining = payload.daysRemaining ?? 0
       setScanStatus({
         status: success ? 'success' : 'error',
-        message: success
-          ? `Acces valide pour ${fullName || 'ce membre'}.`
-          : `Abonnement inactif pour ${fullName || 'ce membre'}.`,
+        message: success ? 'Acces valide' : 'Abonnement inactif',
+        memberName: fullName || 'Membre inconnu',
+        daysRemaining: success ? daysRemaining : undefined,
       })
       playTone(success ? 880 : 240)
     } catch {
-      setScanStatus({ status: 'error', message: 'QR invalide ou membre introuvable.' })
+      setScanStatus({ status: 'error', message: 'QR invalide ou membre introuvable', memberName: 'Erreur' })
       playTone(180)
     } finally {
       setTimeout(() => {
         lastTokenRef.current = null
       }, 1500)
-    }}
+    }
+  }
+
+  const handleScannerError = (error: unknown) => {
+    console.error(error)
+    const permissionDenied = error instanceof Error && error.name === 'NotAllowedError'
+    setScanStatus({
+      status: 'error',
+      memberName: 'Scanner QR',
+      message: permissionDenied ? 'Permission camera refusee' : 'Erreur lors du scan',
+    })
+    setScannerEnabled(false)
+    playTone(160)
+  }
 
   const toggleScanner = () => setScannerEnabled((prev) => !prev)
 
@@ -184,10 +199,11 @@ export default function MembersPage() {
       anchor.click()
       URL.revokeObjectURL(url)
     } catch {
-      toast.error('Impossible de telecharger le rapport membre')
+      toast.error('Impossible de télécharger le rapport membre')
     } finally {
       setMemberReportLoading(null)
-    }}
+    }
+  }
 
   const downloadQrImage = () => {
     if (!qrMember || !qrImage) return
@@ -273,22 +289,21 @@ export default function MembersPage() {
 
       return data
     },
-        onSuccess: () => {
-          queryClient.invalidateQueries({ queryKey: membersQueryKey })
-          setIsOpen(false)
-          setFormData({
-            firstName: '',
-            lastName: '',
-            email: '',
-            phone: '',
-            planId: 'none',
-            startDate: '',
-          })
-          setEditingId(null)
-          setError(null)
-          toast.success(editingId ? 'Membre mis à jour avec succès' : 'Nouveau membre ajouté !')
-        },
-
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: membersQueryKey })
+      setIsOpen(false)
+      setFormData({
+        firstName: '',
+        lastName: '',
+        email: '',
+        phone: '',
+        planId: 'none',
+        startDate: '',
+      })
+      setEditingId(null)
+      setError(null)
+      toast.success(editingId ? 'Membre mis à jour avec succès' : 'Nouveau membre ajouté !')
+    },
     onError: (err) => {
       const message = err instanceof Error ? err.message : 'Erreur lors de la sauvegarde.'
       setError(message)
@@ -309,7 +324,7 @@ export default function MembersPage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: membersQueryKey })
-      toast.success('Membre supprime avec succes')
+      toast.success('Membre supprimé avec succès')
       setMemberToDelete(null)
     },
     onError: (err) => {
@@ -367,6 +382,14 @@ export default function MembersPage() {
 
   return (
     <div className="space-y-6">
+      <QrSuccessErrorAnimation
+        status={scanStatus?.status ?? null}
+        memberName={scanStatus?.memberName ?? ''}
+        message={scanStatus?.message ?? ''}
+        daysRemaining={scanStatus?.daysRemaining}
+        onClose={() => setScanStatus(null)}
+      />
+
       {(error || membersError) && (
         <div className="text-red-500 font-medium">
           {error || 'Impossible de charger les membres.'}
@@ -381,15 +404,15 @@ export default function MembersPage() {
           </p>
         </div>
 
-      <Dialog open={isOpen} onOpenChange={setIsOpen}>
-        <DialogTrigger asChild>
-          <Button onClick={handleAddMember}>
-            <Plus className="mr-2" size={20} />
-            Ajouter un membre
-          </Button>
-        </DialogTrigger>
+        <Dialog open={isOpen} onOpenChange={setIsOpen}>
+          <DialogTrigger asChild>
+            <Button onClick={handleAddMember}>
+              <Plus className="mr-2" size={20} />
+              Ajouter un membre
+            </Button>
+          </DialogTrigger>
 
-          <DialogContent>
+          <DialogContent className="max-w-md sm:max-w-lg md:max-w-2xl w-[95vw] max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>
                 {editingId ? 'Modifier le membre' : 'Ajouter un membre'}
@@ -445,23 +468,22 @@ export default function MembersPage() {
               {/* PLAN */}
               <div>
                 <Label htmlFor="member-plan">Plan</Label>
-                  <Select
-                    value={formData.planId}
-                    onValueChange={(value) => setFormData({ ...formData, planId: value })}
-                  >
-                    <SelectTrigger id="member-plan">
-                      <SelectValue placeholder="Aucun" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="none">Aucun</SelectItem>
-                      {plans.map((plan) => (
-                        <SelectItem key={plan.id} value={plan.id}>
-                          {plan.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-
+                <Select
+                  value={formData.planId}
+                  onValueChange={(value) => setFormData({ ...formData, planId: value })}
+                >
+                  <SelectTrigger id="member-plan">
+                    <SelectValue placeholder="Aucun" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">Aucun</SelectItem>
+                    {plans.map((plan) => (
+                      <SelectItem key={plan.id} value={plan.id}>
+                        {plan.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
 
               {/* START DATE */}
@@ -495,7 +517,7 @@ export default function MembersPage() {
             <div>
               <p className="text-lg font-semibold">QR codes membres</p>
               <p className="text-sm text-muted-foreground">
-                Scannez un membre pour verifier instantanement son abonnement.
+                Scannez un membre pour vérifier instantanément son abonnement.
               </p>
             </div>
             <Button variant="outline" onClick={toggleScanner}>
@@ -505,52 +527,49 @@ export default function MembersPage() {
           {scannerEnabled && (
             <div className="mt-4 grid gap-4 lg:grid-cols-[320px,1fr]">
               <div className="rounded-xl border bg-black/80 p-2">
-                  <Scanner
-                    onScan={(results) => handleScan(results[0]?.rawValue ?? null)}
-                    onError={(error) => console.error(error)}
-                    styles={{
-                      container: {
-                        width: "100%",
-                      },
-                    }}
-                  />
+                <Scanner
+                  onScan={(results) => handleScan(results[0]?.rawValue ?? null)}
+                  onError={handleScannerError}
+                  styles={{
+                    container: {
+                      width: "100%",
+                    },
+                  }}
+                />
               </div>
               <div className="rounded-xl border bg-background/80 p-4">
-                {scanStatus ? (
-                  <div
-                    className={`rounded-lg border px-4 py-3 text-sm font-semibold ${
-                      scanStatus.status === 'success'
-                        ? 'border-emerald-300 bg-emerald-50 text-emerald-900'
-                        : 'border-red-300 bg-red-50 text-red-900'
-                    }`}
-                  >
-                    {scanStatus.message}
-                  </div>
-                ) : (
-                  <p className="text-sm text-muted-foreground">
-                    Positionnez un QR code devant la camera pour voir le resultat du scan.
-                  </p>
-                )}
+                <p className="text-sm text-muted-foreground">
+                  Positionnez un QR code devant la caméra pour voir le résultat du scan.
+                </p>
               </div>
             </div>
           )}
         </div>
       ) : (
         <div className="rounded-2xl border border-dashed border-amber-300/60 bg-amber-500/10 p-4 text-sm text-amber-900">
-          L'outil de generation et de scan de QR codes est reserve au plan Pro.
+          L'outil de génération et de scan de QR codes est réservé au plan Pro.
         </div>
       )}
 
-      
       <div className="rounded-2xl border border-border/70 bg-card">
         <div className="overflow-x-auto">
+          {memberPagination.data.length > 0 && (
+            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border/60 px-6 py-4 text-sm text-muted-foreground">
+              <span>
+                {members.length} membre{members.length > 1 ? 's' : ''} total
+              </span>
+              <span className="text-xs uppercase tracking-[0.3em] text-muted-foreground">
+                Page {memberPagination.page} / {memberPagination.pageCount}
+              </span>
+            </div>
+          )}
           <Table>
             <TableHeader>
               <TableRow className="bg-muted/60 text-muted-foreground">
-                <TableHead>Pr?nom</TableHead>
+                <TableHead>Prénom</TableHead>
                 <TableHead>Nom</TableHead>
                 <TableHead>Email</TableHead>
-                <TableHead>T?l?phone</TableHead>
+                <TableHead>Téléphone</TableHead>
                 <TableHead>Date d'inscription</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
               </TableRow>
@@ -583,7 +602,7 @@ export default function MembersPage() {
                           onSelect={(event) => {
                             event.preventDefault()
                             if (!hasQrTools) {
-                              toast.error('QR code reserve au plan Pro')
+                              toast.error('QR code réservé au plan Pro')
                               return
                             }
                             setQrMember(member)
@@ -628,7 +647,7 @@ export default function MembersPage() {
       </div>
 
       <Dialog open={Boolean(qrMember)} onOpenChange={(open) => !open && setQrMember(null)}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-md sm:max-w-lg w-[95vw]">
           <DialogHeader>
             <DialogTitle>QR membre</DialogTitle>
             <DialogDescription>
@@ -637,16 +656,16 @@ export default function MembersPage() {
           </DialogHeader>
           <div className="flex flex-col items-center gap-4">
             {qrImage ? (
-              <img src={qrImage} alt="QR membre" className="rounded-xl border bg-white p-3" />
+              <img src={qrImage || "/placeholder.svg"} alt="QR membre" className="rounded-xl border bg-white p-3" />
             ) : (
-              <p className="text-sm text-muted-foreground">Generation du QR en cours...</p>
+              <p className="text-sm text-muted-foreground">Génération du QR en cours...</p>
             )}
             {qrMember && (
               <p className="text-xs text-muted-foreground break-all">Token: {qrMember.qrToken}</p>
             )}
             {hasQrDownloads && (
               <Button onClick={downloadQrImage} disabled={!qrImage}>
-                Telecharger le QR
+                Télécharger le QR
               </Button>
             )}
           </div>
@@ -660,12 +679,12 @@ export default function MembersPage() {
           }
         }}
       >
-        <AlertDialogContent>
+        <AlertDialogContent className="max-w-md sm:max-w-lg w-[95vw]">
           <AlertDialogHeader>
             <AlertDialogTitle>Supprimer le membre</AlertDialogTitle>
             <AlertDialogDescription>
               {memberToDelete
-                ? `Cette action supprimera ${memberToDelete.firstName} ${memberToDelete.lastName}. Les abonnements actifs resteront conserves.`
+                ? `Cette action supprimera ${memberToDelete.firstName} ${memberToDelete.lastName}. Les abonnements actifs resteront conservés.`
                 : 'Confirmez la suppression du membre.'}
             </AlertDialogDescription>
           </AlertDialogHeader>

@@ -51,7 +51,7 @@ export function DeleteGymDialog({ gym, onClose }: Props) {
         }
       }}
     >
-      <AlertDialogContent>
+      <AlertDialogContent className="max-w-md sm:max-w-lg w-[95vw]">
         <AlertDialogHeader>
           <AlertDialogTitle>Supprimer la salle</AlertDialogTitle>
           <AlertDialogDescription className="space-y-3 text-left">

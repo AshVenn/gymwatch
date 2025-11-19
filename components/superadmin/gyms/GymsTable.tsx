@@ -160,7 +160,17 @@ export function GymsTable({ gyms, isLoading, pagination, totalItems, onAction }:
         </TableBody>
       </Table>
 
-      <div className="border-t border-border/70 px-4 py-3">
+      <div className="border-t border-border/70 px-4 py-4">
+        {gyms.length > 0 && (
+          <div className="flex flex-wrap items-center justify-between gap-3 mb-4 text-sm text-muted-foreground">
+            <span>
+              {totalItems} salle{totalItems > 1 ? 's' : ''} total
+            </span>
+            <span className="text-xs uppercase tracking-[0.3em]">
+              Page {pagination.page} / {pagination.pageCount}
+            </span>
+          </div>
+        )}
         <PaginationControls
           page={pagination.page}
           pageCount={pagination.pageCount}

@@ -75,7 +75,9 @@
     "tailwindcss-animate": "^1.0.7",
     "url": "0.11.4",
     "xlsx": "^0.18.5",
-    "zod": "3.25.76"
+    "zod": "3.25.76",
+    "fs": "0.0.1-security",
+    "framer-motion": "12.23.24"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4.1.9",

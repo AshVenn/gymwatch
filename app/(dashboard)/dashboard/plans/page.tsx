@@ -215,7 +215,7 @@ export default function PlansPage() {
       </Card>
 
       <Dialog open={isOpen} onOpenChange={setIsOpen}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-md sm:max-w-lg w-[95vw]">
           <DialogHeader>
             <DialogTitle>{editingId ? 'Modifier le plan' : 'Ajouter un plan'}</DialogTitle>
           </DialogHeader>
@@ -284,6 +284,16 @@ export default function PlansPage() {
         </div>
       ) : (
         <div className="rounded-3xl border border-border/70 bg-card">
+          {planPagination.data.length > 0 && (
+            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border/60 px-6 py-4 text-sm text-muted-foreground">
+              <span>
+                {plans.length} plan{plans.length > 1 ? 's' : ''} trouvé{plans.length > 1 ? 's' : ''}
+              </span>
+              <span className="text-xs uppercase tracking-[0.3em] text-muted-foreground">
+                Page {planPagination.page} / {planPagination.pageCount}
+              </span>
+            </div>
+          )}
           <Table>
             <TableHeader>
               <TableRow className="bg-muted/50 text-muted-foreground">

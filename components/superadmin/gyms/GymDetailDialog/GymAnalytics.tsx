@@ -1,13 +1,13 @@
 ﻿import type { SuperAdminGymDetail } from '@/app/(dashboard)/super-admin/hooks'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { ChartContainer, ChartTooltip, ChartTooltipContent, type ChartConfig } from '@/components/ui/chart'
-import { ResponsiveContainer, LineChart, Line, CartesianGrid, PieChart, Pie, Cell, Dot } from 'recharts'
+import { ResponsiveContainer, LineChart, Line, CartesianGrid, XAxis, YAxis, PieChart, Pie, Cell } from 'recharts'
 
 const STATUS_COLORS: Record<string, string> = {
-  ACTIVE: 'hsl(var(--primary))',
-  SUSPENDED: 'hsl(var(--accent))',
-  EXPIRED: 'hsl(var(--secondary))',
-  EXPIRES_TODAY: 'hsl(var(--accent))',
+  ACTIVE: 'oklch(0.69 0.22 267.04)',
+  SUSPENDED: 'oklch(0.704 0.191 22.216)',
+  EXPIRED: 'oklch(0.61 0.16 292.64)',
+  EXPIRES_TODAY: 'oklch(0.704 0.191 22.216)',
 }
 
 const STATUS_LABELS: Record<string, string> = {
@@ -21,7 +21,7 @@ const STATUS_LABELS: Record<string, string> = {
 const expiryChartConfig: ChartConfig = {
   value: {
     label: 'Expirations',
-    color: 'hsl(var(--accent))',
+    color: 'oklch(0.69 0.22 267.04)',
   },
 }
 
@@ -71,7 +71,7 @@ export function GymAnalytics({ gym }: Props) {
   const statusChartData = statusBreakdown.map((entry) => ({
     ...entry,
     label: STATUS_LABELS[entry.status] ?? entry.status,
-    fill: STATUS_COLORS[entry.status] ?? 'hsl(var(--secondary))',
+    fill: STATUS_COLORS[entry.status] ?? 'oklch(0.61 0.16 292.64)',
   }))
 
   return (
@@ -84,27 +84,22 @@ export function GymAnalytics({ gym }: Props) {
         <CardContent>
           <ChartContainer config={expiryChartConfig}>
             <ResponsiveContainer width="100%" height={240}>
-              <LineChart data={expiryTrend.map((item) => ({ ...item, fill: 'hsl(var(--primary))' }))} margin={{ left: 16, right: 16 }}>
+              <LineChart data={expiryTrend} margin={{ left: 16, right: 16, top: 16, bottom: 16 }}>
                 <CartesianGrid vertical={false} strokeDasharray="3 3" />
+                <XAxis dataKey="label" />
+                <YAxis />
                 <ChartTooltip
                   cursor={false}
-                  content={<ChartTooltipContent  hideLabel />}
+                  content={<ChartTooltipContent hideLabel />}
                 />
                 <Line
                   dataKey="value"
                   type="natural"
-                  stroke="hsl(var(--primary))"
+                  stroke="oklch(0.69 0.22 267.04)"
                   strokeWidth={2}
                   connectNulls
-                  dot={({ payload, ...props }) => (
-                    <Dot
-                      key={payload.label}
-                      r={5}
-                      cx={props.cx}
-                      cy={props.cy}
-                      fill="hsl(var(--primary))"
-                      stroke="hsl(var(--primary))"
-                    />
+                  dot={({ cx, cy }) => (
+                    <circle cx={cx} cy={cy} r={5} fill="oklch(0.69 0.22 267.04)" stroke="oklch(0.69 0.22 267.04)" />
                   )}
                 />
               </LineChart>
@@ -122,7 +117,13 @@ export function GymAnalytics({ gym }: Props) {
           <ChartContainer config={statusChartConfig}>
             <ResponsiveContainer width="100%" height={240}>
               <PieChart>
-                <Pie data={statusChartData} dataKey="value" nameKey="label" innerRadius={60} label>
+                <Pie 
+                  data={statusChartData} 
+                  dataKey="value" 
+                  nameKey="label" 
+                  innerRadius={60} 
+                  label
+                >
                   {statusChartData.map((entry) => (
                     <Cell key={entry.status} fill={entry.fill} />
                   ))}

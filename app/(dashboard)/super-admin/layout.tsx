@@ -1,8 +1,7 @@
 'use client'
 
 import { BarChart3, Building, Settings } from 'lucide-react'
-import { DashboardShell, NavigationItem } from '@/components/dashboard/dashboard-shell'
-import { UserRole } from '@prisma/client'
+import { DashboardShell, NavigationItem, UserRole } from '@/components/dashboard/dashboard-shell'
 
 const navigationItems: NavigationItem[] = [
   { href: '/super-admin', label: "Vue d'ensemble", icon: BarChart3 },

@@ -1,8 +1,7 @@
 'use client'
 
 import { Calendar, Layers, LayoutGrid, Settings, Users } from 'lucide-react'
-import { DashboardShell, NavigationItem } from '@/components/dashboard/dashboard-shell'
-import { UserRole } from '@prisma/client'
+import { DashboardShell, NavigationItem, UserRole } from '@/components/dashboard/dashboard-shell'
 import { SubscriptionBanner } from '@/components/dashboard/subscription-banner'
 
 const navigationItems: NavigationItem[] = [

@@ -5,7 +5,6 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { useSession, signOut } from 'next-auth/react'
 import { usePathname, useRouter } from 'next/navigation'
-import { UserRole } from '@prisma/client'
 import type { LucideIcon } from 'lucide-react'
 import { LogOut, Menu, X, User } from 'lucide-react'
 import { toast } from 'sonner'
@@ -19,6 +18,14 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { ThemeToggle } from '@/components/theme-toggle'
 import { cn } from '@/lib/utils'
+
+export const UserRole = {
+  SUPER_ADMIN: 'SUPER_ADMIN',
+  GYM_OWNER: 'GYM_OWNER',
+  GYM_ADMIN: 'GYM_ADMIN',
+} as const
+
+export type UserRole = (typeof UserRole)[keyof typeof UserRole]
 
 export type NavigationItem = {
   href: string

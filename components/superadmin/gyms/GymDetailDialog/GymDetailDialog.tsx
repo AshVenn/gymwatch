@@ -26,21 +26,19 @@ export function GymDetailDialog({ gymId, onClose }: Props) {
 
   return (
     <Dialog open={open} onOpenChange={(value) => !value && onClose()}>
-      <DialogContent className="max-w-5xl space-y-6 bg-card text-card-foreground sm:max-h-[85vh] sm:overflow-y-auto">
+      <DialogContent className="w-[min(100vw-1rem,72rem)] max-w-5xl space-y-6 overflow-y-auto rounded-2xl bg-card px-4 py-6 text-card-foreground sm:max-h-[85vh] sm:px-8">
         {isLoading || !gym ? (
-          <div className="py-12 text-center text-muted-foreground">
-            Chargement des détails…
-          </div>
+          <div className="py-12 text-center text-muted-foreground">Chargement des détails...</div>
         ) : (
           <>
-            <DialogHeader>
+            <DialogHeader className="space-y-3">
               <DialogTitle>{gym.name}</DialogTitle>
 
-              <DialogDescription>
+              <DialogDescription className="text-pretty text-sm">
                 {gym.city ?? 'Localisation inconnue'}
-                {gym.country ? `, ${gym.country}` : ''} • Plan{' '}
-                {PLAN_LABEL[gym.subscriptionPlan] ?? gym.subscriptionPlan} •{' '}
-                {INTERVAL_LABEL[gym.billingInterval] ?? gym.billingInterval} •{' '}
+                {gym.country ? `, ${gym.country}` : ''} {' - '}
+                Plan {PLAN_LABEL[gym.subscriptionPlan] ?? gym.subscriptionPlan} {' - '}
+                {INTERVAL_LABEL[gym.billingInterval] ?? gym.billingInterval} {' - '}
                 {gym.subscriptionPrice.toLocaleString('fr-MA', {
                   style: 'currency',
                   currency: 'MAD',

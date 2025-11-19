@@ -39,7 +39,7 @@ const currencyFormatter = new Intl.NumberFormat('fr-MA', {
   currency: 'MAD',
 })
 
-const STATUS_COLORS = ['hsl(var(--primary))', 'hsl(var(--accent))', 'oklch(var(--chart-3))']
+const STATUS_COLORS = ['hsl(var(--primary))', 'hsl(var(--accent))', 'hsl(var(--secondary))']
 
 const STATUS_LABELS: Record<string, string> = {
   ACTIVE: 'Actif',
@@ -50,7 +50,7 @@ const STATUS_LABELS: Record<string, string> = {
 const revenueChartConfig: ChartConfig = {
   revenue: {
     label: 'Revenus',
-    color: 'var(--chart-2)',
+    color: 'hsl(var(--primary))',
   },
 }
 
@@ -63,6 +63,7 @@ const statusChartConfig: ChartConfig = {
 const radialChartConfig: ChartConfig = {
   value: {
     label: 'Part active',
+    color: 'hsl(var(--primary))',
   },
 }
 
@@ -123,6 +124,24 @@ export default function SuperAdminOverviewPage() {
   const activeShare = stats.totalGyms
     ? Math.round((stats.activeGyms / stats.totalGyms) * 100)
     : 0
+
+  const revenueChartData = (stats.revenueTrend ?? []).map((point, index) => {
+    const originalLabel = point.month ?? `M${index + 1}`
+    const normalized = originalLabel
+      .normalize('NFD')
+      .replace(/\p{Diacritic}/gu, '')
+      .replace(/\./g, '')
+      .trim()
+      .toUpperCase()
+    const monthKey = normalized || `M${index + 1}`
+
+    return {
+      month: monthKey,
+      label: originalLabel,
+      revenue: point.revenue ?? 0,
+    }
+  })
+  const monthLabelLookup = new Map(revenueChartData.map((entry) => [entry.month, entry.label]))
 
   
     
@@ -201,21 +220,14 @@ export default function SuperAdminOverviewPage() {
           <CardContent>
             <ChartContainer config={revenueChartConfig}>
               <ResponsiveContainer width="100%" height={320}>
-                <LineChart
-                  data={stats.revenueTrend.map((point) => ({
-                    ...point,
-                    fill: 'hsl(var(--primary))',
-                  }))}
-                  margin={{ top: 24, left: 24, right: 24 }}
-                >
+                <LineChart data={revenueChartData} margin={{ top: 24, left: 24, right: 24 }}>
                   <CartesianGrid vertical={false} strokeDasharray="3 3" />
                   <XAxis
                     dataKey="month"
                     tickLine={false}
                     axisLine={false}
                     tickMargin={8}
-                    tickFormatter={(value) => value}
-
+                    tickFormatter={(value) => monthLabelLookup.get(String(value)) ?? String(value)}
                   />
                   <YAxis />
                   <ChartTooltip cursor={false} content={<ChartTooltipContent hideLabel />} />
@@ -289,7 +301,7 @@ export default function SuperAdminOverviewPage() {
           <CardContent className="flex-1 pb-0">
             <ChartContainer config={radialChartConfig} className="mx-auto aspect-square max-h-[260px]">
               <RadialBarChart
-                data={[{ segment: 'actives', value: activeShare, fill: 'var(--chart-1)' }]}
+                data={[{ segment: 'actives', value: activeShare, fill: 'hsl(var(--primary))' }]}
                 endAngle={120}
                 innerRadius={80}
                 outerRadius={140}

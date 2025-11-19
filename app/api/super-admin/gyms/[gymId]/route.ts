@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth"
 import { z, ZodError } from "zod"
 import { authOptions } from "@/lib/auth-middleware"
 import {
+  deleteGymFromSuperAdmin,
   getSuperAdminGymDetail,
   updateGymFromSuperAdmin,
 } from "@/lib/super-admin"
@@ -90,6 +91,38 @@ export async function PATCH(
     console.error("[super-admin][gyms][PATCH]", error)
     return NextResponse.json(
       { error: "Unable to update subscription" },
+      { status: 500 },
+    )
+  }
+}
+
+export async function DELETE(
+  _req: Request,
+  { params }: { params: { gymId: string } },
+) {
+  const session = await ensureSuperAdmin()
+  if (!session) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 403 })
+  }
+
+  try {
+    await deleteGymFromSuperAdmin(params.gymId)
+    return NextResponse.json({ success: true })
+  } catch (error) {
+    if (error instanceof Error) {
+      if (error.message === "NOT_FOUND") {
+        return NextResponse.json({ error: "Not found" }, { status: 404 })
+      }
+      if (error.message === "ACTIVE_GYM") {
+        return NextResponse.json(
+          { error: "Cette salle est toujours active" },
+          { status: 409 },
+        )
+      }
+    }
+    console.error("[super-admin][gyms][DELETE]", error)
+    return NextResponse.json(
+      { error: "Unable to delete gym" },
       { status: 500 },
     )
   }

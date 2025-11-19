@@ -438,3 +438,36 @@ export async function createGymAdminAccount(gymId: string, data: { email: string
 
   return admin
 }
+
+export async function deleteGymFromSuperAdmin(gymId: string) {
+  return prisma.$transaction(async (tx) => {
+    const gym = await tx.gym.findUnique({
+      where: { id: gymId },
+      select: { id: true, subscriptionStatus: true, ownerId: true },
+    })
+
+    if (!gym) {
+      throw new Error("NOT_FOUND")
+    }
+
+    if (gym.subscriptionStatus === GymSubscriptionStatus.ACTIVE) {
+      throw new Error("ACTIVE_GYM")
+    }
+
+    await tx.subscription.deleteMany({ where: { gymId } })
+    await tx.payment.deleteMany({ where: { gymId } })
+    await tx.member.deleteMany({ where: { gymId } })
+    await tx.membershipPlan.deleteMany({ where: { gymId } })
+
+    await tx.user.deleteMany({
+      where: {
+        OR: [
+          { gymId },
+          ...(gym.ownerId ? [{ id: gym.ownerId }] : []),
+        ],
+      },
+    })
+
+    await tx.gym.delete({ where: { id: gymId } })
+  })
+}

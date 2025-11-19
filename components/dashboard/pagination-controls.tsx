@@ -20,7 +20,7 @@ export function usePagination<T>(items: readonly T[], pageSize = 10) {
     setPage(Math.min(Math.max(next, 1), pageCount))
   }
 
-  return { page, pageCount, data, setPage: goToPage }
+  return { page, pageCount, pageSize, data, setPage: goToPage }
 }
 
 interface PaginationControlsProps {
@@ -36,14 +36,20 @@ export function PaginationControls({
   pageCount,
   onPageChange,
   totalItems,
+  pageSize = 10,
 }: PaginationControlsProps) {
   if (pageCount <= 1) return null
+
+  const start = (page - 1) * pageSize + 1
+  const end = page * pageSize
 
   return (
     <div className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-md border bg-card px-4 py-3 text-sm">
       <p className="text-muted-foreground">
         Page {page} / {pageCount}
-        {typeof totalItems === 'number' ? ` • ${totalItems} éléments` : null}
+        {typeof totalItems === 'number'
+          ? ` · ${Math.min(start, totalItems)}-${Math.min(end, totalItems)} sur ${totalItems} éléments`
+          : null}
       </p>
       <div className="flex items-center gap-2">
         <Button variant="outline" size="sm" onClick={() => onPageChange(page - 1)} disabled={page <= 1}>

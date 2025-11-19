@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Plus } from 'lucide-react'
-import type { Prisma, GymSubscriptionStatus } from '@prisma/client'
+import type { GymSubscriptionStatus } from '@prisma/client'
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -14,6 +14,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { useCreateGym } from '@/app/(dashboard)/super-admin/hooks'
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form'
 import { PLAN_PRICING } from '@/lib/subscription-plans'
+import { GymPlanTier, GymBillingInterval } from '@prisma/client'
 
 const schema = z.object({
   name: z.string().min(2, 'Nom requis'),
@@ -108,15 +109,15 @@ export function CreateGymDialog() {
           <Plus className="h-4 w-4" /> Ajouter une salle
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-w-2xl">
+      <DialogContent className="w-[min(100vw-1rem,48rem)] max-w-3xl space-y-6 overflow-y-auto rounded-2xl px-4 py-6 sm:max-h-[90vh] sm:px-8">
         <DialogHeader>
           <DialogTitle>Nouvelle salle</DialogTitle>
           <DialogDescription>Enregistrez une salle et son propriétaire.</DialogDescription>
         </DialogHeader>
 
         <Form {...form}>
-          <form className="space-y-5" onSubmit={form.handleSubmit(onSubmit)}>
-            <div className="grid gap-4 md:grid-cols-2">
+          <form className="space-y-6" onSubmit={form.handleSubmit(onSubmit)}>
+            <div className="grid gap-4 sm:grid-cols-2">
               <FormField
                 control={form.control}
                 name="name"
@@ -158,7 +159,7 @@ export function CreateGymDialog() {
               )}
             />
 
-            <div className="grid gap-4 md:grid-cols-2">
+            <div className="grid gap-4 sm:grid-cols-2">
               <FormField
                 control={form.control}
                 name="city"
@@ -185,7 +186,7 @@ export function CreateGymDialog() {
               />
             </div>
 
-            <div className="grid gap-4 md:grid-cols-2">
+            <div className="grid gap-4 sm:grid-cols-2">
               <FormField
                 control={form.control}
                 name="tier"
@@ -252,7 +253,7 @@ export function CreateGymDialog() {
               />
             </div>
 
-            <div className="grid gap-4 md:grid-cols-3">
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
               <FormField
                 control={form.control}
                 name="expiresAt"
@@ -293,7 +294,7 @@ export function CreateGymDialog() {
               />
             </div>
 
-            <div className="grid gap-4 md:grid-cols-2">
+            <div className="grid gap-4 sm:grid-cols-2">
               <FormField
                 control={form.control}
                 name="ownerEmail"
@@ -322,7 +323,7 @@ export function CreateGymDialog() {
               />
             </div>
 
-            <div className="grid gap-4 md:grid-cols-2">
+            <div className="grid gap-4 sm:grid-cols-2">
               <FormField
                 control={form.control}
                 name="ownerFirstName"
@@ -358,5 +359,4 @@ export function CreateGymDialog() {
     </Dialog>
   )
 }
-type GymPlanTier = Prisma.GymPlanTier
-type GymBillingInterval = Prisma.GymBillingInterval
+

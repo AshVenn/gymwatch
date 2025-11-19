@@ -505,6 +505,7 @@ export default function SubscriptionsPage() {
               <PaginationControls
                 page={subscriptionPagination.page}
                 pageCount={subscriptionPagination.pageCount}
+                pageSize={subscriptionPagination.pageSize}
                 onPageChange={subscriptionPagination.setPage}
                 totalItems={filteredSubscriptions.length}
               />

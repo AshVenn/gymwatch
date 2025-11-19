@@ -308,6 +308,7 @@ export default function DashboardPage() {
                 <PaginationControls
                   page={expiringPage}
                   pageCount={expiringPageCount}
+                  pageSize={expiringPageSize}
                   onPageChange={setExpiringPage}
                   totalItems={expiringSoon.length}
                 />

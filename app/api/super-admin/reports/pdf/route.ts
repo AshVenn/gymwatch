@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from "next/server"
 import { getServerSession } from "next-auth"
 import { z } from "zod"
 import { PDFDocument, StandardFonts, rgb } from "pdf-lib"
+import fontkit from "@pdf-lib/fontkit"
+import { readFile } from "fs/promises"
+import path from "node:path"
 import { authOptions } from "@/lib/auth-middleware"
 import { prisma } from "@/lib/prisma"
 
@@ -29,9 +32,21 @@ export async function GET(request: NextRequest) {
   const formatter = new Intl.NumberFormat("fr-MA", { style: "currency", currency: "MAD" })
 
   const pdf = await PDFDocument.create()
+  pdf.registerFontkit(fontkit)
   let page = pdf.addPage([595, 842])
-  const font = await pdf.embedFont(StandardFonts.Helvetica)
-  const bold = await pdf.embedFont(StandardFonts.HelveticaBold)
+  let font = await pdf.embedFont(StandardFonts.Helvetica)
+  let bold = await pdf.embedFont(StandardFonts.HelveticaBold)
+
+  try {
+    const [regularBytes, boldBytes] = await Promise.all([
+      readFile(path.join(process.cwd(), "public", "fonts", "Inter-Regular.ttf")),
+      readFile(path.join(process.cwd(), "public", "fonts", "Inter-SemiBold.ttf")),
+    ])
+    font = await pdf.embedFont(regularBytes, { subset: true })
+    bold = await pdf.embedFont(boldBytes, { subset: true })
+  } catch (error) {
+    console.warn("[super-admin][reports][pdf] Falling back to standard fonts", error)
+  }
   let cursorY = 792
   const ensureSpace = (needed: number) => {
     if (cursorY - needed < 60) {

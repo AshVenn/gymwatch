@@ -176,6 +176,27 @@ export function useCreateGym() {
   })
 }
 
+export function useDeleteGym() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: async ({ gymId }: { gymId: string }) => {
+      return fetchJSON(`/api/super-admin/gyms/${gymId}`, {
+        method: 'DELETE',
+      })
+    },
+    onSuccess: (_data, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['super-admin', 'gyms'] })
+      queryClient.invalidateQueries({ queryKey: ['super-admin', 'stats'] })
+      queryClient.removeQueries({ queryKey: ['super-admin', 'gym', variables.gymId] })
+      toast.success('Salle supprimée')
+    },
+    onError: (error: Error) => {
+      toast.error(error.message)
+    },
+  })
+}
+
 export function useCreateGymAdmin() {
   const queryClient = useQueryClient()
 

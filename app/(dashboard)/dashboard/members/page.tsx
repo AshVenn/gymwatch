@@ -620,6 +620,7 @@ export default function MembersPage() {
           <PaginationControls
             page={memberPagination.page}
             pageCount={memberPagination.pageCount}
+            pageSize={memberPagination.pageSize}
             onPageChange={memberPagination.setPage}
             totalItems={members.length}
           />

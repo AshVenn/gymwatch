@@ -1,6 +1,6 @@
 'use client'
 
-import { BarChart3, ClipboardList, FileCog, PenSquare, Users } from 'lucide-react'
+import { BarChart3, ClipboardList, FileCog, PenSquare, Trash2, Users } from 'lucide-react'
 import type { SuperAdminGym } from '@/app/(dashboard)/super-admin/hooks'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -19,8 +19,9 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip'
+import { cn } from '@/lib/utils'
 
-export type GymAction = 'overview' | 'team' | 'plans' | 'subscription' | 'edit'
+export type GymAction = 'overview' | 'team' | 'plans' | 'subscription' | 'edit' | 'delete'
 
 type Props = {
   gyms: SuperAdminGym[]
@@ -28,6 +29,7 @@ type Props = {
   pagination: {
     page: number
     pageCount: number
+    pageSize: number
     setPage: (page: number) => void
   }
   totalItems: number
@@ -36,8 +38,8 @@ type Props = {
 
 const STATUS_LABEL: Record<string, string> = {
   ACTIVE: 'Actif',
-  SUSPENDED: 'Suspendu',
-  EXPIRED: 'Expiré',
+  SUSPENDED: 'Suspendue',
+  EXPIRED: 'Expirée',
 }
 
 const PLAN_LABEL: Record<string, string> = {
@@ -50,17 +52,23 @@ const INTERVAL_LABEL: Record<string, string> = {
   ANNUAL: 'annuel',
 }
 
-const ROW_ACTIONS: Array<{ type: GymAction; icon: React.ComponentType<{ size?: number }>; label: string }> = [
+const ROW_ACTIONS: Array<{
+  type: GymAction
+  icon: React.ComponentType<{ size?: number }>
+  label: string
+  tone?: 'destructive'
+}> = [
   { type: 'overview', icon: BarChart3, label: "Vue d'ensemble" },
   { type: 'team', icon: Users, label: 'Administrateurs' },
   { type: 'plans', icon: ClipboardList, label: 'Plans' },
   { type: 'subscription', icon: FileCog, label: 'Abonnement' },
   { type: 'edit', icon: PenSquare, label: 'Modifier' },
+  { type: 'delete', icon: Trash2, label: 'Supprimer', tone: 'destructive' },
 ]
 
 export function GymsTable({ gyms, isLoading, pagination, totalItems, onAction }: Props) {
   if (isLoading) {
-    return <div className="py-10 text-center text-muted-foreground">Chargement des salles…</div>
+    return <div className="py-10 text-center text-muted-foreground">Chargement des salles...</div>
   }
 
   if (!gyms.length) {
@@ -95,8 +103,8 @@ export function GymsTable({ gyms, isLoading, pagination, totalItems, onAction }:
                 </Badge>
 
                 <p className="text-xs text-muted-foreground">
-                  Plan {PLAN_LABEL[gym.subscriptionPlan] ?? gym.subscriptionPlan} ·{' '}
-                  {INTERVAL_LABEL[gym.billingInterval] ?? gym.billingInterval} ·{' '}
+                  Plan {PLAN_LABEL[gym.subscriptionPlan] ?? gym.subscriptionPlan} {' - '}
+                  {INTERVAL_LABEL[gym.billingInterval] ?? gym.billingInterval} {' - '}
                   {gym.subscriptionPrice.toLocaleString('fr-MA', {
                     style: 'currency',
                     currency: 'MAD',
@@ -116,7 +124,7 @@ export function GymsTable({ gyms, isLoading, pagination, totalItems, onAction }:
 
                 {typeof gym.daysRemaining === 'number' && (
                   <p className="text-xs text-muted-foreground">
-                    {gym.daysRemaining > 0 ? `${gym.daysRemaining} j restants` : 'Expiré'}
+                    {gym.daysRemaining > 0 ? `${gym.daysRemaining} j restants` : 'Expirée'}
                   </p>
                 )}
               </TableCell>
@@ -124,13 +132,17 @@ export function GymsTable({ gyms, isLoading, pagination, totalItems, onAction }:
               <TableCell>
                 <TooltipProvider>
                   <div className="flex justify-end gap-1">
-                    {ROW_ACTIONS.map(({ type, icon: Icon, label }) => (
+                    {ROW_ACTIONS.map(({ type, icon: Icon, label, tone }) => (
                       <Tooltip key={type}>
                         <TooltipTrigger asChild>
                           <Button
                             variant="ghost"
                             size="sm"
-                            className="h-8 w-8"
+                            className={cn(
+                              'h-8 w-8',
+                              tone === 'destructive' &&
+                                'text-destructive hover:text-destructive focus-visible:text-destructive',
+                            )}
                             onClick={() => onAction(gym.id, type)}
                             aria-label={label}
                           >
@@ -152,6 +164,7 @@ export function GymsTable({ gyms, isLoading, pagination, totalItems, onAction }:
         <PaginationControls
           page={pagination.page}
           pageCount={pagination.pageCount}
+          pageSize={pagination.pageSize}
           onPageChange={pagination.setPage}
           totalItems={totalItems}
         />

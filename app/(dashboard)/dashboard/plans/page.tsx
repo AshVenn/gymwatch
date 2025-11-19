@@ -339,6 +339,7 @@ export default function PlansPage() {
             <PaginationControls
               page={planPagination.page}
               pageCount={planPagination.pageCount}
+              pageSize={planPagination.pageSize}
               onPageChange={planPagination.setPage}
               totalItems={plans.length}
             />

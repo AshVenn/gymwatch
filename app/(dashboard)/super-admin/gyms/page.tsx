@@ -11,6 +11,7 @@ import { GymDetailDialog } from '@/components/superadmin/gyms/GymDetailDialog/Gy
 import { CreateGymDialog } from '@/components/superadmin/gyms/CreateGymDialog'
 import { GymActionSheet } from '@/components/superadmin/gyms/GymActionSheet'
 import { EditGymDialog } from '@/components/superadmin/gyms/EditGymDialog'
+import { DeleteGymDialog } from '@/components/superadmin/gyms/DeleteGymDialog'
 import { usePagination } from '@/components/dashboard/pagination-controls'
 
 export default function SuperAdminGymsPage() {
@@ -38,6 +39,7 @@ export default function SuperAdminGymsPage() {
   }, [gyms, planFilter, searchTerm, statusFilter])
 
   const pagination = usePagination(filteredGyms, 8)
+  const selectedGym = gyms.find((gym) => gym.id === currentAction.gymId) ?? null
 
   const handleAction = (gymId: string, type: GymAction) => {
     setCurrentAction({ gymId, type })
@@ -74,6 +76,7 @@ export default function SuperAdminGymsPage() {
         pagination={{
           page: pagination.page,
           pageCount: pagination.pageCount,
+          pageSize: pagination.pageSize,
           setPage: pagination.setPage,
         }}
         totalItems={filteredGyms.length}
@@ -101,6 +104,11 @@ export default function SuperAdminGymsPage() {
 
       <EditGymDialog
         gymId={currentAction.type === 'edit' ? currentAction.gymId : null}
+        onClose={closeAction}
+      />
+
+      <DeleteGymDialog
+        gym={currentAction.type === 'delete' ? selectedGym : null}
         onClose={closeAction}
       />
     </div>

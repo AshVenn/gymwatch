@@ -6,8 +6,8 @@ import { ResponsiveContainer, LineChart, Line, CartesianGrid, PieChart, Pie, Cel
 const STATUS_COLORS: Record<string, string> = {
   ACTIVE: 'hsl(var(--primary))',
   SUSPENDED: 'hsl(var(--accent))',
-  EXPIRED: 'oklch(var(--chart-3))',
-  EXPIRES_TODAY: 'oklch(var(--chart-4))',
+  EXPIRED: 'hsl(var(--secondary))',
+  EXPIRES_TODAY: 'hsl(var(--accent))',
 }
 
 const STATUS_LABELS: Record<string, string> = {
@@ -21,7 +21,7 @@ const STATUS_LABELS: Record<string, string> = {
 const expiryChartConfig: ChartConfig = {
   value: {
     label: 'Expirations',
-    color: 'var(--chart-4)',
+    color: 'hsl(var(--accent))',
   },
 }
 
@@ -71,7 +71,7 @@ export function GymAnalytics({ gym }: Props) {
   const statusChartData = statusBreakdown.map((entry) => ({
     ...entry,
     label: STATUS_LABELS[entry.status] ?? entry.status,
-    fill: STATUS_COLORS[entry.status] ?? 'oklch(var(--chart-5))',
+    fill: STATUS_COLORS[entry.status] ?? 'hsl(var(--secondary))',
   }))
 
   return (

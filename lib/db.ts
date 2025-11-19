@@ -1,6 +1,5 @@
 // lib/db.ts
 import { prisma } from "./prisma"
-import type { Prisma } from "@prisma/client"
 import { resolvePlanPrice } from "./subscription-plans"
 import { GymPlanTier } from "@prisma/client"
 import { GymBillingInterval } from "@prisma/client"

@@ -5,15 +5,8 @@ import { authOptions } from "@/lib/auth-middleware"
 import { prisma } from "@/lib/prisma"
 import { computeSubscriptionStatus } from "@/lib/subscription-status"
 
-type RouteParams = {
-  params: {
-    subscriptionId: string
-  }
-}
-
-export async function PUT(request: NextRequest, { params }: RouteParams) {
+export async function PUT(request: NextRequest, { params }: any) {
   try {
-    // 🔹 NextAuth v4: get session via getServerSession
     const session = await getServerSession(authOptions)
     const gymId = (session?.user as any)?.gymId as string | undefined
 
@@ -37,7 +30,6 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
 
     const status = computeSubscriptionStatus(end)
 
-    // 1) Mettre à jour l'abonnement
     const subscription = await prisma.subscription.update({
       where: { id: params.subscriptionId },
       data: {
@@ -49,14 +41,12 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
       },
     })
 
-    // 2) Créer un nouveau paiement lié à cet abonnement
     const payment = await prisma.payment.create({
       data: {
         gymId,
         amount: plan.price,
         currency: "MAD",
         paymentDate: start,
-        // 👇 ton schema attend "subscriptions", donc on connecte ici
         subscriptions: {
           connect: { id: subscription.id },
         },
@@ -73,7 +63,7 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
   }
 }
 
-export async function DELETE(request: NextRequest, { params }: RouteParams) {
+export async function DELETE(request: NextRequest, { params }: any) {
   try {
     const session = await getServerSession(authOptions)
     const gymId = (session?.user as any)?.gymId as string | undefined
@@ -81,8 +71,6 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
     if (!gymId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
-
-    // (optionnel mais mieux : vérifier que la sub appartient bien à ce gym)
 
     await prisma.subscription.delete({
       where: { id: params.subscriptionId },

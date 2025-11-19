@@ -95,7 +95,7 @@ export async function GET() {
     const plans = await prisma.membershipPlan.findMany({ where: { gymId } })
 
     const planDistribution = await Promise.all(
-      plans.map(async (plan) => {
+      plans.map(async (plan: { id: string; name: string }) => {
         const count = await prisma.subscription.count({
           where: { planId: plan.id, status: "ACTIVE" },
         })

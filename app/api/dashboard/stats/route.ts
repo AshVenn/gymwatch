@@ -124,12 +124,17 @@ export async function GET() {
       take: 10,
     })
 
-    const expiringSoon = expiringSubs.map((sub) => {
-      const daysLeft = Math.ceil(
-        (sub.endDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24),
-      )
+    const expiringSoon = expiringSubs.map(
+      (sub: {
+        id: string
+        endDate: Date
+        member: { firstName: string | null; lastName: string | null } | null
+      }) => {
+        const daysLeft = Math.ceil(
+          (sub.endDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24),
+        )
 
-      return {
+        return {
         id: sub.id,
         memberName: `${sub.member?.firstName ?? ""} ${sub.member?.lastName ?? ""}`.trim(),
         endDate: sub.endDate.toLocaleDateString("fr-FR"),

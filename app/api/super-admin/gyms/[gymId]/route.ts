@@ -35,7 +35,7 @@ async function ensureSuperAdmin() {
 
 export async function GET(
   _req: Request,
-  { params }: { params: { gymId: string } },
+  { params }: any,
 ) {
   const session = await ensureSuperAdmin()
   if (!session) {
@@ -52,7 +52,7 @@ export async function GET(
 
 export async function PATCH(
   req: Request,
-  { params }: { params: { gymId: string } },
+  { params }: any,
 ) {
   const session = await ensureSuperAdmin()
   if (!session) {
@@ -98,7 +98,7 @@ export async function PATCH(
 
 export async function DELETE(
   _req: Request,
-  { params }: { params: { gymId: string } },
+  { params }: any,
 ) {
   const session = await ensureSuperAdmin()
   if (!session) {

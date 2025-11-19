@@ -21,7 +21,7 @@ async function ensureSuperAdmin() {
 
 export async function POST(
   req: Request,
-  { params }: { params: { gymId: string } },
+  { params }: any,
 ) {
   const session = await ensureSuperAdmin()
   if (!session) {

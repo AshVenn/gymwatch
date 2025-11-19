@@ -82,7 +82,12 @@ export async function GET(request: NextRequest) {
       select: { id: true, firstName: true, lastName: true, email: true },
     })
 
-    const memberLookup = new Map(memberMap.map((m) => [m.id, m]))
+    const memberLookup = new Map(
+      memberMap.map((m: { id: string; firstName: string | null; lastName: string | null; email: string | null }) => [
+        m.id,
+        m,
+      ]),
+    )
     rows = [["Membre", "Email", "Total paye", "Nombre d'abonnements"]]
 
     aggregated.forEach((entry) => {

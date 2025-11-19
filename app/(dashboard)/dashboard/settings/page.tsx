@@ -83,7 +83,7 @@ export default function SettingsPage() {
     },
     onSuccess: () => {
       toast.success('Paramètres mis à jour avec succès')
-      queryClient.invalidateQueries(gymKey)
+      queryClient.invalidateQueries({ queryKey: gymKey })
     },
     onError: (error) => {
       toast.error(error instanceof Error ? error.message : 'Une erreur est survenue')

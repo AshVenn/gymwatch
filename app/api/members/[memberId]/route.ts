@@ -12,14 +12,7 @@ const updateSchema = z.object({
   phone: z.string().optional().or(z.literal("").transform(() => undefined)),
 })
 
-function resolveMemberId(raw: string | string[]) {
-  return Array.isArray(raw) ? raw[0] : raw
-}
-
-export async function PUT(
-  request: NextRequest,
-  context: { params: { memberId: string | string[] } }
-) {
+export async function PUT(request: NextRequest, { params }: any) {
   try {
     const session = await getServerSession(authOptions)
 
@@ -27,7 +20,9 @@ export async function PUT(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const memberId = resolveMemberId(context.params.memberId)
+    const rawId = params.memberId
+    const memberId = Array.isArray(rawId) ? rawId[0] : rawId
+
     const payload = updateSchema.parse(await request.json())
 
     const member = await prisma.member.findFirst({
@@ -55,10 +50,7 @@ export async function PUT(
   }
 }
 
-export async function DELETE(
-  _request: NextRequest,
-  context: { params: { memberId: string | string[] } }
-) {
+export async function DELETE(_request: NextRequest, { params }: any) {
   try {
     const session = await getServerSession(authOptions)
 
@@ -66,7 +58,8 @@ export async function DELETE(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const memberId = resolveMemberId(context.params.memberId)
+    const rawId = params.memberId
+    const memberId = Array.isArray(rawId) ? rawId[0] : rawId
 
     const member = await prisma.member.findFirst({
       where: { id: memberId, gymId: session.user.gymId },

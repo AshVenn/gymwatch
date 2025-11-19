@@ -1,11 +1,11 @@
-//api/plans/[plansId]/route.ts
+// app/api/plans/[planId]/route.ts
 import { getServerSession } from 'next-auth/next'
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { planId: string } }
+  context: { params: { planId: string } }
 ) {
   try {
     const session = await getServerSession()
@@ -16,7 +16,7 @@ export async function PUT(
 
     const { name, durationDays, price } = await request.json()
 
-    const plan = await db.updatePlan(params.planId, {
+    const plan = await db.updatePlan(context.params.planId, {
       name,
       durationDays,
       price,
@@ -30,7 +30,7 @@ export async function PUT(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { planId: string } }
+  context: { params: { planId: string } }
 ) {
   try {
     const session = await getServerSession()
@@ -39,7 +39,7 @@ export async function DELETE(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    await db.deletePlan(params.planId)
+    await db.deletePlan(context.params.planId)
 
     return NextResponse.json({ success: true })
   } catch {

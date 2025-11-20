@@ -53,7 +53,7 @@ export async function GET(request: NextRequest) {
     currency: "MAD",
   })
 
- 
+  // ===== Earnings =====
   if (type === "earnings") {
     rows = [["Mois", "Total"]]
 
@@ -81,46 +81,49 @@ export async function GET(request: NextRequest) {
     }
   }
 
- 
+  // ===== Top / loyal members =====
   else if (type === "top-members" || type === "loyal-members") {
-      const aggregated = await prisma.subscription.groupBy({
-        by: ["memberId"],
-        where: { gymId },
-        _sum: { pricePaid: true },
-        _count: { memberId: true }, // count how many rows per member
-        orderBy:
-          type === "top-members"
-            ? { _sum: { pricePaid: "desc" } }
-            : { _count: { memberId: "desc" } },
-        take: 25,
-      })
+    const aggregated = await prisma.subscription.groupBy({
+      by: ["memberId"],
+      where: { gymId },
+      _sum: { pricePaid: true },
+      _count: { memberId: true }, // count how many rows per member
+      orderBy:
+        type === "top-members"
+          ? { _sum: { pricePaid: "desc" } }
+          : { _count: { memberId: "desc" } },
+      take: 25,
+    })
 
-    const memberIds = aggregated.map((a) => a.memberId)
+    const memberIds = aggregated.map((a: any) => a.memberId)
 
     const memberMap = await prisma.member.findMany({
       where: { id: { in: memberIds } },
       select: { id: true, firstName: true, lastName: true, email: true },
     })
 
-    const memberLookup = new Map(memberMap.map((m) => [m.id, m]))
+    const memberLookup = new Map(
+      memberMap.map((m: any) => [m.id, m] as const),
+    )
 
     rows = [["Membre", "Email", "Total payé", "Nombre d’abonnements"]]
 
-    aggregated.forEach((entry) => {
+    aggregated.forEach((entry: any) => {
       const member = memberLookup.get(entry.memberId)
       const fullName = member
         ? `${member.firstName ?? ""} ${member.lastName ?? ""}`.trim()
         : entry.memberId
 
-        rows.push([
-          fullName,
-          member?.email ?? "--",
-          formatter.format(entry._sum?.pricePaid ?? 0),
-          entry._count?.memberId ?? 0,
-        ])
+      rows.push([
+        fullName,
+        member?.email ?? "--",
+        formatter.format(entry._sum?.pricePaid ?? 0),
+        entry._count?.memberId ?? 0,
+      ])
     })
   }
 
+  // ===== Single member report =====
   else if (type === "member" && memberId) {
     const member = await prisma.member.findFirst({
       where: { id: memberId, gymId },
@@ -145,29 +148,28 @@ export async function GET(request: NextRequest) {
     ]
 
     const totalPaid = member.subscriptions.reduce(
-      (sum, sub) => sum + (sub.pricePaid ?? 0),
+      (sum: number, sub: any) => sum + (sub.pricePaid ?? 0),
       0,
     )
 
     rows.push(["Montant cumulé", formatter.format(totalPaid)])
 
-    member.subscriptions.forEach((sub) => {
+    member.subscriptions.forEach((sub: any) => {
       rows.push([
         `Plan ${sub.plan?.name ?? ""}`,
-        `${new Date(sub.startDate).toLocaleDateString("fr-FR")} -> ${new Date(
-          sub.endDate,
-        ).toLocaleDateString("fr-FR")} (${formatter.format(
+        `${new Date(sub.startDate).toLocaleDateString(
+          "fr-FR",
+        )} -> ${new Date(sub.endDate).toLocaleDateString("fr-FR")} (${formatter.format(
           sub.pricePaid ?? 0,
         )})`,
       ])
     })
   }
 
-
   const filename = `gym-report-${type}-${Date.now()}.xlsx`
   const payload = rowsToWorkbook(rows)
 
-  return new NextResponse(payload, {
+  return new NextResponse(payload as any, {
     headers: {
       "Content-Type":
         "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",

@@ -11,12 +11,6 @@ const querySchema = z.object({
   memberId: z.string().optional(),
 })
 
-type SubscriptionAggregation = {
-  memberId: string
-  _sum: { pricePaid: number | null }
-  _count: { _all: number }
-}
-
 function rowsToWorkbook(rows: Array<Array<string | number>>) {
   const worksheet = utils.aoa_to_sheet(rows)
   const workbook = utils.book_new()
@@ -54,59 +48,80 @@ export async function GET(request: NextRequest) {
 
   let rows: Array<Array<string | number>> = []
   const now = new Date()
-  const formatter = new Intl.NumberFormat("fr-MA", { style: "currency", currency: "MAD" })
+  const formatter = new Intl.NumberFormat("fr-MA", {
+    style: "currency",
+    currency: "MAD",
+  })
 
+ 
   if (type === "earnings") {
     rows = [["Mois", "Total"]]
+
     for (let i = 11; i >= 0; i--) {
       const start = new Date(now.getFullYear(), now.getMonth() - i, 1)
-      const end = new Date(now.getFullYear(), now.getMonth() - i + 1, 0, 23, 59, 59, 999)
+      const end = new Date(
+        now.getFullYear(),
+        now.getMonth() - i + 1,
+        0,
+        23,
+        59,
+        59,
+        999,
+      )
+
       const agg = await prisma.payment.aggregate({
         where: { gymId, paymentDate: { gte: start, lte: end } },
         _sum: { amount: true },
       })
+
       rows.push([
         start.toLocaleDateString("fr-FR", { month: "long", year: "numeric" }),
         formatter.format(agg._sum.amount ?? 0),
       ])
     }
-  } else if (type === "top-members" || type === "loyal-members") {
-    const aggregated: SubscriptionAggregation[] = await prisma.subscription.groupBy({
-      by: ["memberId"],
-      where: { gymId },
-      _sum: { pricePaid: true },
-      _count: { _all: true },
-      orderBy:
-        type === "top-members"
-          ? { _sum: { pricePaid: "desc" } }
-          : { _count: { id: "desc" } },
-      take: 25,
-    })
+  }
+
+ 
+  else if (type === "top-members" || type === "loyal-members") {
+      const aggregated = await prisma.subscription.groupBy({
+        by: ["memberId"],
+        where: { gymId },
+        _sum: { pricePaid: true },
+        _count: { memberId: true }, // count how many rows per member
+        orderBy:
+          type === "top-members"
+            ? { _sum: { pricePaid: "desc" } }
+            : { _count: { memberId: "desc" } },
+        take: 25,
+      })
+
+    const memberIds = aggregated.map((a) => a.memberId)
 
     const memberMap = await prisma.member.findMany({
-      where: { id: { in: aggregated.map((entry: SubscriptionAggregation) => entry.memberId) } },
+      where: { id: { in: memberIds } },
       select: { id: true, firstName: true, lastName: true, email: true },
     })
 
-    const memberLookup = new Map(
-      memberMap.map((m: { id: string; firstName: string | null; lastName: string | null; email: string | null }) => [
-        m.id,
-        m,
-      ]),
-    )
-    rows = [["Membre", "Email", "Total paye", "Nombre d'abonnements"]]
+    const memberLookup = new Map(memberMap.map((m) => [m.id, m]))
 
-    aggregated.forEach((entry: SubscriptionAggregation) => {
+    rows = [["Membre", "Email", "Total payé", "Nombre d’abonnements"]]
+
+    aggregated.forEach((entry) => {
       const member = memberLookup.get(entry.memberId)
-      const fullName = member ? `${member.firstName} ${member.lastName}`.trim() : entry.memberId
-      rows.push([
-        fullName,
-        member?.email ?? "--",
-        formatter.format(entry._sum?.pricePaid ?? 0),
-        entry._count?._all ?? 0,
-      ])
+      const fullName = member
+        ? `${member.firstName ?? ""} ${member.lastName ?? ""}`.trim()
+        : entry.memberId
+
+        rows.push([
+          fullName,
+          member?.email ?? "--",
+          formatter.format(entry._sum?.pricePaid ?? 0),
+          entry._count?.memberId ?? 0,
+        ])
     })
-  } else if (type === "member" && memberId) {
+  }
+
+  else if (type === "member" && memberId) {
     const member = await prisma.member.findFirst({
       where: { id: memberId, gymId },
       include: {
@@ -125,27 +140,37 @@ export async function GET(request: NextRequest) {
       ["Champ", "Valeur"],
       ["Nom", `${member.firstName} ${member.lastName}`.trim()],
       ["Email", member.email ?? "--"],
-      ["Telephone", member.phone ?? "--"],
+      ["Téléphone", member.phone ?? "--"],
       ["Total abonnements", member.subscriptions.length],
     ]
 
-    const totalPaid = member.subscriptions.reduce((sum, sub) => sum + (sub.pricePaid ?? 0), 0)
-    rows.push(["Montant cumule", formatter.format(totalPaid)])
+    const totalPaid = member.subscriptions.reduce(
+      (sum, sub) => sum + (sub.pricePaid ?? 0),
+      0,
+    )
+
+    rows.push(["Montant cumulé", formatter.format(totalPaid)])
 
     member.subscriptions.forEach((sub) => {
       rows.push([
         `Plan ${sub.plan?.name ?? ""}`,
-        `${new Date(sub.startDate).toLocaleDateString("fr-FR")} -> ${new Date(sub.endDate).toLocaleDateString("fr-FR")} (${formatter.format(sub.pricePaid)})`,
+        `${new Date(sub.startDate).toLocaleDateString("fr-FR")} -> ${new Date(
+          sub.endDate,
+        ).toLocaleDateString("fr-FR")} (${formatter.format(
+          sub.pricePaid ?? 0,
+        )})`,
       ])
     })
   }
+
 
   const filename = `gym-report-${type}-${Date.now()}.xlsx`
   const payload = rowsToWorkbook(rows)
 
   return new NextResponse(payload, {
     headers: {
-      "Content-Type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      "Content-Type":
+        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
       "Content-Disposition": `attachment; filename=${filename}`,
     },
   })

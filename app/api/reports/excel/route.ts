@@ -18,12 +18,6 @@ function rowsToWorkbook(rows: Array<Array<string | number>>) {
   return write(workbook, { bookType: "xlsx", type: "buffer" })
 }
 
-type SubscriptionAggregation = {
-  memberId: string
-  _sum: { pricePaid: number | null } | null
-  _count: { _all: number } | null
-}
-
 export async function GET(request: NextRequest) {
   const session = await getServerSession(authOptions)
   const gymId = (session?.user as any)?.gymId as string | undefined
@@ -71,7 +65,7 @@ export async function GET(request: NextRequest) {
       ])
     }
   } else if (type === "top-members" || type === "loyal-members") {
-    const aggregated: SubscriptionAggregation[] = await prisma.subscription.groupBy({
+    const aggregated = await prisma.subscription.groupBy({
       by: ["memberId"],
       where: { gymId },
       _sum: { pricePaid: true },

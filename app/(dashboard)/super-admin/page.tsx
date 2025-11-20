@@ -98,7 +98,7 @@ export default function SuperAdminOverviewPage() {
         ? 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
         : 'application/pdf'
       
-      if (!contentType?.includes(expectedType.split('/')[0])) {
+      if (contentType && !contentType.includes(expectedType)) {
         throw new Error(`Type de fichier invalide reçu: ${contentType}`)
       }
 
@@ -468,3 +468,4 @@ export default function SuperAdminOverviewPage() {
     </div>
   )
 }
+

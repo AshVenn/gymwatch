@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { getServerSession } from "next-auth"
+import type { Prisma } from "@prisma/client"
 import { z } from "zod"
 import { utils, write } from "xlsx"
 import { authOptions } from "@/lib/auth-middleware"
@@ -10,6 +11,8 @@ const querySchema = z.object({
   type: z.enum(["earnings", "top-members", "loyal-members", "member"]),
   memberId: z.string().optional(),
 })
+
+type SubscriptionAggregation = Pick<Prisma.SubscriptionGroupByOutputType, "memberId" | "_sum" | "_count">
 
 function rowsToWorkbook(rows: Array<Array<string | number>>) {
   const worksheet = utils.aoa_to_sheet(rows)
@@ -78,7 +81,7 @@ export async function GET(request: NextRequest) {
     })
 
     const memberMap = await prisma.member.findMany({
-      where: { id: { in: aggregated.map((entry) => entry.memberId) } },
+      where: { id: { in: aggregated.map((entry: SubscriptionAggregation) => entry.memberId) } },
       select: { id: true, firstName: true, lastName: true, email: true },
     })
 
@@ -90,7 +93,7 @@ export async function GET(request: NextRequest) {
     )
     rows = [["Membre", "Email", "Total paye", "Nombre d'abonnements"]]
 
-    aggregated.forEach((entry) => {
+    aggregated.forEach((entry: SubscriptionAggregation) => {
       const member = memberLookup.get(entry.memberId)
       const fullName = member ? `${member.firstName} ${member.lastName}`.trim() : entry.memberId
       rows.push([

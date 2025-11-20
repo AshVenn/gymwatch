@@ -3,7 +3,7 @@
 import { useSession } from 'next-auth/react'
 import { useMemo, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { AlertTriangle, Calendar as CalendarIcon, MoreVertical, RotateCcw, Trash2 } from 'lucide-react'
+import { AlertTriangle, MoreVertical, RotateCcw, Trash2 } from 'lucide-react'
 import { toast } from 'sonner'
 
 import { cn } from '@/lib/utils'
@@ -43,8 +43,6 @@ import {
   type SortOption,
   type QuickFilter,
 } from '@/components/dashboard/subscriptions/subscription-filters'
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
-import { Calendar } from '@/components/ui/calendar'
 import { Switch } from '@/components/ui/switch'
 
 interface Subscription {
@@ -94,11 +92,11 @@ export default function SubscriptionsPage() {
   const [renewingId, setRenewingId] = useState<string | null>(null)
   const [renewalForm, setRenewalForm] = useState<{
     planId: string
-    startDate: Date | null
+    startDate: string
     createPayment: boolean
   }>({
     planId: '',
-    startDate: new Date(),
+    startDate: new Date().toISOString().split('T')[0],
     createPayment: true,
   })
 
@@ -179,7 +177,7 @@ export default function SubscriptionsPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           planId: renewalForm.planId,
-          startDate: renewalForm.startDate ? renewalForm.startDate.toISOString() : new Date().toISOString(),
+          startDate: renewalForm.startDate || new Date().toISOString().split('T')[0],
           createPayment: renewalForm.createPayment,
         }),
       })
@@ -195,7 +193,7 @@ export default function SubscriptionsPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: subscriptionQueryKey })
       setRenewingId(null)
-      setRenewalForm({ planId: '', startDate: new Date(), createPayment: true })
+      setRenewalForm({ planId: '', startDate: new Date().toISOString().split('T')[0], createPayment: true })
       toast.success('Abonnement mis a jour')
     },
     onError: (err) => {
@@ -462,7 +460,7 @@ export default function SubscriptionsPage() {
                                   setRenewingId(sub.id)
                                   setRenewalForm({
                                     planId: '',
-                                    startDate: new Date(),
+                                    startDate: new Date().toISOString().split('T')[0],
                                     createPayment: true,
                                   })
                                 }}
@@ -501,29 +499,11 @@ export default function SubscriptionsPage() {
 
                                 <div className="space-y-2">
                                   <Label className="text-foreground">Date de debut</Label>
-                                  <Popover>
-                                    <PopoverTrigger asChild>
-                                      <Button
-                                        variant="outline"
-                                        className={cn(
-                                          'w-full justify-start text-left font-normal',
-                                          !renewalForm.startDate && 'text-muted-foreground',
-                                        )}
-                                      >
-                                        <CalendarIcon className="mr-2 h-4 w-4" />
-                                        {renewalForm.startDate
-                                          ? dateFormatter.format(renewalForm.startDate)
-                                          : 'Choisir une date'}
-                                      </Button>
-                                    </PopoverTrigger>
-                                    <PopoverContent className="w-auto p-0" align="start">
-                                      <Calendar
-                                        mode="single"
-                                        selected={renewalForm.startDate ?? undefined}
-                                        onSelect={(date) => setRenewalForm({ ...renewalForm, startDate: date ?? null })}
-                                      />
-                                    </PopoverContent>
-                                  </Popover>
+                                  <Input
+                                    type="date"
+                                    value={renewalForm.startDate}
+                                    onChange={(e) => setRenewalForm({ ...renewalForm, startDate: e.target.value })}
+                                  />
                                   {endPreview && (
                                     <p className="text-xs text-muted-foreground">
                                       Fin estimee: {dateFormatter.format(endPreview)}

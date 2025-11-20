@@ -14,6 +14,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Button } from '@/components/ui/button'
+import { DatePicker } from '@/components/ui/date-picker'
 import { toast } from 'sonner'
 
 const schema = z.object({
@@ -174,7 +175,7 @@ export function ApproveDemoDialog({ request, open, onOpenChange }: Props) {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-3xl">
+      <DialogContent className="max-w-3xl w-[95vw] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Creer le compte demo</DialogTitle>
           <DialogDescription>
@@ -334,7 +335,11 @@ export function ApproveDemoDialog({ request, open, onOpenChange }: Props) {
                     <FormItem>
                       <FormLabel>Expiration abonnement</FormLabel>
                       <FormControl>
-                        <Input type="date" {...field} />
+                        <DatePicker
+                          value={field.value || null}
+                          onChange={field.onChange}
+                          placeholder="Choisir une date"
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -347,7 +352,11 @@ export function ApproveDemoDialog({ request, open, onOpenChange }: Props) {
                     <FormItem>
                       <FormLabel>Fin de la demo</FormLabel>
                       <FormControl>
-                        <Input type="date" {...field} />
+                        <DatePicker
+                          value={field.value || null}
+                          onChange={field.onChange}
+                          placeholder="Choisir une date"
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>

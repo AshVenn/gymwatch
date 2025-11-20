@@ -38,6 +38,7 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { DatePicker } from '@/components/ui/date-picker'
 import {
   Select,
   SelectContent,
@@ -489,13 +490,12 @@ export default function MembersPage() {
               {/* START DATE */}
               <div>
                 <Label htmlFor="member-start-date">Date de début</Label>
-                <Input
-                  id="member-start-date"
-                  type="date"
-                  value={formData.startDate}
-                  onChange={(e) =>
-                    setFormData({ ...formData, startDate: e.target.value })
+                <DatePicker
+                  value={formData.startDate || null}
+                  onChange={(value) =>
+                    setFormData({ ...formData, startDate: value || '' })
                   }
+                  placeholder="Choisir une date"
                 />
               </div>
 

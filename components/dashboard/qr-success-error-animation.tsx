@@ -55,63 +55,113 @@ export function QrSuccessErrorAnimation({
     <AnimatePresence>
       {status && (
         <motion.div
-          initial={{ opacity: 0, scale: 0.85, y: -20 }}
-          animate={{ opacity: 1, scale: 1, y: 0 }}
-          exit={{ opacity: 0, scale: 0.85, y: 20 }}
-          transition={{ type: 'spring', damping: 20, stiffness: 280 }}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
           className="pointer-events-none fixed inset-0 z-50 flex items-center justify-center px-4"
         >
+          {/* Animated background rings */}
           <motion.div
-            layout
-            className={`pointer-events-auto flex max-w-sm flex-col items-center rounded-2xl px-8 py-8 text-center backdrop-blur-xl ${styles.panel}`}
-            animate={{
-              boxShadow: [
-                '0 0 20px rgba(0,0,0,0.12)',
-                '0 0 40px rgba(0,0,0,0.22)',
-                '0 0 20px rgba(0,0,0,0.12)',
-              ],
-            }}
-            transition={{ duration: 2, repeat: Infinity }}
+            className="absolute inset-0 flex items-center justify-center"
+            initial={{ scale: 0 }}
+            animate={{ scale: 1 }}
+            exit={{ scale: 0 }}
+            transition={{ duration: 0.5 }}
           >
+            {[1, 2, 3].map((ring) => (
+              <motion.div
+                key={ring}
+                className={`absolute rounded-full border-2 ${
+                  isSuccess ? 'border-primary/20' : 'border-destructive/20'
+                }`}
+                style={{
+                  width: `${200 + ring * 100}px`,
+                  height: `${200 + ring * 100}px`,
+                }}
+                animate={{
+                  scale: [1, 1.2, 1],
+                  opacity: [0.3, 0.1, 0.3],
+                }}
+                transition={{
+                  duration: 2,
+                  repeat: Infinity,
+                  delay: ring * 0.2,
+                }}
+              />
+            ))}
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, scale: 0.8, y: 20 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.8, y: 20 }}
+            transition={{ type: 'spring', damping: 20, stiffness: 300 }}
+            className={`pointer-events-auto relative flex max-w-sm flex-col items-center rounded-3xl px-8 py-10 text-center shadow-2xl ${styles.panel}`}
+          >
+            {/* Glowing effect */}
             <motion.div
-              initial={{ scale: 0, rotate: -90 }}
+              className={`absolute inset-0 rounded-3xl ${
+                isSuccess ? 'bg-primary/10' : 'bg-destructive/10'
+              } blur-2xl`}
+              animate={{
+                opacity: [0.3, 0.6, 0.3],
+              }}
+              transition={{
+                duration: 2,
+                repeat: Infinity,
+              }}
+            />
+
+            <motion.div
+              initial={{ scale: 0, rotate: -180 }}
               animate={{ scale: 1, rotate: 0 }}
-              transition={{ type: 'spring', damping: 12, stiffness: 200, delay: 0.1 }}
-              className={`mb-4 rounded-full p-4 ${styles.iconBg}`}
+              transition={{ type: 'spring', damping: 15, stiffness: 250, delay: 0.1 }}
+              className={`relative mb-6 rounded-full p-5 ${styles.iconBg} shadow-lg`}
             >
+              <motion.div
+                animate={{
+                  scale: [1, 1.1, 1],
+                }}
+                transition={{
+                  duration: 1.5,
+                  repeat: Infinity,
+                  delay: 0.3,
+                }}
+                className="absolute inset-0 rounded-full bg-current opacity-20"
+              />
               {isSuccess ? (
-                <Check className={`h-12 w-12 ${styles.iconColor}`} strokeWidth={3} />
+                <Check className={`relative h-14 w-14 ${styles.iconColor}`} strokeWidth={3} />
               ) : (
-                <X className={`h-12 w-12 ${styles.iconColor}`} strokeWidth={3} />
+                <X className={`relative h-14 w-14 ${styles.iconColor}`} strokeWidth={3} />
               )}
             </motion.div>
 
             <motion.p
-              initial={{ opacity: 0, y: 12 }}
+              initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.2 }}
-              className={`text-lg font-semibold tracking-wide ${styles.iconColor}`}
+              transition={{ delay: 0.25 }}
+              className={`relative text-xl font-bold tracking-wide ${styles.iconColor}`}
             >
               {displayName}
             </motion.p>
 
             <motion.p
-              initial={{ opacity: 0, y: 12 }}
+              initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.28 }}
-              className="mt-2 text-sm text-muted-foreground"
+              transition={{ delay: 0.35 }}
+              className="relative mt-3 text-sm text-muted-foreground"
             >
               {message}
             </motion.p>
 
             {isSuccess && typeof daysRemaining === 'number' && (
               <motion.div
-                initial={{ opacity: 0, y: 12 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.36 }}
-                className={`mt-4 rounded-xl px-4 py-2 ${styles.accentBg}`}
+                initial={{ opacity: 0, scale: 0.9, y: 10 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                transition={{ delay: 0.45 }}
+                className={`relative mt-6 rounded-xl px-6 py-3 ${styles.accentBg} shadow-md`}
               >
-                <p className={`text-sm font-medium ${styles.accentText}`}>
+                <p className={`text-sm font-semibold ${styles.accentText}`}>
                   {daysRemaining} jour{daysRemaining > 1 || daysRemaining === 0 ? 's' : ''} restant
                   {daysRemaining > 1 || daysRemaining === 0 ? 's' : ''}
                 </p>

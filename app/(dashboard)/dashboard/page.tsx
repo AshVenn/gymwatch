@@ -2,7 +2,7 @@
 import { useSession } from 'next-auth/react'
 import { useEffect, useMemo, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle,CardFooter } from '@/components/ui/card'
 import {
   LineChart,
   Line,
@@ -14,6 +14,10 @@ import {
   CartesianGrid,
   ResponsiveContainer,
   Dot,
+  PolarRadiusAxis,
+  RadialBar,
+  RadialBarChart,
+  Label,
 } from 'recharts'
 import {
   ChartConfig,
@@ -25,6 +29,7 @@ import { Button } from '@/components/ui/button'
 import { usePlanFeatures } from '@/app/hooks/use-plan-features'
 import { PaginationControls } from '@/components/dashboard/pagination-controls'
 import { toast } from 'sonner'
+import { TrendingUp } from 'lucide-react'
 
 interface DashboardStats {
   monthlyRevenue: number
@@ -146,7 +151,7 @@ export default function DashboardPage() {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
 
         <Card>
           <CardHeader className="pb-2">
@@ -204,16 +209,15 @@ export default function DashboardPage() {
       </div>
 
       {/* Charts */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Revenus des 12 derniers mois</CardTitle>
-            <CardDescription>Tendance mensuelle</CardDescription>
+      <div className="grid gap-4 lg:grid-cols-3">
+        <Card className="lg:col-span-2 border-border/70">
+          <CardHeader className="pb-0">
+            <CardTitle>Évolution des revenus</CardTitle>
+            <CardDescription>Douze derniers mois</CardDescription>
           </CardHeader>
           <CardContent>
             <ChartContainer config={revenueChartConfig}>
-              <ResponsiveContainer width="100%" height={300}>
+              <ResponsiveContainer width="100%" height={320}>
                 <LineChart data={stats.revenueByMonth ?? []} margin={{ top: 24, left: 24, right: 24 }}>
                   <CartesianGrid vertical={false} strokeDasharray="3 3" />
                   <XAxis
@@ -226,14 +230,14 @@ export default function DashboardPage() {
                   <YAxis />
                   <ChartTooltip cursor={false} content={<ChartTooltipContent hideLabel />} />
                   <Line
-                    type="natural"
                     dataKey="revenue"
+                    type="monotone"
                     stroke="oklch(0.488 0.243 264.376)"
                     strokeWidth={2}
                     connectNulls
-                    dot={(props) => (
+                    dot={({ payload, ...props }) => (
                       <Dot
-                        key={`revenue-dot-${props.payload?.month ?? props.cx ?? props.cy}`}
+                        key={payload?.month}
                         r={5}
                         cx={props.cx}
                         cy={props.cy}
@@ -248,47 +252,122 @@ export default function DashboardPage() {
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Répartition des abonnements par plan</CardTitle>
-            <CardDescription>Distribution des abonnements actifs</CardDescription>
+        <Card className="border-border/70">
+          <CardHeader className="pb-0">
+            <CardTitle>Répartition des statuts</CardTitle>
+            <CardDescription>Abonnements actifs vs. autres</CardDescription>
           </CardHeader>
           <CardContent>
-            <ChartContainer config={planChartConfig} className="[&_.recharts-pie-label-text]:fill-foreground mx-auto aspect-square max-h-[300px]">
-              <ResponsiveContainer width="100%" height={300}>
+            <ChartContainer config={planChartConfig}>
+              <ResponsiveContainer width="100%" height={280}>
                 <PieChart>
                   <Pie
                     data={planDistribution}
-                    cx="50%"
-                    cy="50%"
-                    labelLine={false}
-                    label={({ name, value }) => `${name}: ${value}`}
-                    outerRadius={80}
-                    fill="#8884d8"
                     dataKey="value"
                     nameKey="name"
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={70}
+                    outerRadius={110}
+                    labelLine={false}
+                    label
                   >
                     {planDistribution.map((entry, index) => (
                       <Cell key={`${entry.name}-${index}`} fill={computedColors[index % computedColors.length]} />
                     ))}
                   </Pie>
-                  <ChartTooltip content={<ChartTooltipContent hideLabel />} />
+                  <ChartTooltip content={<ChartTooltipContent />} />
                 </PieChart>
               </ResponsiveContainer>
             </ChartContainer>
           </CardContent>
         </Card>
-
       </div>
 
-      {/* Expiring Soon */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Abonnements expirant dans les 7 prochains jours</CardTitle>
-          <CardDescription>
-            {expiringSoon.length} abonnements expireront bientôt
-          </CardDescription>
-        </CardHeader>
+      {/* Radial Chart and Expiring Soon */}
+      <div className="grid gap-4 lg:grid-cols-2">
+        <Card className="flex flex-col border-border/70">
+          <CardHeader className="items-center pb-0 text-center">
+            <CardTitle>Taux d'abonnements actifs</CardTitle>
+            <CardDescription>Sur l'ensemble des membres</CardDescription>
+          </CardHeader>
+          <CardContent className="flex flex-1 items-center pb-0">
+            <ChartContainer config={planChartConfig} className="mx-auto aspect-square w-full max-w-[250px]">
+              <RadialBarChart
+                data={[
+                  {
+                    active: stats.activeMembers,
+                    inactive: Math.max(0, planDistribution.reduce((sum, p) => sum + p.value, 0) - stats.activeMembers),
+                  },
+                ]}
+                endAngle={180}
+                innerRadius={80}
+                outerRadius={130}
+              >
+                <ChartTooltip cursor={false} content={<ChartTooltipContent hideLabel />} />
+                <PolarRadiusAxis tick={false} tickLine={false} axisLine={false}>
+                  <Label
+                    content={({ viewBox }) => {
+                      if (viewBox && 'cx' in viewBox && 'cy' in viewBox) {
+                        const total = planDistribution.reduce((sum, p) => sum + p.value, 0) || stats.activeMembers
+                        return (
+                          <text x={viewBox.cx} y={viewBox.cy} textAnchor="middle">
+                            <tspan
+                              x={viewBox.cx}
+                              y={(viewBox.cy || 0) - 16}
+                              className="fill-foreground text-2xl font-bold"
+                            >
+                              {stats.activeMembers.toLocaleString()}
+                            </tspan>
+                            <tspan
+                              x={viewBox.cx}
+                              y={(viewBox.cy || 0) + 4}
+                              className="fill-muted-foreground"
+                            >
+                              Actifs
+                            </tspan>
+                          </text>
+                        )
+                      }
+                    }}
+                  />
+                </PolarRadiusAxis>
+                <RadialBar
+                  dataKey="active"
+                  stackId="a"
+                  cornerRadius={5}
+                  fill="var(--chart-1)"
+                  className="stroke-transparent stroke-2"
+                />
+                <RadialBar
+                  dataKey="inactive"
+                  fill="var(--chart-2)"
+                  stackId="a"
+                  cornerRadius={5}
+                  className="stroke-transparent stroke-2"
+                />
+              </RadialBarChart>
+            </ChartContainer>
+          </CardContent>
+          <CardFooter className="flex-col gap-2 text-sm">
+            <div className="flex items-center gap-2 leading-none font-medium">
+              <TrendingUp className="h-4 w-4" />
+              {planDistribution.reduce((sum, p) => sum + p.value, 0) || stats.activeMembers} membres au total
+            </div>
+            <div className="text-muted-foreground leading-none">
+              Répartition des abonnements actifs
+            </div>
+          </CardFooter>
+        </Card>
+
+        {/* Expiring Soon */}
+        <Card className="border-border/70">
+          <CardHeader>
+            <CardTitle>Abonnements expirant dans les 7 prochains jours</CardTitle>
+            <CardDescription>
+              {expiringSoon.length} abonnements expireront bientôt
+            </CardDescription>
+          </CardHeader>
         <CardContent className="space-y-4">
           {expiringSoon.length === 0 ? (
             <p className="text-muted-foreground text-center py-4">
@@ -330,8 +409,9 @@ export default function DashboardPage() {
           )}
         </CardContent>
       </Card>
+      </div>
 
-      <Card>
+      <Card className="border-border/70">
         <CardHeader>
           <CardTitle>Rapports et exports</CardTitle>
           <CardDescription>

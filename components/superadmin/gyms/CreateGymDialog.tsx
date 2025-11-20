@@ -12,6 +12,7 @@ import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form'
+import { DatePicker } from '@/components/ui/date-picker'
 import { PLAN_PRICING } from '@/lib/subscription-plans'
 
 const schema = z.object({
@@ -277,7 +278,11 @@ export function CreateGymDialog() {
                   <FormItem>
                     <FormLabel>Expiration</FormLabel>
                     <FormControl>
-                      <Input type="date" {...field} />
+                      <DatePicker
+                        value={field.value || null}
+                        onChange={field.onChange}
+                        placeholder="Choisir une date"
+                      />
                     </FormControl>
                   </FormItem>
                 )}

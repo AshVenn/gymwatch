@@ -1,4 +1,4 @@
-﻿'use client'
+'use client'
 
 import { useMemo } from 'react'
 import { useSession } from 'next-auth/react'
@@ -49,7 +49,7 @@ export function SubscriptionBanner() {
 
   if (!message || !tone) {
     return (
-      <div className="relative overflow-hidden rounded-2xl border border-white/5 bg-gradient-to-r from-primary/10 via-indigo-500/10 to-cyan-500/10 p-5 shadow-lg">
+      <div className="relative overflow-hidden rounded-2xl border border-white/5 bg-gradient-to-r from-primary/10 via-indigo-500/10 to-cyan-500/10 p-5">
         <div className="absolute inset-y-0 right-0 w-1/2 bg-[radial-gradient(circle_at_center,rgba(79,70,229,0.25),transparent_60%)] blur-3xl" />
         <div className="relative flex flex-col gap-2 text-sm text-white">
           <div className="flex items-center gap-2 text-xs uppercase tracking-[0.3em] text-white/70">
@@ -70,7 +70,7 @@ export function SubscriptionBanner() {
   }
 
   return (
-    <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-r from-red-500/70 via-orange-500/60 to-amber-500/60 p-5 text-white shadow-2xl">
+    <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-r from-red-500/70 via-orange-500/60 to-amber-500/60 p-5 text-white">
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(255,255,255,0.25),_transparent_55%)] blur-3xl opacity-50" />
       <div className="relative flex flex-col gap-3">
         <div className="flex items-center justify-between">

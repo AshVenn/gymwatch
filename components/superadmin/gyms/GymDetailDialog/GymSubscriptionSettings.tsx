@@ -1,4 +1,4 @@
-﻿import { useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import type { SuperAdminGymDetail } from '@/app/(dashboard)/super-admin/hooks'
 import { useUpdateGym } from '@/app/(dashboard)/super-admin/hooks'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -9,6 +9,7 @@ import { useForm } from 'react-hook-form'
 import { z } from 'zod'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form'
+import { DatePicker } from '@/components/ui/date-picker'
 
 type Props = {
   gym: SuperAdminGymDetail
@@ -178,7 +179,11 @@ export function GymSubscriptionSettings({ gym }: Props) {
                 <FormItem>
                   <FormLabel>Date d'expiration</FormLabel>
                   <FormControl>
-                    <Input type="date" {...field} />
+                    <DatePicker
+                      value={field.value || null}
+                      onChange={field.onChange}
+                      placeholder="Choisir une date"
+                    />
                   </FormControl>
                 </FormItem>
               )}

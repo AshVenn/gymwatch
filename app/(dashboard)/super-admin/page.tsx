@@ -62,15 +62,15 @@ const statusChartConfig: ChartConfig = {
 const radialChartConfig: ChartConfig = {
   active: {
     label: 'Actives',
-    color: 'hsl(var(--primary))',
+    color: 'var(--chart-1)',
   },
   suspended: {
     label: 'Suspendues',
-    color: 'hsl(var(--accent))',
+    color: 'var(--chart-2)',
   },
   expired: {
     label: 'Expirées',
-    color: 'hsl(var(--secondary))',
+    color: 'var(--chart-3)',
   },
 }
 
@@ -225,7 +225,7 @@ export default function SuperAdminOverviewPage() {
       </Card>
 
       {/* KPI CARDS */}
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card className="border-border/70">
           <CardHeader className="pb-2">
             <CardDescription>Nombre total de salles</CardDescription>
@@ -268,7 +268,7 @@ export default function SuperAdminOverviewPage() {
       </div>
 
       {/* LINE CHART */}
-      <div className="grid gap-4 lg:grid-cols-3">
+      <div className="grid gap-4 md:grid-cols-1 lg:grid-cols-3">
         <Card className="lg:col-span-2 border-border/70">
           <CardHeader className="pb-0">
             <CardTitle>Évolution des revenus</CardTitle>
@@ -349,14 +349,14 @@ export default function SuperAdminOverviewPage() {
       </div>
 
       {/* RADIAL CHART */}
-      <div className="grid gap-4 lg:grid-cols-2">
+      <div className="grid gap-4 md:grid-cols-1 lg:grid-cols-2">
         <Card className="flex flex-col border-border/70">
           <CardHeader className="items-center pb-0 text-center">
             <CardTitle>Taux de salles actives</CardTitle>
             <CardDescription>Sur l'ensemble du parc</CardDescription>
           </CardHeader>
           <CardContent className="flex flex-1 items-center pb-0">
-            <ChartContainer config={radialChartConfig} className="mx-auto aspect-square w-full max-w-[280px]">
+            <ChartContainer config={radialChartConfig} className="mx-auto aspect-square w-full max-w-[250px]">
               <RadialBarChart data={radialChartData} endAngle={180} innerRadius={80} outerRadius={130}>
                 <ChartTooltip cursor={false} content={<ChartTooltipContent hideLabel />} />
                 <PolarRadiusAxis tick={false} tickLine={false} axisLine={false}>
@@ -367,17 +367,17 @@ export default function SuperAdminOverviewPage() {
                         <text x={viewBox.cx} y={viewBox.cy} textAnchor="middle">
                           <tspan
                             x={viewBox.cx}
-                            y={(viewBox.cy || 0) - 10}
-                            className="fill-foreground text-4xl font-bold"
+                            y={(viewBox.cy || 0) - 16}
+                            className="fill-foreground text-2xl font-bold"
                           >
-                            {activeShare}%
+                            {totalGymsRadial.toLocaleString()}
                           </tspan>
                           <tspan
                             x={viewBox.cx}
-                            y={(viewBox.cy || 0) + 16}
-                            className="fill-muted-foreground text-sm"
+                            y={(viewBox.cy || 0) + 4}
+                            className="fill-muted-foreground"
                           >
-                            Actives
+                            Salles
                           </tspan>
                         </text>
                       )
@@ -386,46 +386,35 @@ export default function SuperAdminOverviewPage() {
                 </PolarRadiusAxis>
                 <RadialBar
                   dataKey="active"
-                  stackId="share"
-                  cornerRadius={8}
-                  fill="hsl(var(--primary))"
+                  stackId="a"
+                  cornerRadius={5}
+                  fill="var(--color-active)"
                   className="stroke-transparent stroke-2"
                 />
                 <RadialBar
                   dataKey="suspended"
-                  stackId="share"
-                  cornerRadius={8}
-                  fill="hsl(var(--accent))"
+                  stackId="a"
+                  cornerRadius={5}
+                  fill="var(--color-suspended)"
                   className="stroke-transparent stroke-2"
                 />
                 <RadialBar
                   dataKey="expired"
-                  stackId="share"
-                  cornerRadius={8}
-                  fill="hsl(var(--secondary))"
+                  stackId="a"
+                  cornerRadius={5}
+                  fill="var(--color-expired)"
                   className="stroke-transparent stroke-2"
                 />
               </RadialBarChart>
             </ChartContainer>
           </CardContent>
-          <CardFooter className="grid gap-2 text-sm text-muted-foreground">
-            <div className="flex items-center gap-2">
-              <span className="inline-flex size-2 rounded-full bg-primary" />
-              <span className="text-foreground font-medium">{stats.activeGyms}</span>
-              <span>actives</span>
+          <CardFooter className="flex-col gap-2 text-sm">
+            <div className="flex items-center gap-2 leading-none font-medium">
+              <TrendingUp className="h-4 w-4" />
+              {activeShare}% de salles actives sur {totalGymsRadial} au total
             </div>
-            <div className="flex items-center gap-2">
-              <span className="inline-flex size-2 rounded-full bg-accent" />
-              <span className="text-foreground font-medium">{stats.suspendedGyms}</span>
-              <span>suspendues</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="inline-flex size-2 rounded-full bg-secondary" />
-              <span className="text-foreground font-medium">{radialExpired}</span>
-              <span>expirees</span>
-            </div>
-            <div className="text-xs text-muted-foreground">
-              Objectif : maintenir plus de 80% d'activite sur {totalGymsRadial} salles.
+            <div className="text-muted-foreground leading-none">
+              Répartition des statuts sur l'ensemble du parc
             </div>
           </CardFooter>
         </Card>

@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
 import { getServerSession } from "next-auth"
-import type { Prisma } from "@prisma/client"
 import { z } from "zod"
 import { utils, write } from "xlsx"
 import { authOptions } from "@/lib/auth-middleware"
@@ -12,7 +11,11 @@ const querySchema = z.object({
   memberId: z.string().optional(),
 })
 
-type SubscriptionAggregation = Pick<Prisma.SubscriptionGroupByOutputType, "memberId" | "_sum" | "_count">
+type SubscriptionAggregation = {
+  memberId: string
+  _sum: { pricePaid: number | null }
+  _count: { _all: number }
+}
 
 function rowsToWorkbook(rows: Array<Array<string | number>>) {
   const worksheet = utils.aoa_to_sheet(rows)
@@ -68,7 +71,7 @@ export async function GET(request: NextRequest) {
       ])
     }
   } else if (type === "top-members" || type === "loyal-members") {
-    const aggregated = await prisma.subscription.groupBy({
+    const aggregated: SubscriptionAggregation[] = await prisma.subscription.groupBy({
       by: ["memberId"],
       where: { gymId },
       _sum: { pricePaid: true },

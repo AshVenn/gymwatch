@@ -12,6 +12,7 @@ const createGymSchema = z.object({
   name: z.string().min(2),
   email: z.string().email(),
   phone: z.string().min(6),
+  address: z.string().optional(),
   city: z.string().optional(),
   country: z.string().optional(),
   subscriptionPlan: z.nativeEnum(GymPlanTier),
@@ -21,6 +22,18 @@ const createGymSchema = z.object({
   subscriptionGracePeriodDays: z.number().int().min(0).max(365).optional(),
   analyticsSnapshot: z.any().optional(),
   maxAdminAccounts: z.number().int().min(1).max(20).optional(),
+  isDemo: z.boolean().optional(),
+  demoEndsAt: z.string().optional(),
+  admins: z
+    .array(
+      z.object({
+        email: z.string().email(),
+        password: z.string().min(8),
+        firstName: z.string().min(2),
+        lastName: z.string().min(2),
+      }),
+    )
+    .optional(),
   owner: z.object({
     email: z.string().email(),
     password: z.string().min(8),
@@ -64,6 +77,7 @@ export async function POST(req: Request) {
       name: payload.name,
       email: payload.email,
       phone: payload.phone,
+      address: payload.address,
       city: payload.city,
       country: payload.country,
       subscriptionPlan: payload.subscriptionPlan,
@@ -75,6 +89,9 @@ export async function POST(req: Request) {
       subscriptionGracePeriodDays: payload.subscriptionGracePeriodDays,
       analyticsSnapshot: payload.analyticsSnapshot,
       maxAdminAccounts: payload.maxAdminAccounts,
+      isDemo: payload.isDemo,
+      demoEndsAt: payload.demoEndsAt ? new Date(payload.demoEndsAt) : undefined,
+      admins: payload.admins,
       owner: payload.owner,
     })
 

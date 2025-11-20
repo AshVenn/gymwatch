@@ -160,6 +160,7 @@ async function runSeed() {
   console.log('Seeding GymWatch data...')
 
   await prisma.$transaction([
+    prisma.demoRequest.deleteMany(),
     prisma.payment.deleteMany(),
     prisma.subscription.deleteMany(),
     prisma.member.deleteMany(),
@@ -257,6 +258,42 @@ async function runSeed() {
   })
   console.log('Created gym 2:', gym2.name)
 
+  const demoGym = await prisma.gym.upsert({
+    where: { id: 'gym-demo' },
+    update: {
+      subscriptionPlan: 'BASIC',
+      billingInterval: 'MONTHLY',
+      subscriptionPrice: 0,
+      subscriptionStatus: 'ACTIVE',
+      subscriptionExpiresAt: addDays(today, 10),
+      demoEndsAt: addDays(today, 15),
+      isDemo: true,
+      subscriptionGracePeriodDays: 3,
+      maxAdminAccounts: 2,
+      lastSettingsUpdateAt: today,
+    },
+    create: {
+      id: 'gym-demo',
+      name: 'Demo Club',
+      email: 'demo@gymwatch.ma',
+      city: 'Marrakech',
+      country: 'Maroc',
+      subscriptionPlan: 'BASIC',
+      billingInterval: 'MONTHLY',
+      subscriptionPrice: 0,
+      subscriptionStatus: 'ACTIVE',
+      subscriptionStartedAt: today,
+      subscriptionExpiresAt: addDays(today, 10),
+      demoEndsAt: addDays(today, 15),
+      isDemo: true,
+      subscriptionGracePeriodDays: 3,
+      maxAdminAccounts: 2,
+      lastSettingsUpdateAt: today,
+      analyticsSnapshot: buildAnalyticsSnapshot(5000),
+    },
+  })
+  console.log('Created demo gym:', demoGym.name)
+
   const fitZoneOwner = await upsertOwner({
     email: 'owner@fitzone.ma',
     password: 'Owner123!',
@@ -274,6 +311,15 @@ async function runSeed() {
     gymId: gym2.id,
   })
   await prisma.gym.update({ where: { id: gym2.id }, data: { ownerId: powerGymOwner.id } })
+
+  const demoGymOwner = await upsertOwner({
+    email: 'owner@demo.gymwatch.ma',
+    password: 'Owner123!',
+    firstName: 'Demo',
+    lastName: 'Owner',
+    gymId: demoGym.id,
+  })
+  await prisma.gym.update({ where: { id: demoGym.id }, data: { ownerId: demoGymOwner.id } })
 
   const fitZoneAdmins = await Promise.all([
     upsertAdmin({
@@ -366,6 +412,22 @@ async function runSeed() {
     }),
   ])
   console.log('Created membership plans for Gym 2')
+
+  const plansDemo = await Promise.all([
+    prisma.membershipPlan.upsert({
+      where: { id: `plan-${demoGym.id}-monthly` },
+      update: {},
+      create: {
+        id: `plan-${demoGym.id}-monthly`,
+        gymId: demoGym.id,
+        name: 'Essai 30j',
+        durationDays: 30,
+        price: 0,
+        isActive: true,
+      },
+    }),
+  ])
+  console.log('Created membership plan for Demo gym')
 
   const members1 = await Promise.all([
     prisma.member.create({
@@ -469,8 +531,43 @@ async function runSeed() {
   await createSubscriptions(members2, gym2, plans2, 5)
   console.log('?? Created subscriptions and payments')
 
+  await prisma.demoRequest.createMany({
+    data: [
+      {
+        gymName: 'Atlas Fitness',
+        gymEmail: 'atlas@demo.ma',
+        adminEmail: 'contact@atlas.ma',
+        adminFirstName: 'Imane',
+        adminLastName: 'Bennani',
+        phone: '+212611112233',
+        city: 'Marrakech',
+        country: 'Maroc',
+        plan: 'PRO',
+        message: 'Reseau de 2 salles en preparation.',
+        status: 'PENDING',
+      },
+      {
+        gymName: 'ZenFit',
+        gymEmail: 'zenfit@demo.ma',
+        adminEmail: 'hello@zenfit.ma',
+        adminFirstName: 'Younes',
+        adminLastName: 'Khalil',
+        phone: '+212622334455',
+        city: 'Agadir',
+        country: 'Maroc',
+        plan: 'BASIC',
+        status: 'RESOLVED',
+        resolvedAt: today,
+        resolvedById: superAdmin.id,
+        createdGymId: demoGym.id,
+        resolutionNote: 'Compte demo et acces envoyes',
+      },
+    ],
+  })
+  console.log('Created demo requests')
+
   return {
-    gymsSeeded: 2,
+    gymsSeeded: 3,
     membersSeeded: members1.length + members2.length,
   }
 }

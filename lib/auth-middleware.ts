@@ -68,6 +68,8 @@ export const authOptions: NextAuthOptions = {
           subscriptionPlan: gym?.subscriptionPlan ?? null,
           billingInterval: gym?.billingInterval ?? null,
           subscriptionExpiresAt: gym?.subscriptionExpiresAt?.toISOString() ?? null,
+          isDemo: gym?.isDemo ?? false,
+          demoEndsAt: gym?.demoEndsAt?.toISOString() ?? null,
           sessionVersion,
         } as any
       },
@@ -91,6 +93,8 @@ export const authOptions: NextAuthOptions = {
         ;(token as any).subscriptionPlan = (user as any).subscriptionPlan
         ;(token as any).billingInterval = (user as any).billingInterval
         ;(token as any).subscriptionExpiresAt = (user as any).subscriptionExpiresAt
+        ;(token as any).isDemo = (user as any).isDemo
+        ;(token as any).demoEndsAt = (user as any).demoEndsAt
         ;(token as any).sessionVersion = (user as any).sessionVersion
         ;(token as any).sessionRevoked = false
       } else if (token.sub) {
@@ -113,6 +117,8 @@ export const authOptions: NextAuthOptions = {
         ;(session.user as any).subscriptionPlan = (token as any).subscriptionPlan
         ;(session.user as any).billingInterval = (token as any).billingInterval
         ;(session.user as any).subscriptionExpiresAt = (token as any).subscriptionExpiresAt
+        ;(session.user as any).isDemo = (token as any).isDemo
+        ;(session.user as any).demoEndsAt = (token as any).demoEndsAt
       }
       return session
     },

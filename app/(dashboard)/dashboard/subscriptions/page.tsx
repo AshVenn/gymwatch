@@ -1,7 +1,11 @@
-﻿'use client'
+'use client'
 
 import { useSession } from 'next-auth/react'
 import { useMemo, useState } from 'react'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { AlertTriangle, Calendar as CalendarIcon, MoreVertical, RotateCcw, Trash2 } from 'lucide-react'
+import { toast } from 'sonner'
+
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import {
@@ -29,9 +33,6 @@ import {
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { AlertTriangle, MoreVertical, RotateCcw, Trash2 } from 'lucide-react'
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { toast } from 'sonner'
 import { PaginationControls, usePagination } from '@/components/dashboard/pagination-controls'
 import {
   SubscriptionSummary,
@@ -42,6 +43,9 @@ import {
   type SortOption,
   type QuickFilter,
 } from '@/components/dashboard/subscriptions/subscription-filters'
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
+import { Calendar } from '@/components/ui/calendar'
+import { Switch } from '@/components/ui/switch'
 
 interface Subscription {
   id: string
@@ -52,6 +56,12 @@ interface Subscription {
   daysLeft: number
   status: 'ACTIVE' | 'EXPIRES_TODAY' | 'EXPIRED'
   pricePaid: number
+}
+
+interface Plan {
+  id: string
+  name: string
+  durationDays?: number
 }
 
 type StatusCounterKey = Subscription['status'] | 'ALL'
@@ -72,7 +82,7 @@ const statusQuickFilters: QuickFilter[] = [
   { label: 'Tous', value: 'ALL', count: 0 },
   { label: 'Actifs', value: 'ACTIVE', count: 0 },
   { label: 'Expire ajd.', value: 'EXPIRES_TODAY', count: 0 },
-  { label: 'Expirés', value: 'EXPIRED', count: 0 },
+  { label: 'Expires', value: 'EXPIRED', count: 0 },
 ]
 
 export default function SubscriptionsPage() {
@@ -82,16 +92,21 @@ export default function SubscriptionsPage() {
   const [filterStatus, setFilterStatus] = useState<string>('ALL')
   const [sortBy, setSortBy] = useState<SortOption>('NEXT_EXPIRY')
   const [renewingId, setRenewingId] = useState<string | null>(null)
-  const [renewalForm, setRenewalForm] = useState({
+  const [renewalForm, setRenewalForm] = useState<{
+    planId: string
+    startDate: Date | null
+    createPayment: boolean
+  }>({
     planId: '',
-    startDate: new Date().toISOString().split('T')[0],
+    startDate: new Date(),
+    createPayment: true,
   })
 
   const gymId = session?.user?.gymId
 
   const subscriptionQueryKey = useMemo(
     () => ['subscriptions', gymId, { searchTerm, filterStatus }] as const,
-    [gymId, searchTerm, filterStatus]
+    [gymId, searchTerm, filterStatus],
   )
   const plansQueryKey = useMemo(() => ['plans', gymId] as const, [gymId])
 
@@ -118,7 +133,7 @@ export default function SubscriptionsPage() {
     },
   })
 
-  const { data: plans = [] } = useQuery<{ id: string; name: string }[]>({
+  const { data: plans = [] } = useQuery<Plan[]>({
     queryKey: plansQueryKey,
     enabled: Boolean(gymId),
     queryFn: async () => {
@@ -145,7 +160,7 @@ export default function SubscriptionsPage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: subscriptionQueryKey })
-      toast.success('Abonnement supprimé avec succès')
+      toast.success('Abonnement supprime avec succes')
     },
     onError: (err) => {
       const message = err instanceof Error ? err.message : 'Impossible de supprimer cet abonnement'
@@ -156,13 +171,17 @@ export default function SubscriptionsPage() {
   const renewSubscriptionMutation = useMutation({
     mutationFn: async () => {
       if (!renewingId) {
-        throw new Error('Aucun abonnement sélectionné')
+        throw new Error("Aucun abonnement selectionne")
       }
 
       const response = await fetch(`/api/subscriptions/${renewingId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(renewalForm),
+        body: JSON.stringify({
+          planId: renewalForm.planId,
+          startDate: renewalForm.startDate ? renewalForm.startDate.toISOString() : new Date().toISOString(),
+          createPayment: renewalForm.createPayment,
+        }),
       })
 
       const data = await response.json().catch(() => ({}))
@@ -176,8 +195,8 @@ export default function SubscriptionsPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: subscriptionQueryKey })
       setRenewingId(null)
-      setRenewalForm({ planId: '', startDate: new Date().toISOString().split('T')[0] })
-      toast.success('Abonnement renouvelé avec succès')
+      setRenewalForm({ planId: '', startDate: new Date(), createPayment: true })
+      toast.success('Abonnement mis a jour')
     },
     onError: (err) => {
       const message = err instanceof Error ? err.message : "Impossible de renouveler l'abonnement"
@@ -275,14 +294,19 @@ export default function SubscriptionsPage() {
   const handleDeleteSubscription = (subscriptionId: string) => {
     if (!subscriptionId) return
 
-    if (confirm('Êtes-vous sûr de vouloir supprimer cet abonnement ?')) {
+    if (confirm('Etes-vous sur de vouloir supprimer cet abonnement ?')) {
       deleteSubscriptionMutation.mutate(subscriptionId)
     }
   }
 
   const handleRenewalSubmit = () => {
     if (!renewalForm.planId) {
-      toast.error('Veuillez sélectionner un plan.')
+      toast.error('Veuillez selectionner un plan.')
+      return
+    }
+
+    if (!renewalForm.startDate) {
+      toast.error('Veuillez choisir une date de debut.')
       return
     }
 
@@ -290,9 +314,9 @@ export default function SubscriptionsPage() {
   }
 
   const safeDate = (value: string | null | undefined) => {
-    if (!value) return '—'
+    if (!value) return '-'
     const parsed = new Date(value)
-    if (Number.isNaN(parsed.getTime())) return '—'
+    if (Number.isNaN(parsed.getTime())) return '-'
     return dateFormatter.format(parsed)
   }
 
@@ -304,15 +328,27 @@ export default function SubscriptionsPage() {
     }
 
     if (status === 'EXPIRES_TODAY') {
-      return <Badge className={cn(base, 'bg-amber-100 text-amber-900 dark:bg-amber-500/20 dark:text-amber-50')}>Expire aujourd'hui</Badge>
+      return <Badge className={cn(base, 'bg-amber-100 text-amber-900 dark:bg-amber-500/20 dark:text-amber-50')}>Expire aujourd hui</Badge>
     }
 
     if (status === 'EXPIRED') {
-      return <Badge className={cn(base, 'bg-destructive/20 text-destructive')}>Expiré</Badge>
+      return <Badge className={cn(base, 'bg-destructive/20 text-destructive')}>Expire</Badge>
     }
 
     return <Badge className={base}>{status}</Badge>
   }
+
+  const selectedPlan = plans.find((plan) => plan.id === renewalForm.planId)
+  const endPreview =
+    selectedPlan && renewalForm.startDate
+      ? (() => {
+          const end = new Date(renewalForm.startDate)
+          if (selectedPlan.durationDays) {
+            end.setDate(end.getDate() + selectedPlan.durationDays)
+          }
+          return end
+        })()
+      : null
 
   if (isLoading) {
     return (
@@ -354,7 +390,7 @@ export default function SubscriptionsPage() {
           <>
             <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border/60 px-6 py-4 text-sm text-muted-foreground">
               <span>
-                {filteredSubscriptions.length} abonnement{filteredSubscriptions.length > 1 ? 's' : ''} trouvés
+                {filteredSubscriptions.length} abonnement{filteredSubscriptions.length > 1 ? 's' : ''} trouves
               </span>
               <span className="text-xs uppercase tracking-[0.3em] text-muted-foreground">
                 Page {subscriptionPagination.page} / {subscriptionPagination.pageCount}
@@ -363,9 +399,9 @@ export default function SubscriptionsPage() {
             <Table>
               <TableHeader>
                 <TableRow className="text-muted-foreground">
-                  <TableHead>Adhérent</TableHead>
+                  <TableHead>Adherent</TableHead>
                   <TableHead>Plan</TableHead>
-                  <TableHead>Début</TableHead>
+                  <TableHead>Debut</TableHead>
                   <TableHead>Fin</TableHead>
                   <TableHead>Restant</TableHead>
                   <TableHead className="text-right">Montant</TableHead>
@@ -381,7 +417,7 @@ export default function SubscriptionsPage() {
                     className={cn(
                       'border-border/60 text-foreground transition-colors hover:bg-muted/40',
                       sub.status === 'EXPIRED' && 'bg-destructive/10',
-                      sub.status === 'EXPIRES_TODAY' && 'bg-amber-100/30 dark:bg-amber-500/10'
+                      sub.status === 'EXPIRES_TODAY' && 'bg-amber-100/30 dark:bg-amber-500/10',
                     )}
                   >
                     <TableCell className="font-semibold">
@@ -399,14 +435,14 @@ export default function SubscriptionsPage() {
                             ? 'text-destructive'
                             : sub.daysLeft <= 5
                               ? 'text-amber-600 dark:text-amber-300'
-                              : 'text-primary'
+                              : 'text-primary',
                         )}
                       >
                         {sub.daysLeft < 0 ? `${Math.abs(sub.daysLeft)} j de retard` : `${sub.daysLeft} j restants`}
                       </span>
                     </TableCell>
                     <TableCell className="text-right font-semibold">
-                      {sub.pricePaid ? currencyFormatter.format(sub.pricePaid) : '—'}
+                      {sub.pricePaid ? currencyFormatter.format(sub.pricePaid) : '-'}
                     </TableCell>
                     <TableCell>{getStatusBadge(sub.status)}</TableCell>
                     <TableCell className="text-right">
@@ -426,18 +462,19 @@ export default function SubscriptionsPage() {
                                   setRenewingId(sub.id)
                                   setRenewalForm({
                                     planId: '',
-                                    startDate: new Date().toISOString().split('T')[0],
+                                    startDate: new Date(),
+                                    createPayment: true,
                                   })
                                 }}
                               >
                                 <RotateCcw className="mr-2" size={16} />
-                                Renouveler
+                                Modifier / renouveler
                               </DropdownMenuItem>
                             </DialogTrigger>
 
                             <DialogContent className="border-border/60 bg-card text-foreground">
                               <DialogHeader>
-                                <DialogTitle>Renouveler l'abonnement</DialogTitle>
+                                <DialogTitle>Mettre a jour l abonnement</DialogTitle>
                               </DialogHeader>
 
                               <div className="space-y-4">
@@ -450,7 +487,7 @@ export default function SubscriptionsPage() {
                                     onValueChange={(value) => setRenewalForm({ ...renewalForm, planId: value })}
                                   >
                                     <SelectTrigger id="renew-plan" className="mt-1">
-                                      <SelectValue placeholder="Sélectionner un plan" />
+                                      <SelectValue placeholder="Selectionner un plan" />
                                     </SelectTrigger>
                                     <SelectContent>
                                       {(plans ?? []).map((plan) => (
@@ -462,16 +499,50 @@ export default function SubscriptionsPage() {
                                   </Select>
                                 </div>
 
-                                <div>
-                                  <Label htmlFor="renew-start-date" className="text-foreground">
-                                    Date de début
-                                  </Label>
-                                  <Input
-                                    id="renew-start-date"
-                                    type="date"
-                                    value={renewalForm.startDate}
-                                    onChange={(e) => setRenewalForm({ ...renewalForm, startDate: e.target.value })}
-                                    className="mt-1"
+                                <div className="space-y-2">
+                                  <Label className="text-foreground">Date de debut</Label>
+                                  <Popover>
+                                    <PopoverTrigger asChild>
+                                      <Button
+                                        variant="outline"
+                                        className={cn(
+                                          'w-full justify-start text-left font-normal',
+                                          !renewalForm.startDate && 'text-muted-foreground',
+                                        )}
+                                      >
+                                        <CalendarIcon className="mr-2 h-4 w-4" />
+                                        {renewalForm.startDate
+                                          ? dateFormatter.format(renewalForm.startDate)
+                                          : 'Choisir une date'}
+                                      </Button>
+                                    </PopoverTrigger>
+                                    <PopoverContent className="w-auto p-0" align="start">
+                                      <Calendar
+                                        mode="single"
+                                        selected={renewalForm.startDate ?? undefined}
+                                        onSelect={(date) => setRenewalForm({ ...renewalForm, startDate: date ?? null })}
+                                      />
+                                    </PopoverContent>
+                                  </Popover>
+                                  {endPreview && (
+                                    <p className="text-xs text-muted-foreground">
+                                      Fin estimee: {dateFormatter.format(endPreview)}
+                                    </p>
+                                  )}
+                                </div>
+
+                                <div className="flex items-center justify-between rounded-md border border-border/60 p-3">
+                                  <div className="space-y-0.5">
+                                    <p className="text-sm font-medium">Creer un paiement</p>
+                                    <p className="text-xs text-muted-foreground">
+                                      Desactivez si vous corrigez une erreur de date.
+                                    </p>
+                                  </div>
+                                  <Switch
+                                    checked={renewalForm.createPayment}
+                                    onCheckedChange={(checked) =>
+                                      setRenewalForm({ ...renewalForm, createPayment: checked })
+                                    }
                                   />
                                 </div>
 
@@ -480,7 +551,7 @@ export default function SubscriptionsPage() {
                                   onClick={handleRenewalSubmit}
                                   disabled={renewSubscriptionMutation.isPending}
                                 >
-                                  {renewSubscriptionMutation.isPending ? 'Renouvellement...' : 'Renouveler'}
+                                  {renewSubscriptionMutation.isPending ? 'Mise a jour...' : 'Sauvegarder'}
                                 </Button>
                               </div>
                             </DialogContent>
@@ -514,12 +585,12 @@ export default function SubscriptionsPage() {
         ) : (
           <div className="flex flex-col items-center justify-center gap-3 px-10 py-24 text-center text-muted-foreground">
             <AlertTriangle className="h-10 w-10 text-primary" />
-            <p className="text-lg font-semibold">Aucun abonnement ne correspond à vos filtres.</p>
+            <p className="text-lg font-semibold">Aucun abonnement ne correspond a vos filtres.</p>
             <p className="text-sm text-muted-foreground">
               Ajustez la recherche ou le statut pour afficher d'autres membres.
             </p>
             <Button variant="outline" onClick={() => setFilterStatus('ALL')}>
-              Réinitialiser les filtres
+              Reinitialiser les filtres
             </Button>
           </div>
         )}

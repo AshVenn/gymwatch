@@ -32,7 +32,12 @@ export function GymDetailDialog({ gymId, onClose }: Props) {
         ) : (
           <>
             <DialogHeader className="space-y-3">
-              <DialogTitle>{gym.name}</DialogTitle>
+              <DialogTitle className="flex items-center gap-2">
+                {gym.name}
+                {gym.isDemo ? (
+                  <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs font-semibold text-primary">DEMO</span>
+                ) : null}
+              </DialogTitle>
 
               <DialogDescription className="text-pretty text-sm">
                 {gym.city ?? 'Localisation inconnue'}
@@ -43,6 +48,9 @@ export function GymDetailDialog({ gymId, onClose }: Props) {
                   style: 'currency',
                   currency: 'MAD',
                 })}
+                {gym.isDemo && gym.demoEndsAt
+                  ? ` - Demo jusqu'au ${new Date(gym.demoEndsAt).toLocaleDateString('fr-FR')}`
+                  : ''}
               </DialogDescription>
             </DialogHeader>
 

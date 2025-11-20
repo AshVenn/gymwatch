@@ -39,7 +39,7 @@ type Props = {
 const STATUS_LABEL: Record<string, string> = {
   ACTIVE: 'Actif',
   SUSPENDED: 'Suspendue',
-  EXPIRED: 'Expirée',
+  EXPIRED: 'Expiree',
 }
 
 const PLAN_LABEL: Record<string, string> = {
@@ -72,7 +72,7 @@ export function GymsTable({ gyms, isLoading, pagination, totalItems, onAction }:
   }
 
   if (!gyms.length) {
-    return <div className="py-10 text-center text-muted-foreground">Aucune salle ne correspond à vos filtres.</div>
+    return <div className="py-10 text-center text-muted-foreground">Aucune salle ne correspond a vos filtres.</div>
   }
 
   return (
@@ -93,7 +93,14 @@ export function GymsTable({ gyms, isLoading, pagination, totalItems, onAction }:
           {gyms.map((gym) => (
             <TableRow key={gym.id}>
               <TableCell>
-                <div className="font-medium">{gym.name}</div>
+                <div className="flex items-center gap-2 font-medium">
+                  {gym.name}
+                  {gym.isDemo ? (
+                    <Badge variant="outline" className="border-primary/60 text-primary">
+                      DEMO
+                    </Badge>
+                  ) : null}
+                </div>
                 <p className="text-xs text-muted-foreground">{gym.email}</p>
               </TableCell>
 
@@ -103,6 +110,7 @@ export function GymsTable({ gyms, isLoading, pagination, totalItems, onAction }:
                 </Badge>
 
                 <p className="text-xs text-muted-foreground">
+                  {gym.isDemo && <span className="font-semibold text-primary">Demo </span>}
                   Plan {PLAN_LABEL[gym.subscriptionPlan] ?? gym.subscriptionPlan} {' - '}
                   {INTERVAL_LABEL[gym.billingInterval] ?? gym.billingInterval} {' - '}
                   {gym.subscriptionPrice.toLocaleString('fr-MA', {
@@ -122,9 +130,13 @@ export function GymsTable({ gyms, isLoading, pagination, totalItems, onAction }:
                     : '—'}
                 </p>
 
+                {gym.isDemo && gym.demoEndsAt ? (
+                  <p className="text-xs text-primary">Demo jusqu'au {new Date(gym.demoEndsAt).toLocaleDateString('fr-FR')}</p>
+                ) : null}
+
                 {typeof gym.daysRemaining === 'number' && (
                   <p className="text-xs text-muted-foreground">
-                    {gym.daysRemaining > 0 ? `${gym.daysRemaining} j restants` : 'Expirée'}
+                    {gym.daysRemaining > 0 ? `${gym.daysRemaining} j restants` : 'Expiree'}
                   </p>
                 )}
               </TableCell>
@@ -162,7 +174,7 @@ export function GymsTable({ gyms, isLoading, pagination, totalItems, onAction }:
 
       <div className="border-t border-border/70 px-4 py-4">
         {gyms.length > 0 && (
-          <div className="flex flex-wrap items-center justify-between gap-3 mb-4 text-sm text-muted-foreground">
+          <div className="mb-4 flex flex-wrap items-center justify-between gap-3 text-sm text-muted-foreground">
             <span>
               {totalItems} salle{totalItems > 1 ? 's' : ''} total
             </span>

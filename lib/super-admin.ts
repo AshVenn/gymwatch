@@ -127,6 +127,8 @@ export async function listGymsForSuperAdmin() {
       subscriptionPrice: true,
       subscriptionStatus: true,
       subscriptionExpiresAt: true,
+      isDemo: true,
+      demoEndsAt: true,
       subscriptionGracePeriodDays: true,
       analyticsSnapshot: true,
       updatedAt: true,
@@ -162,6 +164,8 @@ export async function listGymsForSuperAdmin() {
       subscriptionPrice: gym.subscriptionPrice,
       subscriptionStatus: gym.subscriptionStatus,
       subscriptionExpiresAt: gym.subscriptionExpiresAt,
+      isDemo: gym.isDemo,
+      demoEndsAt: gym.demoEndsAt,
       subscriptionGracePeriodDays: gym.subscriptionGracePeriodDays,
       analyticsSnapshot: gym.analyticsSnapshot ?? undefined,
       daysRemaining,
@@ -198,6 +202,8 @@ export async function getSuperAdminGymDetail(gymId: string) {
       subscriptionPrice: true,
       subscriptionStatus: true,
       subscriptionExpiresAt: true,
+      isDemo: true,
+      demoEndsAt: true,
       subscriptionGracePeriodDays: true,
       analyticsSnapshot: true,
       createdAt: true,
@@ -269,6 +275,8 @@ export async function getSuperAdminGymDetail(gymId: string) {
     subscriptionPrice: gym.subscriptionPrice,
     subscriptionStatus: gym.subscriptionStatus,
     subscriptionExpiresAt: gym.subscriptionExpiresAt,
+    isDemo: gym.isDemo,
+    demoEndsAt: gym.demoEndsAt,
     subscriptionGracePeriodDays: gym.subscriptionGracePeriodDays,
     maxAdminAccounts: gym.maxAdminAccounts,
     analyticsSnapshot: gym.analyticsSnapshot,
@@ -301,6 +309,8 @@ export async function updateGymFromSuperAdmin(
     subscriptionGracePeriodDays?: number
     analyticsSnapshot?: unknown
     maxAdminAccounts?: number
+    isDemo?: boolean
+    demoEndsAt?: Date | null
   },
 ) {
   let subscriptionPrice: number | undefined
@@ -333,6 +343,8 @@ export async function updateGymFromSuperAdmin(
       subscriptionGracePeriodDays: data.subscriptionGracePeriodDays ?? undefined,
       analyticsSnapshot: data.analyticsSnapshot ?? undefined,
       maxAdminAccounts: data.maxAdminAccounts ?? undefined,
+      isDemo: typeof data.isDemo === "boolean" ? data.isDemo : undefined,
+      demoEndsAt: data.demoEndsAt ?? undefined,
     },
   })
 }
@@ -341,6 +353,7 @@ export async function createGymForSuperAdmin(data: {
   name: string
   email: string
   phone: string
+  address?: string | null
   city?: string | null
   country?: string | null
   subscriptionPlan: GymPlanTier
@@ -350,6 +363,14 @@ export async function createGymForSuperAdmin(data: {
   subscriptionGracePeriodDays?: number
   analyticsSnapshot?: unknown
   maxAdminAccounts?: number
+  isDemo?: boolean
+  demoEndsAt?: Date | null
+  admins?: {
+    email: string
+    password: string
+    firstName: string
+    lastName: string
+  }[]
   owner: {
     email: string
     password: string
@@ -360,6 +381,7 @@ export async function createGymForSuperAdmin(data: {
   const hashedPassword = await hashPassword(data.owner.password)
   const interval = data.billingInterval ?? "MONTHLY"
   const subscriptionPrice = resolvePlanPrice(data.subscriptionPlan, interval)
+  const adminLimit = data.maxAdminAccounts ?? 3
 
   return prisma.$transaction(async (tx) => {
     const gym = await tx.gym.create({
@@ -367,6 +389,7 @@ export async function createGymForSuperAdmin(data: {
         name: data.name,
         email: data.email,
         phone: data.phone,
+        address: data.address ?? null,
         city: data.city ?? null,
         country: data.country ?? null,
         subscriptionPlan: data.subscriptionPlan,
@@ -376,7 +399,9 @@ export async function createGymForSuperAdmin(data: {
         subscriptionExpiresAt: data.subscriptionExpiresAt ?? null,
         subscriptionGracePeriodDays: data.subscriptionGracePeriodDays ?? 0,
         analyticsSnapshot: data.analyticsSnapshot ?? undefined,
-        maxAdminAccounts: data.maxAdminAccounts ?? 3,
+        maxAdminAccounts: adminLimit,
+        isDemo: data.isDemo ?? false,
+        demoEndsAt: data.demoEndsAt ?? null,
       },
     })
 
@@ -400,7 +425,37 @@ export async function createGymForSuperAdmin(data: {
       data: { ownerId: owner.id },
     })
 
-    return { ...gym, owner }
+    const adminUsers: {
+      id: string
+      email: string
+      firstName: string | null
+      lastName: string | null
+    }[] = []
+
+    if (data.admins?.length) {
+      for (const admin of data.admins.slice(0, adminLimit)) {
+        const hashedAdminPassword = await hashPassword(admin.password)
+        const created = await tx.user.create({
+          data: {
+            email: admin.email,
+            password: hashedAdminPassword,
+            role: UserRole.GYM_ADMIN,
+            firstName: admin.firstName,
+            lastName: admin.lastName,
+            gymId: gym.id,
+          },
+        })
+        await tx.userPreference.create({ data: { userId: created.id } })
+        adminUsers.push({
+          id: created.id,
+          email: created.email,
+          firstName: created.firstName,
+          lastName: created.lastName,
+        })
+      }
+    }
+
+    return { ...gym, owner, admins: adminUsers }
   })
 }
 

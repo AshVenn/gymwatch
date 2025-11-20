@@ -21,14 +21,13 @@ function LoginPageContent() {
 
   useEffect(() => {
     if (status === 'authenticated' && session?.user) {
-      const destination = session.user.role === 'SUPER_ADMIN' ? '/super-admin' : '/dashboard'
-      router.replace(destination)
+      router.replace('/')
     }
   }, [session, status, router])
 
   useEffect(() => {
-    if (searchParams.get('registered')) {
-      toast.success('Compte cree avec succes, vous pouvez vous connecter.')
+    if (searchParams.get('demo')) {
+      toast.success('Demande de demo envoyee, vous pouvez suivre vos acces dans votre boite mail.')
     }
   }, [searchParams])
 
@@ -118,8 +117,8 @@ function LoginPageContent() {
 
           <p className="mt-4 text-center text-sm text-muted-foreground">
             Pas encore de compte ?{' '}
-            <a href="/register" className="text-primary hover:underline">
-              Creer un compte
+            <a href="/request-demo" className="text-primary hover:underline">
+              Demander une demo
             </a>
           </p>
         </CardContent>

@@ -14,7 +14,7 @@ export async function PUT(request: NextRequest, { params }: any) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const { planId, startDate } = await request.json()
+    const { planId, startDate, endDate, createPayment = true } = await request.json()
 
     const plan = await prisma.membershipPlan.findUnique({
       where: { id: planId },
@@ -24,9 +24,15 @@ export async function PUT(request: NextRequest, { params }: any) {
       return NextResponse.json({ error: "Plan not found" }, { status: 404 })
     }
 
+    if (plan.gymId !== gymId) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 403 })
+    }
+
     const start = new Date(startDate)
-    const end = new Date(start)
-    end.setDate(end.getDate() + plan.durationDays)
+    const end = endDate ? new Date(endDate) : new Date(start)
+    if (!endDate) {
+      end.setDate(end.getDate() + plan.durationDays)
+    }
 
     const status = computeSubscriptionStatus(end)
 
@@ -41,17 +47,19 @@ export async function PUT(request: NextRequest, { params }: any) {
       },
     })
 
-    const payment = await prisma.payment.create({
-      data: {
-        gymId,
-        amount: plan.price,
-        currency: "MAD",
-        paymentDate: start,
-        subscriptions: {
-          connect: { id: subscription.id },
-        },
-      },
-    })
+    const payment = createPayment
+      ? await prisma.payment.create({
+          data: {
+            gymId,
+            amount: plan.price,
+            currency: "MAD",
+            paymentDate: start,
+            subscriptions: {
+              connect: { id: subscription.id },
+            },
+          },
+        })
+      : null
 
     return NextResponse.json({ subscription, payment })
   } catch (error) {

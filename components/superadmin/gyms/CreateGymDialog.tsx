@@ -1,23 +1,24 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
-import { Input } from '@/components/ui/input'
-import { Button } from '@/components/ui/button'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Plus } from 'lucide-react'
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
 import { zodResolver } from '@hookform/resolvers/zod'
 
 import { useCreateGym, GymSubscriptionStatus, GymPlanTier, GymBillingInterval } from '@/app/(dashboard)/super-admin/hooks'
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
+import { Input } from '@/components/ui/input'
+import { Button } from '@/components/ui/button'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form'
 import { PLAN_PRICING } from '@/lib/subscription-plans'
 
 const schema = z.object({
   name: z.string().min(2, 'Nom requis'),
   email: z.string().email('Email invalide'),
-  phone: z.string().min(6, 'Numéro requis'),
+  phone: z.string().min(6, 'Numero requis'),
+  address: z.string().optional(),
   city: z.string().optional(),
   country: z.string().optional(),
   tier: z.enum(['BASIC', 'PRO']),
@@ -27,7 +28,7 @@ const schema = z.object({
   grace: z.coerce.number().min(0).max(30),
   maxAdmins: z.coerce.number().min(1),
   ownerEmail: z.string().email('Email invalide'),
-  ownerPassword: z.string().min(6, 'Min. 6 caractères'),
+  ownerPassword: z.string().min(8, 'Min. 8 caracteres'),
   ownerFirstName: z.string().optional(),
   ownerLastName: z.string().optional(),
 })
@@ -38,6 +39,7 @@ const defaultValues: CreateGymValues = {
   name: '',
   email: '',
   phone: '',
+  address: '',
   city: '',
   country: '',
   tier: 'BASIC',
@@ -76,6 +78,7 @@ export function CreateGymDialog() {
         name: values.name,
         email: values.email,
         phone: values.phone,
+        address: values.address || undefined,
         city: values.city || undefined,
         country: values.country || undefined,
         subscriptionPlan: values.tier as GymPlanTier,
@@ -87,7 +90,7 @@ export function CreateGymDialog() {
         owner: {
           email: values.ownerEmail,
           password: values.ownerPassword,
-          firstName: values.ownerFirstName || 'Propriétaire',
+          firstName: values.ownerFirstName || 'Proprietaire',
           lastName: values.ownerLastName || values.name,
         },
       },
@@ -110,7 +113,7 @@ export function CreateGymDialog() {
       <DialogContent className="max-w-md sm:max-w-lg md:max-w-3xl w-[95vw] max-h-[90vh] overflow-y-auto space-y-6 rounded-2xl px-4 py-6 sm:px-8">
         <DialogHeader>
           <DialogTitle>Nouvelle salle</DialogTitle>
-          <DialogDescription>Enregistrez une salle et son propriétaire.</DialogDescription>
+          <DialogDescription>Enregistrez une salle et son proprietaire.</DialogDescription>
         </DialogHeader>
 
         <Form {...form}>
@@ -143,12 +146,27 @@ export function CreateGymDialog() {
                 )}
               />
             </div>
+
             <FormField
               control={form.control}
               name="phone"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Téléphone</FormLabel>
+                  <FormLabel>Telephone</FormLabel>
+                  <FormControl>
+                    <Input {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="address"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Adresse</FormLabel>
                   <FormControl>
                     <Input {...field} />
                   </FormControl>
@@ -243,7 +261,7 @@ export function CreateGymDialog() {
                       <SelectContent>
                         <SelectItem value="ACTIVE">Actif</SelectItem>
                         <SelectItem value="SUSPENDED">Suspendu</SelectItem>
-                        <SelectItem value="EXPIRED">Expiré</SelectItem>
+                        <SelectItem value="EXPIRED">Expire</SelectItem>
                       </SelectContent>
                     </Select>
                   </FormItem>
@@ -269,7 +287,7 @@ export function CreateGymDialog() {
                 name="grace"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Jours de grâce</FormLabel>
+                    <FormLabel>Jours de grace</FormLabel>
                     <FormControl>
                       <Input type="number" {...field} />
                     </FormControl>
@@ -282,7 +300,7 @@ export function CreateGymDialog() {
                 name="maxAdmins"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Admins autorisés</FormLabel>
+                    <FormLabel>Admins autorises</FormLabel>
                     <FormControl>
                       <Input type="number" {...field} />
                     </FormControl>
@@ -298,7 +316,7 @@ export function CreateGymDialog() {
                 name="ownerEmail"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Email propriétaire</FormLabel>
+                    <FormLabel>Email proprietaire</FormLabel>
                     <FormControl>
                       <Input type="email" {...field} />
                     </FormControl>
@@ -327,7 +345,7 @@ export function CreateGymDialog() {
                 name="ownerFirstName"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Prénom propriétaire</FormLabel>
+                    <FormLabel>Prenom proprietaire</FormLabel>
                     <FormControl>
                       <Input {...field} />
                     </FormControl>
@@ -339,7 +357,7 @@ export function CreateGymDialog() {
                 name="ownerLastName"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Nom propriétaire</FormLabel>
+                    <FormLabel>Nom proprietaire</FormLabel>
                     <FormControl>
                       <Input {...field} />
                     </FormControl>
@@ -349,7 +367,7 @@ export function CreateGymDialog() {
             </div>
 
             <Button type="submit" className="w-full" disabled={createGym.isPending}>
-              {createGym.isPending ? 'Création...' : 'Créer'}
+              {createGym.isPending ? 'Creation...' : 'Creer'}
             </Button>
           </form>
         </Form>

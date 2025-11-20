@@ -9,6 +9,8 @@ declare module "next-auth" {
     subscriptionExpiresAt?: string | null
     subscriptionPlan?: GymPlanTier | null
     billingInterval?: GymBillingInterval | null
+    isDemo?: boolean
+    demoEndsAt?: string | null
   }
 
   interface Session {
@@ -19,6 +21,8 @@ declare module "next-auth" {
       subscriptionExpiresAt?: string | null
       subscriptionPlan?: GymPlanTier | null
       billingInterval?: GymBillingInterval | null
+      isDemo?: boolean
+      demoEndsAt?: string | null
     } & DefaultSession["user"]
   }
 }
@@ -31,5 +35,7 @@ declare module "next-auth/jwt" {
     subscriptionExpiresAt?: string | null
     subscriptionPlan?: GymPlanTier | null
     billingInterval?: GymBillingInterval | null
+    isDemo?: boolean
+    demoEndsAt?: string | null
   }
 }

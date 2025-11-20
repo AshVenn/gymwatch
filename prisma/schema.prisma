@@ -7,9 +7,11 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-/* ============================
-   ENUMS
-   ============================ */
+/**
+ * ============================
+ * ENUMS
+ * ============================
+ */
 
 enum UserRole {
   SUPER_ADMIN
@@ -39,57 +41,68 @@ enum SubscriptionStatus {
   EXPIRED
 }
 
-/* ============================
-   MODELS
-   ============================ */
+enum DemoRequestStatus {
+  PENDING
+  RESOLVED
+  REFUSED
+}
+
+/**
+ * ============================
+ * MODELS
+ * ============================
+ */
 
 model User {
-  id        String   @id @default(cuid())
-  email     String   @unique
-  password  String
-  role      UserRole
-  firstName String?
-  lastName  String?
-  gymId     String?
-  gym       Gym?     @relation(fields: [gymId], references: [id], onDelete: SetNull)
-  ownedGym  Gym?     @relation("GymOwner")
-  preferences UserPreference?
-  sessionVersion Int @default(0)
+  id                   String          @id @default(cuid())
+  email                String          @unique
+  password             String
+  role                 UserRole
+  firstName            String?
+  lastName             String?
+  gymId                String?
+  gym                  Gym?            @relation(fields: [gymId], references: [id], onDelete: SetNull)
+  ownedGym             Gym?            @relation("GymOwner")
+  resolvedDemoRequests DemoRequest[]   @relation("DemoRequestResolvedBy")
+  preferences          UserPreference?
+  sessionVersion       Int             @default(0)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
 
 model Gym {
-  id                         String                 @id @default(cuid())
-  name                       String
-  email                      String                 @unique
-  phone                      String?
-  address                    String?
-  city                       String?
-  country                    String?
-  logoUrl                    String?
-  subscriptionPlan           GymPlanTier            @default(BASIC)
-  billingInterval            GymBillingInterval     @default(MONTHLY)
-  subscriptionPrice          Float                  @default(0)
-  subscriptionStatus         GymSubscriptionStatus  @default(ACTIVE)
-  subscriptionStartedAt      DateTime               @default(now())
-  subscriptionExpiresAt      DateTime?
+  id                          String                @id @default(cuid())
+  name                        String
+  email                       String                @unique
+  phone                       String?
+  address                     String?
+  city                        String?
+  country                     String?
+  logoUrl                     String?
+  subscriptionPlan            GymPlanTier           @default(BASIC)
+  billingInterval             GymBillingInterval    @default(MONTHLY)
+  subscriptionPrice           Float                 @default(0)
+  subscriptionStatus          GymSubscriptionStatus @default(ACTIVE)
+  subscriptionStartedAt       DateTime              @default(now())
+  subscriptionExpiresAt       DateTime?
+  isDemo                      Boolean               @default(false)
+  demoEndsAt                  DateTime?
   subscriptionGracePeriodDays Int                   @default(0)
-  maxAdminAccounts           Int                    @default(3)
-  lastSettingsUpdateAt       DateTime?
-  ownerId                    String?                @unique
-  owner                      User?                  @relation("GymOwner", fields: [ownerId], references: [id])
-  analyticsSnapshot          Json?
-  users                      User[]
-  membershipPlans            MembershipPlan[]
-  members                    Member[]
-  subscriptions              Subscription[]
-  payments                   Payment[]
-  createdAt                  DateTime               @default(now())
-  updatedAt                  DateTime               @updatedAt
+  maxAdminAccounts            Int                   @default(3)
+  lastSettingsUpdateAt        DateTime?
+  ownerId                     String?               @unique
+  owner                       User?                 @relation("GymOwner", fields: [ownerId], references: [id])
+  analyticsSnapshot           Json?
+  users                       User[]
+  membershipPlans             MembershipPlan[]
+  members                     Member[]
+  subscriptions               Subscription[]
+  payments                    Payment[]
+  createdDemoRequests         DemoRequest[]         @relation("DemoRequestCreatedGym")
+  createdAt                   DateTime              @default(now())
+  updatedAt                   DateTime              @updatedAt
 }
-
 
 model UserPreference {
   id            String   @id @default(cuid())
@@ -103,53 +116,54 @@ model UserPreference {
   updatedAt     DateTime @updatedAt
   lastChangedAt DateTime @default(now())
 }
-model MembershipPlan {
-  id            String           @id @default(cuid())
-  gymId         String
-  gym           Gym              @relation(fields: [gymId], references: [id], onDelete: Cascade)
 
-  name          String
-  durationDays  Int
-  price         Float
-  isActive      Boolean          @default(true)
+model MembershipPlan {
+  id    String @id @default(cuid())
+  gymId String
+  gym   Gym    @relation(fields: [gymId], references: [id], onDelete: Cascade)
+
+  name         String
+  durationDays Int
+  price        Float
+  isActive     Boolean @default(true)
 
   subscriptions Subscription[]
 
-  createdAt     DateTime         @default(now())
-  updatedAt     DateTime         @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model Member {
-  id            String           @id @default(cuid())
-  gymId         String
-  gym           Gym              @relation(fields: [gymId], references: [id], onDelete: Cascade)
+  id    String @id @default(cuid())
+  gymId String
+  gym   Gym    @relation(fields: [gymId], references: [id], onDelete: Cascade)
 
   firstName     String
   lastName      String
   email         String?
   phone         String?
-  qrToken       String           @unique @default(dbgenerated("encode(gen_random_bytes(16), 'hex')"))
-  qrGeneratedAt DateTime         @default(now())
+  qrToken       String   @unique @default(dbgenerated("encode(gen_random_bytes(16), 'hex')"))
+  qrGeneratedAt DateTime @default(now())
 
   subscriptions Subscription[]
 
-  createdAt     DateTime         @default(now())
-  updatedAt     DateTime         @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([gymId])
 }
 
 model Subscription {
-  id        String               @id @default(cuid())
-  
-  memberId  String
-  member    Member               @relation(fields: [memberId], references: [id], onDelete: Cascade)
-  
-  gymId     String
-  gym       Gym                  @relation(fields: [gymId], references: [id], onDelete: Cascade)
+  id String @id @default(cuid())
 
-  planId    String
-  plan      MembershipPlan       @relation(fields: [planId], references: [id], onDelete: Restrict)
+  memberId String
+  member   Member @relation(fields: [memberId], references: [id], onDelete: Cascade)
+
+  gymId String
+  gym   Gym    @relation(fields: [gymId], references: [id], onDelete: Cascade)
+
+  planId String
+  plan   MembershipPlan @relation(fields: [planId], references: [id], onDelete: Restrict)
 
   startDate DateTime
   endDate   DateTime
@@ -157,10 +171,10 @@ model Subscription {
   status    SubscriptionStatus
 
   paymentId String?
-  payment   Payment?             @relation(fields: [paymentId], references: [id], onDelete: SetNull)
+  payment   Payment? @relation(fields: [paymentId], references: [id], onDelete: SetNull)
 
-  createdAt DateTime             @default(now())
-  updatedAt DateTime             @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([gymId])
   @@index([memberId])
@@ -168,22 +182,46 @@ model Subscription {
 }
 
 model Payment {
-  id             String          @id @default(cuid())
-  gymId          String
-  gym            Gym             @relation(fields: [gymId], references: [id], onDelete: Cascade)
+  id    String @id @default(cuid())
+  gymId String
+  gym   Gym    @relation(fields: [gymId], references: [id], onDelete: Cascade)
 
-  /* Important: Relation fix */
-  subscriptions  Subscription[]
+  /**
+   * Important: Relation fix
+   */
+  subscriptions Subscription[]
 
-  amount         Float
-  currency       String          @default("MAD")
-  paymentDate    DateTime        @default(now())
+  amount      Float
+  currency    String   @default("MAD")
+  paymentDate DateTime @default(now())
 
-  createdAt      DateTime        @default(now())
-  updatedAt      DateTime        @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([gymId])
   @@index([paymentDate])
 }
 
-
+model DemoRequest {
+  id             String            @id @default(cuid())
+  gymName        String
+  gymEmail       String
+  adminEmail     String
+  adminFirstName String?
+  adminLastName  String?
+  phone          String?
+  address        String?
+  city           String?
+  country        String?
+  plan           GymPlanTier
+  message        String?
+  status         DemoRequestStatus @default(PENDING)
+  resolvedAt     DateTime?
+  resolvedById   String?
+  resolvedBy     User?             @relation("DemoRequestResolvedBy", fields: [resolvedById], references: [id], onDelete: SetNull)
+  resolutionNote String?
+  createdGymId   String?
+  createdGym     Gym?              @relation("DemoRequestCreatedGym", fields: [createdGymId], references: [id], onDelete: SetNull)
+  createdAt      DateTime          @default(now())
+  updatedAt      DateTime          @updatedAt
+}

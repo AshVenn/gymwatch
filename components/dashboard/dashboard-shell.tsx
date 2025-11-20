@@ -111,6 +111,7 @@ export function DashboardShell({
   const userDisplayName = session.user.name || session.user.email || 'Utilisateur'
   const userRole = roleLabels[session.user.role as string] || session.user.role || 'Utilisateur'
   const userInitial = userDisplayName.charAt(0).toUpperCase()
+  const isDemoGym = Boolean((session.user as any).isDemo)
 
   return (
     <div className="flex min-h-screen bg-background text-foreground">
@@ -194,7 +195,14 @@ export function DashboardShell({
             
             <div className="hidden flex-col items-end md:flex">
               <p className="text-sm font-semibold text-foreground">{userDisplayName}</p>
-              <p className="text-xs text-muted-foreground">{userRole}</p>
+              <p className="text-xs text-muted-foreground flex items-center gap-2">
+                {userRole}
+                {isDemoGym ? (
+                  <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-amber-800 dark:bg-amber-500/20 dark:text-amber-100">
+                    Demo
+                  </span>
+                ) : null}
+              </p>
             </div>
 
             <DropdownMenu>

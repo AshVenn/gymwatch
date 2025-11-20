@@ -17,6 +17,8 @@ export function SubscriptionBanner() {
   const { data: session } = useSession()
   const subscriptionStatus = session?.user?.subscriptionStatus ?? null
   const expiresAtRaw = session?.user?.subscriptionExpiresAt ?? null
+  const demoEndsAtRaw = (session?.user as any)?.demoEndsAt ?? null
+  const isDemo = Boolean((session?.user as any)?.isDemo)
   const planLabel = formatPlan(session?.user?.subscriptionPlan ?? null)
   const intervalLabel = formatInterval(session?.user?.billingInterval ?? null)
 
@@ -52,12 +54,16 @@ export function SubscriptionBanner() {
         <div className="relative flex flex-col gap-2 text-sm text-white">
           <div className="flex items-center gap-2 text-xs uppercase tracking-[0.3em] text-white/70">
             <Sparkles className="h-4 w-4" />
-            GymWatch Plan {planLabel}
+            GymWatch Plan {planLabel} {isDemo ? '(Demo)' : null}
           </div>
           <p className="text-base font-semibold">
             {planLabel} - {intervalLabel}
           </p>
-          <p className="text-white/70">Merci d utiliser GymWatch</p>
+          <p className="text-white/70">
+            {isDemo && demoEndsAtRaw
+              ? `Compte demo actif jusqu'au ${new Date(demoEndsAtRaw).toLocaleDateString('fr-FR')}`
+              : 'Merci d utiliser GymWatch'}
+          </p>
         </div>
       </div>
     )

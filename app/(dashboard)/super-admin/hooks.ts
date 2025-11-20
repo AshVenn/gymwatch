@@ -4,6 +4,7 @@ import { toast } from 'sonner'
 export type GymPlanTier = 'BASIC' | 'PRO'
 export type GymSubscriptionStatus = 'ACTIVE' | 'SUSPENDED' | 'EXPIRED'
 export type GymBillingInterval = 'MONTHLY' | 'ANNUAL'
+export type DemoRequestStatus = 'PENDING' | 'RESOLVED' | 'REFUSED'
 
 export interface SuperAdminStats {
   totalGyms: number
@@ -38,6 +39,8 @@ export interface SuperAdminGym {
   subscriptionPrice: number
   subscriptionStatus: GymSubscriptionStatus
   subscriptionExpiresAt: string | null
+  isDemo?: boolean
+  demoEndsAt?: string | null
   subscriptionGracePeriodDays: number
   analyticsSnapshot?: unknown
   daysRemaining: number | null
@@ -76,6 +79,26 @@ export interface SuperAdminGymDetail extends SuperAdminGym {
   }[]
 }
 
+export interface DemoRequest {
+  id: string
+  gymName: string
+  gymEmail: string
+  adminEmail: string
+  adminFirstName?: string | null
+  adminLastName?: string | null
+  phone?: string | null
+  address?: string | null
+  city?: string | null
+  country?: string | null
+  plan: GymPlanTier
+  message?: string | null
+  status: DemoRequestStatus
+  resolvedAt?: string | null
+  resolutionNote?: string | null
+  createdAt: string
+  createdGymId?: string | null
+}
+
 async function fetchJSON<T>(input: string | URL, init?: RequestInit): Promise<T> {
   const response = await fetch(input, init)
   if (!response.ok) {
@@ -104,6 +127,28 @@ export function useSuperAdminGym(gymId?: string | null) {
     queryKey: ['super-admin', 'gym', gymId],
     enabled: Boolean(gymId),
     queryFn: () => fetchJSON(`/api/super-admin/gyms/${gymId}`),
+  })
+}
+
+export function useDemoRequests(status: DemoRequestStatus | 'ALL' = 'ALL') {
+  return useQuery<DemoRequest[]>({
+    queryKey: ['super-admin', 'demo-requests', status],
+    queryFn: () => {
+      const params = new URLSearchParams()
+      if (status !== 'ALL') {
+        params.set('status', status)
+      }
+      const query = params.toString()
+      return fetchJSON(`/api/super-admin/demo-requests${query ? `?${query}` : ''}`)
+    },
+  })
+}
+
+export function useDemoRequest(requestId?: string | null) {
+  return useQuery<DemoRequest>({
+    queryKey: ['super-admin', 'demo-request', requestId],
+    enabled: Boolean(requestId),
+    queryFn: () => fetchJSON(`/api/super-admin/demo-requests/${requestId}`),
   })
 }
 
@@ -148,6 +193,7 @@ export function useCreateGym() {
       name: string
       email: string
       phone?: string
+      address?: string
       city?: string
       country?: string
       subscriptionPlan: GymPlanTier
@@ -156,6 +202,14 @@ export function useCreateGym() {
       subscriptionExpiresAt?: string
       subscriptionGracePeriodDays?: number
       maxAdminAccounts?: number
+      isDemo?: boolean
+      demoEndsAt?: string
+      admins?: {
+        email: string
+        password: string
+        firstName: string
+        lastName: string
+      }[]
       owner: {
         email: string
         password: string
@@ -259,6 +313,80 @@ export function useUpdateGymProfile() {
       queryClient.invalidateQueries({ queryKey: ['super-admin', 'gyms'] })
       queryClient.invalidateQueries({ queryKey: ['super-admin', 'gym', variables.gymId] })
       toast.success('Salle mise à jour')
+    },
+    onError: (error: Error) => {
+      toast.error(error.message)
+    },
+  })
+}
+
+export function useUpdateDemoRequestStatus() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: async (payload: { requestId: string; status: DemoRequestStatus; resolutionNote?: string }) => {
+      return fetchJSON(`/api/super-admin/demo-requests/${payload.requestId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: payload.status, resolutionNote: payload.resolutionNote }),
+      })
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['super-admin', 'demo-requests'] })
+      toast.success('Demande mise a jour')
+    },
+    onError: (error: Error) => {
+      toast.error(error.message)
+    },
+  })
+}
+
+export function useApproveDemoRequest() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: async (payload: {
+      requestId: string
+      data: {
+        name: string
+        email: string
+        phone: string
+        address?: string
+        city?: string
+        country?: string
+        subscriptionPlan: GymPlanTier
+        billingInterval?: GymBillingInterval
+        subscriptionStatus?: GymSubscriptionStatus
+        subscriptionExpiresAt?: string | null
+        subscriptionGracePeriodDays?: number
+        maxAdminAccounts?: number
+        demoEndsAt?: string | null
+        resolutionNote?: string
+        owner: {
+          email: string
+          password: string
+          firstName: string
+          lastName: string
+        }
+        admins?: {
+          email: string
+          password: string
+          firstName: string
+          lastName: string
+        }[]
+      }
+    }) => {
+      return fetchJSON(`/api/super-admin/demo-requests/${payload.requestId}/approve`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload.data),
+      })
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['super-admin', 'demo-requests'] })
+      queryClient.invalidateQueries({ queryKey: ['super-admin', 'gyms'] })
+      queryClient.invalidateQueries({ queryKey: ['super-admin', 'stats'] })
+      toast.success('Compte demo cree et demande resolue')
     },
     onError: (error: Error) => {
       toast.error(error.message)

@@ -1,50 +1,39 @@
 "use client"
 
 import { useEffect, useState } from 'react'
-import Link from 'next/link'
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
-import { useSession } from 'next-auth/react'
-import { CheckCircle2, ArrowRight, Sparkles, Menu, X, TrendingUp, Users, Zap } from 'lucide-react'
+import { CheckCircle2, ArrowRight, Sparkles, TrendingUp, Users, Zap } from 'lucide-react'
 
+import { MarketingNavbar } from '@/components/marketing/navbar'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { ThemeToggle } from '@/components/theme-toggle'
 import { cn } from '@/lib/utils'
 import { getPlanCatalogAsList } from '@/lib/subscription-plans'
 
 const navigationLinks = [
-  { label: 'Fonctionnalités', href: '#features' },
+  { label: 'Fonctionnalites', href: '#features' },
   { label: 'Plans', href: '#plans' },
   { label: 'Contact', href: '#contact' },
 ]
 
 const services = [
-  { title: 'Pilotage unifié', description: 'Tableau de bord multi-salles, suivi des membres et revenus temps réel.', icon: TrendingUp },
-  { title: 'Automatisations', description: 'Alertes d\'expiration, factures et relances orchestrées pour chaque club.', icon: Zap },
-  { title: 'Analyses avancées', description: 'Revenus, fréquentation et comparatifs pour guider vos décisions.', icon: Users },
+  { title: 'Pilotage unifie', description: 'Tableau de bord multi-salles, suivi des membres et revenus temps reel.', icon: TrendingUp },
+  { title: 'Automatisations', description: "Alertes d'expiration, factures et relances orchestrees pour chaque club.", icon: Zap },
+  { title: 'Analyses avancees', description: 'Revenus, frequentation et comparatifs pour guider vos decisions.', icon: Users },
 ]
 
 const planCatalog = getPlanCatalogAsList()
+
 export default function Home() {
-  const { data: session, status } = useSession()
   const router = useRouter()
-  const [menuOpen, setMenuOpen] = useState(false)
-  const [isScrolled, setIsScrolled] = useState(false)
   const [parallaxOffset, setParallaxOffset] = useState(0)
   const [hoveredDevice, setHoveredDevice] = useState<string | null>(null)
   const [billingCycle, setBillingCycle] = useState<'MONTHLY' | 'ANNUAL'>('MONTHLY')
   const priceFormatter = new Intl.NumberFormat('fr-MA', { style: 'currency', currency: 'MAD' })
 
   useEffect(() => {
-    if (status === 'authenticated' && session?.user) {
-      router.push('/dashboard')
-    }
-  }, [router, session?.user, status])
-
-  useEffect(() => {
     const handleScroll = () => {
-      setIsScrolled(window.scrollY > 50)
       const heroSection = document.getElementById('hero-section')
       if (heroSection) {
         const rect = heroSection.getBoundingClientRect()
@@ -59,110 +48,54 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-background text-foreground">
-      <header className={cn(
-        "sticky top-0 z-30 transition-all duration-500",
-        isScrolled ? "border-b border-border/40 bg-background/80 backdrop-blur-xl shadow-sm" : "border-b border-border/20 bg-background/50 backdrop-blur"
-      )}>
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-4">
-          <div className="group flex items-center gap-3 transition-transform hover:scale-105">
-            <div className="relative overflow-hidden rounded-lg">
-              <Image src="/GymWatch.svg" alt="GymWatch" width={56} height={56} priority className="transition-transform group-hover:scale-110" />
-            </div>
-            <div>
-              <p className="text-xs uppercase tracking-[0.3em] text-muted-foreground">GymWatch</p>
-              <p className="text-base font-semibold">Gestion moderne des salles</p>
-            </div>
-          </div>
-
-          <nav className="hidden items-center gap-8 text-sm font-medium text-muted-foreground md:flex">
-            {navigationLinks.map((link) => (
-              <Link key={link.href} href={link.href} className="relative transition hover:text-foreground group">
-                {link.label}
-                <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-primary group-hover:w-full transition-all duration-300" />
-              </Link>
-            ))}
-          </nav>
-
-          <div className="hidden items-center gap-2 md:flex">
-            <ThemeToggle />
-            <Button variant="ghost" onClick={() => router.push('/login')} className="transition hover:text-primary">
-              Se connecter
-            </Button>
-            <Button onClick={() => router.push('/register')} className="transition hover:scale-105 hover:shadow-lg">
-              Créer un compte
-            </Button>
-          </div>
-
-          <div className="flex items-center gap-2 md:hidden">
-            <ThemeToggle />
-            <Button variant="ghost" size="icon" onClick={() => setMenuOpen(true)} aria-label="Ouvrir le menu">
-              <Menu className="h-5 w-5" />
-            </Button>
-          </div>
-        </div>
-        {menuOpen && (
-          <div className="border-t border-border/60 bg-background md:hidden animate-in slide-in-from-top">
-            <div className="flex items-center justify-between px-4 py-3">
-              <p className="text-sm font-medium">Navigation</p>
-              <Button variant="ghost" size="icon" onClick={() => setMenuOpen(false)} aria-label="Fermer le menu">
-                <X className="h-5 w-5" />
-              </Button>
-            </div>
-            <div className="space-y-2 px-4 pb-4">
-              {navigationLinks.map((link) => (
-                <Link
-                  key={link.href}
-                  href={link.href}
-                  className="block rounded-lg border border-border/60 px-4 py-2 text-sm transition hover:bg-primary/10"
-                  onClick={() => setMenuOpen(false)}
-                >
-                  {link.label}
-                </Link>
-              ))}
-              <Button className="w-full transition hover:scale-105" onClick={() => router.push('/register')}>
-                Démarrer
-              </Button>
-              <Button variant="ghost" className="w-full transition hover:text-primary" onClick={() => router.push('/login')}>
-                Se connecter
-              </Button>
-            </div>
-          </div>
-        )}
-      </header>
+      <MarketingNavbar links={navigationLinks} />
 
       <main className="mx-auto flex max-w-6xl flex-col gap-16 px-4 py-12">
-        <section id="hero-section" className="relative overflow-hidden rounded-3xl border border-border/50 bg-gradient-to-br from-card to-card/50 p-8 md:p-12 shadow-lg">
+        <section
+          id="hero-section"
+          className="relative overflow-hidden rounded-3xl border border-border/50 bg-gradient-to-br from-card to-card/50 p-8 shadow-lg md:p-12"
+        >
           <div className="floating-orb-primary left-1/4 top-0" />
           <div className="floating-orb-secondary right-0 top-1/2" />
           <div className="floating-orb-tertiary left-0 bottom-0" />
-          
-          <div className="relative grid gap-12 lg:grid-cols-2 items-center">
+
+          <div className="relative grid items-center gap-12 lg:grid-cols-2">
             <div className="space-y-8 animate-fade-in">
-              <span className="inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/5 px-4 py-2 text-xs uppercase tracking-[0.3em] text-primary font-semibold animate-bounce-subtle">
+              <span className="inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/5 px-4 py-2 text-xs font-semibold uppercase tracking-[0.3em] text-primary animate-bounce-subtle">
                 <Sparkles className="h-4 w-4" /> Plateforme multi-salles
               </span>
 
-              <h1 className="text-5xl md:text-6xl font-bold leading-tight text-balance">
+              <h1 className="text-balance text-5xl font-bold leading-tight md:text-6xl">
                 L'OS de vos salles de sport <span className="bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">multi-sites</span>
               </h1>
 
-              <p className="text-lg text-muted-foreground leading-relaxed max-w-lg">
-                GymWatch centralise vos abonnements, vos équipes et vos finances dans une expérience unique, optimisée pour les réseaux de salles ambitieuses.
+              <p className="max-w-lg text-lg leading-relaxed text-muted-foreground">
+                GymWatch centralise vos abonnements, vos equipes et vos finances dans une experience unique, optimisee pour les reseaux de salles ambitieuses.
               </p>
 
               <div className="flex flex-wrap gap-4 pt-4">
-                <Button size="lg" onClick={() => router.push('/register')} className="group transition-all hover:scale-105 hover:shadow-xl">
-                  Demander une démo <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />
+                <Button
+                  size="lg"
+                  onClick={() => router.push('/request-demo')}
+                  className="group transition-all hover:scale-105 hover:shadow-xl"
+                >
+                  Demander une demo
+                  <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
                 </Button>
-                <Button size="lg" variant="outline" onClick={() => router.push('/login')} className="transition hover:bg-primary/10">
-                  Accéder au tableau de bord
+                <Button
+                  size="lg"
+                  variant="outline"
+                  onClick={() => router.push('/login')}
+                  className="transition hover:bg-primary/10"
+                >
+                  Acceder au tableau de bord
                 </Button>
               </div>
 
-              <div className="flex flex-wrap gap-8 pt-6 border-t border-border/20">
+              <div className="flex flex-wrap gap-8 border-t border-border/20 pt-6">
                 <div className="group animate-slide-up" style={{ animationDelay: '0.1s' }}>
                   <p className="text-3xl font-bold text-foreground">+120</p>
-                  <p className="text-sm text-muted-foreground">Salles accompagnées</p>
+                  <p className="text-sm text-muted-foreground">Salles accompagnees</p>
                 </div>
                 <div className="group animate-slide-up" style={{ animationDelay: '0.2s' }}>
                   <p className="text-3xl font-bold text-foreground">38k</p>
@@ -175,49 +108,53 @@ export default function Home() {
               </div>
             </div>
 
-            <div className="relative h-full min-h-96 flex items-center justify-center animate-fade-in" style={{ animationDelay: '0.2s' }}>
-              <div className="relative w-full h-full perspective">
-                <div 
-                  className="relative w-full h-full transition-all duration-700 ease-out hover-lift"
+            <div className="relative flex h-full min-h-96 items-center justify-center animate-fade-in" style={{ animationDelay: '0.2s' }}>
+              <div className="perspective relative h-full w-full">
+                <div
+                  className="relative h-full w-full transition-all duration-700 ease-out hover-lift"
                   style={{
                     transform: `translateY(${parallaxOffset * -0.3}px) ${hoveredDevice ? 'scale(1.05)' : 'scale(1)'}`,
                   }}
                   onMouseEnter={() => setHoveredDevice('devices')}
                   onMouseLeave={() => setHoveredDevice(null)}
                 >
-                  <Image 
+                  <Image
                     src="/featured-plateforme.png"
-                    alt="GymWatch Platform - Desktop and Mobile Showcase"
+                    alt="GymWatch - Experience desktop et mobile"
                     width={800}
                     height={600}
                     quality={95}
                     priority
                     className={cn(
-                      "w-full h-auto object-contain transition-all duration-700 drop-shadow-2xl",
-                      hoveredDevice === 'devices' ? 'brightness-110 drop-shadow-[0_20px_40px_rgba(59,130,246,0.3)]' : 'drop-shadow-lg'
+                      'h-auto w-full object-contain transition-all duration-700 drop-shadow-2xl',
+                      hoveredDevice === 'devices'
+                        ? 'brightness-110 drop-shadow-[0_20px_40px_rgba(59,130,246,0.3)]'
+                        : 'drop-shadow-lg',
                     )}
                   />
-                  
-                  <div className={cn(
-                    "absolute inset-0 rounded-lg bg-gradient-to-tr from-transparent via-white/5 to-transparent opacity-0 transition-opacity duration-500",
-                    hoveredDevice === 'devices' && 'opacity-100 animate-shine'
-                  )} />
+
+                  <div
+                    className={cn(
+                      'absolute inset-0 rounded-lg bg-gradient-to-tr from-transparent via-white/5 to-transparent opacity-0 transition-opacity duration-500',
+                      hoveredDevice === 'devices' && 'opacity-100 animate-shine',
+                    )}
+                  />
 
                   <div className="absolute top-4 -left-6 animate-float-left">
-                    <div className="bg-primary/90 text-primary-foreground px-3 py-1 rounded-full text-xs font-semibold shadow-lg backdrop-blur-sm">
-                      ✓ Multi-salles
+                    <div className="rounded-full bg-primary/90 px-3 py-1 text-xs font-semibold text-primary-foreground shadow-lg backdrop-blur-sm">
+                      Multi-salles
                     </div>
                   </div>
 
                   <div className="absolute top-1/3 -right-8 animate-float-right">
-                    <div className="bg-primary/90 text-primary-foreground px-3 py-1 rounded-full text-xs font-semibold shadow-lg backdrop-blur-sm">
-                      ✓ Temps réel
+                    <div className="rounded-full bg-primary/90 px-3 py-1 text-xs font-semibold text-primary-foreground shadow-lg backdrop-blur-sm">
+                      Temps reel
                     </div>
                   </div>
 
-                  <div className="absolute top-1/2 -translate-y-1/2 -right-12 animate-float-up">
-                    <div className="bg-primary/90 text-primary-foreground px-3 py-1 rounded-full text-xs font-semibold shadow-lg backdrop-blur-sm">
-                      ✓ Analytics
+                  <div className="absolute top-1/2 -right-12 -translate-y-1/2 animate-float-up">
+                    <div className="rounded-full bg-primary/90 px-3 py-1 text-xs font-semibold text-primary-foreground shadow-lg backdrop-blur-sm">
+                      Analytics
                     </div>
                   </div>
                 </div>
@@ -229,23 +166,23 @@ export default function Home() {
         <section id="features" className="space-y-8 animate-fade-in" style={{ animationDelay: '0.3s' }}>
           <div className="space-y-4">
             <h2 className="text-4xl font-bold">Tout ce qu'il faut pour une exploitation sereine</h2>
-            <p className="text-lg text-muted-foreground">Des modules pensés pour les réseaux multi-sites.</p>
+            <p className="text-lg text-muted-foreground">Des modules penses pour les reseaux multi-sites.</p>
           </div>
           <div className="grid gap-6 md:grid-cols-3">
             {services.map((service, index) => {
               const Icon = service.icon
               return (
-                <Card 
-                  key={service.title} 
-                  className="group relative overflow-hidden transition-all duration-500 hover:shadow-lg hover:border-primary/50 animate-slide-up"
+                <Card
+                  key={service.title}
+                  className="group relative overflow-hidden border border-border/70 transition-all duration-500 hover:border-primary/50 hover:shadow-lg animate-slide-up"
                   style={{ animationDelay: `${0.1 + index * 0.1}s` }}
                 >
-                  <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                  <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0 transition-opacity group-hover:opacity-100" />
                   <CardHeader>
-                    <div className="mb-2 inline-block p-2 rounded-lg bg-primary/10 group-hover:bg-primary/20 transition-colors">
+                    <div className="mb-2 inline-block rounded-lg bg-primary/10 p-2 transition-colors group-hover:bg-primary/20">
                       <Icon className="h-6 w-6 text-primary" />
                     </div>
-                    <CardTitle className="group-hover:text-primary transition-colors">{service.title}</CardTitle>
+                    <CardTitle className="transition-colors group-hover:text-primary">{service.title}</CardTitle>
                     <CardDescription>{service.description}</CardDescription>
                   </CardHeader>
                 </Card>
@@ -255,10 +192,10 @@ export default function Home() {
         </section>
 
         <section id="plans" className="rounded-3xl border border-primary/10 bg-card/70 px-6 py-12 shadow-lg backdrop-blur-sm">
-          <div className="text-center space-y-3">
+          <div className="space-y-3 text-center">
             <p className="text-sm uppercase tracking-[0.3em] text-primary/80">Plans</p>
             <h2 className="text-3xl font-bold">Deux offres, zero compromis</h2>
-            <p className="text-muted-foreground max-w-2xl mx-auto">
+            <p className="mx-auto max-w-2xl text-muted-foreground">
               Choisissez un rythme mensuel ou annuel. Le plan Pro debloque les QR codes, exports CSV/PDF et outils avances.
             </p>
           </div>
@@ -266,7 +203,7 @@ export default function Home() {
             <button
               className={cn(
                 'rounded-full border px-4 py-1 font-medium transition',
-                billingCycle === 'MONTHLY' ? 'bg-primary text-white border-primary' : 'border-border'
+                billingCycle === 'MONTHLY' ? 'border-primary bg-primary text-white' : 'border-border',
               )}
               onClick={() => setBillingCycle('MONTHLY')}
             >
@@ -275,7 +212,7 @@ export default function Home() {
             <button
               className={cn(
                 'rounded-full border px-4 py-1 font-medium transition',
-                billingCycle === 'ANNUAL' ? 'bg-primary text-white border-primary' : 'border-border'
+                billingCycle === 'ANNUAL' ? 'border-primary bg-primary text-white' : 'border-border',
               )}
               onClick={() => setBillingCycle('ANNUAL')}
             >
@@ -291,20 +228,18 @@ export default function Home() {
                   key={plan.tier}
                   className={cn(
                     'relative overflow-hidden border border-border/60 transition hover:shadow-lg',
-                    plan.highlight ? 'border-primary/50 bg-gradient-to-br from-primary/5 to-primary/10' : 'bg-card'
+                    plan.highlight ? 'border-primary/50 bg-gradient-to-br from-primary/5 to-primary/10' : 'bg-card',
                   )}
                 >
                   {plan.highlight && (
-                    <span className="absolute right-4 top-4 rounded-full bg-primary/90 px-3 py-1 text-xs uppercase tracking-[0.3em] text-white">
+                    <span className="absolute right-4 top-4 rounded-full bg-primary/90 px-3 py-1 text-xs font-semibold uppercase tracking-[0.3em] text-white">
                       Pro
                     </span>
                   )}
                   <CardHeader>
-                    <CardTitle className="flex items-center justify-between text-2xl">
-                      {plan.name}
-                    </CardTitle>
+                    <CardTitle className="flex items-center justify-between text-2xl">{plan.name}</CardTitle>
                     <CardDescription>{plan.description}</CardDescription>
-                    <div className="text-4xl font-bold text-foreground pt-2">
+                    <div className="pt-2 text-4xl font-bold text-foreground">
                       {priceFormatter.format(price)}
                       <span className="text-base font-normal text-muted-foreground"> / {cadenceLabel}</span>
                     </div>
@@ -326,18 +261,22 @@ export default function Home() {
           </div>
         </section>
 
-        <section id="contact" className="rounded-3xl border border-primary/20 bg-gradient-to-br from-card to-card/50 px-8 py-12 md:px-12 shadow-lg animate-fade-in" style={{ animationDelay: '0.5s' }}>
-          <div className="flex flex-col md:flex-row items-center justify-between gap-6">
+        <section
+          id="contact"
+          className="animate-fade-in rounded-3xl border border-primary/20 bg-gradient-to-br from-card to-card/50 px-8 py-12 shadow-lg md:px-12"
+          style={{ animationDelay: '0.5s' }}
+        >
+          <div className="flex flex-col items-center justify-between gap-6 md:flex-row">
             <div className="flex-1">
-              <p className="text-xs uppercase tracking-[0.3em] text-primary font-semibold">Support</p>
-              <h2 className="text-3xl md:text-4xl font-bold mt-2">Besoin d'un plan sur-mesure ?</h2>
-              <p className="text-muted-foreground mt-2">Notre équipe vous répond sous 24h pour cadrer vos besoins.</p>
+              <p className="text-xs font-semibold uppercase tracking-[0.3em] text-primary">Support</p>
+              <h2 className="mt-2 text-3xl font-bold md:text-4xl">Besoin d'un plan sur-mesure ?</h2>
+              <p className="mt-2 text-muted-foreground">Notre equipe vous repond sous 24h pour cadrer vos besoins.</p>
             </div>
             <div className="flex flex-wrap gap-3">
               <Button variant="secondary" onClick={() => router.push('mailto:hello@gymwatch.ma')} className="transition hover:scale-105">
                 hello@gymwatch.ma
               </Button>
-              <Button onClick={() => router.push('/register')} className="transition hover:scale-105 hover:shadow-lg">
+              <Button onClick={() => router.push('/request-demo')} className="transition hover:scale-105 hover:shadow-lg">
                 Commencer maintenant
               </Button>
             </div>

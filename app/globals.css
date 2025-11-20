@@ -276,34 +276,3 @@
   }
 }
 
-/* Required for Sonner custom variable styling */
-.toaster .toast {
-  background-color: var(--normal-bg);
-  color: var(--normal-text);
-  border: 1px solid var(--normal-border);
-  border-radius: var(--border-radius);
-}
-
-.toaster .toast-info {
-  background-color: var(--info-bg);
-  color: var(--info-text);
-  border: 1px solid var(--info-border);
-}
-
-.toaster .toast-success {
-  background-color: var(--success-bg);
-  color: var(--success-text);
-  border: 1px solid var(--success-border);
-}
-
-.toaster .toast-warning {
-  background-color: var(--warning-bg);
-  color: var(--warning-text);
-  border: 1px solid var(--warning-border);
-}
-
-.toaster .toast-error {
-  background-color: var(--error-bg);
-  color: var(--error-text);
-  border: 1px solid var(--error-border);
-}

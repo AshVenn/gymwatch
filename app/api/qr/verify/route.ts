@@ -3,7 +3,7 @@ import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth-middleware"
 import { prisma } from "@/lib/prisma"
 import { hasPlanFeature } from "@/lib/subscription-plans"
-import { computeSubscriptionStatus } from "@/lib/subscription-status"
+import { markVisitForMember } from "@/lib/visits"
 
 export async function POST(request: NextRequest) {
   const session = await getServerSession(authOptions)
@@ -18,7 +18,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Plan PRO requis" }, { status: 403 })
   }
 
-  const { token } = await request.json()
+  const { token, markVisit = true } = await request.json()
 
   if (!token || typeof token !== "string") {
     return NextResponse.json({ error: "Token manquant" }, { status: 400 })
@@ -26,43 +26,31 @@ export async function POST(request: NextRequest) {
 
   const member = await prisma.member.findFirst({
     where: { qrToken: token, gymId },
-    include: {
-      subscriptions: {
-        where: { gymId },
-        orderBy: { endDate: "desc" },
-        take: 1,
-        include: { plan: true },
-      },
-    },
+    select: { id: true },
   })
 
   if (!member) {
     return NextResponse.json({ error: "Membre introuvable" }, { status: 404 })
   }
 
-  const latestSubscription = member.subscriptions[0] ?? null
-  const now = new Date()
-  const status = latestSubscription
-    ? computeSubscriptionStatus(latestSubscription.endDate)
-    : "EXPIRED"
-  const isActive =
-    latestSubscription !== null &&
-    (status === "ACTIVE" || (status === "EXPIRES_TODAY" && latestSubscription.endDate >= now))
-  const daysRemaining =
-    latestSubscription?.endDate instanceof Date
-      ? Math.max(Math.ceil((latestSubscription.endDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)), 0)
-      : null
+  const visit = await markVisitForMember({
+    gymId,
+    memberId: member.id,
+    markVisit,
+  })
 
   return NextResponse.json({
     member: {
-      id: member.id,
-      firstName: member.firstName,
-      lastName: member.lastName,
-      planName: latestSubscription?.plan?.name ?? null,
-      subscriptionEndsAt: latestSubscription?.endDate ?? null,
+      id: visit.memberId,
+      firstName: visit.firstName,
+      lastName: visit.lastName,
+      planName: visit.planName,
+      subscriptionEndsAt: visit.subscriptionEndsAt,
     },
-    status,
-    active: isActive,
-    daysRemaining,
+    status: visit.status,
+    active: visit.active,
+    daysRemaining: visit.daysRemaining,
+    alreadyVisited: visit.alreadyVisited,
+    todayVisitorCount: visit.todayVisitorCount,
   })
 }

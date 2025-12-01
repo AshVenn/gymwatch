@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth-middleware"
 import { prisma } from "@/lib/prisma"
-import { computeSubscriptionStatus } from "@/lib/subscription-status"
+import { computeSubscriptionStatus, daysUntilExpiry } from "@/lib/subscription-status"
 
 export async function GET(request: NextRequest) {
   try {
@@ -33,32 +33,38 @@ export async function GET(request: NextRequest) {
       },
     })
 
-    const today = new Date()
-    today.setHours(0, 0, 0, 0)
+    const filtered = await Promise.all(
+      subscriptions
+        .filter((sub) => {
+          if (!search) return true
+          const memberName = `${sub.member.firstName} ${sub.member.lastName}`.toLowerCase()
+          const planName = sub.plan.name.toLowerCase()
+          return memberName.includes(search) || planName.includes(search)
+        })
+        .map(async (sub) => {
+          const computedStatus = computeSubscriptionStatus(sub.endDate)
+          if (computedStatus !== sub.status) {
+            await prisma.subscription.update({
+              where: { id: sub.id },
+              data: { status: computedStatus },
+            })
+          }
 
-    const filtered = subscriptions
-      .filter((sub) => {
-        if (!search) return true
-        const memberName = `${sub.member.firstName} ${sub.member.lastName}`.toLowerCase()
-        const planName = sub.plan.name.toLowerCase()
-        return memberName.includes(search) || planName.includes(search)
-      })
-      .map((sub) => {
-        const daysLeft = Math.ceil(
-          (sub.endDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24),
-        )
+          const daysLeft = daysUntilExpiry(sub.endDate)
 
-        return {
-          id: sub.id,
-          memberName: `${sub.member.firstName} ${sub.member.lastName}`,
-          planName: sub.plan.name,
-          startDate: sub.startDate.toISOString().split("T")[0],
-          endDate: sub.endDate.toISOString().split("T")[0],
-          daysLeft,
-          status: sub.status,
-          pricePaid: sub.pricePaid,
-        }
-      })
+          return {
+            id: sub.id,
+            memberId: sub.member.id,
+            memberName: `${sub.member.firstName} ${sub.member.lastName}`,
+            planName: sub.plan.name,
+            startDate: sub.startDate.toISOString().split("T")[0],
+            endDate: sub.endDate.toISOString().split("T")[0],
+            daysLeft,
+            status: computedStatus,
+            pricePaid: sub.pricePaid,
+          }
+        }),
+    )
 
     return NextResponse.json(filtered)
   } catch (error) {

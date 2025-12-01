@@ -67,7 +67,21 @@ function getDates(durationDays, type, extraOffset = 0) {
     end.setDate(end.getDate() - (5 + extraOffset))
   }
 
+  start.setHours(0, 0, 0, 0)
+  end.setHours(0, 0, 0, 0)
+
   return { start, end }
+}
+
+function computeSeedStatus(endDate) {
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+  const end = new Date(endDate)
+  end.setHours(0, 0, 0, 0)
+
+  if (end.getTime() < today.getTime()) return 'EXPIRED'
+  if (end.getTime() === today.getTime()) return 'EXPIRES_TODAY'
+  return 'ACTIVE'
 }
 
 async function createSubscriptions(members, gym, plans, extraOffset = 0) {
@@ -77,6 +91,7 @@ async function createSubscriptions(members, gym, plans, extraOffset = 0) {
 
     const type = i === 0 ? 'ACTIVE' : i === 1 ? 'EXPIRES_TODAY' : 'EXPIRED'
     const { start, end } = getDates(plan.durationDays, type, extraOffset)
+    const status = computeSeedStatus(end)
 
     const sub = await prisma.subscription.create({
       data: {
@@ -86,7 +101,7 @@ async function createSubscriptions(members, gym, plans, extraOffset = 0) {
         startDate: start,
         endDate: end,
         pricePaid: plan.price,
-        status: type,
+        status,
       },
     })
 
@@ -189,6 +204,8 @@ async function runSeed() {
   console.log('Created super admin:', superAdmin.email)
 
   const today = new Date()
+  const todayStart = new Date(today)
+  todayStart.setHours(0, 0, 0, 0)
 
   const gym1 = await prisma.gym.upsert({
     where: { id: 'gym-fitzone' },
@@ -219,6 +236,8 @@ async function runSeed() {
       subscriptionGracePeriodDays: 3,
       maxAdminAccounts: 5,
       lastSettingsUpdateAt: today,
+      todayVisitorCount: 0,
+      todayVisitorDate: todayStart,
       analyticsSnapshot: buildAnalyticsSnapshot(13500),
     },
   })
@@ -237,6 +256,8 @@ async function runSeed() {
       subscriptionGracePeriodDays: 7,
       maxAdminAccounts: 3,
       lastSettingsUpdateAt: today,
+      todayVisitorCount: 0,
+      todayVisitorDate: todayStart,
     },
     create: {
       id: 'gym-powergym',
@@ -253,6 +274,8 @@ async function runSeed() {
       subscriptionGracePeriodDays: 7,
       maxAdminAccounts: 3,
       lastSettingsUpdateAt: today,
+      todayVisitorCount: 0,
+      todayVisitorDate: todayStart,
       analyticsSnapshot: buildAnalyticsSnapshot(9800),
     },
   })
@@ -271,6 +294,8 @@ async function runSeed() {
       subscriptionGracePeriodDays: 3,
       maxAdminAccounts: 2,
       lastSettingsUpdateAt: today,
+      todayVisitorCount: 0,
+      todayVisitorDate: todayStart,
     },
     create: {
       id: 'gym-demo',
@@ -290,6 +315,8 @@ async function runSeed() {
       maxAdminAccounts: 2,
       lastSettingsUpdateAt: today,
       analyticsSnapshot: buildAnalyticsSnapshot(5000),
+      todayVisitorCount: 0,
+      todayVisitorDate: todayStart,
     },
   })
   console.log('Created demo gym:', demoGym.name)
@@ -526,6 +553,24 @@ async function runSeed() {
     }),
   ])
   console.log('Created members for Gym 2')
+
+  const visitStamp = new Date(todayStart.getTime() + 9 * 60 * 60 * 1000)
+  await prisma.member.updateMany({
+    where: { id: { in: [members1[0].id, members1[1].id] } },
+    data: { lastVisitedAt: visitStamp },
+  })
+  await prisma.member.updateMany({
+    where: { id: { in: [members2[0].id] } },
+    data: { lastVisitedAt: visitStamp },
+  })
+  await prisma.gym.update({
+    where: { id: gym1.id },
+    data: { todayVisitorCount: 2, todayVisitorDate: todayStart },
+  })
+  await prisma.gym.update({
+    where: { id: gym2.id },
+    data: { todayVisitorCount: 1, todayVisitorDate: todayStart },
+  })
 
   await createSubscriptions(members1, gym1, plans1)
   await createSubscriptions(members2, gym2, plans2, 5)

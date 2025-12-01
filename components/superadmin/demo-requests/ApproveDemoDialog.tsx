@@ -14,7 +14,6 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Button } from '@/components/ui/button'
-import { DatePicker } from '@/components/ui/date-picker'
 import { toast } from 'sonner'
 
 const schema = z.object({
@@ -335,10 +334,10 @@ export function ApproveDemoDialog({ request, open, onOpenChange }: Props) {
                     <FormItem>
                       <FormLabel>Expiration abonnement</FormLabel>
                       <FormControl>
-                        <DatePicker
-                          value={field.value || null}
-                          onChange={field.onChange}
-                          placeholder="Choisir une date"
+                        <Input
+                          type="date"
+                          value={field.value || ''}
+                          onChange={(e) => field.onChange(e.target.value)}
                         />
                       </FormControl>
                       <FormMessage />
@@ -352,10 +351,10 @@ export function ApproveDemoDialog({ request, open, onOpenChange }: Props) {
                     <FormItem>
                       <FormLabel>Fin de la demo</FormLabel>
                       <FormControl>
-                        <DatePicker
-                          value={field.value || null}
-                          onChange={field.onChange}
-                          placeholder="Choisir une date"
+                        <Input
+                          type="date"
+                          value={field.value || ''}
+                          onChange={(e) => field.onChange(e.target.value)}
                         />
                       </FormControl>
                       <FormMessage />

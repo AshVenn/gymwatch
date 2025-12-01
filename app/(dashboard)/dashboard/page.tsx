@@ -39,6 +39,8 @@ interface DashboardStats {
   revenueByMonth: { month: string; revenue: number }[]
   planDistribution: { name: string; value: number }[]
   expiringSoon: { id: string; memberName: string; endDate: string; daysLeft: number }[]
+  todayVisitorCount: number
+  canViewRevenue: boolean
 }
 
 export default function DashboardPage() {
@@ -54,6 +56,8 @@ export default function DashboardPage() {
     revenueByMonth: [],
     planDistribution: [],
     expiringSoon: [],
+    todayVisitorCount: 0,
+    canViewRevenue: true,
   }), [])
 
   const { data: stats = defaultStats, isLoading, isError } = useQuery({
@@ -75,6 +79,8 @@ export default function DashboardPage() {
         revenueByMonth: data.revenueByMonth ?? [],
         planDistribution: data.planDistribution ?? [],
         expiringSoon: data.expiringSoon ?? [],
+        todayVisitorCount: data.todayVisitorCount ?? 0,
+        canViewRevenue: data.canViewRevenue ?? true,
       } satisfies DashboardStats
     },
   })
@@ -83,6 +89,34 @@ export default function DashboardPage() {
   useEffect(() => {
     setExpiringPage(1)
   }, [expiringSoon.length])
+  const canViewRevenue = stats.canViewRevenue !== false
+  const statCards: Array<{ title: string; value: string; valueClass?: string }> = [
+    canViewRevenue
+      ? {
+          title: 'Revenus du mois',
+          value: `${(stats.monthlyRevenue ?? 0).toLocaleString()} MAD`,
+        }
+      : null,
+    {
+      title: 'Visites aujourd\'hui',
+      value: (stats.todayVisitorCount ?? 0).toLocaleString(),
+    },
+    {
+      title: 'Membres actifs',
+      value: (stats.activeMembers ?? 0).toLocaleString(),
+    },
+    {
+      title: 'Nouveaux membres ce mois-ci',
+      value: (stats.newMembers ?? 0).toLocaleString(),
+    },
+    canViewRevenue
+      ? {
+          title: 'Evolution par rapport au mois dernier',
+          value: `${(stats.percentageChange ?? 0) >= 0 ? '+' : ''}${stats.percentageChange ?? 0}%`,
+          valueClass: (stats.percentageChange ?? 0) >= 0 ? 'text-green-600' : 'text-red-600',
+        }
+      : null,
+  ].filter(Boolean) as Array<{ title: string; value: string; valueClass?: string }>
 
   if (isLoading) {
     return <div className="text-center py-10">Chargement des statistiques...</div>
@@ -123,6 +157,10 @@ export default function DashboardPage() {
   }
 
   const downloadExcel = async (type: 'earnings' | 'top-members' | 'loyal-members') => {
+    if (type === 'earnings' && !canViewRevenue) {
+      toast.error('Acces revenus reserve au proprietaire')
+      return
+    }
     try {
       setDownloading(type)
       const response = await fetch(`/api/reports/excel?type=${type}`)
@@ -152,109 +190,71 @@ export default function DashboardPage() {
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              Revenus du mois
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {(stats.monthlyRevenue ?? 0).toLocaleString()} MAD
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              Membres actifs
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.activeMembers ?? 0}</div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              Nouveaux membres ce mois-ci
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.newMembers ?? 0}</div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              Évolution par rapport au mois dernier
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div
-              className={`text-2xl font-bold ${
-                (stats.percentageChange ?? 0) >= 0 ? 'text-green-600' : 'text-red-600'
-              }`}
-            >
-              {(stats.percentageChange ?? 0) >= 0 ? '+' : ''}
-              {stats.percentageChange ?? 0}%
-            </div>
-          </CardContent>
-        </Card>
-
+        {statCards.map((card) => (
+          <Card key={card.title}>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium text-muted-foreground">
+                {card.title}
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className={`text-2xl font-bold ${card.valueClass ?? ''}`}>
+                {card.value}
+              </div>
+            </CardContent>
+          </Card>
+        ))}
       </div>
 
       {/* Charts */}
-      <div className="grid gap-4 lg:grid-cols-3">
-        <Card className="lg:col-span-2 border-border/70">
-          <CardHeader className="pb-0">
-            <CardTitle>Évolution des revenus</CardTitle>
-            <CardDescription>Douze derniers mois</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <ChartContainer config={revenueChartConfig}>
-              <ResponsiveContainer width="100%" height={320}>
-                <LineChart data={stats.revenueByMonth ?? []} margin={{ top: 24, left: 24, right: 24 }}>
-                  <CartesianGrid vertical={false} strokeDasharray="3 3" />
-                  <XAxis
-                    dataKey="month"
-                    tickLine={false}
-                    axisLine={false}
-                    tickMargin={8}
-                    tickFormatter={(value) => (typeof value === 'string' ? value.slice(0, 3) : value)}
-                  />
-                  <YAxis />
-                  <ChartTooltip cursor={false} content={<ChartTooltipContent hideLabel />} />
-                  <Line
-                    dataKey="revenue"
-                    type="monotone"
-                    stroke="oklch(0.488 0.243 264.376)"
-                    strokeWidth={2}
-                    connectNulls
-                    dot={({ payload, ...props }) => (
-                      <Dot
-                        key={payload?.month}
-                        r={5}
-                        cx={props.cx}
-                        cy={props.cy}
-                        fill="oklch(0.488 0.243 264.376)"
-                        stroke="oklch(0.488 0.243 264.376)"
-                      />
-                    )}
-                  />
-                </LineChart>
-              </ResponsiveContainer>
-            </ChartContainer>
-          </CardContent>
-        </Card>
+      <div className={`grid gap-4 ${canViewRevenue ? 'lg:grid-cols-3' : 'lg:grid-cols-1'}`}>
+        {canViewRevenue && (
+          <Card className="lg:col-span-2 border-border/70">
+            <CardHeader className="pb-0">
+              <CardTitle>Evolution des revenus</CardTitle>
+              <CardDescription>Douze derniers mois</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <ChartContainer config={revenueChartConfig}>
+                <ResponsiveContainer width="100%" height={320}>
+                  <LineChart data={stats.revenueByMonth ?? []} margin={{ top: 24, left: 24, right: 24 }}>
+                    <CartesianGrid vertical={false} strokeDasharray="3 3" />
+                    <XAxis
+                      dataKey="month"
+                      tickLine={false}
+                      axisLine={false}
+                      tickMargin={8}
+                      tickFormatter={(value) => (typeof value === 'string' ? value.slice(0, 3) : value)}
+                    />
+                    <YAxis />
+                    <ChartTooltip cursor={false} content={<ChartTooltipContent hideLabel />} />
+                    <Line
+                      dataKey="revenue"
+                      type="monotone"
+                      stroke="oklch(0.488 0.243 264.376)"
+                      strokeWidth={2}
+                      connectNulls
+                      dot={({ payload, ...props }) => (
+                        <Dot
+                          key={payload?.month}
+                          r={5}
+                          cx={props.cx}
+                          cy={props.cy}
+                          fill="oklch(0.488 0.243 264.376)"
+                          stroke="oklch(0.488 0.243 264.376)"
+                        />
+                      )}
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
+              </ChartContainer>
+            </CardContent>
+          </Card>
+        )}
 
         <Card className="border-border/70">
           <CardHeader className="pb-0">
-            <CardTitle>Répartition des statuts</CardTitle>
+            <CardTitle>Repartition des statuts</CardTitle>
             <CardDescription>Abonnements actifs vs. autres</CardDescription>
           </CardHeader>
           <CardContent>
@@ -423,13 +423,15 @@ export default function DashboardPage() {
         <CardContent>
           {hasExcelReports ? (
             <div className="flex flex-wrap gap-3">
-              <Button
-                variant="outline"
-                onClick={() => downloadExcel('earnings')}
-                disabled={downloading === 'earnings'}
-              >
-                {downloading === 'earnings' ? 'Export...' : 'Revenus Excel'}
-              </Button>
+              {canViewRevenue && (
+                <Button
+                  variant="outline"
+                  onClick={() => downloadExcel('earnings')}
+                  disabled={downloading === 'earnings'}
+                >
+                  {downloading === 'earnings' ? 'Export...' : 'Revenus Excel'}
+                </Button>
+              )}
               <Button
                 variant="outline"
                 onClick={() => downloadExcel('top-members')}

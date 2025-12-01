@@ -9,7 +9,6 @@ import { useForm } from 'react-hook-form'
 import { z } from 'zod'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form'
-import { DatePicker } from '@/components/ui/date-picker'
 
 type Props = {
   gym: SuperAdminGymDetail
@@ -179,9 +178,10 @@ export function GymSubscriptionSettings({ gym }: Props) {
                 <FormItem>
                   <FormLabel>Date d'expiration</FormLabel>
                   <FormControl>
-                    <DatePicker
-                      value={field.value || null}
-                      onChange={field.onChange}
+                    <Input
+                      type="date"
+                      value={field.value || ''}
+                      onChange={(e) => field.onChange(e.target.value)}
                       placeholder="Choisir une date"
                     />
                   </FormControl>

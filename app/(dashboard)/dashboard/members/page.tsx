@@ -38,7 +38,6 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { DatePicker } from '@/components/ui/date-picker'
 import {
   Select,
   SelectContent,
@@ -46,7 +45,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { MoreVertical, Plus, Edit2, Trash2, QrCode, FileDown } from 'lucide-react'
+import { MoreVertical, Plus, Edit2, Trash2, QrCode, FileDown, CheckCircle2 } from 'lucide-react'
 import QRCode from 'qrcode'
 import type { IScannerProps } from '@yudiel/react-qr-scanner/dist/components/Scanner'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
@@ -68,6 +67,7 @@ interface Member {
   phone?: string
   createdAt: string
   qrToken: string
+  lastVisitedAt?: string | null
 }
 
 interface Plan {
@@ -103,6 +103,9 @@ export default function MembersPage() {
   const audioRef = useRef<AudioContext | null>(null)
   const [memberReportLoading, setMemberReportLoading] = useState<string | null>(null)
   const [memberToDelete, setMemberToDelete] = useState<Member | null>(null)
+  const [visitDialogOpen, setVisitDialogOpen] = useState(false)
+  const [visitSearch, setVisitSearch] = useState('')
+  const [visitLoading, setVisitLoading] = useState<string | null>(null)
 
   useEffect(() => {
     if (!qrMember) return
@@ -145,24 +148,31 @@ export default function MembersPage() {
       const response = await fetch('/api/qr/verify', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ token }),
+        body: JSON.stringify({ token, markVisit: true }),
       })
       if (!response.ok) {
         throw new Error('Scan invalide')
       }
       const payload = await response.json()
       const fullName = `${payload.member?.firstName ?? ''} ${payload.member?.lastName ?? ''}`.trim()
-      const success = Boolean(payload.active)
-      const daysRemaining = payload.daysRemaining ?? 0
+      const active = Boolean(payload.active)
+      const alreadyVisited = Boolean(payload.alreadyVisited)
+      const success = active && !alreadyVisited
+      const daysRemaining = typeof payload.daysRemaining === 'number' ? payload.daysRemaining : null
+      const message = !active
+        ? 'Abonnement inactif'
+        : alreadyVisited
+          ? "Deja visite aujourd'hui"
+          : 'Acces valide'
       setScanStatus({
         status: success ? 'success' : 'error',
-        message: success ? 'Acces valide' : 'Abonnement inactif',
+        message,
         memberName: fullName || 'Membre inconnu',
-        daysRemaining: success ? daysRemaining : undefined,
+        daysRemaining: daysRemaining ?? undefined,
       })
-      playTone(success ? 880 : 240)
+      playTone(success ? 880 : alreadyVisited ? 520 : 240)
     } catch {
-      setScanStatus({ status: 'error', message: 'QR invalide ou membre introuvable', memberName: 'Erreur' })
+      setScanStatus({ status: 'error', message: 'QR invalide ou membre introuvele', memberName: 'Erreur' })
       playTone(180)
     } finally {
       setTimeout(() => {
@@ -251,6 +261,16 @@ export default function MembersPage() {
   })
 
   const memberPagination = usePagination(members, 10)
+  const visitableMembers = useMemo(() => {
+    const term = visitSearch.trim().toLowerCase()
+    return members
+      .filter((member) => {
+        if (!term) return true
+        const fullName = `${member.firstName} ${member.lastName}`.toLowerCase()
+        return fullName.includes(term) || (member.email ?? '').toLowerCase().includes(term)
+      })
+      .sort((a, b) => a.firstName.localeCompare(b.firstName))
+  }, [members, visitSearch])
 
   const { data: plans = [] } = useQuery<Plan[]>({
     queryKey: plansQueryKey,
@@ -379,6 +399,37 @@ export default function MembersPage() {
     }
   }
 
+  const markVisit = async (memberId: string) => {
+    if (!memberId) return
+    try {
+      setVisitLoading(memberId)
+      const response = await fetch('/api/visits', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ memberId, markVisit: true }),
+      })
+      const data = await response.json().catch(() => ({}))
+      if (!response.ok) {
+        throw new Error(data.error || 'Impossible de marquer la visite')
+      }
+      const fullName = data.memberName || 'Membre'
+
+      if (!data.active) {
+        toast.error('Abonnement inactif ou expire')
+      } else if (data.alreadyVisited) {
+        toast.warning(`${fullName} deja comptabilise aujourd'hui`)
+      } else {
+        toast.success(`${fullName} marque present (${data.todayVisitorCount ?? 0} visites aujourd'hui)`)
+      }
+      setVisitDialogOpen(false)
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Impossible de marquer la visite'
+      toast.error(message)
+    } finally {
+      setVisitLoading(null)
+    }
+  }
+
   if (membersLoading) return <div>Chargement des membres...</div>
 
   return (
@@ -405,7 +456,61 @@ export default function MembersPage() {
           </p>
         </div>
 
-        <Dialog open={isOpen} onOpenChange={setIsOpen}>
+        <div className="flex items-center gap-2">
+          <Dialog open={visitDialogOpen} onOpenChange={setVisitDialogOpen}>
+          <DialogTrigger asChild>
+            <Button variant="outline" onClick={() => setVisitDialogOpen(true)}>
+              <CheckCircle2 className="mr-2" size={18} />
+              Marquer une visite
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="max-w-md sm:max-w-lg w-[95vw]">
+            <DialogHeader>
+              <DialogTitle>Marquer un membre present</DialogTitle>
+              <DialogDescription>
+                Recherchez un membre puis enregistrez sa visite du jour.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-3">
+              <Input
+                placeholder="Rechercher par nom ou email"
+                value={visitSearch}
+                onChange={(e) => setVisitSearch(e.target.value)}
+              />
+              <div className="max-h-72 overflow-y-auto space-y-2">
+                {visitableMembers.length === 0 ? (
+                  <p className="text-sm text-muted-foreground">Aucun membre trouve.</p>
+                ) : (
+                  visitableMembers.map((member) => (
+                    <div
+                      key={member.id}
+                      className="flex items-center justify-between rounded-lg border border-border/60 px-3 py-2"
+                    >
+                      <div>
+                        <p className="font-semibold">
+                          {member.firstName} {member.lastName}
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          {member.email || member.phone || 'Pas de contact'}
+                        </p>
+                      </div>
+                      <Button
+                        size="sm"
+                        variant="secondary"
+                        disabled={visitLoading === member.id}
+                        onClick={() => markVisit(member.id)}
+                      >
+                        {visitLoading === member.id ? 'Enregistrement...' : 'Valider'}
+                      </Button>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+
+          <Dialog open={isOpen} onOpenChange={setIsOpen}>
           <DialogTrigger asChild>
             <Button onClick={handleAddMember}>
               <Plus className="mr-2" size={20} />
@@ -490,10 +595,12 @@ export default function MembersPage() {
               {/* START DATE */}
               <div>
                 <Label htmlFor="member-start-date">Date de début</Label>
-                <DatePicker
-                  value={formData.startDate || null}
-                  onChange={(value) =>
-                    setFormData({ ...formData, startDate: value || '' })
+                <Input
+                  id="member-start-date"
+                  type="date"
+                  value={formData.startDate}
+                  onChange={(e) =>
+                    setFormData({ ...formData, startDate: e.target.value })
                   }
                   placeholder="Choisir une date"
                 />
@@ -509,6 +616,7 @@ export default function MembersPage() {
             </div>
           </DialogContent>
         </Dialog>
+        </div>
       </div>
 
       {hasQrTools ? (
@@ -593,6 +701,15 @@ export default function MembersPage() {
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
+                        <DropdownMenuItem
+                          onSelect={(event) => {
+                            event.preventDefault()
+                            markVisit(member.id)
+                          }}
+                        >
+                          <CheckCircle2 className="mr-2" size={16} />
+                          Marquer visite
+                        </DropdownMenuItem>
                         <DropdownMenuItem onSelect={() => handleEditMember(member)}>
                           <Edit2 className="mr-2" size={16} />
                           Modifier

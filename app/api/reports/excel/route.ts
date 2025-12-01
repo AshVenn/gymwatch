@@ -21,6 +21,7 @@ function rowsToWorkbook(rows: Array<Array<string | number>>) {
 export async function GET(request: NextRequest) {
   const session = await getServerSession(authOptions)
   const gymId = (session?.user as any)?.gymId as string | undefined
+  const role = (session?.user as any)?.role as string | undefined
   const tier = (session?.user as any)?.subscriptionPlan ?? null
 
   if (!gymId) {
@@ -41,6 +42,10 @@ export async function GET(request: NextRequest) {
   }
 
   const { type, memberId } = parsed.data
+
+  if (type === "earnings" && role === "GYM_ADMIN") {
+    return NextResponse.json({ error: "Acces revenu reserve au proprietaire" }, { status: 403 })
+  }
 
   if (type === "member" && !memberId) {
     return NextResponse.json({ error: "memberId requis" }, { status: 400 })

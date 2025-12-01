@@ -3,7 +3,7 @@
 import { useSession } from 'next-auth/react'
 import { useMemo, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { AlertTriangle, MoreVertical, RotateCcw, Trash2 } from 'lucide-react'
+import { AlertTriangle, MoreVertical, RotateCcw, Trash2, CheckCircle2 } from 'lucide-react'
 import { toast } from 'sonner'
 
 import { cn } from '@/lib/utils'
@@ -23,6 +23,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
+  DialogDescription
 } from '@/components/ui/dialog'
 import {
   DropdownMenu,
@@ -47,6 +48,7 @@ import { Switch } from '@/components/ui/switch'
 
 interface Subscription {
   id: string
+  memberId: string
   memberName: string
   planName: string
   startDate: string
@@ -99,6 +101,9 @@ export default function SubscriptionsPage() {
     startDate: new Date().toISOString().split('T')[0],
     createPayment: true,
   })
+  const [visitDialogOpen, setVisitDialogOpen] = useState(false)
+  const [visitSearch, setVisitSearch] = useState('')
+  const [visitLoading, setVisitLoading] = useState<string | null>(null)
 
   const gymId = session?.user?.gymId
 
@@ -287,6 +292,21 @@ export default function SubscriptionsPage() {
     })
   }, [subscriptions, filterStatus, searchTerm, sortBy])
 
+  const visitableMembers = useMemo(() => {
+    const normalizedSearch = visitSearch.trim().toLowerCase()
+    const seen = new Set<string>()
+    return (subscriptions ?? []).reduce((list: Subscription[], sub) => {
+      if (seen.has(sub.memberId)) return list
+      const matchesSearch =
+        !normalizedSearch || sub.memberName.toLowerCase().includes(normalizedSearch)
+      if (matchesSearch) {
+        list.push(sub)
+        seen.add(sub.memberId)
+      }
+      return list
+    }, [])
+  }, [subscriptions, visitSearch])
+
   const subscriptionPagination = usePagination(filteredSubscriptions, 10)
 
   const handleDeleteSubscription = (subscriptionId: string) => {
@@ -309,6 +329,36 @@ export default function SubscriptionsPage() {
     }
 
     renewSubscriptionMutation.mutate()
+  }
+
+  const markVisit = async (memberId: string) => {
+    if (!memberId) return
+    try {
+      setVisitLoading(memberId)
+      const response = await fetch('/api/visits', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ memberId, markVisit: true }),
+      })
+      const data = await response.json().catch(() => ({}))
+      if (!response.ok) {
+        throw new Error(data.error || 'Impossible de marquer la visite')
+      }
+      const fullName = data.memberName || 'Membre'
+      if (!data.active) {
+        toast.error('Abonnement inactif ou expire')
+      } else if (data.alreadyVisited) {
+        toast.warning(`${fullName} deja comptabilise aujourd'hui`)
+      } else {
+        toast.success(`${fullName} marque present (${data.todayVisitorCount ?? 0} visites aujourd'hui)`)
+      }
+      setVisitDialogOpen(false)
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Impossible de marquer la visite'
+      toast.error(message)
+    } finally {
+      setVisitLoading(null)
+    }
   }
 
   const safeDate = (value: string | null | undefined) => {
@@ -375,13 +425,66 @@ export default function SubscriptionsPage() {
       <SubscriptionFilters
         searchTerm={searchTerm}
         onSearch={setSearchTerm}
-        filterStatus={filterStatus}
-        onStatusChange={setFilterStatus}
-        sortBy={sortBy}
-        onSortChange={setSortBy}
-        quickFilters={quickFilters}
-        onQuickFilter={setFilterStatus}
-      />
+      filterStatus={filterStatus}
+      onStatusChange={setFilterStatus}
+      sortBy={sortBy}
+      onSortChange={setSortBy}
+      quickFilters={quickFilters}
+      onQuickFilter={setFilterStatus}
+    />
+
+      <div className="flex justify-end">
+        <Dialog open={visitDialogOpen} onOpenChange={setVisitDialogOpen}>
+          <DialogTrigger asChild>
+            <Button variant="outline" onClick={() => setVisitDialogOpen(true)}>
+              <CheckCircle2 className="mr-2" size={16} />
+              Marquer une visite
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="max-w-md sm:max-w-lg w-[95vw]">
+            <DialogHeader>
+              <DialogTitle>Enregistrer une visite</DialogTitle>
+              <DialogDescription>
+                Choisissez un membre pour enregistrer une visite aujourd'hui.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-3">
+              <Input
+                placeholder="Rechercher un membre"
+                value={visitSearch}
+                onChange={(e) => setVisitSearch(e.target.value)}
+              />
+              <div className="max-h-72 overflow-y-auto space-y-2">
+                {visitableMembers.length === 0 ? (
+                  <p className="text-sm text-muted-foreground">Aucun membre trouve.</p>
+                ) : (
+                  visitableMembers.map((sub) => (
+                    <div
+                      key={sub.memberId}
+                      className="flex items-center justify-between rounded-lg border border-border/60 px-3 py-2"
+                    >
+                      <div>
+                        <p className="font-semibold">{sub.memberName}</p>
+                        <p className="text-xs text-muted-foreground">
+                          Fin: {safeDate(sub.endDate)} - {sub.daysLeft} j restants
+                        </p>
+                      </div>
+                      <Button
+                        size="sm"
+                        variant="secondary"
+                        disabled={visitLoading === sub.memberId}
+                        onClick={() => markVisit(sub.memberId)}
+                      >
+                        {visitLoading === sub.memberId ? 'Enregistrement...' : 'Valider'}
+                      </Button>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+      </div>
 
       <div className="overflow-hidden rounded-3xl border border-border/70 bg-card shadow-sm">
         {subscriptionPagination.data.length ? (
@@ -452,6 +555,15 @@ export default function SubscriptionsPage() {
                         </DropdownMenuTrigger>
 
                         <DropdownMenuContent align="end" className="w-48 border border-border/60 bg-card text-foreground">
+                          <DropdownMenuItem
+                            onSelect={(event) => {
+                              event.preventDefault()
+                              markVisit(sub.memberId)
+                            }}
+                          >
+                            <CheckCircle2 className="mr-2" size={16} />
+                            Marquer visite
+                          </DropdownMenuItem>
                           <Dialog open={renewingId === sub.id} onOpenChange={(open) => !open && setRenewingId(null)}>
                             <DialogTrigger asChild>
                               <DropdownMenuItem

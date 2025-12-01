@@ -91,6 +91,8 @@ model Gym {
   subscriptionGracePeriodDays Int                   @default(0)
   maxAdminAccounts            Int                   @default(3)
   lastSettingsUpdateAt        DateTime?
+  todayVisitorCount           Int                   @default(0)
+  todayVisitorDate            DateTime?             @default(now())
   ownerId                     String?               @unique
   owner                       User?                 @relation("GymOwner", fields: [ownerId], references: [id])
   analyticsSnapshot           Json?
@@ -144,6 +146,7 @@ model Member {
   phone         String?
   qrToken       String   @unique @default(dbgenerated("encode(gen_random_bytes(16), 'hex')"))
   qrGeneratedAt DateTime @default(now())
+  lastVisitedAt DateTime?
 
   subscriptions Subscription[]
 

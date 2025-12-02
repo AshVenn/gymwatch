@@ -84,6 +84,27 @@ function computeSeedStatus(endDate) {
   return 'ACTIVE'
 }
 
+function slugifyVariant(name) {
+  return name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') || 'principal'
+}
+
+async function createVariantsForGym(gymId, names) {
+  const variants = []
+  for (let i = 0; i < names.length; i++) {
+    const name = names[i]
+    const variant = await prisma.gymVariant.create({
+      data: {
+        gymId,
+        name,
+        slug: slugifyVariant(name),
+        isDefault: i === 0,
+      },
+    })
+    variants.push(variant)
+  }
+  return variants
+}
+
 async function createSubscriptions(members, gym, plans, extraOffset = 0) {
   for (let i = 0; i < members.length; i++) {
     const member = members[i]
@@ -97,6 +118,7 @@ async function createSubscriptions(members, gym, plans, extraOffset = 0) {
       data: {
         memberId: member.id,
         gymId: gym.id,
+        gymVariantId: plan.gymVariantId,
         planId: plan.id,
         startDate: start,
         endDate: end,
@@ -119,7 +141,7 @@ async function createSubscriptions(members, gym, plans, extraOffset = 0) {
   }
 }
 
-async function upsertOwner({ email, password, firstName, lastName, gymId }) {
+async function upsertOwner({ email, password, firstName, lastName, gymId, gymVariantId }) {
   const hashed = await hashPassword(password)
 
   const owner = await prisma.user.upsert({
@@ -130,6 +152,7 @@ async function upsertOwner({ email, password, firstName, lastName, gymId }) {
       gymId,
       firstName,
       lastName,
+      gymVariantId: gymVariantId ?? null,
     },
     create: {
       email,
@@ -138,6 +161,7 @@ async function upsertOwner({ email, password, firstName, lastName, gymId }) {
       firstName,
       lastName,
       gymId,
+      gymVariantId: gymVariantId ?? null,
     },
   })
 
@@ -145,7 +169,7 @@ async function upsertOwner({ email, password, firstName, lastName, gymId }) {
   return owner
 }
 
-async function upsertAdmin({ email, password, firstName, lastName, gymId }) {
+async function upsertAdmin({ email, password, firstName, lastName, gymId, gymVariantId }) {
   const hashed = await hashPassword(password)
 
   const admin = await prisma.user.upsert({
@@ -156,6 +180,7 @@ async function upsertAdmin({ email, password, firstName, lastName, gymId }) {
       gymId,
       firstName,
       lastName,
+      gymVariantId: gymVariantId ?? null,
     },
     create: {
       email,
@@ -164,6 +189,7 @@ async function upsertAdmin({ email, password, firstName, lastName, gymId }) {
       firstName,
       lastName,
       gymId,
+      gymVariantId: gymVariantId ?? null,
     },
   })
 
@@ -175,6 +201,7 @@ async function runSeed() {
   console.log('Seeding GymWatch data...')
 
   await prisma.$transaction([
+    prisma.systemSettings.deleteMany(),
     prisma.demoRequest.deleteMany(),
     prisma.payment.deleteMany(),
     prisma.subscription.deleteMany(),
@@ -185,6 +212,24 @@ async function runSeed() {
     prisma.gym.deleteMany(),
   ])
   console.log('Database cleared')
+
+  await prisma.systemSettings.upsert({
+    where: { id: 1 },
+    update: {},
+    create: {
+      id: 1,
+      supportEmail: 'support@gymwatch.ma',
+      supportPhone: '+212600000000',
+      brandColor: '#5b4bff',
+      expiryReminder: true,
+      weeklyDigest: true,
+      incidentAlerts: true,
+      payoutReport: false,
+      gymSettingsIntervalMs: 60000,
+      userSettingsIntervalMs: 30000,
+    },
+  })
+  console.log('System settings initialized')
 
   const adminPassword = await hashPassword('Admin123!')
   const superAdmin = await prisma.user.upsert({
@@ -242,6 +287,8 @@ async function runSeed() {
     },
   })
   console.log('Created gym 1:', gym1.name)
+  const gym1Variants = await createVariantsForGym(gym1.id, ['Principal'])
+  const gym1DefaultVariant = gym1Variants[0]
 
   const gym2 = await prisma.gym.upsert({
     where: { id: 'gym-powergym' },
@@ -280,6 +327,8 @@ async function runSeed() {
     },
   })
   console.log('Created gym 2:', gym2.name)
+  const gym2Variants = await createVariantsForGym(gym2.id, ['Femmes', 'Hommes'])
+  const gym2DefaultVariant = gym2Variants[0]
 
   const demoGym = await prisma.gym.upsert({
     where: { id: 'gym-demo' },
@@ -320,6 +369,8 @@ async function runSeed() {
     },
   })
   console.log('Created demo gym:', demoGym.name)
+  const demoVariants = await createVariantsForGym(demoGym.id, ['Downtown', 'Uptown', 'Cardio'])
+  const demoDefaultVariant = demoVariants[0]
 
   const fitZoneOwner = await upsertOwner({
     email: 'owner@fitzone.ma',
@@ -327,6 +378,7 @@ async function runSeed() {
     firstName: 'Sanae',
     lastName: 'Belkadi',
     gymId: gym1.id,
+    gymVariantId: gym1DefaultVariant.id,
   })
   await prisma.gym.update({ where: { id: gym1.id }, data: { ownerId: fitZoneOwner.id } })
 
@@ -336,6 +388,7 @@ async function runSeed() {
     firstName: 'Yassine',
     lastName: 'Haddad',
     gymId: gym2.id,
+    gymVariantId: gym2DefaultVariant.id,
   })
   await prisma.gym.update({ where: { id: gym2.id }, data: { ownerId: powerGymOwner.id } })
 
@@ -345,6 +398,7 @@ async function runSeed() {
     firstName: 'Demo',
     lastName: 'Owner',
     gymId: demoGym.id,
+    gymVariantId: demoDefaultVariant.id,
   })
   await prisma.gym.update({ where: { id: demoGym.id }, data: { ownerId: demoGymOwner.id } })
 
@@ -355,6 +409,7 @@ async function runSeed() {
       firstName: 'Manager',
       lastName: 'FitZone',
       gymId: gym1.id,
+      gymVariantId: gym1DefaultVariant.id,
     }),
     upsertAdmin({
       email: 'coach@fitzone.ma',
@@ -362,6 +417,7 @@ async function runSeed() {
       firstName: 'Coach',
       lastName: 'Casablanca',
       gymId: gym1.id,
+      gymVariantId: gym1DefaultVariant.id,
     }),
   ])
   console.log('Created gym1 admins:', fitZoneAdmins.map((a) => a.email).join(', '))
@@ -373,6 +429,7 @@ async function runSeed() {
       firstName: 'Manager',
       lastName: 'PowerGym',
       gymId: gym2.id,
+      gymVariantId: gym2Variants[0].id,
     }),
     upsertAdmin({
       email: 'coach@powergym.ma',
@@ -380,6 +437,7 @@ async function runSeed() {
       firstName: 'Coach',
       lastName: 'Rabat',
       gymId: gym2.id,
+      gymVariantId: gym2Variants[1].id,
     }),
   ])
   console.log('Created gym2 admins:', powerGymAdmins.map((a) => a.email).join(', '))
@@ -391,6 +449,7 @@ async function runSeed() {
       create: {
         id: `plan-${gym1.id}-monthly`,
         gymId: gym1.id,
+        gymVariantId: gym1DefaultVariant.id,
         name: 'Mensuel',
         durationDays: 30,
         price: 300,
@@ -403,6 +462,7 @@ async function runSeed() {
       create: {
         id: `plan-${gym1.id}-quarterly`,
         gymId: gym1.id,
+        gymVariantId: gym1DefaultVariant.id,
         name: 'Trimestriel',
         durationDays: 90,
         price: 800,
@@ -419,6 +479,7 @@ async function runSeed() {
       create: {
         id: `plan-${gym2.id}-monthly`,
         gymId: gym2.id,
+        gymVariantId: gym2Variants[0].id,
         name: 'Mensuel',
         durationDays: 30,
         price: 350,
@@ -431,6 +492,7 @@ async function runSeed() {
       create: {
         id: `plan-${gym2.id}-annual`,
         gymId: gym2.id,
+        gymVariantId: gym2Variants[1].id,
         name: 'Annuel',
         durationDays: 365,
         price: 3000,
@@ -447,9 +509,36 @@ async function runSeed() {
       create: {
         id: `plan-${demoGym.id}-monthly`,
         gymId: demoGym.id,
+        gymVariantId: demoDefaultVariant.id,
         name: 'Essai 30j',
         durationDays: 30,
         price: 0,
+        isActive: true,
+      },
+    }),
+    prisma.membershipPlan.upsert({
+      where: { id: `plan-${demoGym.id}-uptown` },
+      update: {},
+      create: {
+        id: `plan-${demoGym.id}-uptown`,
+        gymId: demoGym.id,
+        gymVariantId: demoVariants[1].id,
+        name: 'Mensuel Uptown',
+        durationDays: 30,
+        price: 120,
+        isActive: true,
+      },
+    }),
+    prisma.membershipPlan.upsert({
+      where: { id: `plan-${demoGym.id}-cardio` },
+      update: {},
+      create: {
+        id: `plan-${demoGym.id}-cardio`,
+        gymId: demoGym.id,
+        gymVariantId: demoVariants[2].id,
+        name: 'Cardio illimité',
+        durationDays: 45,
+        price: 200,
         isActive: true,
       },
     }),
@@ -460,6 +549,7 @@ async function runSeed() {
     prisma.member.create({
       data: {
         gymId: gym1.id,
+        gymVariantId: gym1DefaultVariant.id,
         firstName: 'Ahmed',
         lastName: 'Morocco',
         email: 'ahmed@example.com',
@@ -469,6 +559,7 @@ async function runSeed() {
     prisma.member.create({
       data: {
         gymId: gym1.id,
+        gymVariantId: gym1DefaultVariant.id,
         firstName: 'Fatima',
         lastName: 'Hassan',
         email: 'fatima@example.com',
@@ -478,6 +569,7 @@ async function runSeed() {
     prisma.member.create({
       data: {
         gymId: gym1.id,
+        gymVariantId: gym1DefaultVariant.id,
         firstName: 'Mohammed',
         lastName: 'Ali',
         email: 'mohammed@example.com',
@@ -487,6 +579,7 @@ async function runSeed() {
     prisma.member.create({
       data: {
         gymId: gym1.id,
+        gymVariantId: gym1DefaultVariant.id,
         firstName: 'Youssef',
         lastName: 'Karim',
         email: 'youssef@example.com',
@@ -496,6 +589,7 @@ async function runSeed() {
     prisma.member.create({
       data: {
         gymId: gym1.id,
+        gymVariantId: gym1DefaultVariant.id,
         firstName: 'Layla',
         lastName: 'Ibrahim',
         email: 'layla@example.com',
@@ -509,6 +603,7 @@ async function runSeed() {
     prisma.member.create({
       data: {
         gymId: gym2.id,
+        gymVariantId: gym2Variants[0].id,
         firstName: 'Hassan',
         lastName: 'Rashid',
         email: 'hassan@example.com',
@@ -518,6 +613,7 @@ async function runSeed() {
     prisma.member.create({
       data: {
         gymId: gym2.id,
+        gymVariantId: gym2Variants[0].id,
         firstName: 'Noor',
         lastName: 'Said',
         email: 'noor@example.com',
@@ -527,6 +623,7 @@ async function runSeed() {
     prisma.member.create({
       data: {
         gymId: gym2.id,
+        gymVariantId: gym2Variants[0].id,
         firstName: 'Zainab',
         lastName: 'Malik',
         email: 'zainab@example.com',
@@ -536,6 +633,7 @@ async function runSeed() {
     prisma.member.create({
       data: {
         gymId: gym2.id,
+        gymVariantId: gym2Variants[1].id,
         firstName: 'Omar',
         lastName: 'Farhan',
         email: 'omar@example.com',
@@ -545,6 +643,7 @@ async function runSeed() {
     prisma.member.create({
       data: {
         gymId: gym2.id,
+        gymVariantId: gym2Variants[1].id,
         firstName: 'Sara',
         lastName: 'Walid',
         email: 'sara@example.com',
@@ -553,6 +652,50 @@ async function runSeed() {
     }),
   ])
   console.log('Created members for Gym 2')
+
+  const membersDemo = await Promise.all([
+    prisma.member.create({
+      data: {
+        gymId: demoGym.id,
+        gymVariantId: demoVariants[0].id,
+        firstName: 'Lina',
+        lastName: 'North',
+        email: 'lina.north@example.com',
+        phone: '+212600000011',
+      },
+    }),
+    prisma.member.create({
+      data: {
+        gymId: demoGym.id,
+        gymVariantId: demoVariants[1].id,
+        firstName: 'Karim',
+        lastName: 'East',
+        email: 'karim.east@example.com',
+        phone: '+212600000012',
+      },
+    }),
+    prisma.member.create({
+      data: {
+        gymId: demoGym.id,
+        gymVariantId: demoVariants[2].id,
+        firstName: 'Meryem',
+        lastName: 'Cardio',
+        email: 'meryem.cardio@example.com',
+        phone: '+212600000013',
+      },
+    }),
+    prisma.member.create({
+      data: {
+        gymId: demoGym.id,
+        gymVariantId: demoVariants[2].id,
+        firstName: 'Salma',
+        lastName: 'Atlas',
+        email: 'salma.atlas@example.com',
+        phone: '+212600000014',
+      },
+    }),
+  ])
+  console.log('Created members for Demo gym')
 
   const visitStamp = new Date(todayStart.getTime() + 9 * 60 * 60 * 1000)
   await prisma.member.updateMany({
@@ -573,7 +716,16 @@ async function runSeed() {
   })
 
   await createSubscriptions(members1, gym1, plans1)
-  await createSubscriptions(members2, gym2, plans2, 5)
+  const members2VariantA = members2.slice(0, 3)
+  const members2VariantB = members2.slice(3)
+  await createSubscriptions(members2VariantA, gym2, [plans2[0]], 5)
+  await createSubscriptions(members2VariantB, gym2, [plans2[1]], 8)
+  const demoVariantMembersA = membersDemo.filter((m) => m.gymVariantId === demoVariants[0].id)
+  const demoVariantMembersB = membersDemo.filter((m) => m.gymVariantId === demoVariants[1].id)
+  const demoVariantMembersC = membersDemo.filter((m) => m.gymVariantId === demoVariants[2].id)
+  await createSubscriptions(demoVariantMembersA, demoGym, [plansDemo[0]])
+  await createSubscriptions(demoVariantMembersB, demoGym, [plansDemo[1]], 2)
+  await createSubscriptions(demoVariantMembersC, demoGym, [plansDemo[2]], 4)
   console.log('?? Created subscriptions and payments')
 
   await prisma.demoRequest.createMany({

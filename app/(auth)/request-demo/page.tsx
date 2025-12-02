@@ -8,7 +8,7 @@ import { z } from 'zod'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useMutation } from '@tanstack/react-query'
 import { toast } from 'sonner'
-import { ArrowRight, Mail, MapPin, Phone, Shield } from 'lucide-react'
+import {  Mail, MapPin, Phone, Shield } from 'lucide-react'
 
 import { MarketingNavbar } from '@/components/marketing/navbar'
 import { Button } from '@/components/ui/button'
@@ -105,7 +105,7 @@ export default function RequestDemoPage() {
 
       <main className="mx-auto flex max-w-6xl flex-col gap-10 px-4 py-10">
         <div className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
-          <Card className="border border-primary/20 bg-gradient-to-br from-primary/5 via-card to-card shadow-lg">
+          <Card className="border border-primary/20 bg-linear-to-br from-primary/5 via-card to-card shadow-lg">
             <CardHeader className="space-y-3">
               <Badge variant="outline" className="w-fit border-primary/40 text-primary">
                 Nouveau flux demo

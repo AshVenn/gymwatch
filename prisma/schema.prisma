@@ -53,6 +53,22 @@ enum DemoRequestStatus {
  * ============================
  */
 
+model SystemSettings {
+  id                    Int      @id @default(1)
+  supportEmail          String   @default("support@gymwatch.ma")
+  supportPhone          String   @default("+212600000000")
+  brandColor            String   @default("#5b4bff")
+  expiryReminder        Boolean  @default(true)
+  weeklyDigest          Boolean  @default(true)
+  incidentAlerts        Boolean  @default(true)
+  payoutReport          Boolean  @default(false)
+  gymSettingsIntervalMs Int      @default(60000)
+  userSettingsIntervalMs Int     @default(30000)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
 model User {
   id                   String          @id @default(cuid())
   email                String          @unique
@@ -62,6 +78,8 @@ model User {
   lastName             String?
   gymId                String?
   gym                  Gym?            @relation(fields: [gymId], references: [id], onDelete: SetNull)
+  gymVariantId         String?
+  gymVariant           GymVariant?     @relation(fields: [gymVariantId], references: [id], onDelete: SetNull)
   ownedGym             Gym?            @relation("GymOwner")
   resolvedDemoRequests DemoRequest[]   @relation("DemoRequestResolvedBy")
   preferences          UserPreference?
@@ -101,9 +119,27 @@ model Gym {
   members                     Member[]
   subscriptions               Subscription[]
   payments                    Payment[]
+  variants                    GymVariant[]
   createdDemoRequests         DemoRequest[]         @relation("DemoRequestCreatedGym")
   createdAt                   DateTime              @default(now())
   updatedAt                   DateTime              @updatedAt
+}
+
+model GymVariant {
+  id          String   @id @default(cuid())
+  gymId       String
+  gym         Gym      @relation(fields: [gymId], references: [id], onDelete: Cascade)
+  name        String
+  slug        String
+  isDefault   Boolean  @default(false)
+  members     Member[]
+  subscriptions Subscription[]
+  membershipPlans MembershipPlan[]
+  admins      User[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([gymId, slug])
 }
 
 model UserPreference {
@@ -128,17 +164,23 @@ model MembershipPlan {
   durationDays Int
   price        Float
   isActive     Boolean @default(true)
+  gymVariantId String
+  gymVariant   GymVariant @relation(fields: [gymVariantId], references: [id], onDelete: Cascade)
 
   subscriptions Subscription[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  @@index([gymVariantId])
 }
 
 model Member {
   id    String @id @default(cuid())
   gymId String
   gym   Gym    @relation(fields: [gymId], references: [id], onDelete: Cascade)
+  gymVariantId String
+  gymVariant   GymVariant @relation(fields: [gymVariantId], references: [id], onDelete: Cascade)
 
   firstName     String
   lastName      String
@@ -154,6 +196,7 @@ model Member {
   updatedAt DateTime @updatedAt
 
   @@index([gymId])
+  @@index([gymVariantId])
 }
 
 model Subscription {
@@ -167,6 +210,8 @@ model Subscription {
 
   planId String
   plan   MembershipPlan @relation(fields: [planId], references: [id], onDelete: Restrict)
+  gymVariantId String
+  gymVariant   GymVariant @relation(fields: [gymVariantId], references: [id], onDelete: Cascade)
 
   startDate DateTime
   endDate   DateTime
@@ -182,6 +227,7 @@ model Subscription {
   @@index([gymId])
   @@index([memberId])
   @@index([endDate])
+  @@index([gymVariantId])
 }
 
 model Payment {

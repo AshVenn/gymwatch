@@ -4,6 +4,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { useSuperAdminGym } from '@/app/(dashboard)/super-admin/hooks'
 import { GymStats } from './GymStats'
 import { GymAnalytics } from './GymAnalytics'
+import { Badge } from '@/components/ui/badge'
 
 const PLAN_LABEL: Record<string, string> = {
   BASIC: 'Basic',
@@ -48,11 +49,32 @@ export function GymDetailDialog({ gymId, onClose }: Props) {
                   style: 'currency',
                   currency: 'MAD',
                 })}
+                {' ? '}{gym.variantCount ?? gym.variants?.length ?? 0} variante(s)
                 {gym.isDemo && gym.demoEndsAt
                   ? ` - Demo jusqu'au ${new Date(gym.demoEndsAt).toLocaleDateString('fr-FR')}`
                   : ''}
               </DialogDescription>
             </DialogHeader>
+
+            <div className="rounded-xl border border-border/60 bg-muted/30 px-4 py-3">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <p className="text-sm font-semibold">Variantes du gym</p>
+                <span className="text-xs text-muted-foreground">
+                  {gym.variantCount ?? gym.variants?.length ?? 0} variante(s)
+                </span>
+              </div>
+              <div className="mt-2 flex flex-wrap gap-2">
+                {gym.variants?.length ? (
+                  gym.variants.map((variant) => (
+                    <Badge key={variant.id} variant={variant.isDefault ? 'secondary' : 'outline'}>
+                      {variant.name} {variant.isDefault ? '(defaut)' : ''} • {variant.slug}
+                    </Badge>
+                  ))
+                ) : (
+                  <p className="text-xs text-muted-foreground">Aucune variante enregistree</p>
+                )}
+              </div>
+            </div>
 
             <GymStats gym={gym} />
 

@@ -32,6 +32,7 @@ import {
 import { ChartContainer, ChartTooltip, ChartTooltipContent, type ChartConfig } from '@/components/ui/chart'
 import Link from 'next/link'
 import { toast } from 'sonner'
+import { Skeleton } from '@/components/ui/skeleton'
 
 const currencyFormatter = new Intl.NumberFormat('fr-MA', {
   style: 'currency',
@@ -141,10 +142,81 @@ export default function SuperAdminOverviewPage() {
 
   if (isLoading || !stats) {
     return (
-      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        {Array.from({ length: 4 }).map((_, index) => (
-          <Card key={index} className="h-32 animate-pulse bg-muted" />
-        ))}
+      <div className="space-y-6">
+        <div className="space-y-2">
+          <Skeleton className="h-8 w-56" />
+          <Skeleton className="h-4 w-72" />
+        </div>
+
+        <Card className="border-border/70">
+          <CardHeader>
+            <Skeleton className="h-5 w-40" />
+            <Skeleton className="h-4 w-64" />
+          </CardHeader>
+          <CardContent className="flex flex-wrap gap-3">
+            <Skeleton className="h-10 w-40 rounded-full" />
+            <Skeleton className="h-10 w-40 rounded-full" />
+          </CardContent>
+        </Card>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          {Array.from({ length: 4 }).map((_, index) => (
+            <Card key={index} className="border-border/70 p-4">
+              <Skeleton className="h-4 w-24" />
+              <Skeleton className="mt-3 h-8 w-32" />
+            </Card>
+          ))}
+        </div>
+
+        <div className="grid gap-4 lg:grid-cols-3">
+          <Card className="lg:col-span-2 border-border/70">
+            <CardHeader className="pb-0">
+              <Skeleton className="h-5 w-40" />
+              <Skeleton className="h-4 w-52" />
+            </CardHeader>
+            <CardContent>
+              <Skeleton className="h-64 w-full rounded-2xl" />
+            </CardContent>
+          </Card>
+          <Card className="border-border/70">
+            <CardHeader className="pb-0">
+              <Skeleton className="h-5 w-44" />
+              <Skeleton className="h-4 w-40" />
+            </CardHeader>
+            <CardContent>
+              <Skeleton className="h-64 w-full rounded-2xl" />
+            </CardContent>
+          </Card>
+        </div>
+
+        <div className="grid gap-4 lg:grid-cols-2">
+          <Card className="border-border/70">
+            <CardHeader>
+              <Skeleton className="h-5 w-48" />
+              <Skeleton className="h-4 w-44" />
+            </CardHeader>
+            <CardContent>
+              <Skeleton className="h-56 w-full rounded-2xl" />
+            </CardContent>
+          </Card>
+          <Card className="border-border/70">
+            <CardHeader className="flex items-center justify-between">
+              <div className="space-y-2">
+                <Skeleton className="h-5 w-48" />
+                <Skeleton className="h-4 w-52" />
+              </div>
+              <Skeleton className="h-5 w-5 rounded-full" />
+            </CardHeader>
+            <CardContent className="space-y-3">
+              {Array.from({ length: 3 }).map((_, idx) => (
+                <div key={idx} className="flex items-center justify-between rounded-xl border border-border/50 p-3">
+                  <Skeleton className="h-4 w-40" />
+                  <Skeleton className="h-4 w-16" />
+                </div>
+              ))}
+            </CardContent>
+          </Card>
+        </div>
       </div>
     )
   }
@@ -159,7 +231,7 @@ export default function SuperAdminOverviewPage() {
     ? Math.round((stats.activeGyms / stats.totalGyms) * 100)
     : 0
 
-  const radialExpired = Math.max(stats.totalGyms - stats.activeGyms - stats.suspendedGyms, 0)
+
   
   // FIX: Ensure data keys match the config keys exactly
     const radialChartData = [
@@ -171,11 +243,6 @@ export default function SuperAdminOverviewPage() {
       },
     ]
   
-  const totalGymsRadial = Math.max(
-    radialChartData[0].active + radialChartData[0].suspended + radialChartData[0].expired,
-    1,
-  )
-
   const revenueChartData = (stats.revenueTrend ?? []).map((point, index) => {
     const originalLabel = point.month ?? `M${index + 1}`
     const normalized = originalLabel

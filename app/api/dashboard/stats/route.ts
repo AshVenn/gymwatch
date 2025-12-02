@@ -1,18 +1,39 @@
-import { NextResponse } from "next/server"
+import { NextRequest, NextResponse } from "next/server"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth-middleware"
 import { prisma } from "@/lib/prisma"
 import { daysUntilExpiry } from "@/lib/subscription-status"
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions)
 
     const gymId = (session?.user as any)?.gymId as string | undefined
     const role = (session?.user as any)?.role as string | undefined
+    const sessionVariantId = (session?.user as any)?.gymVariantId as string | undefined
 
     if (!gymId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    }
+
+    if (role === "GYM_ADMIN" && !sessionVariantId) {
+      return NextResponse.json({ error: "Variant manquant" }, { status: 403 })
+    }
+
+    const searchParams = request.nextUrl.searchParams
+    const requestedVariantId = searchParams.get("variantId")
+    let gymVariantId: string | undefined =
+      role === "GYM_ADMIN" ? sessionVariantId : undefined
+
+    if (role === "GYM_OWNER" && requestedVariantId && requestedVariantId !== "all") {
+      const variant = await prisma.gymVariant.findFirst({
+        where: { id: requestedVariantId, gymId },
+        select: { id: true },
+      })
+      if (!variant) {
+        return NextResponse.json({ error: "Variant invalide" }, { status: 400 })
+      }
+      gymVariantId = variant.id
     }
 
     const today = new Date()
@@ -32,6 +53,13 @@ export async function GET() {
         where: {
           gymId,
           paymentDate: { gte: firstDayOfMonth, lte: lastDayOfMonth },
+          ...(gymVariantId
+            ? {
+                subscriptions: {
+                  some: { gymVariantId },
+                },
+              }
+            : {}),
         },
         _sum: { amount: true },
       })
@@ -40,6 +68,13 @@ export async function GET() {
         where: {
           gymId,
           paymentDate: { gte: firstDayOfLastMonth, lte: lastDayOfLastMonth },
+          ...(gymVariantId
+            ? {
+                subscriptions: {
+                  some: { gymVariantId },
+                },
+              }
+            : {}),
         },
         _sum: { amount: true },
       })
@@ -62,6 +97,13 @@ export async function GET() {
           where: {
             gymId,
             paymentDate: { gte: start, lte: end },
+            ...(gymVariantId
+              ? {
+                  subscriptions: {
+                    some: { gymVariantId },
+                  },
+                }
+              : {}),
           },
           _sum: { amount: true },
         })
@@ -74,27 +116,37 @@ export async function GET() {
     }
 
     const activeMembers = await prisma.subscription.count({
-      where: { gymId, status: { in: ["ACTIVE", "EXPIRES_TODAY"] } },
+      where: {
+        gymId,
+        ...(gymVariantId ? { gymVariantId } : {}),
+        status: { in: ["ACTIVE", "EXPIRES_TODAY"] },
+      },
     })
 
     const newMembers = await prisma.member.count({
       where: {
         gymId,
+        ...(gymVariantId ? { gymVariantId } : {}),
         createdAt: { gte: firstDayOfMonth, lte: lastDayOfMonth },
       },
     })
 
-    const plans = await prisma.membershipPlan.findMany({ where: { gymId } })
+    const plans = await prisma.membershipPlan.findMany({
+      where: {
+        gymId,
+        ...(gymVariantId ? { gymVariantId } : {}),
+      },
+    })
 
     const planDistribution = await Promise.all(
       plans.map(async (plan: { id: string; name: string }) => {
         const count = await prisma.subscription.count({
-          where: { planId: plan.id, status: "ACTIVE" },
-        })
+        where: { planId: plan.id, status: "ACTIVE" },
+      })
 
-        return {
-          name: plan.name,
-          value: count ?? 0,
+      return {
+        name: plan.name,
+        value: count ?? 0,
         }
       }),
     )
@@ -105,6 +157,7 @@ export async function GET() {
     const expiringSubs = await prisma.subscription.findMany({
       where: {
         gymId,
+        ...(gymVariantId ? { gymVariantId } : {}),
         endDate: { gt: today, lte: expiringSoonDate },
         status: { in: ["ACTIVE", "EXPIRES_TODAY"] },
       },
@@ -150,6 +203,7 @@ export async function GET() {
       expiringSoon: expiringSoon ?? [],
       todayVisitorCount,
       canViewRevenue: revenueVisible,
+      gymVariantId: gymVariantId ?? null,
     })
   } catch (error) {
     console.error("Stats error:", error)

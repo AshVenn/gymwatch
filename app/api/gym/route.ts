@@ -2,8 +2,7 @@ import { getServerSession } from 'next-auth/next'
 import { NextRequest, NextResponse } from 'next/server'
 import { authOptions } from '@/lib/auth-middleware'
 import { prisma } from '@/lib/prisma'
-
-const MIN_UPDATE_INTERVAL_MS = Number(process.env.GYM_SETTINGS_INTERVAL_MS ?? 60_000)
+import { getSystemSettings } from '@/lib/settings'
 
 export async function GET() {
   try {
@@ -49,10 +48,13 @@ export async function PUT(request: NextRequest) {
       return NextResponse.json({ error: 'Gym not found' }, { status: 404 })
     }
 
+    const systemSettings = await getSystemSettings()
+    const minInterval = systemSettings.gymSettingsIntervalMs ?? 60_000
+
     if (gymRecord.lastSettingsUpdateAt) {
       const elapsed = Date.now() - gymRecord.lastSettingsUpdateAt.getTime()
-      if (elapsed < MIN_UPDATE_INTERVAL_MS) {
-        const retryIn = Math.ceil((MIN_UPDATE_INTERVAL_MS - elapsed) / 1000)
+      if (elapsed < minInterval) {
+        const retryIn = Math.ceil((minInterval - elapsed) / 1000)
         return NextResponse.json(
           { error: 'RATE_LIMIT', retryIn },
           { status: 429 }

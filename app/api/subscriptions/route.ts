@@ -7,26 +7,45 @@ import { computeSubscriptionStatus, daysUntilExpiry } from "@/lib/subscription-s
 
 export async function GET(request: NextRequest) {
   try {
-    // 🔹 NextAuth v4: get session using authOptions
     const session = await getServerSession(authOptions)
     const gymId = (session?.user as any)?.gymId as string | undefined
+    const role = (session?.user as any)?.role as string | undefined
+    const sessionVariantId = (session?.user as any)?.gymVariantId as string | undefined
 
     if (!gymId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    }
+    if (role === "GYM_ADMIN" && !sessionVariantId) {
+      return NextResponse.json({ error: "Variant manquant" }, { status: 403 })
     }
 
     const searchParams = request.nextUrl.searchParams
     const search = searchParams.get("search")?.toLowerCase() ?? ""
     const status = searchParams.get("status") as string | null
+    const requestedVariantId = searchParams.get("variantId")
+
+    let gymVariantId = role === "GYM_ADMIN" ? sessionVariantId : undefined
+    if (role === "GYM_OWNER" && requestedVariantId && requestedVariantId !== "all") {
+      const variant = await prisma.gymVariant.findFirst({
+        where: { id: requestedVariantId, gymId },
+        select: { id: true },
+      })
+      if (!variant) {
+        return NextResponse.json({ error: "Variant invalide" }, { status: 400 })
+      }
+      gymVariantId = variant.id
+    }
 
     const subscriptions = await prisma.subscription.findMany({
       where: {
         gymId,
+        ...(gymVariantId ? { gymVariantId } : {}),
         ...(status ? { status: status as any } : {}),
       },
       include: {
         member: true,
         plan: true,
+        gymVariant: { select: { id: true, name: true, slug: true } },
       },
       orderBy: {
         endDate: "asc",
@@ -62,6 +81,8 @@ export async function GET(request: NextRequest) {
             daysLeft,
             status: computedStatus,
             pricePaid: sub.pricePaid,
+            gymVariantId: sub.gymVariantId,
+            gymVariant: sub.gymVariant,
           }
         }),
     )
@@ -69,10 +90,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json(filtered)
   } catch (error) {
     console.error("Subscriptions error:", error)
-    return NextResponse.json(
-      { error: "Failed to fetch subscriptions" },
-      { status: 500 },
-    )
+    return NextResponse.json({ error: "Failed to fetch subscriptions" }, { status: 500 })
   }
 }
 
@@ -80,19 +98,41 @@ export async function POST(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions)
     const gymId = (session?.user as any)?.gymId as string | undefined
+    const role = (session?.user as any)?.role as string | undefined
+    const sessionVariantId = (session?.user as any)?.gymVariantId as string | undefined
 
     if (!gymId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
+    if (role === "GYM_ADMIN" && !sessionVariantId) {
+      return NextResponse.json({ error: "Variant manquant" }, { status: 403 })
+    }
 
     const { memberId, planId, startDate } = await request.json()
 
-    const plan = await prisma.membershipPlan.findUnique({
-      where: { id: planId },
+    const member = await prisma.member.findFirst({
+      where: { id: memberId, gymId },
+      select: { id: true, gymVariantId: true, firstName: true, lastName: true },
     })
 
-    if (!plan) {
+    if (!member) {
+      return NextResponse.json({ error: "Member not found" }, { status: 404 })
+    }
+    if (role === "GYM_ADMIN" && sessionVariantId && member.gymVariantId !== sessionVariantId) {
+      return NextResponse.json({ error: "FORBIDDEN_VARIANT" }, { status: 403 })
+    }
+
+    const plan = await prisma.membershipPlan.findUnique({
+      where: { id: planId },
+      select: { id: true, durationDays: true, price: true, gymId: true, gymVariantId: true, name: true },
+    })
+
+    if (!plan || plan.gymId !== gymId) {
       return NextResponse.json({ error: "Plan not found" }, { status: 404 })
+    }
+
+    if (plan.gymVariantId !== member.gymVariantId) {
+      return NextResponse.json({ error: "Plan incompatible avec la variante du membre" }, { status: 400 })
     }
 
     const start = new Date(startDate)
@@ -101,11 +141,11 @@ export async function POST(request: NextRequest) {
 
     const status = computeSubscriptionStatus(end)
 
-    // 1) Créer la subscription
     const subscription = await prisma.subscription.create({
       data: {
         memberId,
         gymId,
+        gymVariantId: member.gymVariantId,
         planId,
         startDate: start,
         endDate: end,
@@ -114,7 +154,6 @@ export async function POST(request: NextRequest) {
       },
     })
 
-    // 2) Créer le paiement lié
     const payment = await prisma.payment.create({
       data: {
         gymId,
@@ -130,9 +169,6 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ subscription, payment }, { status: 201 })
   } catch (error) {
     console.error("Create subscription error:", error)
-    return NextResponse.json(
-      { error: "Failed to create subscription" },
-      { status: 500 },
-    )
+    return NextResponse.json({ error: "Failed to create subscription" }, { status: 500 })
   }
 }

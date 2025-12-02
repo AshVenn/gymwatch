@@ -61,6 +61,7 @@ export function CreateGymDialog() {
     defaultValues,
   })
   const createGym = useCreateGym()
+  const [variantNames, setVariantNames] = useState('Principal')
 
   const selectedTier = form.watch('tier') as GymPlanTier
   const selectedInterval = form.watch('interval') as GymBillingInterval
@@ -69,10 +70,17 @@ export function CreateGymDialog() {
   useEffect(() => {
     if (!open) {
       form.reset(defaultValues)
+      setVariantNames('Principal')
     }
   }, [open, form])
 
   const onSubmit = (values: CreateGymValues) => {
+    const parsedVariants = variantNames
+      .split(',')
+      .map((name) => name.trim())
+      .filter(Boolean)
+      .map((name, index) => ({ name, isDefault: index === 0 }))
+
     createGym.mutate(
       {
         name: values.name,
@@ -87,6 +95,7 @@ export function CreateGymDialog() {
         subscriptionExpiresAt: values.expiresAt || undefined,
         subscriptionGracePeriodDays: values.grace,
         maxAdminAccounts: values.maxAdmins,
+        variants: parsedVariants,
         owner: {
           email: values.ownerEmail,
           password: values.ownerPassword,
@@ -97,6 +106,7 @@ export function CreateGymDialog() {
       {
         onSuccess: () => {
           form.reset(defaultValues)
+          setVariantNames('Principal')
           setOpen(false)
         },
       },
@@ -200,6 +210,18 @@ export function CreateGymDialog() {
                   </FormItem>
                 )}
               />
+            </div>
+
+            <div>
+              <FormLabel>Variantes (separees par une virgule)</FormLabel>
+              <FormControl>
+                <Input
+                  value={variantNames}
+                  onChange={(e) => setVariantNames(e.target.value)}
+                  placeholder="Principal, Premium, Budget"
+                />
+              </FormControl>
+              <FormDescription>La premiere variante sera selectionnee par defaut.</FormDescription>
             </div>
 
             <div className="grid gap-4 sm:grid-cols-2">

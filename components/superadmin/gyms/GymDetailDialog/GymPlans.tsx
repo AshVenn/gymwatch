@@ -31,6 +31,7 @@ export function GymPlans({ gym }: Props) {
                 <TableHead>Nom</TableHead>
                 <TableHead>Durée</TableHead>
                 <TableHead>Prix</TableHead>
+                <TableHead>Variante</TableHead>
                 <TableHead>Statut</TableHead>
               </TableRow>
             </TableHeader>
@@ -40,6 +41,7 @@ export function GymPlans({ gym }: Props) {
                   <TableCell>{plan.name}</TableCell>
                   <TableCell>{plan.durationDays} jours</TableCell>
                   <TableCell>{MAD.format(plan.price)}</TableCell>
+                  <TableCell>{plan.gymVariant?.name ?? '-'}</TableCell>
                   <TableCell>
                     <Badge variant={plan.isActive ? 'secondary' : 'outline'}>
                       {plan.isActive ? 'Actif' : 'Inactif'}

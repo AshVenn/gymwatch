@@ -55,10 +55,12 @@ export async function markVisitForMember({
   gymId,
   memberId,
   markVisit = true,
+  allowedVariantId,
 }: {
   gymId: string
   memberId: string
   markVisit?: boolean
+  allowedVariantId?: string
 }): Promise<VisitResult> {
   const now = new Date()
   const today = startOfDay(now)
@@ -80,6 +82,10 @@ export async function markVisitForMember({
 
   if (!member) {
     throw new Error("Member not found")
+  }
+
+  if (allowedVariantId && member.gymVariantId !== allowedVariantId) {
+    throw new Error("FORBIDDEN_VARIANT")
   }
 
   const latestSubscription = member.subscriptions[0] ?? null

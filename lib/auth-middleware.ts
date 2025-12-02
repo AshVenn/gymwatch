@@ -3,6 +3,7 @@ import type { NextAuthOptions } from "next-auth"
 import CredentialsProvider from "next-auth/providers/credentials"
 import { db } from "./db"
 import { verifyPassword } from "./auth"
+import { prisma } from "./prisma"
 
 function isGymSubscriptionInactive(gym?: {
   subscriptionStatus: string
@@ -56,6 +57,21 @@ export const authOptions: NextAuthOptions = {
           }
         }
 
+        let gymVariantId: string | null = user.gymVariantId ?? null
+        if (user.role === "GYM_ADMIN") {
+          if (!gymVariantId) {
+            throw new Error("MISSING_VARIANT")
+          }
+          const variant = await prisma.gymVariant.findFirst({
+            where: { id: gymVariantId, gymId: user.gymId ?? undefined },
+            select: { id: true },
+          })
+          if (!variant) {
+            throw new Error("MISSING_VARIANT")
+          }
+          gymVariantId = variant.id
+        }
+
         const sessionVersion = await db.touchUserSession(user.id)
 
         return {
@@ -70,6 +86,7 @@ export const authOptions: NextAuthOptions = {
           subscriptionExpiresAt: gym?.subscriptionExpiresAt?.toISOString() ?? null,
           isDemo: gym?.isDemo ?? false,
           demoEndsAt: gym?.demoEndsAt?.toISOString() ?? null,
+          gymVariantId,
           sessionVersion,
         } as any
       },
@@ -95,6 +112,7 @@ export const authOptions: NextAuthOptions = {
         ;(token as any).subscriptionExpiresAt = (user as any).subscriptionExpiresAt
         ;(token as any).isDemo = (user as any).isDemo
         ;(token as any).demoEndsAt = (user as any).demoEndsAt
+        ;(token as any).gymVariantId = (user as any).gymVariantId
         ;(token as any).sessionVersion = (user as any).sessionVersion
         ;(token as any).sessionRevoked = false
       } else if (token.sub) {
@@ -119,6 +137,7 @@ export const authOptions: NextAuthOptions = {
         ;(session.user as any).subscriptionExpiresAt = (token as any).subscriptionExpiresAt
         ;(session.user as any).isDemo = (token as any).isDemo
         ;(session.user as any).demoEndsAt = (token as any).demoEndsAt
+        ;(session.user as any).gymVariantId = (token as any).gymVariantId
       }
       return session
     },

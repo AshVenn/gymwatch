@@ -21,6 +21,15 @@ const approveSchema = z.object({
   subscriptionGracePeriodDays: z.number().int().min(0).max(365).optional(),
   maxAdminAccounts: z.number().int().min(1).max(20).optional(),
   demoEndsAt: z.string().optional(),
+  variants: z
+    .array(
+      z.object({
+        name: z.string().min(1),
+        slug: z.string().optional(),
+        isDefault: z.boolean().optional(),
+      }),
+    )
+    .optional(),
   owner: z.object({
     email: z.string().email(),
     password: z.string().min(8),
@@ -34,6 +43,7 @@ const approveSchema = z.object({
         password: z.string().min(8),
         firstName: z.string().min(2),
         lastName: z.string().min(2),
+        variantSlug: z.string().optional(),
       }),
     )
     .optional(),
@@ -90,6 +100,7 @@ export async function POST(request: NextRequest, { params }: { params: { request
       maxAdminAccounts: body.maxAdminAccounts ?? 3,
       isDemo: true,
       demoEndsAt,
+      variants: body.variants,
       admins: body.admins,
       owner: body.owner,
     })

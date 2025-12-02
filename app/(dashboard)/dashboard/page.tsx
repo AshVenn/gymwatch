@@ -30,6 +30,9 @@ import { usePlanFeatures } from '@/app/hooks/use-plan-features'
 import { PaginationControls } from '@/components/dashboard/pagination-controls'
 import { toast } from 'sonner'
 import { TrendingUp } from 'lucide-react'
+import { useVariantOptions } from '@/app/hooks/use-variants'
+import { VariantSelector } from '@/components/dashboard/variant-selector'
+import { Skeleton } from '@/components/ui/skeleton'
 
 interface DashboardStats {
   monthlyRevenue: number
@@ -47,6 +50,15 @@ export default function DashboardPage() {
   const { data: session } = useSession()
   const { hasExcelReports } = usePlanFeatures()
   const [downloading, setDownloading] = useState<string | null>(null)
+  const {
+    variants,
+    selectedVariant,
+    setSelectedVariant,
+    isGymAdmin,
+    lockedVariantId,
+    isLoading: variantsLoading,
+  } = useVariantOptions()
+  const variantFilter = selectedVariant === 'all' ? null : selectedVariant
 
   const defaultStats = useMemo<DashboardStats>(() => ({
     monthlyRevenue: 0,
@@ -61,10 +73,14 @@ export default function DashboardPage() {
   }), [])
 
   const { data: stats = defaultStats, isLoading, isError } = useQuery({
-    queryKey: ['dashboard-stats', session?.user?.gymId],
+    queryKey: ['dashboard-stats', session?.user?.gymId, variantFilter],
     enabled: Boolean(session?.user?.gymId),
     queryFn: async () => {
-      const response = await fetch('/api/dashboard/stats')
+      const params = new URLSearchParams()
+      if (variantFilter) {
+        params.set('variantId', variantFilter)
+      }
+      const response = await fetch(`/api/dashboard/stats${params.toString() ? `?${params.toString()}` : ''}`)
 
       if (!response.ok) {
         throw new Error('Impossible de charger les statistiques')
@@ -118,8 +134,21 @@ export default function DashboardPage() {
       : null,
   ].filter(Boolean) as Array<{ title: string; value: string; valueClass?: string }>
 
-  if (isLoading) {
-    return <div className="text-center py-10">Chargement des statistiques...</div>
+  if (isLoading || variantsLoading) {
+    return (
+      <div className="space-y-6">
+        <div className="flex justify-between gap-4">
+          <Skeleton className="h-9 w-48" />
+          <Skeleton className="h-9 w-64" />
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          {Array.from({ length: 4 }).map((_, idx) => (
+            <Skeleton key={idx} className="h-28 rounded-2xl" />
+          ))}
+        </div>
+        <Skeleton className="h-80 w-full rounded-3xl" />
+      </div>
+    )
   }
 
   if (isError) {
@@ -163,7 +192,9 @@ export default function DashboardPage() {
     }
     try {
       setDownloading(type)
-      const response = await fetch(`/api/reports/excel?type=${type}`)
+      const params = new URLSearchParams({ type })
+      if (variantFilter) params.set('variantId', variantFilter)
+      const response = await fetch(`/api/reports/excel?${params.toString()}`)
       if (!response.ok) {
         throw new Error('Impossible de telecharger le rapport')
       }
@@ -186,6 +217,17 @@ export default function DashboardPage() {
       <div>
         <h1 className="text-3xl font-bold">Tableau de bord</h1>
         <p className="text-muted-foreground mt-2">Bienvenue dans votre espace de gestion</p>
+      </div>
+
+      <div className="flex justify-end">
+        <VariantSelector
+          variants={variants}
+          value={selectedVariant}
+          onChange={setSelectedVariant}
+          isGymAdmin={isGymAdmin}
+          lockedVariantId={lockedVariantId}
+          loading={variantsLoading}
+        />
       </div>
 
       {/* Stats Cards */}
@@ -309,7 +351,6 @@ export default function DashboardPage() {
                   <Label
                     content={({ viewBox }) => {
                       if (viewBox && 'cx' in viewBox && 'cy' in viewBox) {
-                        const total = planDistribution.reduce((sum, p) => sum + p.value, 0) || stats.activeMembers
                         return (
                           <text x={viewBox.cx} y={viewBox.cy} textAnchor="middle">
                             <tspan

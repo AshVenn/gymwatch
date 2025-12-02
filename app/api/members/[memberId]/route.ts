@@ -19,6 +19,11 @@ export async function PUT(request: NextRequest, { params }: any) {
     if (!session?.user?.gymId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
+    const role = (session.user as any).role as string | undefined
+    const sessionVariantId = (session.user as any).gymVariantId as string | undefined
+    if (role === "GYM_ADMIN" && !sessionVariantId) {
+      return NextResponse.json({ error: "Variant manquant" }, { status: 403 })
+    }
 
     const rawId = params.memberId
     const memberId = Array.isArray(rawId) ? rawId[0] : rawId
@@ -27,10 +32,14 @@ export async function PUT(request: NextRequest, { params }: any) {
 
     const member = await prisma.member.findFirst({
       where: { id: memberId, gymId: session.user.gymId },
+      select: { id: true, gymVariantId: true },
     })
 
     if (!member) {
       return NextResponse.json({ error: "Member not found" }, { status: 404 })
+    }
+    if (role === "GYM_ADMIN" && sessionVariantId && member.gymVariantId !== sessionVariantId) {
+      return NextResponse.json({ error: "FORBIDDEN_VARIANT" }, { status: 403 })
     }
 
     const updated = await db.updateMember(memberId, {
@@ -57,16 +66,25 @@ export async function DELETE(_request: NextRequest, { params }: any) {
     if (!session?.user?.gymId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
+    const role = (session.user as any).role as string | undefined
+    const sessionVariantId = (session.user as any).gymVariantId as string | undefined
+    if (role === "GYM_ADMIN" && !sessionVariantId) {
+      return NextResponse.json({ error: "Variant manquant" }, { status: 403 })
+    }
 
     const rawId = params.memberId
     const memberId = Array.isArray(rawId) ? rawId[0] : rawId
 
     const member = await prisma.member.findFirst({
       where: { id: memberId, gymId: session.user.gymId },
+      select: { id: true, gymVariantId: true },
     })
 
     if (!member) {
       return NextResponse.json({ error: "Member not found" }, { status: 404 })
+    }
+    if (role === "GYM_ADMIN" && sessionVariantId && member.gymVariantId !== sessionVariantId) {
+      return NextResponse.json({ error: "FORBIDDEN_VARIANT" }, { status: 403 })
     }
 
     const activeSubscriptions = await prisma.subscription.count({

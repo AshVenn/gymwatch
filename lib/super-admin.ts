@@ -19,6 +19,35 @@ async function ensurePreference(userId: string) {
   })
 }
 
+function slugifyVariantName(name: string) {
+  return name
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/(^-|-$)+/g, "") || "principal"
+}
+
+function normalizeVariants(
+  variants?: { name: string; slug?: string; isDefault?: boolean }[]
+) {
+  const base =
+    variants?.length && variants.some((v) => v.name.trim())
+      ? variants
+      : [{ name: "Principal", slug: "principal", isDefault: true }]
+
+  const normalized = base.map((variant, index) => ({
+    name: variant.name.trim() || `Variant ${index + 1}`,
+    slug: slugifyVariantName(variant.slug ?? variant.name),
+    isDefault: Boolean(variant.isDefault),
+  }))
+
+  if (!normalized.some((v) => v.isDefault)) {
+    normalized[0].isDefault = true
+  }
+
+  return normalized
+}
+
 export async function getSuperAdminOverview() {
   const [gyms, totalMembers, activeSubscriptions] = await Promise.all([
     prisma.gym.findMany({
@@ -136,12 +165,16 @@ export async function listGymsForSuperAdmin() {
       owner: {
         select: { id: true, email: true, firstName: true, lastName: true },
       },
+      variants: {
+        select: { id: true, name: true, slug: true, isDefault: true },
+        orderBy: [{ isDefault: "desc" }, { name: "asc" }],
+      },
       users: {
         where: { role: UserRole.GYM_ADMIN },
         select: { id: true },
       },
       _count: {
-        select: { members: true, subscriptions: true },
+        select: { members: true, subscriptions: true, variants: true },
       },
     },
   })
@@ -182,6 +215,8 @@ export async function listGymsForSuperAdmin() {
         : null,
       adminCount: gym.users.length,
       maxAdminAccounts: gym.maxAdminAccounts,
+      variants: gym.variants,
+      variantCount: gym._count.variants,
     }
   })
 }
@@ -214,11 +249,20 @@ export async function getSuperAdminGymDetail(gymId: string) {
       },
       users: {
         where: { role: { in: [UserRole.GYM_OWNER, UserRole.GYM_ADMIN] } },
-        select: { id: true, email: true, firstName: true, lastName: true, role: true },
+        select: { id: true, email: true, firstName: true, lastName: true, role: true, gymVariantId: true, gymVariant: { select: { id: true, name: true, slug: true, isDefault: true } } },
         orderBy: { createdAt: "asc" },
       },
       membershipPlans: {
         orderBy: { durationDays: "asc" },
+        include: {
+          gymVariant: {
+            select: { id: true, name: true, slug: true, isDefault: true },
+          },
+        },
+      },
+      variants: {
+        select: { id: true, name: true, slug: true, isDefault: true },
+        orderBy: [{ isDefault: "desc" }, { name: "asc" }],
       },
       subscriptions: {
         select: {
@@ -230,7 +274,7 @@ export async function getSuperAdminGymDetail(gymId: string) {
         orderBy: { createdAt: "desc" },
       },
       _count: {
-        select: { members: true, subscriptions: true },
+        select: { members: true, subscriptions: true, variants: true },
       },
     },
   })
@@ -260,6 +304,8 @@ export async function getSuperAdminGymDetail(gymId: string) {
       email: user.email,
       firstName: user.firstName,
       lastName: user.lastName,
+      gymVariantId: user.gymVariantId,
+      gymVariant: user.gymVariant,
     }))
 
   return {
@@ -282,8 +328,10 @@ export async function getSuperAdminGymDetail(gymId: string) {
     analyticsSnapshot: gym.analyticsSnapshot,
     membershipPlans: gym.membershipPlans,
     subscriptions: gym.subscriptions,
+    variants: gym.variants,
     memberCount: gym._count.members,
     activeSubscriptions: gym._count.subscriptions,
+    variantCount: gym._count.variants,
     daysRemaining,
     paymentsLast30Days: paymentsLast30Days._sum.amount ?? 0,
     owner: gym.owner,
@@ -370,7 +418,9 @@ export async function createGymForSuperAdmin(data: {
     password: string
     firstName: string
     lastName: string
+    variantSlug?: string
   }[]
+  variants?: { name: string; slug?: string; isDefault?: boolean }[]
   owner: {
     email: string
     password: string
@@ -382,6 +432,7 @@ export async function createGymForSuperAdmin(data: {
   const interval = data.billingInterval ?? "MONTHLY"
   const subscriptionPrice = resolvePlanPrice(data.subscriptionPlan, interval)
   const adminLimit = data.maxAdminAccounts ?? 3
+  const variantsPayload = normalizeVariants(data.variants)
 
   return prisma.$transaction(async (tx) => {
     const gym = await tx.gym.create({
@@ -405,6 +456,21 @@ export async function createGymForSuperAdmin(data: {
       },
     })
 
+    const variants = await Promise.all(
+      variantsPayload.map((variant) =>
+        tx.gymVariant.create({
+          data: {
+            gymId: gym.id,
+            name: variant.name,
+            slug: variant.slug,
+            isDefault: variant.isDefault,
+          },
+        }),
+      ),
+    )
+
+    const defaultVariant = variants.find((v) => v.isDefault) ?? variants[0]
+
     const owner = await tx.user.create({
       data: {
         email: data.owner.email,
@@ -413,6 +479,7 @@ export async function createGymForSuperAdmin(data: {
         firstName: data.owner.firstName,
         lastName: data.owner.lastName,
         gymId: gym.id,
+        gymVariantId: defaultVariant?.id ?? null,
       },
     })
 
@@ -435,6 +502,9 @@ export async function createGymForSuperAdmin(data: {
     if (data.admins?.length) {
       for (const admin of data.admins.slice(0, adminLimit)) {
         const hashedAdminPassword = await hashPassword(admin.password)
+        const adminVariant =
+          variants.find((variant) => variant.slug === slugifyVariantName(admin.variantSlug ?? "")) ??
+          defaultVariant
         const created = await tx.user.create({
           data: {
             email: admin.email,
@@ -443,6 +513,7 @@ export async function createGymForSuperAdmin(data: {
             firstName: admin.firstName,
             lastName: admin.lastName,
             gymId: gym.id,
+            gymVariantId: adminVariant?.id ?? null,
           },
         })
         await tx.userPreference.create({ data: { userId: created.id } })
@@ -455,11 +526,14 @@ export async function createGymForSuperAdmin(data: {
       }
     }
 
-    return { ...gym, owner, admins: adminUsers }
+    return { ...gym, owner, admins: adminUsers, variants }
   })
 }
 
-export async function createGymAdminAccount(gymId: string, data: { email: string; password: string; firstName: string; lastName: string }) {
+export async function createGymAdminAccount(
+  gymId: string,
+  data: { email: string; password: string; firstName: string; lastName: string; gymVariantId?: string }
+) {
   const gym = await prisma.gym.findUnique({
     where: { id: gymId },
     select: { maxAdminAccounts: true },
@@ -477,6 +551,25 @@ export async function createGymAdminAccount(gymId: string, data: { email: string
     throw new Error("MAX_ADMINS_REACHED")
   }
 
+  const targetVariant =
+    data.gymVariantId &&
+    (await prisma.gymVariant.findFirst({
+      where: { id: data.gymVariantId, gymId },
+      select: { id: true },
+    }))
+
+  const defaultVariant =
+    targetVariant ??
+    (await prisma.gymVariant.findFirst({
+      where: { gymId },
+      orderBy: [{ isDefault: "desc" }, { createdAt: "asc" }],
+      select: { id: true },
+    }))
+
+  if (!defaultVariant) {
+    throw new Error("NO_VARIANT")
+  }
+
   const hashedPassword = await hashPassword(data.password)
   const admin = await prisma.user.create({
     data: {
@@ -486,6 +579,7 @@ export async function createGymAdminAccount(gymId: string, data: { email: string
       firstName: data.firstName,
       lastName: data.lastName,
       gymId,
+      gymVariantId: defaultVariant.id,
     },
   })
 

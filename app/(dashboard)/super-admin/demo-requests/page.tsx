@@ -1,7 +1,7 @@
 'use client'
 
 import { useMemo, useState } from 'react'
-import { Mail, MapPin, Phone, CalendarClock, CheckCircle2, XCircle, Info } from 'lucide-react'
+import { Mail, MapPin, Phone, CheckCircle2, XCircle, Info } from 'lucide-react'
 
 import { useDemoRequests, useUpdateDemoRequestStatus, type DemoRequest, type DemoRequestStatus } from '../hooks'
 import { ApproveDemoDialog } from '@/components/superadmin/demo-requests/ApproveDemoDialog'
@@ -12,6 +12,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Input } from '@/components/ui/input'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { PaginationControls, usePagination } from '@/components/dashboard/pagination-controls'
+import { Skeleton } from '@/components/ui/skeleton'
 
 const STATUS_LABEL: Record<DemoRequestStatus, string> = {
   PENDING: 'En attente',
@@ -88,20 +89,27 @@ export default function DemoRequestsPage() {
 
       <Card className="border border-border/70">
         <CardContent className="grid gap-4 py-4 md:grid-cols-2 lg:grid-cols-4">
-          {(['ALL', 'PENDING', 'RESOLVED', 'REFUSED'] as (DemoRequestStatus | 'ALL')[]).map((status) => (
-            <button
-              key={status}
-              onClick={() => setStatusFilter(status)}
-              className={`rounded-xl border px-4 py-3 text-left transition ${
-                statusFilter === status ? 'border-primary bg-primary/10 text-primary' : 'border-border/70 hover:border-primary/50'
-              }`}
-            >
-              <p className="text-sm text-muted-foreground">
-                {status === 'ALL' ? 'Toutes' : STATUS_LABEL[status as DemoRequestStatus]}
-              </p>
-              <p className="text-2xl font-semibold text-foreground">{statusCounters[status] ?? 0}</p>
-            </button>
-          ))}
+          {isLoading
+            ? Array.from({ length: 4 }).map((_, idx) => (
+                <div key={idx} className="rounded-xl border border-border/70 p-4">
+                  <Skeleton className="h-4 w-24" />
+                  <Skeleton className="mt-2 h-8 w-16" />
+                </div>
+              ))
+            : (['ALL', 'PENDING', 'RESOLVED', 'REFUSED'] as (DemoRequestStatus | 'ALL')[]).map((status) => (
+                <button
+                  key={status}
+                  onClick={() => setStatusFilter(status)}
+                  className={`rounded-xl border px-4 py-3 text-left transition ${
+                    statusFilter === status ? 'border-primary bg-primary/10 text-primary' : 'border-border/70 hover:border-primary/50'
+                  }`}
+                >
+                  <p className="text-sm text-muted-foreground">
+                    {status === 'ALL' ? 'Toutes' : STATUS_LABEL[status as DemoRequestStatus]}
+                  </p>
+                  <p className="text-2xl font-semibold text-foreground">{statusCounters[status] ?? 0}</p>
+                </button>
+              ))}
         </CardContent>
       </Card>
 
@@ -132,11 +140,36 @@ export default function DemoRequestsPage() {
           </TableHeader>
           <TableBody>
             {isLoading ? (
-              <TableRow>
-                <TableCell colSpan={7} className="text-center text-muted-foreground">
-                  Chargement des demandes...
-                </TableCell>
-              </TableRow>
+              Array.from({ length: 4 }).map((_, idx) => (
+                <TableRow key={idx} className="border-border/60">
+                  <TableCell>
+                    <Skeleton className="h-4 w-32" />
+                    <Skeleton className="mt-2 h-3 w-28" />
+                  </TableCell>
+                  <TableCell>
+                    <Skeleton className="h-4 w-28" />
+                    <Skeleton className="mt-2 h-3 w-20" />
+                  </TableCell>
+                  <TableCell>
+                    <Skeleton className="h-5 w-16" />
+                  </TableCell>
+                  <TableCell>
+                    <Skeleton className="h-6 w-20" />
+                  </TableCell>
+                  <TableCell>
+                    <Skeleton className="h-4 w-16" />
+                  </TableCell>
+                  <TableCell>
+                    <Skeleton className="h-4 w-16" />
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <div className="flex justify-end gap-2">
+                      <Skeleton className="h-8 w-20" />
+                      <Skeleton className="h-8 w-24" />
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))
             ) : pagination.data.length ? (
               pagination.data.map((req) => (
                 <TableRow key={req.id} className="border-border/60">

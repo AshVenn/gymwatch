@@ -53,6 +53,9 @@ import { toast } from 'sonner'
 import { PaginationControls, usePagination } from '@/components/dashboard/pagination-controls'
 import { usePlanFeatures } from '@/app/hooks/use-plan-features'
 import { QrSuccessErrorAnimation } from '@/components/dashboard/qr-success-error-animation'
+import { useVariantOptions } from '@/app/hooks/use-variants'
+import { VariantSelector } from '@/components/dashboard/variant-selector'
+import { Skeleton } from '@/components/ui/skeleton'
 
 const Scanner = dynamic<IScannerProps>(
   () => import('@yudiel/react-qr-scanner').then((mod) => mod.Scanner),
@@ -68,6 +71,8 @@ interface Member {
   createdAt: string
   qrToken: string
   lastVisitedAt?: string | null
+  gymVariantId?: string
+  gymVariant?: { id: string; name: string; slug: string }
 }
 
 interface Plan {
@@ -76,6 +81,8 @@ interface Plan {
   durationDays: number
   price: number
   isActive: boolean
+  gymVariantId?: string
+  gymVariant?: { id: string; name: string; slug: string; isDefault?: boolean }
 }
 
 export default function MembersPage() {
@@ -98,7 +105,12 @@ export default function MembersPage() {
   const [qrMember, setQrMember] = useState<Member | null>(null)
   const [qrImage, setQrImage] = useState<string>('')
   const [scannerEnabled, setScannerEnabled] = useState(false)
-  const [scanStatus, setScanStatus] = useState<{ status: 'success' | 'error'; message: string; memberName: string; daysRemaining?: number } | null>(null)
+  const [scanStatus, setScanStatus] = useState<{
+    status: 'success' | 'error'
+    message: string
+    memberName: string
+    daysRemaining?: number
+  } | null>(null)
   const lastTokenRef = useRef<string | null>(null)
   const audioRef = useRef<AudioContext | null>(null)
   const [memberReportLoading, setMemberReportLoading] = useState<string | null>(null)
@@ -106,6 +118,20 @@ export default function MembersPage() {
   const [visitDialogOpen, setVisitDialogOpen] = useState(false)
   const [visitSearch, setVisitSearch] = useState('')
   const [visitLoading, setVisitLoading] = useState<string | null>(null)
+  const {
+    variants,
+    selectedVariant,
+    setSelectedVariant,
+    isGymAdmin,
+    lockedVariantId,
+    defaultVariantId,
+    isLoading: variantsLoading,
+  } = useVariantOptions()
+  const [memberVariantId, setMemberVariantId] = useState<string>('')
+  const effectiveMemberVariantId = useMemo(
+    () => memberVariantId || defaultVariantId || variants[0]?.id || '',
+    [defaultVariantId, memberVariantId, variants],
+  )
 
   useEffect(() => {
     if (!qrMember) return
@@ -120,6 +146,19 @@ export default function MembersPage() {
       active = false
     }
   }, [qrMember])
+
+  useEffect(() => {
+    if (editingId) return
+    if (isGymAdmin && lockedVariantId) {
+      setMemberVariantId(lockedVariantId)
+      return
+    }
+    if (selectedVariant && selectedVariant !== 'all') {
+      setMemberVariantId(selectedVariant)
+    } else if (defaultVariantId) {
+      setMemberVariantId(defaultVariantId)
+    }
+  }, [defaultVariantId, editingId, isGymAdmin, lockedVariantId, selectedVariant])
 
   const playTone = (frequency: number) => {
     if (typeof window === 'undefined') return
@@ -162,8 +201,8 @@ export default function MembersPage() {
       const message = !active
         ? 'Abonnement inactif'
         : alreadyVisited
-          ? "Deja visite aujourd'hui"
-          : 'Acces valide'
+          ? "Déjà visité aujourd'hui"
+          : 'Accès valide'
       setScanStatus({
         status: success ? 'success' : 'error',
         message,
@@ -172,7 +211,11 @@ export default function MembersPage() {
       })
       playTone(success ? 880 : alreadyVisited ? 520 : 240)
     } catch {
-      setScanStatus({ status: 'error', message: 'QR invalide ou membre introuvele', memberName: 'Erreur' })
+      setScanStatus({
+        status: 'error',
+        message: 'QR invalide ou membre introuvable',
+        memberName: 'Erreur',
+      })
       playTone(180)
     } finally {
       setTimeout(() => {
@@ -187,7 +230,7 @@ export default function MembersPage() {
     setScanStatus({
       status: 'error',
       memberName: 'Scanner QR',
-      message: permissionDenied ? 'Permission camera refusee' : 'Erreur lors du scan',
+      message: permissionDenied ? 'Permission caméra refusée' : 'Erreur lors du scan',
     })
     setScannerEnabled(false)
     playTone(160)
@@ -198,7 +241,11 @@ export default function MembersPage() {
   const downloadMemberReport = async (memberId: string) => {
     try {
       setMemberReportLoading(memberId)
-      const response = await fetch(`/api/reports/excel?type=member&memberId=${memberId}`)
+      const params = new URLSearchParams({ type: 'member', memberId })
+      if (variantFilter) {
+        params.set('variantId', variantFilter)
+      }
+      const response = await fetch(`/api/reports/excel?${params.toString()}`)
       if (!response.ok) {
         throw new Error('Export impossible')
       }
@@ -210,7 +257,7 @@ export default function MembersPage() {
       anchor.click()
       URL.revokeObjectURL(url)
     } catch {
-      toast.error('Impossible de télécharger le rapport membre')
+      toast.error("Impossible de télécharger le rapport membre")
     } finally {
       setMemberReportLoading(null)
     }
@@ -224,8 +271,8 @@ export default function MembersPage() {
     anchor.click()
   }
 
-  // 🔒 Authentication checks
-  if (status === 'loading') return <div>Chargement de l'utilisateur...</div>
+  // Authentication checks
+  if (status === 'loading') return <div>Chargement de l&apos;utilisateur...</div>
 
   if (status === 'unauthenticated')
     return <div className="text-red-500 font-medium">Accès refusé.</div>
@@ -238,8 +285,9 @@ export default function MembersPage() {
     )
 
   const gymId = session.user.gymId
-  const membersQueryKey = useMemo(() => ['members', gymId] as const, [gymId])
-  const plansQueryKey = useMemo(() => ['plans', gymId] as const, [gymId])
+  const variantFilter = selectedVariant === 'all' ? null : selectedVariant
+  const membersQueryKey = useMemo(() => ['members', gymId, variantFilter] as const, [gymId, variantFilter])
+  const plansQueryKey = useMemo(() => ['plans', gymId, variantFilter] as const, [gymId, variantFilter])
 
   const {
     data: members = [],
@@ -249,7 +297,11 @@ export default function MembersPage() {
     queryKey: membersQueryKey,
     enabled: status === 'authenticated',
     queryFn: async () => {
-      const response = await fetch('/api/members')
+      const params = new URLSearchParams()
+      if (variantFilter) {
+        params.set('variantId', variantFilter)
+      }
+      const response = await fetch(`/api/members${params.toString() ? `?${params.toString()}` : ''}`)
 
       if (!response.ok) {
         throw new Error('Impossible de charger les membres')
@@ -265,18 +317,27 @@ export default function MembersPage() {
     const term = visitSearch.trim().toLowerCase()
     return members
       .filter((member) => {
+        const matchesVariant = !variantFilter || member.gymVariantId === variantFilter
+        if (!matchesVariant) return false
         if (!term) return true
         const fullName = `${member.firstName} ${member.lastName}`.toLowerCase()
-        return fullName.includes(term) || (member.email ?? '').toLowerCase().includes(term)
+        return (
+          fullName.includes(term) ||
+          (member.email ?? '').toLowerCase().includes(term)
+        )
       })
       .sort((a, b) => a.firstName.localeCompare(b.firstName))
-  }, [members, visitSearch])
+  }, [members, variantFilter, visitSearch])
 
   const { data: plans = [] } = useQuery<Plan[]>({
     queryKey: plansQueryKey,
     enabled: status === 'authenticated',
     queryFn: async () => {
-      const response = await fetch('/api/plans')
+      const params = new URLSearchParams()
+      if (variantFilter) {
+        params.set('variantId', variantFilter)
+      }
+      const response = await fetch(`/api/plans${params.toString() ? `?${params.toString()}` : ''}`)
       if (!response.ok) {
         throw new Error('Impossible de charger les plans')
       }
@@ -285,6 +346,12 @@ export default function MembersPage() {
       return Array.isArray(data) ? data : []
     },
   })
+  const availablePlans = useMemo(() => {
+    const targetVariant = effectiveMemberVariantId
+    return (plans ?? []).filter((plan) =>
+      targetVariant ? plan.gymVariantId === targetVariant : true,
+    )
+  }, [effectiveMemberVariantId, plans])
 
   const saveMemberMutation = useMutation({
     mutationFn: async () => {
@@ -294,6 +361,7 @@ export default function MembersPage() {
         ...formData,
         planId: formData.planId === 'none' ? null : formData.planId,
         startDate: formData.planId === 'none' ? null : formData.startDate,
+        gymVariantId: effectiveMemberVariantId || undefined,
       }
 
       const response = await fetch(url, {
@@ -323,10 +391,15 @@ export default function MembersPage() {
       })
       setEditingId(null)
       setError(null)
-      toast.success(editingId ? 'Membre mis à jour avec succès' : 'Nouveau membre ajouté !')
+      toast.success(
+        editingId
+          ? 'Membre mis à jour avec succès'
+          : 'Nouveau membre ajouté !',
+      )
     },
     onError: (err) => {
-      const message = err instanceof Error ? err.message : 'Erreur lors de la sauvegarde.'
+      const message =
+        err instanceof Error ? err.message : 'Erreur lors de la sauvegarde.'
       setError(message)
       toast.error(message)
     },
@@ -349,7 +422,8 @@ export default function MembersPage() {
       setMemberToDelete(null)
     },
     onError: (err) => {
-      const message = err instanceof Error ? err.message : 'Impossible de supprimer le membre'
+      const message =
+        err instanceof Error ? err.message : 'Impossible de supprimer le membre'
       toast.error(message)
     },
   })
@@ -364,6 +438,12 @@ export default function MembersPage() {
       planId: 'none',
       startDate: '',
     })
+    const fallbackVariant = isGymAdmin
+      ? lockedVariantId ?? ''
+      : selectedVariant !== 'all'
+        ? selectedVariant
+        : defaultVariantId ?? ''
+    setMemberVariantId(fallbackVariant ?? '')
     setIsOpen(true)
   }
 
@@ -377,12 +457,17 @@ export default function MembersPage() {
       planId: 'none',
       startDate: '',
     })
+    setMemberVariantId(member.gymVariantId ?? member.gymVariant?.id ?? lockedVariantId ?? '')
     setIsOpen(true)
   }
 
   const handleSubmit = () => {
     if (!formData.firstName || !formData.lastName) {
       toast.error('Prénom et Nom obligatoires.')
+      return
+    }
+    if (!effectiveMemberVariantId) {
+      toast.error('Choisissez une variante pour ce membre.')
       return
     }
 
@@ -415,22 +500,38 @@ export default function MembersPage() {
       const fullName = data.memberName || 'Membre'
 
       if (!data.active) {
-        toast.error('Abonnement inactif ou expire')
+        toast.error('Abonnement inactif ou expiré')
       } else if (data.alreadyVisited) {
-        toast.warning(`${fullName} deja comptabilise aujourd'hui`)
+        toast.warning(`${fullName} déjà comptabilisé aujourd'hui`)
       } else {
-        toast.success(`${fullName} marque present (${data.todayVisitorCount ?? 0} visites aujourd'hui)`)
+        toast.success(
+          `${fullName} marqué présent (${
+            data.todayVisitorCount ?? 0
+          } visites aujourd'hui)`,
+        )
       }
       setVisitDialogOpen(false)
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Impossible de marquer la visite'
+      const message =
+        error instanceof Error ? error.message : 'Impossible de marquer la visite'
       toast.error(message)
     } finally {
       setVisitLoading(null)
     }
   }
 
-  if (membersLoading) return <div>Chargement des membres...</div>
+  if (membersLoading || variantsLoading) {
+    return (
+      <div className="space-y-4">
+        <Skeleton className="h-9 w-52" />
+        <div className="space-y-3 rounded-2xl border border-border/70 bg-card p-4">
+          <Skeleton className="h-5 w-1/3" />
+          <Skeleton className="h-10 w-full" />
+          <Skeleton className="h-64 w-full" />
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="space-y-6">
@@ -448,7 +549,7 @@ export default function MembersPage() {
         </div>
       )}
 
-      <div className="flex justify-between items-center">
+      <div className="flex justify-between items-center gap-4 flex-wrap">
         <div>
           <h1 className="text-3xl font-bold">Membres</h1>
           <p className="text-muted-foreground mt-2">
@@ -456,36 +557,46 @@ export default function MembersPage() {
           </p>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-3 flex-wrap justify-end">
+          <VariantSelector
+            variants={variants}
+            value={selectedVariant}
+            onChange={setSelectedVariant}
+            isGymAdmin={isGymAdmin}
+            lockedVariantId={lockedVariantId}
+            loading={variantsLoading}
+          />
           <Dialog open={visitDialogOpen} onOpenChange={setVisitDialogOpen}>
-          <DialogTrigger asChild>
-            <Button variant="outline" onClick={() => setVisitDialogOpen(true)}>
-              <CheckCircle2 className="mr-2" size={18} />
-              Marquer une visite
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="max-w-md sm:max-w-lg w-[95vw]">
-            <DialogHeader>
-              <DialogTitle>Marquer un membre present</DialogTitle>
-              <DialogDescription>
-                Recherchez un membre puis enregistrez sa visite du jour.
-              </DialogDescription>
-            </DialogHeader>
-            <div className="space-y-3">
-              <Input
-                placeholder="Rechercher par nom ou email"
-                value={visitSearch}
-                onChange={(e) => setVisitSearch(e.target.value)}
-              />
-              <div className="max-h-72 overflow-y-auto space-y-2">
-                {visitableMembers.length === 0 ? (
-                  <p className="text-sm text-muted-foreground">Aucun membre trouve.</p>
-                ) : (
-                  visitableMembers.map((member) => (
-                    <div
-                      key={member.id}
-                      className="flex items-center justify-between rounded-lg border border-border/60 px-3 py-2"
-                    >
+            <DialogTrigger asChild>
+              <Button variant="outline" onClick={() => setVisitDialogOpen(true)}>
+                <CheckCircle2 className="mr-2" size={18} />
+                Marquer une visite
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-md sm:max-w-lg w-[95vw]">
+              <DialogHeader>
+                <DialogTitle>Marquer un membre présent</DialogTitle>
+                <DialogDescription>
+                  Recherchez un membre puis enregistrez sa visite du jour.
+                </DialogDescription>
+              </DialogHeader>
+              <div className="space-y-3">
+                <Input
+                  placeholder="Rechercher par nom ou email"
+                  value={visitSearch}
+                  onChange={(e) => setVisitSearch(e.target.value)}
+                />
+                <div className="max-h-72 overflow-y-auto space-y-2">
+                  {visitableMembers.length === 0 ? (
+                    <p className="text-sm text-muted-foreground">
+                      Aucun membre trouvé.
+                    </p>
+                  ) : (
+                    visitableMembers.map((member) => (
+                      <div
+                        key={member.id}
+                        className="flex items-center justify-between rounded-lg border border-border/60 px-3 py-2"
+                      >
                       <div>
                         <p className="font-semibold">
                           {member.firstName} {member.lastName}
@@ -493,129 +604,165 @@ export default function MembersPage() {
                         <p className="text-xs text-muted-foreground">
                           {member.email || member.phone || 'Pas de contact'}
                         </p>
+                        {member.gymVariant?.name ? (
+                          <p className="text-xs text-muted-foreground">Variante : {member.gymVariant.name}</p>
+                        ) : null}
                       </div>
-                      <Button
-                        size="sm"
-                        variant="secondary"
-                        disabled={visitLoading === member.id}
-                        onClick={() => markVisit(member.id)}
-                      >
-                        {visitLoading === member.id ? 'Enregistrement...' : 'Valider'}
-                      </Button>
-                    </div>
-                  ))
-                )}
+                        <Button
+                          size="sm"
+                          variant="secondary"
+                          disabled={visitLoading === member.id}
+                          onClick={() => markVisit(member.id)}
+                        >
+                          {visitLoading === member.id
+                            ? 'Enregistrement...'
+                            : 'Valider'}
+                        </Button>
+                      </div>
+                    ))
+                  )}
+                </div>
               </div>
-            </div>
-          </DialogContent>
-        </Dialog>
+            </DialogContent>
+          </Dialog>
 
           <Dialog open={isOpen} onOpenChange={setIsOpen}>
-          <DialogTrigger asChild>
-            <Button onClick={handleAddMember}>
-              <Plus className="mr-2" size={20} />
-              Ajouter un membre
-            </Button>
-          </DialogTrigger>
-
-          <DialogContent className="max-w-md sm:max-w-lg md:max-w-2xl w-[95vw] max-h-[90vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle>
-                {editingId ? 'Modifier le membre' : 'Ajouter un membre'}
-              </DialogTitle>
-            </DialogHeader>
-
-            <div className="space-y-4">
-              <div>
-                <Label htmlFor="member-first-name">Prénom</Label>
-                <Input
-                  id="member-first-name"
-                  value={formData.firstName}
-                  onChange={(e) =>
-                    setFormData({ ...formData, firstName: e.target.value })
-                  }
-                />
-              </div>
-
-              <div>
-                <Label htmlFor="member-last-name">Nom</Label>
-                <Input
-                  id="member-last-name"
-                  value={formData.lastName}
-                  onChange={(e) =>
-                    setFormData({ ...formData, lastName: e.target.value })
-                  }
-                />
-              </div>
-
-              <div>
-                <Label htmlFor="member-email">Email</Label>
-                <Input
-                  id="member-email"
-                  type="email"
-                  value={formData.email}
-                  onChange={(e) =>
-                    setFormData({ ...formData, email: e.target.value })
-                  }
-                />
-              </div>
-
-              <div>
-                <Label htmlFor="member-phone">Téléphone</Label>
-                <Input
-                  id="member-phone"
-                  value={formData.phone}
-                  onChange={(e) =>
-                    setFormData({ ...formData, phone: e.target.value })
-                  }
-                />
-              </div>
-
-              {/* PLAN */}
-              <div>
-                <Label htmlFor="member-plan">Plan</Label>
-                <Select
-                  value={formData.planId}
-                  onValueChange={(value) => setFormData({ ...formData, planId: value })}
-                >
-                  <SelectTrigger id="member-plan">
-                    <SelectValue placeholder="Aucun" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="none">Aucun</SelectItem>
-                    {plans.map((plan) => (
-                      <SelectItem key={plan.id} value={plan.id}>
-                        {plan.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              {/* START DATE */}
-              <div>
-                <Label htmlFor="member-start-date">Date de début</Label>
-                <Input
-                  id="member-start-date"
-                  type="date"
-                  value={formData.startDate}
-                  onChange={(e) =>
-                    setFormData({ ...formData, startDate: e.target.value })
-                  }
-                  placeholder="Choisir une date"
-                />
-              </div>
-
-              <Button onClick={handleSubmit} className="w-full" disabled={saveMemberMutation.isPending}>
-                {saveMemberMutation.isPending
-                  ? 'Enregistrement...'
-                  : editingId
-                    ? 'Mettre à jour'
-                    : 'Ajouter'}
+            <DialogTrigger asChild>
+              <Button onClick={handleAddMember}>
+                <Plus className="mr-2" size={20} />
+                Ajouter un membre
               </Button>
-            </div>
-          </DialogContent>
-        </Dialog>
+            </DialogTrigger>
+
+            <DialogContent className="max-w-md sm:max-w-lg md:max-w-2xl w-[95vw] max-h-[90vh] overflow-y-auto">
+              <DialogHeader>
+                <DialogTitle>
+                  {editingId ? 'Modifier le membre' : 'Ajouter un membre'}
+                </DialogTitle>
+              </DialogHeader>
+
+              <div className="space-y-4">
+                <div>
+                  <Label htmlFor="member-variant">Variante</Label>
+                  {isGymAdmin ? (
+                    <p className="text-sm text-muted-foreground">
+                      {variants.find((variant) => variant.id === lockedVariantId)?.name ?? 'Variante assignée'}
+                    </p>
+                  ) : (
+                    <Select
+                      value={effectiveMemberVariantId}
+                      onValueChange={(value) => setMemberVariantId(value)}
+                    >
+                      <SelectTrigger id="member-variant">
+                        <SelectValue placeholder="Choisir une variante" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {(variants ?? []).map((variant) => (
+                          <SelectItem key={variant.id} value={variant.id}>
+                            {variant.name} {variant.isDefault ? '(par défaut)' : ''}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  )}
+                </div>
+
+                <div>
+                  <Label htmlFor="member-first-name">Prénom</Label>
+                  <Input
+                    id="member-first-name"
+                    value={formData.firstName}
+                    onChange={(e) =>
+                      setFormData({ ...formData, firstName: e.target.value })
+                    }
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="member-last-name">Nom</Label>
+                  <Input
+                    id="member-last-name"
+                    value={formData.lastName}
+                    onChange={(e) =>
+                      setFormData({ ...formData, lastName: e.target.value })
+                    }
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="member-email">Email</Label>
+                  <Input
+                    id="member-email"
+                    type="email"
+                    value={formData.email}
+                    onChange={(e) =>
+                      setFormData({ ...formData, email: e.target.value })
+                    }
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="member-phone">Téléphone</Label>
+                  <Input
+                    id="member-phone"
+                    value={formData.phone}
+                    onChange={(e) =>
+                      setFormData({ ...formData, phone: e.target.value })
+                    }
+                  />
+                </div>
+
+                {/* PLAN */}
+                <div>
+                  <Label htmlFor="member-plan">Plan</Label>
+                  <Select
+                    value={formData.planId}
+                    onValueChange={(value) =>
+                      setFormData({ ...formData, planId: value })
+                    }
+                  >
+                    <SelectTrigger id="member-plan">
+                      <SelectValue placeholder="Aucun" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">Aucun</SelectItem>
+                      {availablePlans.map((plan) => (
+                        <SelectItem key={plan.id} value={plan.id}>
+                          {plan.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* START DATE */}
+                <div>
+                  <Label htmlFor="member-start-date">Date de début</Label>
+                  <Input
+                    id="member-start-date"
+                    type="date"
+                    value={formData.startDate}
+                    onChange={(e) =>
+                      setFormData({ ...formData, startDate: e.target.value })
+                    }
+                    placeholder="Choisir une date"
+                  />
+                </div>
+
+                <Button
+                  onClick={handleSubmit}
+                  className="w-full"
+                  disabled={saveMemberMutation.isPending}
+                >
+                  {saveMemberMutation.isPending
+                    ? 'Enregistrement...'
+                    : editingId
+                      ? 'Mettre à jour'
+                      : 'Ajouter'}
+                </Button>
+              </div>
+            </DialogContent>
+          </Dialog>
         </div>
       </div>
 
@@ -640,14 +787,15 @@ export default function MembersPage() {
                   onError={handleScannerError}
                   styles={{
                     container: {
-                      width: "100%",
+                      width: '100%',
                     },
                   }}
                 />
               </div>
               <div className="rounded-xl border bg-background/80 p-4">
                 <p className="text-sm text-muted-foreground">
-                  Positionnez un QR code devant la caméra pour voir le résultat du scan.
+                  Positionnez un QR code devant la caméra pour voir le résultat du
+                  scan.
                 </p>
               </div>
             </div>
@@ -655,7 +803,7 @@ export default function MembersPage() {
         </div>
       ) : (
         <div className="rounded-2xl border border-dashed border-amber-300/60 bg-amber-500/10 p-4 text-sm text-amber-900">
-          L'outil de génération et de scan de QR codes est réservé au plan Pro.
+          L&apos;outil de génération et de scan de QR codes est réservé au plan Pro.
         </div>
       )}
 
@@ -674,11 +822,12 @@ export default function MembersPage() {
           <Table>
             <TableHeader>
               <TableRow className="bg-muted/60 text-muted-foreground">
-                <TableHead>Prénom</TableHead>
+                <TableHead>Prenom</TableHead>
                 <TableHead>Nom</TableHead>
                 <TableHead>Email</TableHead>
-                <TableHead>Téléphone</TableHead>
+                <TableHead>Telephone</TableHead>
                 <TableHead>Date d'inscription</TableHead>
+                <TableHead>Variante</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
@@ -686,13 +835,16 @@ export default function MembersPage() {
             <TableBody>
               {memberPagination.data.map((member) => (
                 <TableRow key={member.id}>
-                  <TableCell className="font-medium">{member.firstName}</TableCell>
+                  <TableCell className="font-medium">
+                    {member.firstName}
+                  </TableCell>
                   <TableCell>{member.lastName}</TableCell>
                   <TableCell>{member.email || '-'}</TableCell>
                   <TableCell>{member.phone || '-'}</TableCell>
                   <TableCell>
                     {new Date(member.createdAt).toLocaleDateString('fr-FR')}
                   </TableCell>
+                  <TableCell>{member.gymVariant?.name ?? '-'}</TableCell>
                   <TableCell className="text-right">
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
@@ -710,7 +862,9 @@ export default function MembersPage() {
                           <CheckCircle2 className="mr-2" size={16} />
                           Marquer visite
                         </DropdownMenuItem>
-                        <DropdownMenuItem onSelect={() => handleEditMember(member)}>
+                        <DropdownMenuItem
+                          onSelect={() => handleEditMember(member)}
+                        >
                           <Edit2 className="mr-2" size={16} />
                           Modifier
                         </DropdownMenuItem>
@@ -734,7 +888,9 @@ export default function MembersPage() {
                             onSelect={() => downloadMemberReport(member.id)}
                           >
                             <FileDown className="mr-2" size={16} />
-                            {memberReportLoading === member.id ? 'Export...' : 'Stats Excel'}
+                            {memberReportLoading === member.id
+                              ? 'Export...'
+                              : 'Stats Excel'}
                           </DropdownMenuItem>
                         )}
                         <DropdownMenuItem
@@ -745,7 +901,7 @@ export default function MembersPage() {
                           Supprimer
                         </DropdownMenuItem>
                       </DropdownMenuContent>
-                    </DropdownMenu>
+                      </DropdownMenu>
                   </TableCell>
                 </TableRow>
               ))}
@@ -763,22 +919,35 @@ export default function MembersPage() {
         </div>
       </div>
 
-      <Dialog open={Boolean(qrMember)} onOpenChange={(open) => !open && setQrMember(null)}>
+      <Dialog
+        open={Boolean(qrMember)}
+        onOpenChange={(open) => !open && setQrMember(null)}
+      >
         <DialogContent className="max-w-md sm:max-w-lg w-[95vw]">
           <DialogHeader>
             <DialogTitle>QR membre</DialogTitle>
             <DialogDescription>
-              {qrMember ? `${qrMember.firstName} ${qrMember.lastName}` : 'QR code membre'}
+              {qrMember
+                ? `${qrMember.firstName} ${qrMember.lastName}`
+                : 'QR code membre'}
             </DialogDescription>
           </DialogHeader>
           <div className="flex flex-col items-center gap-4">
             {qrImage ? (
-              <img src={qrImage || "/placeholder.svg"} alt="QR membre" className="rounded-xl border bg-white p-3" />
+              <img
+                src={qrImage || '/placeholder.svg'}
+                alt="QR membre"
+                className="rounded-xl border bg-white p-3"
+              />
             ) : (
-              <p className="text-sm text-muted-foreground">Génération du QR en cours...</p>
+              <p className="text-sm text-muted-foreground">
+                Génération du QR en cours...
+              </p>
             )}
             {qrMember && (
-              <p className="text-xs text-muted-foreground break-all">Token: {qrMember.qrToken}</p>
+              <p className="text-xs text-muted-foreground break-all">
+                Token: {qrMember.qrToken}
+              </p>
             )}
             {hasQrDownloads && (
               <Button onClick={downloadQrImage} disabled={!qrImage}>
@@ -788,6 +957,7 @@ export default function MembersPage() {
           </div>
         </DialogContent>
       </Dialog>
+
       <AlertDialog
         open={Boolean(memberToDelete)}
         onOpenChange={(open) => {
@@ -806,7 +976,9 @@ export default function MembersPage() {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={deleteMemberMutation.isPending}>Annuler</AlertDialogCancel>
+            <AlertDialogCancel disabled={deleteMemberMutation.isPending}>
+              Annuler
+            </AlertDialogCancel>
             <AlertDialogAction
               onClick={confirmDeleteMember}
               disabled={deleteMemberMutation.isPending}

@@ -55,15 +55,25 @@ export interface SuperAdminGym {
   } | null
   adminCount: number
   maxAdminAccounts: number
+  variants?: {
+    id: string
+    name: string
+    slug: string
+    isDefault: boolean
+  }[]
+  variantCount?: number
 }
 
 export interface SuperAdminGymDetail extends SuperAdminGym {
   paymentsLast30Days: number
+  variantCount?: number
   admins: {
     id: string
     email: string
     firstName: string | null
     lastName: string | null
+    gymVariantId?: string | null
+    gymVariant?: { id: string; name: string; slug: string; isDefault: boolean } | null
   }[]
   membershipPlans: {
     id: string
@@ -71,11 +81,24 @@ export interface SuperAdminGymDetail extends SuperAdminGym {
     durationDays: number
     price: number
     isActive: boolean
+    gymVariantId?: string
+    gymVariant?: {
+      id: string
+      name: string
+      slug: string
+      isDefault: boolean
+    } | null
   }[]
   subscriptions: {
     id: string
     status: string
     endDate: string
+  }[]
+  variants?: {
+    id: string
+    name: string
+    slug: string
+    isDefault: boolean
   }[]
 }
 
@@ -209,7 +232,9 @@ export function useCreateGym() {
         password: string
         firstName: string
         lastName: string
+        variantSlug?: string
       }[]
+      variants?: { name: string; slug?: string; isDefault?: boolean }[]
       owner: {
         email: string
         password: string
@@ -265,6 +290,7 @@ export function useCreateGymAdmin() {
       password: string
       firstName: string
       lastName: string
+      gymVariantId?: string
     }) => {
       return fetchJSON(`/api/super-admin/gyms/${payload.gymId}/admins`, {
         method: 'POST',
@@ -274,6 +300,7 @@ export function useCreateGymAdmin() {
           password: payload.password,
           firstName: payload.firstName,
           lastName: payload.lastName,
+          gymVariantId: payload.gymVariantId,
         }),
       })
     },
@@ -361,6 +388,7 @@ export function useApproveDemoRequest() {
         subscriptionGracePeriodDays?: number
         maxAdminAccounts?: number
         demoEndsAt?: string | null
+        variants?: { name: string; slug?: string; isDefault?: boolean }[]
         resolutionNote?: string
         owner: {
           email: string
@@ -373,6 +401,7 @@ export function useApproveDemoRequest() {
           password: string
           firstName: string
           lastName: string
+          variantSlug?: string
         }[]
       }
     }) => {

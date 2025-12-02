@@ -2,8 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth/next'
 import { authOptions } from '@/lib/auth-middleware'
 import { prisma } from '@/lib/prisma'
+import { getSystemSettings } from '@/lib/settings'
 
-const MIN_INTERVAL_MS = Number(process.env.USER_SETTINGS_INTERVAL_MS ?? 30_000)
 const THEMES = ['light', 'dark', 'system']
 
 export async function GET() {
@@ -54,10 +54,13 @@ export async function PUT(request: NextRequest) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 })
     }
 
+    const systemSettings = await getSystemSettings()
+    const minInterval = systemSettings.userSettingsIntervalMs ?? 30_000
+
     if (user.preferences?.lastChangedAt) {
       const elapsed = Date.now() - user.preferences.lastChangedAt.getTime()
-      if (elapsed < MIN_INTERVAL_MS) {
-        const retryIn = Math.ceil((MIN_INTERVAL_MS - elapsed) / 1000)
+      if (elapsed < minInterval) {
+        const retryIn = Math.ceil((minInterval - elapsed) / 1000)
         return NextResponse.json({ error: 'RATE_LIMIT', retryIn }, { status: 429 })
       }
     }

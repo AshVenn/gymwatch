@@ -12,6 +12,11 @@ export async function PUT(request: NextRequest, { params }: any) {
     if (!session?.user?.gymId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
+    const role = (session.user as any).role as string | undefined
+    const sessionVariantId = (session.user as any).gymVariantId as string | undefined
+    if (role === 'GYM_ADMIN' && !sessionVariantId) {
+      return NextResponse.json({ error: 'Variant manquant' }, { status: 403 })
+    }
 
     const { name, durationDays, price } = await request.json()
 
@@ -19,6 +24,9 @@ export async function PUT(request: NextRequest, { params }: any) {
 
     if (!planRecord || planRecord.gymId !== session.user.gymId) {
       return NextResponse.json({ error: 'Plan not found' }, { status: 404 })
+    }
+    if (role === 'GYM_ADMIN' && sessionVariantId && planRecord.gymVariantId !== sessionVariantId) {
+      return NextResponse.json({ error: 'FORBIDDEN_VARIANT' }, { status: 403 })
     }
 
     const plan = await db.updatePlan(params.planId, {
@@ -40,10 +48,18 @@ export async function DELETE(request: NextRequest, { params }: any) {
     if (!session?.user?.gymId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
+    const role = (session.user as any).role as string | undefined
+    const sessionVariantId = (session.user as any).gymVariantId as string | undefined
+    if (role === 'GYM_ADMIN' && !sessionVariantId) {
+      return NextResponse.json({ error: 'Variant manquant' }, { status: 403 })
+    }
 
     const planRecord = await prisma.membershipPlan.findUnique({ where: { id: params.planId } })
     if (!planRecord || planRecord.gymId !== session.user.gymId) {
       return NextResponse.json({ error: 'Plan not found' }, { status: 404 })
+    }
+    if (role === 'GYM_ADMIN' && sessionVariantId && planRecord.gymVariantId !== sessionVariantId) {
+      return NextResponse.json({ error: 'FORBIDDEN_VARIANT' }, { status: 403 })
     }
 
     await db.deletePlan(params.planId)

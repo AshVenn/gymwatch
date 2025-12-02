@@ -19,6 +19,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip'
+import { Skeleton } from '@/components/ui/skeleton'
 import { cn } from '@/lib/utils'
 
 export type GymAction = 'overview' | 'team' | 'plans' | 'subscription' | 'edit' | 'delete'
@@ -68,7 +69,33 @@ const ROW_ACTIONS: Array<{
 
 export function GymsTable({ gyms, isLoading, pagination, totalItems, onAction }: Props) {
   if (isLoading) {
-    return <div className="py-10 text-center text-muted-foreground">Chargement des salles...</div>
+    return (
+      <div className="rounded-2xl border border-border/70 bg-card p-4">
+        <div className="flex items-center justify-between pb-4">
+          <Skeleton className="h-6 w-48" />
+          <Skeleton className="h-6 w-24" />
+        </div>
+        <div className="space-y-3">
+          {Array.from({ length: 4 }).map((_, idx) => (
+            <div
+              key={idx}
+              className="flex flex-col gap-2 rounded-xl border border-border/60 p-4 md:flex-row md:items-center md:justify-between"
+            >
+              <div className="space-y-2">
+                <Skeleton className="h-5 w-48" />
+                <Skeleton className="h-4 w-40" />
+                <Skeleton className="h-3 w-32" />
+              </div>
+              <div className="flex gap-2">
+                <Skeleton className="h-8 w-8 rounded-full" />
+                <Skeleton className="h-8 w-8 rounded-full" />
+                <Skeleton className="h-8 w-8 rounded-full" />
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    )
   }
 
   if (!gyms.length) {
@@ -118,6 +145,24 @@ export function GymsTable({ gyms, isLoading, pagination, totalItems, onAction }:
                     currency: 'MAD',
                   })}
                 </p>
+                <p className="text-xs text-muted-foreground">{gym.variantCount ?? gym.variants?.length ?? 0} variante(s)</p>
+                {gym.variants?.length ? (
+                  <div className="mt-1 flex flex-wrap gap-1">
+                    {gym.variants.slice(0, 3).map((variant) => (
+                      <Badge key={variant.id} variant={variant.isDefault ? 'secondary' : 'outline'} className="text-[11px]">
+                        {variant.name}
+                        {variant.isDefault ? ' (defaut)' : ''}
+                      </Badge>
+                    ))}
+                    {(gym.variantCount ?? 0) > (gym.variants?.length ?? 0) && (
+                      <Badge variant="outline" className="text-[11px]">
+                        +{(gym.variantCount ?? 0) - (gym.variants?.length ?? 0)} autre(s)
+                      </Badge>
+                    )}
+                  </div>
+                ) : (
+                  <p className="text-xs text-muted-foreground">Variante unique</p>
+                )}
               </TableCell>
 
               <TableCell>{gym.memberCount}</TableCell>

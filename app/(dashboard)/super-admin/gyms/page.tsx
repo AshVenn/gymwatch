@@ -13,6 +13,7 @@ import { GymActionSheet } from '@/components/superadmin/gyms/GymActionSheet'
 import { EditGymDialog } from '@/components/superadmin/gyms/EditGymDialog'
 import { DeleteGymDialog } from '@/components/superadmin/gyms/DeleteGymDialog'
 import { usePagination } from '@/components/dashboard/pagination-controls'
+import { Skeleton } from '@/components/ui/skeleton'
 
 export default function SuperAdminGymsPage() {
   const { data: gyms = [], isLoading } = useSuperAdminGyms()
@@ -59,7 +60,19 @@ export default function SuperAdminGymsPage() {
         <CreateGymDialog />
       </div>
 
-      <GymSummaryCards gyms={gyms} />
+      {isLoading ? (
+        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+          {Array.from({ length: 4 }).map((_, idx) => (
+            <div key={idx} className="rounded-2xl border border-border/70 bg-card p-4">
+              <Skeleton className="h-4 w-24" />
+              <Skeleton className="mt-3 h-8 w-28" />
+              <Skeleton className="mt-2 h-3 w-32" />
+            </div>
+          ))}
+        </div>
+      ) : (
+        <GymSummaryCards gyms={gyms} />
+      )}
 
       <GymFilters
         searchTerm={searchTerm}

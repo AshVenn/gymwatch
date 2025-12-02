@@ -31,6 +31,16 @@ const createGymSchema = z.object({
         password: z.string().min(8),
         firstName: z.string().min(2),
         lastName: z.string().min(2),
+        variantSlug: z.string().optional(),
+      }),
+    )
+    .optional(),
+  variants: z
+    .array(
+      z.object({
+        name: z.string().min(1),
+        slug: z.string().optional(),
+        isDefault: z.boolean().optional(),
       }),
     )
     .optional(),
@@ -91,6 +101,7 @@ export async function POST(req: Request) {
       maxAdminAccounts: payload.maxAdminAccounts,
       isDemo: payload.isDemo,
       demoEndsAt: payload.demoEndsAt ? new Date(payload.demoEndsAt) : undefined,
+      variants: payload.variants,
       admins: payload.admins,
       owner: payload.owner,
     })

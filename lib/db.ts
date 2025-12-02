@@ -1,32 +1,19 @@
-// lib/db.ts
 import { prisma } from "./prisma"
 import { resolvePlanPrice } from "./subscription-plans"
-import { GymPlanTier } from "@prisma/client"
-import { GymBillingInterval } from "@prisma/client"
-
+import { GymPlanTier, GymBillingInterval } from "@prisma/client"
 
 export const db = {
-  // 🔹 Users
-  findUserByEmail: async (email: string) => {
-    return prisma.user.findUnique({ where: { email } })
-  },
+  // Users
+  findUserByEmail: async (email: string) => prisma.user.findUnique({ where: { email } }),
 
-  findUserById: async (id: string) => {
-    return prisma.user.findUnique({ where: { id } })
-  },
+  findUserById: async (id: string) => prisma.user.findUnique({ where: { id } }),
 
-  createUser: async (data: any) => {
-    return prisma.user.create({ data })
-  },
+  createUser: async (data: any) => prisma.user.create({ data }),
 
-  // 🔹 Gyms
-  findGymByEmail: async (email: string) => {
-    return prisma.gym.findUnique({ where: { email } })
-  },
+  // Gyms
+  findGymByEmail: async (email: string) => prisma.gym.findUnique({ where: { email } }),
 
-  getGymById: async (id: string) => {
-    return prisma.gym.findUnique({ where: { id } })
-  },
+  getGymById: async (id: string) => prisma.gym.findUnique({ where: { id } }),
 
   createGym: async (data: {
     name: string
@@ -63,39 +50,50 @@ export const db = {
       city?: string | null
       country?: string | null
       logoUrl?: string | null
-    }
-  ) => {
-    return prisma.gym.update({
+    },
+  ) =>
+    prisma.gym.update({
       where: { id },
       data,
-    })
-  },
+    }),
 
-  // 🔹 Members
-  getMembers: async (gymId: string) => {
-    return prisma.member.findMany({
+  // Variants
+  getGymVariants: async (gymId: string) =>
+    prisma.gymVariant.findMany({
       where: { gymId },
+      orderBy: [{ isDefault: "desc" }, { name: "asc" }],
+      select: { id: true, name: true, slug: true, isDefault: true },
+    }),
+
+  // Members
+  getMembers: async (gymId: string, gymVariantId?: string) =>
+    prisma.member.findMany({
+      where: {
+        gymId,
+        ...(gymVariantId ? { gymVariantId } : {}),
+      },
+      include: { gymVariant: { select: { id: true, name: true, slug: true } } },
       orderBy: { firstName: "asc" },
-    })
-  },
+    }),
 
   createMember: async (data: {
     gymId: string
+    gymVariantId: string
     firstName: string
     lastName: string
     email?: string | null
     phone?: string | null
-  }) => {
-    return prisma.member.create({
+  }) =>
+    prisma.member.create({
       data: {
         gymId: data.gymId,
+        gymVariantId: data.gymVariantId,
         firstName: data.firstName,
         lastName: data.lastName,
         email: data.email ?? null,
         phone: data.phone ?? null,
       },
-    })
-  },
+    }),
 
   updateMember: async (
     id: string,
@@ -104,9 +102,9 @@ export const db = {
       lastName: string
       email?: string | null
       phone?: string | null
-    }
-  ) => {
-    return prisma.member.update({
+    },
+  ) =>
+    prisma.member.update({
       where: { id },
       data: {
         firstName: data.firstName,
@@ -114,39 +112,42 @@ export const db = {
         email: data.email ?? null,
         phone: data.phone ?? null,
       },
-    })
-  },
+    }),
 
-  deleteMember: async (id: string) => {
-    return prisma.member.delete({
+  deleteMember: async (id: string) =>
+    prisma.member.delete({
       where: { id },
-    })
-  },
+    }),
 
-  // 🔹 Plans
-  getPlans: async (gymId: string) => {
-    return prisma.membershipPlan.findMany({
-      where: { gymId, isActive: true },
+  // Plans
+  getPlans: async (gymId: string, gymVariantId?: string) =>
+    prisma.membershipPlan.findMany({
+      where: {
+        gymId,
+        isActive: true,
+        ...(gymVariantId ? { gymVariantId } : {}),
+      },
+      include: { gymVariant: { select: { id: true, name: true, slug: true, isDefault: true } } },
       orderBy: { durationDays: "asc" },
-    })
-  },
+    }),
 
   createPlan: async (data: {
     gymId: string
+    gymVariantId: string
     name: string
     durationDays: number
     price: number
-  }) => {
-    return prisma.membershipPlan.create({
+  }) =>
+    prisma.membershipPlan.create({
       data: {
         gymId: data.gymId,
+        gymVariantId: data.gymVariantId,
         name: data.name,
         durationDays: data.durationDays,
         price: data.price,
         isActive: true,
       },
-    })
-  },
+    }),
 
   updatePlan: async (
     id: string,
@@ -154,46 +155,51 @@ export const db = {
       name: string
       durationDays: number
       price: number
-    }
-  ) => {
-    return prisma.membershipPlan.update({
+    },
+  ) =>
+    prisma.membershipPlan.update({
       where: { id },
       data: {
         name: data.name,
         durationDays: data.durationDays,
         price: data.price,
       },
-    })
-  },
+    }),
 
-  // on soft-delete le plan (isActive = false)
-  deletePlan: async (id: string) => {
-    return prisma.membershipPlan.update({
+  // Soft-delete plan
+  deletePlan: async (id: string) =>
+    prisma.membershipPlan.update({
       where: { id },
       data: {
         isActive: false,
       },
-    })
-  },
+    }),
 
-  // 🔹 Subscriptions
-  getSubscriptions: async (gymId: string) => {
-    return prisma.subscription.findMany({
-      where: { gymId },
+  // Subscriptions
+  getSubscriptions: async (gymId: string, gymVariantId?: string) =>
+    prisma.subscription.findMany({
+      where: {
+        gymId,
+        ...(gymVariantId ? { gymVariantId } : {}),
+      },
       orderBy: { endDate: "desc" },
-      include: { member: true, plan: true },
-    })
-  },
+      include: { member: true, plan: { include: { gymVariant: true } }, gymVariant: true },
+    }),
 
-  // 🔹 Dashboard stats
-  getDashboardStats: async (gymId: string) => {
+  // Dashboard stats
+  getDashboardStats: async (gymId: string, gymVariantId?: string) => {
     const activeMembers = await prisma.subscription.count({
-      where: { gymId, status: "ACTIVE" },
+      where: {
+        gymId,
+        ...(gymVariantId ? { gymVariantId } : {}),
+        status: "ACTIVE",
+      },
     })
 
     const newMembers = await prisma.member.count({
       where: {
         gymId,
+        ...(gymVariantId ? { gymVariantId } : {}),
         createdAt: {
           gte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),
         },
@@ -203,6 +209,7 @@ export const db = {
     const monthlyRevenue = await prisma.subscription.aggregate({
       where: {
         gymId,
+        ...(gymVariantId ? { gymVariantId } : {}),
         createdAt: {
           gte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),
         },
@@ -216,6 +223,7 @@ export const db = {
       monthlyRevenue: monthlyRevenue._sum.pricePaid || 0,
     }
   },
+
   touchUserSession: async (userId: string) => {
     try {
       const updated = await prisma.user.update({
@@ -229,6 +237,7 @@ export const db = {
       return 0
     }
   },
+
   getUserSessionVersion: async (userId: string) => {
     try {
       const user = await prisma.user.findUnique({

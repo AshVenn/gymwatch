@@ -23,6 +23,7 @@ export async function GET(request: NextRequest) {
   const gymId = (session?.user as any)?.gymId as string | undefined
   const role = (session?.user as any)?.role as string | undefined
   const tier = (session?.user as any)?.subscriptionPlan ?? null
+  const sessionVariantId = (session?.user as any)?.gymVariantId as string | undefined
 
   if (!gymId) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
@@ -36,6 +37,23 @@ export async function GET(request: NextRequest) {
     type: request.nextUrl.searchParams.get("type"),
     memberId: request.nextUrl.searchParams.get("memberId") ?? undefined,
   })
+  const requestedVariantId = request.nextUrl.searchParams.get("variantId")
+  let gymVariantId = role === "GYM_ADMIN" ? sessionVariantId : undefined
+
+  if (role === "GYM_ADMIN" && !sessionVariantId) {
+    return NextResponse.json({ error: "Variant manquant" }, { status: 403 })
+  }
+
+  if (role === "GYM_OWNER" && requestedVariantId && requestedVariantId !== "all") {
+    const variant = await prisma.gymVariant.findFirst({
+      where: { id: requestedVariantId, gymId },
+      select: { id: true },
+    })
+    if (!variant) {
+      return NextResponse.json({ error: "Variant invalide" }, { status: 400 })
+    }
+    gymVariantId = variant.id
+  }
 
   if (!parsed.success) {
     return NextResponse.json({ error: "Parametres invalides" }, { status: 400 })
@@ -75,7 +93,13 @@ export async function GET(request: NextRequest) {
       )
 
       const agg = await prisma.payment.aggregate({
-        where: { gymId, paymentDate: { gte: start, lte: end } },
+        where: {
+          gymId,
+          paymentDate: { gte: start, lte: end },
+          ...(gymVariantId
+            ? { subscriptions: { some: { gymVariantId } } }
+            : {}),
+        },
         _sum: { amount: true },
       })
 
@@ -90,7 +114,10 @@ export async function GET(request: NextRequest) {
   else if (type === "top-members" || type === "loyal-members") {
     const aggregated = await prisma.subscription.groupBy({
       by: ["memberId"],
-      where: { gymId },
+      where: {
+        gymId,
+        ...(gymVariantId ? { gymVariantId } : {}),
+      },
       _sum: { pricePaid: true },
       _count: { memberId: true }, // count how many rows per member
       orderBy:
@@ -131,11 +158,16 @@ export async function GET(request: NextRequest) {
   // ===== Single member report =====
   else if (type === "member" && memberId) {
     const member = await prisma.member.findFirst({
-      where: { id: memberId, gymId },
+      where: {
+        id: memberId,
+        gymId,
+        ...(gymVariantId ? { gymVariantId } : {}),
+      },
       include: {
         subscriptions: {
           include: { plan: true },
           orderBy: { startDate: "desc" },
+          where: gymVariantId ? { gymVariantId } : {},
         },
       },
     })

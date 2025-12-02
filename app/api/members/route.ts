@@ -13,9 +13,10 @@ const createMemberSchema = z.object({
   phone: z.string().optional().or(z.literal("").transform(() => undefined)),
   planId: z.string().optional().nullable(),
   startDate: z.string().optional().nullable(),
+  gymVariantId: z.string().optional(),
 })
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions)
 
@@ -23,7 +24,26 @@ export async function GET() {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const members = await db.getMembers(session.user.gymId)
+    const role = (session.user as any).role as string | undefined
+    const sessionVariantId = (session.user as any).gymVariantId as string | undefined
+    const requestedVariantId = request.nextUrl.searchParams.get("variantId")
+    if (role === "GYM_ADMIN" && !sessionVariantId) {
+      return NextResponse.json({ error: "Variant manquant" }, { status: 403 })
+    }
+
+    let gymVariantId = role === "GYM_ADMIN" ? sessionVariantId : undefined
+    if (role === "GYM_OWNER" && requestedVariantId && requestedVariantId !== "all") {
+      const variant = await prisma.gymVariant.findFirst({
+        where: { id: requestedVariantId, gymId: session.user.gymId },
+        select: { id: true },
+      })
+      if (!variant) {
+        return NextResponse.json({ error: "Variant invalide" }, { status: 400 })
+      }
+      gymVariantId = variant.id
+    }
+
+    const members = await db.getMembers(session.user.gymId, gymVariantId)
     return NextResponse.json(members)
   } catch {
     return NextResponse.json({ error: "Failed to fetch members" }, { status: 500 })
@@ -40,9 +60,38 @@ export async function POST(request: NextRequest) {
 
     const payload = createMemberSchema.parse(await request.json())
     const gymId = session.user.gymId
+    const role = (session.user as any).role as string | undefined
+    const sessionVariantId = (session.user as any).gymVariantId as string | undefined
+
+    if (role === "GYM_ADMIN" && !sessionVariantId) {
+      return NextResponse.json({ error: "Variant manquant" }, { status: 403 })
+    }
+
+    let targetVariantId = role === "GYM_ADMIN" ? sessionVariantId : payload.gymVariantId
+    if (!targetVariantId) {
+      const defaultVariant = await prisma.gymVariant.findFirst({
+        where: { gymId },
+        orderBy: [{ isDefault: "desc" }, { createdAt: "asc" }],
+      })
+      targetVariantId = defaultVariant?.id
+    }
+
+    if (!targetVariantId) {
+      return NextResponse.json({ error: "Variant introuvable" }, { status: 400 })
+    }
+
+    const variant = await prisma.gymVariant.findFirst({
+      where: { id: targetVariantId, gymId },
+      select: { id: true },
+    })
+
+    if (!variant) {
+      return NextResponse.json({ error: "Variant invalide" }, { status: 400 })
+    }
 
     const member = await db.createMember({
       gymId,
+      gymVariantId: variant.id,
       firstName: payload.firstName,
       lastName: payload.lastName,
       email: payload.email ?? null,
@@ -60,7 +109,7 @@ export async function POST(request: NextRequest) {
       }
 
       const plan = await prisma.membershipPlan.findFirst({
-        where: { id: payload.planId, gymId },
+        where: { id: payload.planId, gymId, gymVariantId: variant.id },
       })
 
       if (!plan) {
@@ -80,6 +129,7 @@ export async function POST(request: NextRequest) {
         data: {
           memberId: member.id,
           gymId,
+          gymVariantId: variant.id,
           planId: plan.id,
           startDate: start,
           endDate: end,

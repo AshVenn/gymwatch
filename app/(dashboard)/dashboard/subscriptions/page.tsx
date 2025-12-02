@@ -1,7 +1,7 @@
 'use client'
 
 import { useSession } from 'next-auth/react'
-import { useMemo, useState } from 'react'
+import { useMemo, useState,useEffect } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { AlertTriangle, MoreVertical, RotateCcw, Trash2, CheckCircle2 } from 'lucide-react'
 import { toast } from 'sonner'
@@ -45,6 +45,8 @@ import {
   type QuickFilter,
 } from '@/components/dashboard/subscriptions/subscription-filters'
 import { Switch } from '@/components/ui/switch'
+import { useVariantOptions } from '@/app/hooks/use-variants'
+import { VariantSelector } from '@/components/dashboard/variant-selector'
 
 interface Subscription {
   id: string
@@ -56,12 +58,15 @@ interface Subscription {
   daysLeft: number
   status: 'ACTIVE' | 'EXPIRES_TODAY' | 'EXPIRED'
   pricePaid: number
+  gymVariantId?: string
 }
 
 interface Plan {
   id: string
   name: string
   durationDays?: number
+  gymVariantId?: string
+  gymVariant?: { id: string; name: string; slug: string; isDefault?: boolean }
 }
 
 type StatusCounterKey = Subscription['status'] | 'ALL'
@@ -104,14 +109,23 @@ export default function SubscriptionsPage() {
   const [visitDialogOpen, setVisitDialogOpen] = useState(false)
   const [visitSearch, setVisitSearch] = useState('')
   const [visitLoading, setVisitLoading] = useState<string | null>(null)
+  const {
+    variants,
+    selectedVariant,
+    setSelectedVariant,
+    isGymAdmin,
+    lockedVariantId,
+    isLoading: variantsLoading,
+  } = useVariantOptions()
 
   const gymId = session?.user?.gymId
+  const variantFilter = selectedVariant === 'all' ? null : selectedVariant
 
   const subscriptionQueryKey = useMemo(
-    () => ['subscriptions', gymId, { searchTerm, filterStatus }] as const,
-    [gymId, searchTerm, filterStatus],
+    () => ['subscriptions', gymId, { searchTerm, filterStatus, variantFilter }] as const,
+    [filterStatus, gymId, searchTerm, variantFilter],
   )
-  const plansQueryKey = useMemo(() => ['plans', gymId] as const, [gymId])
+  const plansQueryKey = useMemo(() => ['plans', gymId, variantFilter] as const, [gymId, variantFilter])
 
   const {
     data: subscriptions = [],
@@ -125,6 +139,7 @@ export default function SubscriptionsPage() {
       if (searchTerm) params.append('search', searchTerm)
       const normalizedStatus = filterStatus === 'ALL' ? '' : filterStatus
       if (normalizedStatus) params.append('status', normalizedStatus)
+      if (variantFilter) params.append('variantId', variantFilter)
 
       const response = await fetch(`/api/subscriptions?${params.toString()}`)
       if (!response.ok) {
@@ -140,7 +155,9 @@ export default function SubscriptionsPage() {
     queryKey: plansQueryKey,
     enabled: Boolean(gymId),
     queryFn: async () => {
-      const response = await fetch('/api/plans')
+      const params = new URLSearchParams()
+      if (variantFilter) params.set('variantId', variantFilter)
+      const response = await fetch(`/api/plans${params.toString() ? `?${params.toString()}` : ''}`)
       if (!response.ok) {
         throw new Error('Impossible de charger les plans')
       }
@@ -149,6 +166,15 @@ export default function SubscriptionsPage() {
       return Array.isArray(data) ? data : []
     },
   })
+
+  const availablePlans = useMemo(() => {
+    if (!variantFilter) return plans ?? []
+    return (plans ?? []).filter((plan) => plan.gymVariantId === variantFilter)
+  }, [plans, variantFilter])
+
+  useEffect(() => {
+    setRenewalForm((prev) => ({ ...prev, planId: '' }))
+  }, [variantFilter])
 
   const deleteSubscriptionMutation = useMutation({
     mutationFn: async (subscriptionId: string) => {
@@ -297,6 +323,8 @@ export default function SubscriptionsPage() {
     const seen = new Set<string>()
     return (subscriptions ?? []).reduce((list: Subscription[], sub) => {
       if (seen.has(sub.memberId)) return list
+      const matchesVariant = !variantFilter || sub.gymVariantId === variantFilter
+      if (!matchesVariant) return list
       const matchesSearch =
         !normalizedSearch || sub.memberName.toLowerCase().includes(normalizedSearch)
       if (matchesSearch) {
@@ -305,7 +333,7 @@ export default function SubscriptionsPage() {
       }
       return list
     }, [])
-  }, [subscriptions, visitSearch])
+  }, [subscriptions, variantFilter, visitSearch])
 
   const subscriptionPagination = usePagination(filteredSubscriptions, 10)
 
@@ -398,7 +426,7 @@ export default function SubscriptionsPage() {
         })()
       : null
 
-  if (isLoading) {
+  if (isLoading || variantsLoading) {
     return (
       <div className="space-y-6">
         <div className="h-56 animate-pulse rounded-3xl bg-muted/40" />
@@ -414,6 +442,16 @@ export default function SubscriptionsPage() {
 
   return (
     <div className="space-y-8">
+      <div className="flex justify-end">
+        <VariantSelector
+          variants={variants}
+          value={selectedVariant}
+          onChange={setSelectedVariant}
+          isGymAdmin={isGymAdmin}
+          lockedVariantId={lockedVariantId}
+          loading={variantsLoading}
+        />
+      </div>
       <SubscriptionSummary metrics={summaryMetrics} />
 
       {isError && (
@@ -507,6 +545,7 @@ export default function SubscriptionsPage() {
                   <TableHead>Restant</TableHead>
                   <TableHead className="text-right">Montant</TableHead>
                   <TableHead>Statut</TableHead>
+                  <TableHead>Variante</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
@@ -546,6 +585,7 @@ export default function SubscriptionsPage() {
                       {sub.pricePaid ? currencyFormatter.format(sub.pricePaid) : '-'}
                     </TableCell>
                     <TableCell>{getStatusBadge(sub.status)}</TableCell>
+                    <TableCell>{sub.gymVariantId ? (variants.find((v) => v.id === sub.gymVariantId)?.name ?? '-') : '-'}</TableCell>
                     <TableCell className="text-right">
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
@@ -600,7 +640,7 @@ export default function SubscriptionsPage() {
                                       <SelectValue placeholder="Selectionner un plan" />
                                     </SelectTrigger>
                                     <SelectContent>
-                                      {(plans ?? []).map((plan) => (
+                                      {availablePlans.map((plan) => (
                                         <SelectItem key={plan.id} value={plan.id}>
                                           {plan.name}
                                         </SelectItem>

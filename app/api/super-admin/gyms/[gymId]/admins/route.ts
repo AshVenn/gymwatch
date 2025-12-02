@@ -9,6 +9,7 @@ const adminSchema = z.object({
   password: z.string().min(8),
   firstName: z.string().min(2),
   lastName: z.string().min(2),
+  gymVariantId: z.string().optional(),
 })
 
 async function ensureSuperAdmin() {

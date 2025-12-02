@@ -8,6 +8,8 @@ import { markVisitForMember } from "@/lib/visits"
 export async function POST(request: NextRequest) {
   const session = await getServerSession(authOptions)
   const gymId = (session?.user as any)?.gymId as string | undefined
+  const role = (session?.user as any)?.role as string | undefined
+  const gymVariantId = (session?.user as any)?.gymVariantId as string | undefined
   const tier = (session?.user as any)?.subscriptionPlan ?? null
 
   if (!gymId) {
@@ -25,8 +27,12 @@ export async function POST(request: NextRequest) {
   }
 
   const member = await prisma.member.findFirst({
-    where: { qrToken: token, gymId },
-    select: { id: true },
+    where: {
+      qrToken: token,
+      gymId,
+      ...(role === "GYM_ADMIN" && gymVariantId ? { gymVariantId } : {}),
+    },
+    select: { id: true, gymVariantId: true },
   })
 
   if (!member) {
@@ -37,6 +43,7 @@ export async function POST(request: NextRequest) {
     gymId,
     memberId: member.id,
     markVisit,
+    allowedVariantId: role === "GYM_ADMIN" ? gymVariantId : undefined,
   })
 
   return NextResponse.json({

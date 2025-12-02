@@ -9,23 +9,40 @@ export async function PUT(request: NextRequest, { params }: any) {
   try {
     const session = await getServerSession(authOptions)
     const gymId = (session?.user as any)?.gymId as string | undefined
+    const role = (session?.user as any)?.role as string | undefined
+    const sessionVariantId = (session?.user as any)?.gymVariantId as string | undefined
 
     if (!gymId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
+    if (role === "GYM_ADMIN" && !sessionVariantId) {
+      return NextResponse.json({ error: "Variant manquant" }, { status: 403 })
+    }
 
     const { planId, startDate, endDate, createPayment = true } = await request.json()
+
+    const subscription = await prisma.subscription.findFirst({
+      where: { id: params.subscriptionId, gymId },
+      select: { id: true, gymVariantId: true, memberId: true },
+    })
+
+    if (!subscription) {
+      return NextResponse.json({ error: "Subscription not found" }, { status: 404 })
+    }
+    if (role === "GYM_ADMIN" && sessionVariantId && subscription.gymVariantId !== sessionVariantId) {
+      return NextResponse.json({ error: "FORBIDDEN_VARIANT" }, { status: 403 })
+    }
 
     const plan = await prisma.membershipPlan.findUnique({
       where: { id: planId },
     })
 
-    if (!plan) {
+    if (!plan || plan.gymId !== gymId) {
       return NextResponse.json({ error: "Plan not found" }, { status: 404 })
     }
 
-    if (plan.gymId !== gymId) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 403 })
+    if (plan.gymVariantId !== subscription.gymVariantId) {
+      return NextResponse.json({ error: "Plan incompatible avec cette variante" }, { status: 400 })
     }
 
     const start = new Date(startDate)
@@ -36,7 +53,7 @@ export async function PUT(request: NextRequest, { params }: any) {
 
     const status = computeSubscriptionStatus(end)
 
-    const subscription = await prisma.subscription.update({
+    const updatedSubscription = await prisma.subscription.update({
       where: { id: params.subscriptionId },
       data: {
         planId,
@@ -61,23 +78,37 @@ export async function PUT(request: NextRequest, { params }: any) {
         })
       : null
 
-    return NextResponse.json({ subscription, payment })
+    return NextResponse.json({ subscription: updatedSubscription, payment })
   } catch (error) {
     console.error("Update subscription error:", error)
-    return NextResponse.json(
-      { error: "Failed to update subscription" },
-      { status: 500 },
-    )
+    return NextResponse.json({ error: "Failed to update subscription" }, { status: 500 })
   }
 }
 
-export async function DELETE(request: NextRequest, { params }: any) {
+export async function DELETE(_request: NextRequest, { params }: any) {
   try {
     const session = await getServerSession(authOptions)
     const gymId = (session?.user as any)?.gymId as string | undefined
+    const role = (session?.user as any)?.role as string | undefined
+    const sessionVariantId = (session?.user as any)?.gymVariantId as string | undefined
 
     if (!gymId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    }
+    if (role === "GYM_ADMIN" && !sessionVariantId) {
+      return NextResponse.json({ error: "Variant manquant" }, { status: 403 })
+    }
+
+    const subscription = await prisma.subscription.findFirst({
+      where: { id: params.subscriptionId, gymId },
+      select: { id: true, gymVariantId: true },
+    })
+
+    if (!subscription) {
+      return NextResponse.json({ error: "Subscription not found" }, { status: 404 })
+    }
+    if (role === "GYM_ADMIN" && sessionVariantId && subscription.gymVariantId !== sessionVariantId) {
+      return NextResponse.json({ error: "FORBIDDEN_VARIANT" }, { status: 403 })
     }
 
     await prisma.subscription.delete({
@@ -87,9 +118,6 @@ export async function DELETE(request: NextRequest, { params }: any) {
     return NextResponse.json({ success: true })
   } catch (error) {
     console.error("Delete subscription error:", error)
-    return NextResponse.json(
-      { error: "Failed to delete subscription" },
-      { status: 500 },
-    )
+    return NextResponse.json({ error: "Failed to delete subscription" }, { status: 500 })
   }
 }

@@ -14,7 +14,16 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
 import { toast } from 'sonner'
+
+function slugifyVariantName(value: string) {
+  return value
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/(^-|-$)+/g, '') || 'principal'
+}
 
 const schema = z.object({
   name: z.string().min(2, 'Nom requis'),
@@ -29,6 +38,7 @@ const schema = z.object({
   grace: z.coerce.number().min(0).max(30),
   maxAdmins: z.coerce.number().min(1).max(20),
   demoEndsAt: z.string().optional(),
+  variantNames: z.string().min(1, 'Au moins une variante'),
   ownerEmail: z.string().email('Email invalide'),
   ownerPassword: z.string().min(8, 'Min. 8 caracteres'),
   ownerFirstName: z.string().optional(),
@@ -37,6 +47,7 @@ const schema = z.object({
   adminPassword: z.string().min(8).optional(),
   adminFirstName: z.string().optional(),
   adminLastName: z.string().optional(),
+  adminVariantSlug: z.string().optional(),
   resolutionNote: z.string().optional(),
 })
 
@@ -55,6 +66,7 @@ const defaultValues: ApproveValues = {
   grace: 7,
   maxAdmins: 3,
   demoEndsAt: '',
+  variantNames: 'Principal, Annexe',
   ownerEmail: '',
   ownerPassword: '',
   ownerFirstName: '',
@@ -63,6 +75,7 @@ const defaultValues: ApproveValues = {
   adminPassword: '',
   adminFirstName: '',
   adminLastName: '',
+  adminVariantSlug: '',
   resolutionNote: '',
 }
 
@@ -80,6 +93,21 @@ export function ApproveDemoDialog({ request, open, onOpenChange }: Props) {
     resolver: zodResolver(schema),
     defaultValues,
   })
+
+  const variantNamesValue = form.watch('variantNames')
+  const parsedVariants = useMemo(() => {
+    const raw = variantNamesValue
+      ?.split(',')
+      .map((name) => name.trim())
+      .filter(Boolean)
+
+    const base = raw?.length ? raw : ['Principal']
+    return base.map((name, index) => ({
+      name,
+      slug: slugifyVariantName(name),
+      isDefault: index === 0,
+    }))
+  }, [variantNamesValue])
 
   useEffect(() => {
     if (request && open) {
@@ -99,6 +127,7 @@ export function ApproveDemoDialog({ request, open, onOpenChange }: Props) {
         grace: 7,
         maxAdmins: 3,
         demoEndsAt: defaultExpiration,
+        variantNames: 'Principal, Annexe',
         ownerEmail: request.adminEmail,
         ownerPassword: '',
         ownerFirstName: request.adminFirstName ?? '',
@@ -107,6 +136,7 @@ export function ApproveDemoDialog({ request, open, onOpenChange }: Props) {
         adminPassword: '',
         adminFirstName: '',
         adminLastName: '',
+        adminVariantSlug: '',
         resolutionNote: '',
       })
       setPrefilled(true)
@@ -142,6 +172,10 @@ export function ApproveDemoDialog({ request, open, onOpenChange }: Props) {
           maxAdminAccounts: values.maxAdmins,
           demoEndsAt: values.demoEndsAt || null,
           resolutionNote: values.resolutionNote || undefined,
+          variants: parsedVariants.map((variant, index) => ({
+            ...variant,
+            isDefault: index === 0 || variant.isDefault,
+          })),
           admins:
             values.adminEmail && values.adminPassword
               ? [
@@ -150,6 +184,7 @@ export function ApproveDemoDialog({ request, open, onOpenChange }: Props) {
                     password: values.adminPassword,
                     firstName: values.adminFirstName || 'Admin',
                     lastName: values.adminLastName || 'Demo',
+                    variantSlug: values.adminVariantSlug || parsedVariants[0]?.slug,
                   },
                 ]
               : undefined,
@@ -282,6 +317,30 @@ export function ApproveDemoDialog({ request, open, onOpenChange }: Props) {
                   )}
                 />
               </div>
+
+              <FormField
+                control={form.control}
+                name="variantNames"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Variantes du gym (separees par des virgules)</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Principal, Premium, Budget" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                    <p className="text-xs text-muted-foreground">
+                      La premiere variante est appliquee par defaut aux nouveaux comptes.
+                    </p>
+                    <div className="mt-2 flex flex-wrap gap-2">
+                      {parsedVariants.map((variant) => (
+                        <Badge key={variant.slug} variant={variant.isDefault ? 'secondary' : 'outline'}>
+                          {variant.name} {variant.isDefault ? '(defaut)' : ''}
+                        </Badge>
+                      ))}
+                    </div>
+                  </FormItem>
+                )}
+              />
 
               <div className="grid gap-4 md:grid-cols-2">
                 <FormField
@@ -517,6 +576,35 @@ export function ApproveDemoDialog({ request, open, onOpenChange }: Props) {
                           <Input {...field} />
                         </FormControl>
                         <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+                <div className="mt-3">
+                  <FormField
+                    control={form.control}
+                    name="adminVariantSlug"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Variante assignee</FormLabel>
+                        <Select onValueChange={field.onChange} value={field.value}>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder={parsedVariants[0]?.name ?? 'Par defaut'} />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {parsedVariants.map((variant) => (
+                              <SelectItem key={variant.slug} value={variant.slug}>
+                                {variant.name} {variant.isDefault ? '(defaut)' : ''}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                        <p className="text-xs text-muted-foreground">
+                          Par defaut : {parsedVariants[0]?.name ?? 'Principal'}
+                        </p>
                       </FormItem>
                     )}
                   />

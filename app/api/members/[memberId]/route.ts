@@ -12,6 +12,67 @@ const updateSchema = z.object({
   phone: z.string().optional().or(z.literal("").transform(() => undefined)),
 })
 
+export async function GET(_request: NextRequest, { params }: any) {
+  try {
+    const session = await getServerSession(authOptions)
+
+    if (!session?.user?.gymId) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    }
+    const role = (session.user as any).role as string | undefined
+    const sessionVariantId = (session.user as any).gymVariantId as string | undefined
+    if (role === "GYM_ADMIN" && !sessionVariantId) {
+      return NextResponse.json({ error: "Variant manquant" }, { status: 403 })
+    }
+
+    const rawId = params.memberId
+    const memberId = Array.isArray(rawId) ? rawId[0] : rawId
+
+    const member = await prisma.member.findFirst({
+      where: {
+        id: memberId,
+        gymId: session.user.gymId,
+        ...(role === "GYM_ADMIN" && sessionVariantId ? { gymVariantId: sessionVariantId } : {}),
+      },
+      include: {
+        gymVariant: { select: { id: true, name: true, slug: true, isDefault: true } },
+        subscriptions: {
+          orderBy: { endDate: "desc" },
+          take: 1,
+          include: { plan: { select: { id: true, name: true, durationDays: true } } },
+        },
+      },
+    })
+
+    if (!member) {
+      return NextResponse.json({ error: "Member not found" }, { status: 404 })
+    }
+
+    const latestSubscription = member.subscriptions[0] ?? null
+    return NextResponse.json({
+      id: member.id,
+      firstName: member.firstName,
+      lastName: member.lastName,
+      email: member.email,
+      phone: member.phone,
+      qrToken: member.qrToken,
+      lastVisitedAt: member.lastVisitedAt,
+      gymVariant: member.gymVariant,
+      subscription: latestSubscription
+        ? {
+            id: latestSubscription.id,
+            status: latestSubscription.status,
+            endDate: latestSubscription.endDate,
+            planName: latestSubscription.plan?.name ?? null,
+          }
+        : null,
+    })
+  } catch (error) {
+    console.error("members.get", error)
+    return NextResponse.json({ error: "Failed to load member" }, { status: 500 })
+  }
+}
+
 export async function PUT(request: NextRequest, { params }: any) {
   try {
     const session = await getServerSession(authOptions)

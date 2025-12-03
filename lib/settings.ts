@@ -20,6 +20,8 @@ const defaultSettings: Omit<SystemSettings, "createdAt" | "updatedAt"> = {
   payoutReport: false,
   gymSettingsIntervalMs: 60_000,
   userSettingsIntervalMs: 30_000,
+  accessLogRetentionDays: 90,
+  lastPurgeAt: null,
 }
 
 async function readSettings(): Promise<SystemSettings> {

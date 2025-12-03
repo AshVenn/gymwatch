@@ -21,6 +21,8 @@ import {
 } from '@/components/ui/tooltip'
 import { Skeleton } from '@/components/ui/skeleton'
 import { cn } from '@/lib/utils'
+import { PlanModuleBadges } from './PlanModules'
+import { getPlanFeatures } from '@/lib/subscription-plans'
 
 export type GymAction = 'overview' | 'team' | 'plans' | 'subscription' | 'edit' | 'delete'
 
@@ -46,6 +48,7 @@ const STATUS_LABEL: Record<string, string> = {
 const PLAN_LABEL: Record<string, string> = {
   BASIC: 'Basic',
   PRO: 'Pro',
+  COMPLEX: 'Complex',
 }
 
 const INTERVAL_LABEL: Record<string, string> = {
@@ -117,8 +120,12 @@ export function GymsTable({ gyms, isLoading, pagination, totalItems, onAction }:
         </TableHeader>
 
         <TableBody>
-          {gyms.map((gym) => (
-            <TableRow key={gym.id}>
+          {gyms.map((gym) => {
+            const variantTotal = gym.variantCount ?? gym.variants?.length ?? 0
+            const planFeatures = gym.planFeatures ?? getPlanFeatures(gym.subscriptionPlan)
+
+            return (
+              <TableRow key={gym.id}>
               <TableCell>
                 <div className="flex items-center gap-2 font-medium">
                   {gym.name}
@@ -145,7 +152,9 @@ export function GymsTable({ gyms, isLoading, pagination, totalItems, onAction }:
                     currency: 'MAD',
                   })}
                 </p>
-                <p className="text-xs text-muted-foreground">{gym.variantCount ?? gym.variants?.length ?? 0} variante(s)</p>
+                <p className="text-xs text-muted-foreground">
+                  {gym.variantMode === 'MULTI' ? 'Multi-salles' : 'Mono-salle'} - {variantTotal} variante(s)
+                </p>
                 {gym.variants?.length ? (
                   <div className="mt-1 flex flex-wrap gap-1">
                     {gym.variants.slice(0, 3).map((variant) => (
@@ -163,6 +172,7 @@ export function GymsTable({ gyms, isLoading, pagination, totalItems, onAction }:
                 ) : (
                   <p className="text-xs text-muted-foreground">Variante unique</p>
                 )}
+                <PlanModuleBadges features={planFeatures} />
               </TableCell>
 
               <TableCell>{gym.memberCount}</TableCell>
@@ -172,7 +182,7 @@ export function GymsTable({ gyms, isLoading, pagination, totalItems, onAction }:
                 <p>
                   {gym.subscriptionExpiresAt
                     ? new Date(gym.subscriptionExpiresAt).toLocaleDateString('fr-FR')
-                    : '—'}
+                    : '--'}
                 </p>
 
                 {gym.isDemo && gym.demoEndsAt ? (
@@ -213,7 +223,8 @@ export function GymsTable({ gyms, isLoading, pagination, totalItems, onAction }:
                 </TooltipProvider>
               </TableCell>
             </TableRow>
-          ))}
+            )
+          })}
         </TableBody>
       </Table>
 

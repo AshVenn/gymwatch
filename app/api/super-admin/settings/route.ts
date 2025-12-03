@@ -14,6 +14,7 @@ const settingsSchema = z.object({
   payoutReport: z.boolean(),
   gymSettingsIntervalMs: z.coerce.number().int().min(5_000).max(3_600_000),
   userSettingsIntervalMs: z.coerce.number().int().min(5_000).max(3_600_000),
+  accessLogRetentionDays: z.coerce.number().int().min(1).max(3_650),
 })
 
 async function ensureSuperAdmin() {

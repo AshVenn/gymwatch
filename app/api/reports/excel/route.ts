@@ -5,6 +5,7 @@ import { utils, write } from "xlsx"
 import { authOptions } from "@/lib/auth-middleware"
 import { prisma } from "@/lib/prisma"
 import { hasPlanFeature } from "@/lib/subscription-plans"
+import { resolveVariantAccess } from "@/lib/variant-access"
 
 const querySchema = z.object({
   type: z.enum(["earnings", "top-members", "loyal-members", "member"]),
@@ -30,7 +31,7 @@ export async function GET(request: NextRequest) {
   }
 
   if (!hasPlanFeature(tier, "excelReports")) {
-    return NextResponse.json({ error: "Plan PRO requis" }, { status: 403 })
+    return NextResponse.json({ error: "Plan Pro ou Complex requis" }, { status: 403 })
   }
 
   const parsed = querySchema.safeParse({
@@ -38,22 +39,28 @@ export async function GET(request: NextRequest) {
     memberId: request.nextUrl.searchParams.get("memberId") ?? undefined,
   })
   const requestedVariantId = request.nextUrl.searchParams.get("variantId")
-  let gymVariantId = role === "GYM_ADMIN" ? sessionVariantId : undefined
+  const variantAccess = await resolveVariantAccess({
+    gymId,
+    tier,
+    role,
+    requestedVariantId,
+    sessionVariantId,
+  })
 
-  if (role === "GYM_ADMIN" && !sessionVariantId) {
-    return NextResponse.json({ error: "Variant manquant" }, { status: 403 })
+  if (!variantAccess.ok) {
+    return NextResponse.json(
+      {
+        error: variantAccess.message,
+        code: variantAccess.code,
+        variantMode: variantAccess.variantMode,
+        defaultVariantId: variantAccess.defaultVariantId,
+        multiLocationAllowed: variantAccess.multiLocationAllowed,
+      },
+      { status: variantAccess.status },
+    )
   }
 
-  if (role === "GYM_OWNER" && requestedVariantId && requestedVariantId !== "all") {
-    const variant = await prisma.gymVariant.findFirst({
-      where: { id: requestedVariantId, gymId },
-      select: { id: true },
-    })
-    if (!variant) {
-      return NextResponse.json({ error: "Variant invalide" }, { status: 400 })
-    }
-    gymVariantId = variant.id
-  }
+  const gymVariantId = variantAccess.variantId
 
   if (!parsed.success) {
     return NextResponse.json({ error: "Parametres invalides" }, { status: 400 })

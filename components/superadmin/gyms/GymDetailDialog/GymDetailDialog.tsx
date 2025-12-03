@@ -5,10 +5,13 @@ import { useSuperAdminGym } from '@/app/(dashboard)/super-admin/hooks'
 import { GymStats } from './GymStats'
 import { GymAnalytics } from './GymAnalytics'
 import { Badge } from '@/components/ui/badge'
+import { PlanModuleList } from '../PlanModules'
+import { getPlanFeatures } from '@/lib/subscription-plans'
 
 const PLAN_LABEL: Record<string, string> = {
   BASIC: 'Basic',
   PRO: 'Pro',
+  COMPLEX: 'Complex',
 }
 
 const INTERVAL_LABEL: Record<string, string> = {
@@ -24,12 +27,14 @@ type Props = {
 export function GymDetailDialog({ gymId, onClose }: Props) {
   const open = Boolean(gymId)
   const { data: gym, isLoading } = useSuperAdminGym(gymId)
+  const variantTotal = gym?.variantCount ?? gym?.variants?.length ?? 0
+  const planFeatures = gym ? gym.planFeatures ?? getPlanFeatures(gym.subscriptionPlan) : undefined
 
   return (
     <Dialog open={open} onOpenChange={(value) => !value && onClose()}>
       <DialogContent className="max-w-md sm:max-w-lg md:max-w-4xl w-[95vw] max-h-[90vh] overflow-y-auto space-y-6 rounded-2xl bg-card px-4 py-6 sm:px-8">
         {isLoading || !gym ? (
-          <div className="py-12 text-center text-muted-foreground">Chargement des détails...</div>
+          <div className="py-12 text-center text-muted-foreground">Chargement des details...</div>
         ) : (
           <>
             <DialogHeader className="space-y-3">
@@ -49,7 +54,8 @@ export function GymDetailDialog({ gymId, onClose }: Props) {
                   style: 'currency',
                   currency: 'MAD',
                 })}
-                {' ? '}{gym.variantCount ?? gym.variants?.length ?? 0} variante(s)
+                {' - '}
+                {gym.variantMode === 'MULTI' ? 'Multi-salles' : 'Mono-salle'} ({variantTotal} variante(s))
                 {gym.isDemo && gym.demoEndsAt
                   ? ` - Demo jusqu'au ${new Date(gym.demoEndsAt).toLocaleDateString('fr-FR')}`
                   : ''}
@@ -67,13 +73,24 @@ export function GymDetailDialog({ gymId, onClose }: Props) {
                 {gym.variants?.length ? (
                   gym.variants.map((variant) => (
                     <Badge key={variant.id} variant={variant.isDefault ? 'secondary' : 'outline'}>
-                      {variant.name} {variant.isDefault ? '(defaut)' : ''} • {variant.slug}
+                      {variant.name} {variant.isDefault ? '(defaut)' : ''} - {variant.slug}
                     </Badge>
                   ))
                 ) : (
                   <p className="text-xs text-muted-foreground">Aucune variante enregistree</p>
                 )}
               </div>
+            </div>
+
+            <div className="space-y-3 rounded-xl border border-border/60 bg-muted/30 px-4 py-3">
+              <div className="flex flex-wrap items-center gap-2 text-sm font-semibold">
+                <Badge variant="outline">{gym.variantMode === 'MULTI' ? 'Multi-salles' : 'Mono-salle'}</Badge>
+                <Badge variant="outline">{variantTotal} variante(s)</Badge>
+                <Badge variant="secondary">
+                  Plan {PLAN_LABEL[gym.subscriptionPlan] ?? gym.subscriptionPlan}
+                </Badge>
+              </div>
+              <PlanModuleList features={planFeatures} />
             </div>
 
             <GymStats gym={gym} />

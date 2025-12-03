@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Plus } from 'lucide-react'
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
@@ -12,7 +12,9 @@ import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form'
-import { PLAN_PRICING } from '@/lib/subscription-plans'
+import { PLAN_PRICING, getPlanFeatures } from '@/lib/subscription-plans'
+import { PlanModuleBadges } from './PlanModules'
+import { Badge } from '@/components/ui/badge'
 
 const schema = z.object({
   name: z.string().min(2, 'Nom requis'),
@@ -21,16 +23,33 @@ const schema = z.object({
   address: z.string().optional(),
   city: z.string().optional(),
   country: z.string().optional(),
-  tier: z.enum(['BASIC', 'PRO']),
+  tier: z.enum(['BASIC', 'PRO', 'COMPLEX']),
   interval: z.enum(['MONTHLY', 'ANNUAL']),
   status: z.enum(['ACTIVE', 'SUSPENDED', 'EXPIRED']),
   expiresAt: z.string().optional(),
   grace: z.coerce.number().min(0).max(30),
   maxAdmins: z.coerce.number().min(1),
+  gymType: z.enum(['SINGLE', 'MULTI']),
+  variantNames: z.string().optional(),
   ownerEmail: z.string().email('Email invalide'),
   ownerPassword: z.string().min(8, 'Min. 8 caracteres'),
   ownerFirstName: z.string().optional(),
   ownerLastName: z.string().optional(),
+}).superRefine((values, ctx) => {
+  if (values.gymType === 'MULTI') {
+    const variants = (values.variantNames ?? '')
+      .split(',')
+      .map((name) => name.trim())
+      .filter(Boolean)
+
+    if (!variants.length) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['variantNames'],
+        message: 'Ajoutez au moins une variante',
+      })
+    }
+  }
 })
 
 type CreateGymValues = z.infer<typeof schema>
@@ -48,6 +67,8 @@ const defaultValues: CreateGymValues = {
   expiresAt: '',
   grace: 5,
   maxAdmins: 3,
+  gymType: 'SINGLE',
+  variantNames: 'Principal',
   ownerEmail: '',
   ownerPassword: '',
   ownerFirstName: '',
@@ -61,25 +82,46 @@ export function CreateGymDialog() {
     defaultValues,
   })
   const createGym = useCreateGym()
-  const [variantNames, setVariantNames] = useState('Principal')
 
   const selectedTier = form.watch('tier') as GymPlanTier
   const selectedInterval = form.watch('interval') as GymBillingInterval
+  const gymType = form.watch('gymType') as 'SINGLE' | 'MULTI'
+  const variantNamesValue = form.watch('variantNames') ?? ''
+  const gymNameValue = form.watch('name')
   const estimatedPrice = PLAN_PRICING[selectedTier][selectedInterval]
+  const selectedFeatures = useMemo(() => getPlanFeatures(selectedTier), [selectedTier])
+  const parsedVariants = useMemo(() => {
+    if (gymType === 'SINGLE') {
+      const base = (gymNameValue || '').trim() || 'Principal'
+      return [{ name: base, isDefault: true }]
+    }
+
+    const names = variantNamesValue
+      .split(',')
+      .map((name) => name.trim())
+      .filter(Boolean)
+
+    const base = names.length ? names : ['Principal']
+    return base.map((name, index) => ({ name, isDefault: index === 0 }))
+  }, [gymNameValue, gymType, variantNamesValue])
 
   useEffect(() => {
     if (!open) {
       form.reset(defaultValues)
-      setVariantNames('Principal')
     }
   }, [open, form])
 
   const onSubmit = (values: CreateGymValues) => {
-    const parsedVariants = variantNames
-      .split(',')
-      .map((name) => name.trim())
-      .filter(Boolean)
-      .map((name, index) => ({ name, isDefault: index === 0 }))
+    const variantList =
+      values.gymType === 'MULTI'
+        ? (values.variantNames ?? '')
+            .split(',')
+            .map((name) => name.trim())
+            .filter(Boolean)
+            .map((name, index) => ({ name, isDefault: index === 0 }))
+        : [{ name: values.name?.trim() || 'Principal', isDefault: true }]
+
+    const safeVariants = variantList.length ? variantList : [{ name: 'Principal', isDefault: true }]
 
     createGym.mutate(
       {
@@ -95,7 +137,7 @@ export function CreateGymDialog() {
         subscriptionExpiresAt: values.expiresAt || undefined,
         subscriptionGracePeriodDays: values.grace,
         maxAdminAccounts: values.maxAdmins,
-        variants: parsedVariants,
+        variants: safeVariants,
         owner: {
           email: values.ownerEmail,
           password: values.ownerPassword,
@@ -106,7 +148,6 @@ export function CreateGymDialog() {
       {
         onSuccess: () => {
           form.reset(defaultValues)
-          setVariantNames('Principal')
           setOpen(false)
         },
       },
@@ -212,17 +253,68 @@ export function CreateGymDialog() {
               />
             </div>
 
-            <div>
-              <FormLabel>Variantes (separees par une virgule)</FormLabel>
-              <FormControl>
-                <Input
-                  value={variantNames}
-                  onChange={(e) => setVariantNames(e.target.value)}
-                  placeholder="Principal, Premium, Budget"
-                />
-              </FormControl>
-              <FormDescription>La premiere variante sera selectionnee par defaut.</FormDescription>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <FormField
+                control={form.control}
+                name="gymType"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Type de salle</FormLabel>
+                    <Select onValueChange={field.onChange} value={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Choisir un type" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="SINGLE">Mono-salle</SelectItem>
+                        <SelectItem value="MULTI">Multi-salles (variants)</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormDescription>
+                      Mono-salle : un seul emplacement. Multi-salles : plusieurs variantes/locaux.
+                    </FormDescription>
+                  </FormItem>
+                )}
+              />
+
+              <div className="rounded-xl border border-dashed border-border/60 bg-muted/20 p-4">
+                <p className="text-sm font-semibold">Apercu des variantes</p>
+                <div className="mt-2 flex flex-wrap gap-2">
+                  {parsedVariants.map((variant) => (
+                    <Badge key={variant.name} variant={variant.isDefault ? 'secondary' : 'outline'}>
+                      {variant.name} {variant.isDefault ? '(defaut)' : ''}
+                    </Badge>
+                  ))}
+                </div>
+                <p className="mt-2 text-xs text-muted-foreground">
+                  La premiere variante est appliquee par defaut aux nouveaux comptes.
+                </p>
+              </div>
             </div>
+
+            {gymType === 'MULTI' ? (
+              <FormField
+                control={form.control}
+                name="variantNames"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Variantes (separees par une virgule)</FormLabel>
+                    <FormControl>
+                      <Input {...field} placeholder="Principal, Premium, Budget" />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            ) : (
+              <div className="rounded-xl border border-border/60 bg-muted/20 p-4">
+                <p className="text-sm font-semibold">Variante unique</p>
+                <p className="text-xs text-muted-foreground">
+                  Utilisation automatique du nom de la salle : {parsedVariants[0]?.name}
+                </p>
+              </div>
+            )}
 
             <div className="grid gap-4 sm:grid-cols-2">
               <FormField
@@ -232,19 +324,20 @@ export function CreateGymDialog() {
                   <FormItem>
                     <FormLabel>Plan</FormLabel>
                     <Select onValueChange={field.onChange} value={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="BASIC">Basic</SelectItem>
-                        <SelectItem value="PRO">Pro</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </FormItem>
-                )}
-              />
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="BASIC">Basic</SelectItem>
+                          <SelectItem value="PRO">Pro</SelectItem>
+                          <SelectItem value="COMPLEX">Complex</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </FormItem>
+                  )}
+                />
               <FormField
                 control={form.control}
                 name="interval"
@@ -289,6 +382,16 @@ export function CreateGymDialog() {
                   </FormItem>
                 )}
               />
+            </div>
+
+            <div className="rounded-xl border border-border/60 bg-muted/20 p-4">
+              <div className="flex flex-wrap items-center justify-between gap-2 text-sm">
+                <p className="font-semibold">Modules inclus dans le plan {selectedTier}</p>
+                <span className="text-xs text-muted-foreground">
+                  Estimation: {estimatedPrice.toLocaleString('fr-MA', { style: 'currency', currency: 'MAD' })}
+                </span>
+              </div>
+              <PlanModuleBadges features={selectedFeatures} />
             </div>
 
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">

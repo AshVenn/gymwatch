@@ -1,10 +1,16 @@
-import type { SubscriptionStatus } from "@prisma/client"
+import type { Prisma, SubscriptionStatus } from "@prisma/client"
 import { prisma } from "./prisma"
 import { computeSubscriptionStatus, daysUntilExpiry } from "./subscription-status"
 
 const startOfDay = (value: Date) => {
   const day = new Date(value)
   day.setHours(0, 0, 0, 0)
+  return day
+}
+
+const endOfDay = (value: Date) => {
+  const day = startOfDay(value)
+  day.setHours(23, 59, 59, 999)
   return day
 }
 
@@ -25,6 +31,37 @@ export type VisitResult = {
   alreadyVisited: boolean
   daysRemaining: number | null
   todayVisitorCount: number
+}
+
+export type VisitRow = {
+  id: string
+  memberId: string
+  memberName: string
+  variantId: string
+  variantName: string
+  checkIn: Date
+  checkOut: Date | null
+  durationMinutes: number
+}
+
+export type VisitAnalytics = {
+  visits: VisitRow[]
+  summary: {
+    total: number
+    uniqueMembers: number
+    currentInside: number
+    averageDurationMinutes: number
+  }
+  charts: {
+    byHour: Array<{ label: string; value: number }>
+    byDay: Array<{ label: string; value: number }>
+    byVariant: Array<{ label: string; value: number }>
+  }
+  range: {
+    from: Date
+    to: Date
+    mode: "day" | "period"
+  }
 }
 
 async function syncGymVisitorCounter(gymId: string, today: Date) {
@@ -111,7 +148,17 @@ export async function markVisitForMember({
     })
   }
 
-  const alreadyVisited = isSameDay(member.lastVisitedAt, today)
+  let alreadyVisited = isSameDay(member.lastVisitedAt, today)
+  if (!alreadyVisited) {
+    const existingVisit = await prisma.visit.findFirst({
+      where: {
+        memberId: member.id,
+        checkIn: { gte: today, lte: endOfDay(today) },
+      },
+      select: { id: true },
+    })
+    alreadyVisited = Boolean(existingVisit)
+  }
 
   if (!markVisit || !isActive || alreadyVisited) {
     return {
@@ -142,6 +189,14 @@ export async function markVisitForMember({
       },
       select: { todayVisitorCount: true },
     }),
+    prisma.visit.create({
+      data: {
+        gymId,
+        memberId: member.id,
+        gymVariantId: member.gymVariantId,
+        checkIn: now,
+      },
+    }),
   ])
 
   return {
@@ -153,8 +208,178 @@ export async function markVisitForMember({
     subscriptionEndsAt: latestSubscription?.endDate ?? null,
     status,
     active: isActive,
-    alreadyVisited: false,
-    daysRemaining,
-    todayVisitorCount: updatedGym.todayVisitorCount,
+  alreadyVisited: false,
+  daysRemaining,
+  todayVisitorCount: updatedGym.todayVisitorCount,
+  }
+}
+
+export async function getVisitAnalytics({
+  gymId,
+  variantId,
+  view = "day",
+  date,
+  from,
+  to,
+  search,
+  limit = 120,
+}: {
+  gymId: string
+  variantId?: string | null
+  view?: "day" | "period"
+  date?: Date
+  from?: Date
+  to?: Date
+  search?: string
+  limit?: number
+}): Promise<VisitAnalytics> {
+  const now = new Date()
+  const viewMode = view === "period" ? "period" : "day"
+  const rangeStart =
+    viewMode === "day"
+      ? startOfDay(date ?? now)
+      : startOfDay(from ?? new Date(now.getTime() - 6 * 24 * 60 * 60 * 1000))
+  const rangeEnd = viewMode === "day" ? endOfDay(date ?? now) : endOfDay(to ?? now)
+  const safeLimit = Math.min(Math.max(Math.floor(limit ?? 120), 1), 500)
+
+  const where: Prisma.VisitWhereInput = {
+    gymId,
+    ...(variantId ? { gymVariantId: variantId } : {}),
+    checkIn: { gte: rangeStart, lte: rangeEnd },
+    ...(search
+      ? {
+          member: {
+            OR: [
+              { firstName: { contains: search, mode: "insensitive" } },
+              { lastName: { contains: search, mode: "insensitive" } },
+              { email: { contains: search, mode: "insensitive" } },
+            ],
+          },
+        }
+      : {}),
+  }
+
+  const [visits, totalVisits, distinctMembers, openVisits, chartVisits, variantGroups] = await Promise.all([
+    prisma.visit.findMany({
+      where,
+      orderBy: { checkIn: "desc" },
+      take: safeLimit,
+      include: {
+        member: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            email: true,
+            gymVariant: { select: { id: true, name: true } },
+          },
+        },
+      },
+    }),
+    prisma.visit.count({ where }),
+    prisma.visit.findMany({
+      where,
+      select: { memberId: true },
+      distinct: ["memberId"],
+    }),
+    prisma.visit.count({
+      where: {
+        gymId,
+        ...(variantId ? { gymVariantId: variantId } : {}),
+        checkOut: null,
+        checkIn: { gte: startOfDay(now) },
+      },
+    }),
+    prisma.visit.findMany({
+      where,
+      select: { checkIn: true, checkOut: true, gymVariantId: true },
+    }),
+    prisma.visit.groupBy({
+      by: ["gymVariantId"],
+      where,
+      _count: { _all: true },
+    }),
+  ])
+
+  const variantNames = await prisma.gymVariant.findMany({
+    where: { id: { in: variantGroups.map((group) => group.gymVariantId) } },
+    select: { id: true, name: true },
+  })
+
+  const durationSum = chartVisits.reduce((acc, visit) => {
+    const end = visit.checkOut ?? now
+    const duration = Math.max(0, Math.round((end.getTime() - visit.checkIn.getTime()) / 60000))
+    return acc + duration
+  }, 0)
+  const averageDurationMinutes = chartVisits.length ? Math.round(durationSum / chartVisits.length) : 0
+
+  const byVariant = variantGroups.map((group) => {
+    const label = variantNames.find((variant) => variant.id === group.gymVariantId)?.name ?? "Variant"
+    return { label, value: group._count._all }
+  })
+
+  const hourlyBuckets = Array.from({ length: 24 }, (_, hour) => ({
+    label: `${hour.toString().padStart(2, "0")}h`,
+    value: 0,
+  }))
+
+  chartVisits.forEach((visit) => {
+    const hour = new Date(visit.checkIn).getHours()
+    if (hourlyBuckets[hour]) {
+      hourlyBuckets[hour].value += 1
+    }
+  })
+
+  const dayCounts = new Map<string, number>()
+  chartVisits.forEach((visit) => {
+    const key = startOfDay(visit.checkIn).toISOString().slice(0, 10)
+    dayCounts.set(key, (dayCounts.get(key) ?? 0) + 1)
+  })
+
+  const byDay: Array<{ label: string; value: number }> = []
+  const cursor = new Date(rangeStart)
+  let guard = 0
+  while (cursor.getTime() <= rangeEnd.getTime() && guard < 200) {
+    const key = startOfDay(cursor).toISOString().slice(0, 10)
+    const label = cursor.toLocaleDateString("fr-FR", { day: "2-digit", month: "2-digit" })
+    byDay.push({ label, value: dayCounts.get(key) ?? 0 })
+    cursor.setDate(cursor.getDate() + 1)
+    guard++
+  }
+
+  const rows: VisitRow[] = visits.map((visit) => {
+    const memberName = `${visit.member.firstName} ${visit.member.lastName}`.trim()
+    const end = visit.checkOut ?? now
+    const durationMinutes = Math.max(0, Math.round((end.getTime() - visit.checkIn.getTime()) / 60000))
+    return {
+      id: visit.id,
+      memberId: visit.memberId,
+      memberName,
+      variantId: visit.member.gymVariant?.id ?? visit.gymVariantId,
+      variantName: visit.member.gymVariant?.name ?? "Salle",
+      checkIn: visit.checkIn,
+      checkOut: visit.checkOut,
+      durationMinutes,
+    }
+  })
+
+  return {
+    visits: rows,
+    summary: {
+      total: totalVisits,
+      uniqueMembers: distinctMembers.length,
+      currentInside: openVisits,
+      averageDurationMinutes,
+    },
+    charts: {
+      byHour: hourlyBuckets,
+      byDay,
+      byVariant,
+    },
+    range: {
+      from: rangeStart,
+      to: rangeEnd,
+      mode: viewMode,
+    },
   }
 }

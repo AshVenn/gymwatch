@@ -28,7 +28,7 @@ const schema = z.object({
   address: z.string().optional(),
   city: z.string().optional(),
   country: z.string().optional(),
-  plan: z.enum(['BASIC', 'PRO']),
+  plan: z.enum(['BASIC', 'PRO', 'COMPLEX']),
   message: z.string().max(2000, 'Message trop long').optional(),
 })
 
@@ -289,12 +289,13 @@ export default function RequestDemoPage() {
                               <SelectTrigger>
                                 <SelectValue placeholder="Choisir un plan" />
                               </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              <SelectItem value="BASIC">Basic (gestion essentielle)</SelectItem>
-                              <SelectItem value="PRO">Pro (QR codes, exports)</SelectItem>
-                            </SelectContent>
-                          </Select>
+                              </FormControl>
+                              <SelectContent>
+                                <SelectItem value="BASIC">Basic (gestion essentielle)</SelectItem>
+                                <SelectItem value="PRO">Pro (QR codes, exports)</SelectItem>
+                                <SelectItem value="COMPLEX">Complex (multi-sites, cours)</SelectItem>
+                              </SelectContent>
+                            </Select>
                           <FormMessage />
                         </FormItem>
                       )}

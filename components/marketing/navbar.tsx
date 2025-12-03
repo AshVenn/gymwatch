@@ -54,6 +54,7 @@ export function MarketingNavbar({ links = [], className }: MarketingNavbarProps)
     : [
         { label: 'Fonctionnalités', href: '#features' },
         { label: "Plans", href: '#plans' },
+        { label: 'FAQs', href: '/faqs' },
         { label: 'Contact', href: '#contact' },
       ]
 

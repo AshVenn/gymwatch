@@ -1,0 +1,244 @@
+import { NextRequest, NextResponse } from "next/server"
+import { getServerSession } from "next-auth"
+import { z } from "zod"
+import { AccessEventSource, AccessEventStatus, Prisma } from "@prisma/client"
+
+import { authOptions } from "@/lib/auth-middleware"
+import { prisma } from "@/lib/prisma"
+import { hasPlanFeature } from "@/lib/subscription-plans"
+import { resolveAccessEventStatus } from "@/lib/access-events"
+import { markVisitForMember } from "@/lib/visits"
+import { resolveVariantAccess } from "@/lib/variant-access"
+
+const createSchema = z
+  .object({
+    memberId: z.string().optional(),
+    token: z.string().optional(),
+    source: z.nativeEnum(AccessEventSource).optional(),
+    markVisit: z.boolean().optional(),
+  })
+  .refine((payload) => Boolean(payload.memberId || payload.token), {
+    message: "memberId ou token requis",
+  })
+
+function parseStatus(value: string | null): AccessEventStatus | null {
+  if (!value) return null
+  return Object.values(AccessEventStatus).includes(value as AccessEventStatus)
+    ? (value as AccessEventStatus)
+    : null
+}
+
+function parseSource(value: string | null): AccessEventSource | null {
+  if (!value) return null
+  return Object.values(AccessEventSource).includes(value as AccessEventSource)
+    ? (value as AccessEventSource)
+    : null
+}
+
+export async function GET(request: NextRequest) {
+  const session = await getServerSession(authOptions)
+  const gymId = (session?.user as any)?.gymId as string | undefined
+  const role = (session?.user as any)?.role as string | undefined
+  const gymVariantId = (session?.user as any)?.gymVariantId as string | undefined
+  const tier = (session?.user as any)?.subscriptionPlan ?? null
+
+  if (!gymId) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+  }
+  if (!hasPlanFeature(tier, "accessControl")) {
+    return NextResponse.json({ error: "Plan Pro ou Complex requis" }, { status: 403 })
+  }
+  if (role === "GYM_ADMIN" && !gymVariantId) {
+    return NextResponse.json({ error: "Variant manquant" }, { status: 403 })
+  }
+
+  const params = request.nextUrl.searchParams
+  const statusFilter = parseStatus(params.get("status"))
+  const sourceFilter = parseSource(params.get("source"))
+  const memberFilter = params.get("memberId") || null
+  const requestedVariant = params.get("variantId")
+  const search = params.get("q")?.trim() ?? ""
+  const from = params.get("from")
+  const to = params.get("to")
+
+  const limitRaw = Number(params.get("limit"))
+  const limit = Number.isFinite(limitRaw) ? Math.min(Math.max(Math.floor(limitRaw), 1), 500) : 200
+
+  const variantAccess = await resolveVariantAccess({
+    gymId,
+    tier,
+    role,
+    requestedVariantId: requestedVariant,
+    sessionVariantId: gymVariantId,
+  })
+
+  if (!variantAccess.ok) {
+    return NextResponse.json(
+      {
+        error: variantAccess.message,
+        code: variantAccess.code,
+        variantMode: variantAccess.variantMode,
+        defaultVariantId: variantAccess.defaultVariantId,
+        multiLocationAllowed: variantAccess.multiLocationAllowed,
+      },
+      { status: variantAccess.status },
+    )
+  }
+
+  const variantId = variantAccess.variantId
+
+  const createdAt: Prisma.DateTimeFilter = {}
+  if (from) {
+    const fromDate = new Date(from)
+    if (Number.isNaN(fromDate.getTime())) {
+      return NextResponse.json({ error: "Date de début invalide" }, { status: 400 })
+    }
+    createdAt.gte = fromDate
+  }
+  if (to) {
+    const toDate = new Date(to)
+    if (Number.isNaN(toDate.getTime())) {
+      return NextResponse.json({ error: "Date de fin invalide" }, { status: 400 })
+    }
+    createdAt.lte = toDate
+  }
+
+  const where: Prisma.AccessEventWhereInput = {
+    ...(statusFilter ? { status: statusFilter } : {}),
+    ...(sourceFilter ? { source: sourceFilter } : {}),
+    ...(memberFilter ? { memberId: memberFilter } : {}),
+    ...(from || to ? { createdAt } : {}),
+    member: {
+      gymId,
+      ...(variantId ? { gymVariantId: variantId } : {}),
+      ...(search
+        ? {
+            OR: [
+              { firstName: { contains: search, mode: "insensitive" } },
+              { lastName: { contains: search, mode: "insensitive" } },
+              { email: { contains: search, mode: "insensitive" } },
+            ],
+          }
+        : {}),
+    },
+  }
+
+  try {
+    const events = await prisma.accessEvent.findMany({
+      where,
+      orderBy: { createdAt: "desc" },
+      take: limit,
+      include: {
+        member: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            email: true,
+            gymVariantId: true,
+            gymVariant: { select: { id: true, name: true, slug: true } },
+          },
+        },
+      },
+    })
+
+    return NextResponse.json({ events })
+  } catch (error) {
+    console.error("[access-events][get]", error)
+    return NextResponse.json({ error: "Impossible de charger les accès" }, { status: 500 })
+  }
+}
+
+export async function POST(request: NextRequest) {
+  const session = await getServerSession(authOptions)
+  const gymId = (session?.user as any)?.gymId as string | undefined
+  const role = (session?.user as any)?.role as string | undefined
+  const gymVariantId = (session?.user as any)?.gymVariantId as string | undefined
+  const tier = (session?.user as any)?.subscriptionPlan ?? null
+
+  if (!gymId) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+  }
+  if (!hasPlanFeature(tier, "accessControl")) {
+    return NextResponse.json({ error: "Plan Pro ou Complex requis" }, { status: 403 })
+  }
+  if (role === "GYM_ADMIN" && !gymVariantId) {
+    return NextResponse.json({ error: "Variant manquant" }, { status: 403 })
+  }
+
+  try {
+    const payload = createSchema.parse(await request.json())
+    const shouldMarkVisit = payload.markVisit ?? false
+    const variantGuard = role === "GYM_ADMIN" ? gymVariantId : undefined
+
+    let member =
+      payload.memberId && !payload.token
+        ? await prisma.member.findFirst({
+            where: {
+              id: payload.memberId,
+              gymId,
+              ...(variantGuard ? { gymVariantId: variantGuard } : {}),
+            },
+            include: { gymVariant: { select: { id: true, name: true, slug: true } } },
+          })
+        : null
+
+    if (!member && payload.token) {
+      member = await prisma.member.findFirst({
+        where: {
+          qrToken: payload.token,
+          gymId,
+          ...(variantGuard ? { gymVariantId: variantGuard } : {}),
+        },
+        include: { gymVariant: { select: { id: true, name: true, slug: true } } },
+      })
+    }
+
+    if (!member) {
+      return NextResponse.json({ error: "Membre introuvable" }, { status: 404 })
+    }
+
+    const visit = await markVisitForMember({
+      gymId,
+      memberId: member.id,
+      markVisit: shouldMarkVisit,
+      allowedVariantId: variantGuard,
+    })
+    const status = resolveAccessEventStatus(visit)
+    const event = await prisma.accessEvent.create({
+      data: {
+        memberId: member.id,
+        status,
+        source: payload.source ?? AccessEventSource.SIMULATOR,
+      },
+      include: {
+        member: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            email: true,
+            gymVariant: { select: { id: true, name: true, slug: true } },
+          },
+        },
+      },
+    })
+
+    return NextResponse.json({ event, visit, accessStatus: status })
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      return NextResponse.json({ error: "Payload invalide" }, { status: 400 })
+    }
+    const message = error instanceof Error ? error.message : "Impossible d'enregistrer l'accès"
+    const status =
+      message === "Membre introuvable"
+        ? 404
+        : message === "Member not found"
+          ? 404
+          : message === "FORBIDDEN_VARIANT"
+            ? 403
+            : 500
+    console.error("[access-events][post]", error)
+    return NextResponse.json({ error: message }, { status })
+  }
+}

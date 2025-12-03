@@ -1,4 +1,4 @@
-const { PrismaClient, UserRole } = require('@prisma/client')
+const { PrismaClient, UserRole, AccessEventStatus, AccessEventSource } = require('@prisma/client')
 const bcrypt = require('bcrypt')
 
 const prisma = new PrismaClient()
@@ -28,6 +28,18 @@ function addDays(baseDate, days) {
   const date = new Date(baseDate)
   date.setDate(date.getDate() + days)
   return date
+}
+
+function startOfDay(date) {
+  const next = new Date(date)
+  next.setHours(0, 0, 0, 0)
+  return next
+}
+
+function buildVisitDate(baseDate, dayOffset, hour = 9, minute = 0) {
+  const day = startOfDay(addDays(baseDate, dayOffset))
+  day.setHours(hour, minute, 0, 0)
+  return day
 }
 
 function buildAnalyticsSnapshot(baseRevenue = 10000) {
@@ -141,6 +153,55 @@ async function createSubscriptions(members, gym, plans, extraOffset = 0) {
   }
 }
 
+async function seedVisitsForGym(gym, visitConfigs) {
+  const today = startOfDay(new Date())
+  const lastVisitByMember = new Map()
+
+  for (const config of visitConfigs) {
+    const checkIn = buildVisitDate(today, config.dayOffset ?? 0, config.hour ?? 9, config.minute ?? 0)
+    const durationMinutes = config.durationMinutes ?? 75
+    const checkOut =
+      config.checkout === false ? null : new Date(checkIn.getTime() + durationMinutes * 60 * 1000)
+
+    const created = await prisma.visit.create({
+      data: {
+        gymId: gym.id,
+        memberId: config.member.id,
+        gymVariantId: config.member.gymVariantId,
+        checkIn,
+        checkOut,
+      },
+    })
+
+    const prev = lastVisitByMember.get(config.member.id)
+    if (!prev || prev.getTime() < created.checkIn.getTime()) {
+      lastVisitByMember.set(config.member.id, created.checkIn)
+    }
+  }
+
+  for (const [memberId, lastVisitAt] of lastVisitByMember.entries()) {
+    await prisma.member.update({
+      where: { id: memberId },
+      data: { lastVisitedAt: lastVisitAt },
+    })
+  }
+
+  const todayVisits = await prisma.visit.count({
+    where: {
+      gymId: gym.id,
+      checkIn: { gte: today, lt: addDays(today, 1) },
+    },
+  })
+
+  await prisma.gym.update({
+    where: { id: gym.id },
+    data: {
+      todayVisitorCount: todayVisits,
+      todayVisitorDate: today,
+    },
+  })
+}
+
 async function upsertOwner({ email, password, firstName, lastName, gymId, gymVariantId }) {
   const hashed = await hashPassword(password)
 
@@ -203,6 +264,8 @@ async function runSeed() {
   await prisma.$transaction([
     prisma.systemSettings.deleteMany(),
     prisma.demoRequest.deleteMany(),
+    prisma.accessEvent.deleteMany(),
+    prisma.visit.deleteMany(),
     prisma.payment.deleteMany(),
     prisma.subscription.deleteMany(),
     prisma.member.deleteMany(),
@@ -227,6 +290,8 @@ async function runSeed() {
       payoutReport: false,
       gymSettingsIntervalMs: 60000,
       userSettingsIntervalMs: 30000,
+      accessLogRetentionDays: 90,
+      lastPurgeAt: null,
     },
   })
   console.log('System settings initialized')
@@ -697,24 +762,6 @@ async function runSeed() {
   ])
   console.log('Created members for Demo gym')
 
-  const visitStamp = new Date(todayStart.getTime() + 9 * 60 * 60 * 1000)
-  await prisma.member.updateMany({
-    where: { id: { in: [members1[0].id, members1[1].id] } },
-    data: { lastVisitedAt: visitStamp },
-  })
-  await prisma.member.updateMany({
-    where: { id: { in: [members2[0].id] } },
-    data: { lastVisitedAt: visitStamp },
-  })
-  await prisma.gym.update({
-    where: { id: gym1.id },
-    data: { todayVisitorCount: 2, todayVisitorDate: todayStart },
-  })
-  await prisma.gym.update({
-    where: { id: gym2.id },
-    data: { todayVisitorCount: 1, todayVisitorDate: todayStart },
-  })
-
   await createSubscriptions(members1, gym1, plans1)
   const members2VariantA = members2.slice(0, 3)
   const members2VariantB = members2.slice(3)
@@ -727,6 +774,67 @@ async function runSeed() {
   await createSubscriptions(demoVariantMembersB, demoGym, [plansDemo[1]], 2)
   await createSubscriptions(demoVariantMembersC, demoGym, [plansDemo[2]], 4)
   console.log('?? Created subscriptions and payments')
+
+  await seedVisitsForGym(gym1, [
+    { member: members1[0], dayOffset: 0, hour: 9, durationMinutes: 80, checkout: false },
+    { member: members1[0], dayOffset: -1, hour: 18, durationMinutes: 70 },
+    { member: members1[1], dayOffset: 0, hour: 11, durationMinutes: 60 },
+    { member: members1[1], dayOffset: -3, hour: 10, durationMinutes: 55 },
+    { member: members1[2], dayOffset: -2, hour: 17, durationMinutes: 90 },
+    { member: members1[3], dayOffset: -5, hour: 8, durationMinutes: 50 },
+  ])
+
+  await seedVisitsForGym(gym2, [
+    { member: members2[0], dayOffset: 0, hour: 8, durationMinutes: 50 },
+    { member: members2[0], dayOffset: -1, hour: 19, durationMinutes: 55 },
+    { member: members2[1], dayOffset: -2, hour: 12, durationMinutes: 70, checkout: false },
+    { member: members2[2], dayOffset: -3, hour: 17, durationMinutes: 65 },
+    { member: members2[3], dayOffset: 0, hour: 18, durationMinutes: 45 },
+  ])
+
+  await seedVisitsForGym(demoGym, [
+    { member: membersDemo[0], dayOffset: -1, hour: 10, durationMinutes: 75 },
+    { member: membersDemo[0], dayOffset: -4, hour: 16, durationMinutes: 80 },
+    { member: membersDemo[1], dayOffset: 0, hour: 9, durationMinutes: 70 },
+    { member: membersDemo[2], dayOffset: 0, hour: 7, durationMinutes: 60, checkout: false },
+    { member: membersDemo[3], dayOffset: -3, hour: 14, durationMinutes: 90 },
+  ])
+
+  await prisma.accessEvent.createMany({
+    data: [
+      {
+        memberId: members1[0].id,
+        status: AccessEventStatus.GRANTED,
+        source: AccessEventSource.QR_SCAN,
+        createdAt: addDays(today, -1),
+      },
+      {
+        memberId: members1[1].id,
+        status: AccessEventStatus.ALREADY_CHECKED_IN,
+        source: AccessEventSource.SIMULATOR,
+        createdAt: addDays(today, -2),
+      },
+      {
+        memberId: members1[2].id,
+        status: AccessEventStatus.DENIED_EXPIRED,
+        source: AccessEventSource.QR_SCAN,
+        createdAt: addDays(today, -3),
+      },
+      {
+        memberId: members2[0].id,
+        status: AccessEventStatus.DENIED_INACTIVE,
+        source: AccessEventSource.MANUAL,
+        createdAt: addDays(today, -1),
+      },
+      {
+        memberId: membersDemo[0].id,
+        status: AccessEventStatus.GRANTED,
+        source: AccessEventSource.SIMULATOR,
+        createdAt: addDays(today, -5),
+      },
+    ],
+  })
+  console.log('Seeded access events')
 
   await prisma.demoRequest.createMany({
     data: [

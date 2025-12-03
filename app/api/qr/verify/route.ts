@@ -1,9 +1,11 @@
 import { NextRequest, NextResponse } from "next/server"
 import { getServerSession } from "next-auth"
+import { AccessEventSource } from "@prisma/client"
 import { authOptions } from "@/lib/auth-middleware"
 import { prisma } from "@/lib/prisma"
 import { hasPlanFeature } from "@/lib/subscription-plans"
 import { markVisitForMember } from "@/lib/visits"
+import { resolveAccessEventStatus } from "@/lib/access-events"
 
 export async function POST(request: NextRequest) {
   const session = await getServerSession(authOptions)
@@ -16,8 +18,8 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
   }
 
-  if (!hasPlanFeature(tier, "qrTools")) {
-    return NextResponse.json({ error: "Plan PRO requis" }, { status: 403 })
+  if (!hasPlanFeature(tier, "accessControl")) {
+    return NextResponse.json({ error: "Plan Pro ou Complex requis" }, { status: 403 })
   }
 
   const { token, markVisit = true } = await request.json()
@@ -45,6 +47,19 @@ export async function POST(request: NextRequest) {
     markVisit,
     allowedVariantId: role === "GYM_ADMIN" ? gymVariantId : undefined,
   })
+
+  try {
+    const status = resolveAccessEventStatus(visit)
+    await prisma.accessEvent.create({
+      data: {
+        memberId: member.id,
+        status,
+        source: AccessEventSource.QR_SCAN,
+      },
+    })
+  } catch (error) {
+    console.error("[access-event][qr-verify]", error)
+  }
 
   return NextResponse.json({
     member: {

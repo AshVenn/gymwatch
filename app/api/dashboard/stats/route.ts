@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth-middleware"
 import { prisma } from "@/lib/prisma"
 import { daysUntilExpiry } from "@/lib/subscription-status"
+import { resolveVariantAccess } from "@/lib/variant-access"
 
 export async function GET(request: NextRequest) {
   try {
@@ -11,6 +12,7 @@ export async function GET(request: NextRequest) {
     const gymId = (session?.user as any)?.gymId as string | undefined
     const role = (session?.user as any)?.role as string | undefined
     const sessionVariantId = (session?.user as any)?.gymVariantId as string | undefined
+    const tier = (session?.user as any)?.subscriptionPlan ?? null
 
     if (!gymId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
@@ -22,19 +24,28 @@ export async function GET(request: NextRequest) {
 
     const searchParams = request.nextUrl.searchParams
     const requestedVariantId = searchParams.get("variantId")
-    let gymVariantId: string | undefined =
-      role === "GYM_ADMIN" ? sessionVariantId : undefined
+    const variantAccess = await resolveVariantAccess({
+      gymId,
+      tier,
+      role,
+      requestedVariantId,
+      sessionVariantId,
+    })
 
-    if (role === "GYM_OWNER" && requestedVariantId && requestedVariantId !== "all") {
-      const variant = await prisma.gymVariant.findFirst({
-        where: { id: requestedVariantId, gymId },
-        select: { id: true },
-      })
-      if (!variant) {
-        return NextResponse.json({ error: "Variant invalide" }, { status: 400 })
-      }
-      gymVariantId = variant.id
+    if (!variantAccess.ok) {
+      return NextResponse.json(
+        {
+          error: variantAccess.message,
+          code: variantAccess.code,
+          variantMode: variantAccess.variantMode,
+          defaultVariantId: variantAccess.defaultVariantId,
+          multiLocationAllowed: variantAccess.multiLocationAllowed,
+        },
+        { status: variantAccess.status },
+      )
     }
+
+    const gymVariantId = variantAccess.variantId
 
     const today = new Date()
     today.setHours(0, 0, 0, 0)
@@ -46,7 +57,7 @@ export async function GET(request: NextRequest) {
     const revenueVisible = role !== "GYM_ADMIN"
     let monthlyRevenue = 0
     let percentageChange = 0
-    let revenueByMonth: { month: string; revenue: number }[] = []
+    const revenueByMonth: { month: string; revenue: number }[] = []
 
     if (revenueVisible) {
       const currentAgg = await prisma.payment.aggregate({
@@ -204,6 +215,11 @@ export async function GET(request: NextRequest) {
       todayVisitorCount,
       canViewRevenue: revenueVisible,
       gymVariantId: gymVariantId ?? null,
+      variantScope: {
+        variantId: gymVariantId ?? null,
+        variantMode: variantAccess.variantMode,
+        multiLocationAllowed: variantAccess.multiLocationAllowed,
+      },
     })
   } catch (error) {
     console.error("Stats error:", error)

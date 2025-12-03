@@ -1,4 +1,5 @@
 'use client'
+import Link from 'next/link'
 import { useSession } from 'next-auth/react'
 import { useEffect, useMemo, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
@@ -29,7 +30,7 @@ import { Button } from '@/components/ui/button'
 import { usePlanFeatures } from '@/app/hooks/use-plan-features'
 import { PaginationControls } from '@/components/dashboard/pagination-controls'
 import { toast } from 'sonner'
-import { TrendingUp } from 'lucide-react'
+import { AlertTriangle, TrendingUp } from 'lucide-react'
 import { useVariantOptions } from '@/app/hooks/use-variants'
 import { VariantSelector } from '@/components/dashboard/variant-selector'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -48,7 +49,7 @@ interface DashboardStats {
 
 export default function DashboardPage() {
   const { data: session } = useSession()
-  const { hasExcelReports } = usePlanFeatures()
+  const { hasExcelReports, hasMultiLocations } = usePlanFeatures()
   const [downloading, setDownloading] = useState<string | null>(null)
   const {
     variants,
@@ -56,9 +57,27 @@ export default function DashboardPage() {
     setSelectedVariant,
     isGymAdmin,
     lockedVariantId,
+    defaultVariantId,
     isLoading: variantsLoading,
-  } = useVariantOptions()
-  const variantFilter = selectedVariant === 'all' ? null : selectedVariant
+  } = useVariantOptions({ allowAll: hasMultiLocations })
+  const isMultiVariantGym = variants.length > 1
+  const allowAllVariants = hasMultiLocations || !isMultiVariantGym
+  const multiVariantLocked = isMultiVariantGym && !hasMultiLocations
+  const variantFilter =
+    selectedVariant === 'all'
+      ? allowAllVariants
+        ? null
+        : defaultVariantId ?? variants[0]?.id ?? null
+      : selectedVariant
+
+  useEffect(() => {
+    if (!allowAllVariants && selectedVariant === 'all') {
+      const fallback = lockedVariantId ?? defaultVariantId ?? variants[0]?.id ?? 'all'
+      if (fallback && fallback !== 'all') {
+        setSelectedVariant(fallback)
+      }
+    }
+  }, [allowAllVariants, defaultVariantId, lockedVariantId, selectedVariant, setSelectedVariant, variants])
 
   const defaultStats = useMemo<DashboardStats>(() => ({
     monthlyRevenue: 0,
@@ -74,7 +93,7 @@ export default function DashboardPage() {
 
   const { data: stats = defaultStats, isLoading, isError } = useQuery({
     queryKey: ['dashboard-stats', session?.user?.gymId, variantFilter],
-    enabled: Boolean(session?.user?.gymId),
+    enabled: Boolean(session?.user?.gymId) && !variantsLoading,
     queryFn: async () => {
       const params = new URLSearchParams()
       if (variantFilter) {
@@ -196,7 +215,9 @@ export default function DashboardPage() {
       if (variantFilter) params.set('variantId', variantFilter)
       const response = await fetch(`/api/reports/excel?${params.toString()}`)
       if (!response.ok) {
-        throw new Error('Impossible de telecharger le rapport')
+        const payload = await response.json().catch(() => null)
+        const message = (payload as any)?.error ?? 'Impossible de telecharger le rapport'
+        throw new Error(message)
       }
       const blob = await response.blob()
       const url = URL.createObjectURL(blob)
@@ -219,15 +240,31 @@ export default function DashboardPage() {
         <p className="text-muted-foreground mt-2">Bienvenue dans votre espace de gestion</p>
       </div>
 
-      <div className="flex justify-end">
-        <VariantSelector
-          variants={variants}
-          value={selectedVariant}
-          onChange={setSelectedVariant}
-          isGymAdmin={isGymAdmin}
-          lockedVariantId={lockedVariantId}
-          loading={variantsLoading}
-        />
+      <div className="space-y-3">
+        <div className="flex justify-end">
+          <VariantSelector
+            variants={variants}
+            value={selectedVariant}
+            onChange={setSelectedVariant}
+            isGymAdmin={isGymAdmin}
+            lockedVariantId={lockedVariantId}
+            loading={variantsLoading}
+            allowAll={allowAllVariants}
+          />
+        </div>
+        {multiVariantLocked ? (
+          <div className="flex items-start gap-3 rounded-xl border border-amber-200/70 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+            <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-600" />
+            <div className="space-y-1">
+              <p className="font-semibold">Vue multi-salles reservee</p>
+              <p>
+                Votre plan actuel ne permet pas d&apos;agreger plusieurs variantes. Choisissez une salle
+                ou <Link href="/dashboard/settings" className="font-semibold text-amber-900 underline">mettez a niveau</Link>{' '}
+                pour debloquer les exports consolides.
+              </p>
+            </div>
+          </div>
+        ) : null}
       </div>
 
       {/* Stats Cards */}

@@ -11,7 +11,8 @@ export interface GymVariantOption {
   isDefault: boolean
 }
 
-export function useVariantOptions() {
+export function useVariantOptions(options: { allowAll?: boolean } = {}) {
+  const { allowAll = true } = options
   const { data: session } = useSession()
   const role = (session?.user as any)?.role as string | undefined
   const lockedVariantId = (session?.user as any)?.gymVariantId as string | undefined
@@ -31,7 +32,7 @@ export function useVariantOptions() {
   })
 
   const [selectedVariant, setSelectedVariant] = useState<string>(
-    isGymAdmin && lockedVariantId ? lockedVariantId : 'all',
+    isGymAdmin && lockedVariantId ? lockedVariantId : allowAll ? 'all' : '',
   )
 
   useEffect(() => {
@@ -39,6 +40,19 @@ export function useVariantOptions() {
       setSelectedVariant(lockedVariantId)
     }
   }, [isGymAdmin, lockedVariantId])
+
+  useEffect(() => {
+    if (!allowAll && (selectedVariant === 'all' || !selectedVariant)) {
+      const fallback =
+        lockedVariantId ??
+        query.data?.find((variant) => variant.isDefault)?.id ??
+        query.data?.[0]?.id ??
+        ''
+      if (fallback && fallback !== selectedVariant) {
+        setSelectedVariant(fallback)
+      }
+    }
+  }, [allowAll, lockedVariantId, query.data, selectedVariant])
 
   const defaultVariantId = useMemo(() => {
     const fallback = query.data?.[0]?.id
@@ -53,6 +67,8 @@ export function useVariantOptions() {
     lockedVariantId: lockedVariantId ?? null,
     role,
     defaultVariantId,
+    variantCount: query.data?.length ?? 0,
+    allowAll,
     isLoading: query.isLoading,
   }
 }

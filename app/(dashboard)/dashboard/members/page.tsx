@@ -101,7 +101,7 @@ export default function MembersPage() {
 
   const [isOpen, setIsOpen] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const { hasQrTools, hasQrDownloads, hasExcelReports } = usePlanFeatures()
+  const { hasQrTools, hasQrDownloads, hasExcelReports, hasMultiLocations } = usePlanFeatures()
   const [qrMember, setQrMember] = useState<Member | null>(null)
   const [qrImage, setQrImage] = useState<string>('')
   const [scannerEnabled, setScannerEnabled] = useState(false)
@@ -126,7 +126,7 @@ export default function MembersPage() {
     lockedVariantId,
     defaultVariantId,
     isLoading: variantsLoading,
-  } = useVariantOptions()
+  } = useVariantOptions({ allowAll: hasMultiLocations })
   const [memberVariantId, setMemberVariantId] = useState<string>('')
   const effectiveMemberVariantId = useMemo(
     () => memberVariantId || defaultVariantId || variants[0]?.id || '',
@@ -247,7 +247,9 @@ export default function MembersPage() {
       }
       const response = await fetch(`/api/reports/excel?${params.toString()}`)
       if (!response.ok) {
-        throw new Error('Export impossible')
+        const payload = await response.json().catch(() => null)
+        const message = (payload as any)?.error ?? 'Export impossible'
+        throw new Error(message)
       }
       const blob = await response.blob()
       const url = URL.createObjectURL(blob)
@@ -256,8 +258,10 @@ export default function MembersPage() {
       anchor.download = `member-${memberId}-${Date.now()}.xlsx`
       anchor.click()
       URL.revokeObjectURL(url)
-    } catch {
-      toast.error("Impossible de télécharger le rapport membre")
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "Impossible de telecharger le rapport membre"
+      toast.error(message)
     } finally {
       setMemberReportLoading(null)
     }
@@ -285,7 +289,21 @@ export default function MembersPage() {
     )
 
   const gymId = session.user.gymId
-  const variantFilter = selectedVariant === 'all' ? null : selectedVariant
+  const allowAllVariants = hasMultiLocations || variants.length <= 1
+  const variantFilter =
+    selectedVariant === 'all'
+      ? allowAllVariants
+        ? null
+        : defaultVariantId ?? variants[0]?.id ?? null
+      : selectedVariant
+  useEffect(() => {
+    if (!allowAllVariants && selectedVariant === 'all') {
+      const fallback = lockedVariantId ?? defaultVariantId ?? variants[0]?.id ?? 'all'
+      if (fallback && fallback !== 'all') {
+        setSelectedVariant(fallback)
+      }
+    }
+  }, [allowAllVariants, defaultVariantId, lockedVariantId, selectedVariant, setSelectedVariant, variants])
   const membersQueryKey = useMemo(() => ['members', gymId, variantFilter] as const, [gymId, variantFilter])
   const plansQueryKey = useMemo(() => ['plans', gymId, variantFilter] as const, [gymId, variantFilter])
 
@@ -295,7 +313,7 @@ export default function MembersPage() {
     isError: membersError,
   } = useQuery<Member[]>({
     queryKey: membersQueryKey,
-    enabled: status === 'authenticated',
+    enabled: status === 'authenticated' && !variantsLoading,
     queryFn: async () => {
       const params = new URLSearchParams()
       if (variantFilter) {
@@ -331,7 +349,7 @@ export default function MembersPage() {
 
   const { data: plans = [] } = useQuery<Plan[]>({
     queryKey: plansQueryKey,
-    enabled: status === 'authenticated',
+    enabled: status === 'authenticated' && !variantsLoading,
     queryFn: async () => {
       const params = new URLSearchParams()
       if (variantFilter) {
@@ -565,6 +583,8 @@ export default function MembersPage() {
             isGymAdmin={isGymAdmin}
             lockedVariantId={lockedVariantId}
             loading={variantsLoading}
+            allowAll={allowAllVariants}
+            lockedMessage="Vue multi-salles et exports reserves au plan Complex"
           />
           <Dialog open={visitDialogOpen} onOpenChange={setVisitDialogOpen}>
             <DialogTrigger asChild>
@@ -991,3 +1011,5 @@ export default function MembersPage() {
     </div>
   )
 }
+
+

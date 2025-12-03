@@ -1,7 +1,8 @@
 ﻿import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
+import type { PlanFeatures } from '@/lib/subscription-plans'
 
-export type GymPlanTier = 'BASIC' | 'PRO'
+export type GymPlanTier = 'BASIC' | 'PRO' | 'COMPLEX'
 export type GymSubscriptionStatus = 'ACTIVE' | 'SUSPENDED' | 'EXPIRED'
 export type GymBillingInterval = 'MONTHLY' | 'ANNUAL'
 export type DemoRequestStatus = 'PENDING' | 'RESOLVED' | 'REFUSED'
@@ -62,6 +63,8 @@ export interface SuperAdminGym {
     isDefault: boolean
   }[]
   variantCount?: number
+  variantMode?: 'SINGLE' | 'MULTI'
+  planFeatures?: PlanFeatures
 }
 
 export interface SuperAdminGymDetail extends SuperAdminGym {
@@ -201,6 +204,28 @@ export function useUpdateGym() {
       queryClient.invalidateQueries({ queryKey: ['super-admin', 'stats'] })
       queryClient.invalidateQueries({ queryKey: ['super-admin', 'gym', variables.gymId] })
       toast.success('Abonnement mis a jour')
+    },
+    onError: (error: Error) => {
+      toast.error(error.message)
+    },
+  })
+}
+
+export function usePurgeAccessLogs() {
+  return useMutation({
+    mutationFn: async () => {
+      return fetchJSON<{ deleted: number; lastPurgeAt?: string | null; retentionDays?: number; message?: string }>(
+        '/api/admin/access-logs/purge',
+        { method: 'POST' },
+      )
+    },
+    onSuccess: (data) => {
+      const base =
+        data.deleted > 0 ? `${data.deleted} logs supprimes` : 'Aucun log a supprimer'
+      const detail = data.retentionDays ? `${base} (retention ${data.retentionDays} jours)` : base
+      toast.success('Purge effectuee', {
+        description: data.message ?? detail,
+      })
     },
     onError: (error: Error) => {
       toast.error(error.message)

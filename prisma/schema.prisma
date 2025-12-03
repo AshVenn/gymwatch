@@ -22,6 +22,7 @@ enum UserRole {
 enum GymPlanTier {
   BASIC
   PRO
+  COMPLEX
 }
 
 enum GymBillingInterval {
@@ -47,6 +48,26 @@ enum DemoRequestStatus {
   REFUSED
 }
 
+enum AccessEventStatus {
+  GRANTED
+  ALREADY_CHECKED_IN
+  DENIED_EXPIRED
+  DENIED_INACTIVE
+  DENIED_FORBIDDEN
+}
+
+enum AccessEventSource {
+  QR_SCAN
+  SIMULATOR
+  MANUAL
+}
+
+enum ClassBookingStatus {
+  CONFIRMED
+  WAITLISTED
+  CANCELLED
+}
+
 /**
  * ============================
  * MODELS
@@ -64,6 +85,8 @@ model SystemSettings {
   payoutReport          Boolean  @default(false)
   gymSettingsIntervalMs Int      @default(60000)
   userSettingsIntervalMs Int     @default(30000)
+  accessLogRetentionDays Int     @default(90)
+  lastPurgeAt           DateTime?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -120,6 +143,8 @@ model Gym {
   subscriptions               Subscription[]
   payments                    Payment[]
   variants                    GymVariant[]
+  visits                      Visit[]
+  classSessions               ClassSession[]
   createdDemoRequests         DemoRequest[]         @relation("DemoRequestCreatedGym")
   createdAt                   DateTime              @default(now())
   updatedAt                   DateTime              @updatedAt
@@ -136,6 +161,8 @@ model GymVariant {
   subscriptions Subscription[]
   membershipPlans MembershipPlan[]
   admins      User[]
+  visits      Visit[]
+  classSessions ClassSession[]
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
@@ -191,6 +218,9 @@ model Member {
   lastVisitedAt DateTime?
 
   subscriptions Subscription[]
+  visits       Visit[]
+  accessEvents AccessEvent[]
+  classBookings ClassBooking[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -273,4 +303,73 @@ model DemoRequest {
   createdGym     Gym?              @relation("DemoRequestCreatedGym", fields: [createdGymId], references: [id], onDelete: SetNull)
   createdAt      DateTime          @default(now())
   updatedAt      DateTime          @updatedAt
+}
+
+model AccessEvent {
+  id        String            @id @default(cuid())
+  memberId  String
+  member    Member            @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  status    AccessEventStatus
+  source    AccessEventSource @default(SIMULATOR)
+  createdAt DateTime          @default(now())
+
+  @@index([memberId])
+  @@index([createdAt])
+}
+
+model Visit {
+  id           String     @id @default(cuid())
+  gymId        String
+  gym          Gym        @relation(fields: [gymId], references: [id], onDelete: Cascade)
+  memberId     String
+  member       Member     @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  gymVariantId String
+  gymVariant   GymVariant @relation(fields: [gymVariantId], references: [id], onDelete: Cascade)
+  checkIn      DateTime   @default(now())
+  checkOut     DateTime?
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
+  @@index([gymId])
+  @@index([memberId])
+  @@index([gymVariantId])
+  @@index([checkIn])
+}
+
+model ClassSession {
+  id            String     @id @default(cuid())
+  gymId         String
+  gym           Gym        @relation(fields: [gymId], references: [id], onDelete: Cascade)
+  gymVariantId  String
+  gymVariant    GymVariant @relation(fields: [gymVariantId], references: [id], onDelete: Cascade)
+  title         String
+  coach         String?
+  room          String?
+  capacity      Int        @default(0)
+  startAt       DateTime
+  endAt         DateTime
+  waitlist      Boolean    @default(true)
+  bookings      ClassBooking[]
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+
+  @@index([gymId])
+  @@index([gymVariantId])
+  @@index([startAt])
+}
+
+model ClassBooking {
+  id             String             @id @default(cuid())
+  classSessionId String
+  classSession   ClassSession       @relation(fields: [classSessionId], references: [id], onDelete: Cascade)
+  memberId       String
+  member         Member             @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  status         ClassBookingStatus @default(CONFIRMED)
+  position       Int                @default(0)
+  createdAt      DateTime           @default(now())
+  updatedAt      DateTime           @updatedAt
+
+  @@index([memberId])
+  @@index([status])
+  @@unique([classSessionId, memberId])
 }

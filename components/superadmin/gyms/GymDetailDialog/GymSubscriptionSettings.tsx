@@ -9,6 +9,8 @@ import { useForm } from 'react-hook-form'
 import { z } from 'zod'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form'
+import { PlanModuleBadges } from '../PlanModules'
+import { getPlanFeatures } from '@/lib/subscription-plans'
 
 type Props = {
   gym: SuperAdminGymDetail
@@ -16,7 +18,7 @@ type Props = {
 
 const schema = z.object({
   status: z.enum(['ACTIVE', 'SUSPENDED', 'EXPIRED']),
-  plan: z.enum(['BASIC', 'PRO']),
+  plan: z.enum(['BASIC', 'PRO', 'COMPLEX']),
   interval: z.enum(['MONTHLY', 'ANNUAL']),
   expiresAt: z.string().optional(),
   grace: z.coerce.number().min(0).max(30),
@@ -39,6 +41,8 @@ export function GymSubscriptionSettings({ gym }: Props) {
       maxAdmins: gym.maxAdminAccounts,
     },
   })
+  const planFeatures = gym.planFeatures ?? getPlanFeatures(gym.subscriptionPlan)
+  const variantTotal = gym.variantCount ?? gym.variants?.length ?? 0
 
   const [downloading, setDownloading] = useState<string | null>(null)
 
@@ -100,6 +104,14 @@ export function GymSubscriptionSettings({ gym }: Props) {
       </CardHeader>
 
       <CardContent>
+        <div className="mb-4 rounded-lg border border-border/60 bg-muted/20 p-4">
+          <p className="text-sm font-semibold">Modules actifs</p>
+          <PlanModuleBadges features={planFeatures} />
+          <p className="mt-2 text-xs text-muted-foreground">
+            {gym.variantMode === 'MULTI' ? 'Multi-salles' : 'Mono-salle'} - {variantTotal} variante(s)
+          </p>
+        </div>
+
         <Form {...form}>
           <form className="space-y-4" onSubmit={form.handleSubmit(onSubmit)}>
             {/* Status */}
@@ -142,6 +154,7 @@ export function GymSubscriptionSettings({ gym }: Props) {
                       <SelectContent>
                         <SelectItem value="BASIC">Basic</SelectItem>
                         <SelectItem value="PRO">Pro</SelectItem>
+                        <SelectItem value="COMPLEX">Complex</SelectItem>
                       </SelectContent>
                     </Select>
                   </FormItem>

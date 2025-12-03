@@ -22,6 +22,7 @@ import {
   FormMessage,
 } from '@/components/ui/form'
 import { Skeleton } from '@/components/ui/skeleton'
+import { usePurgeAccessLogs } from '@/app/(dashboard)/super-admin/hooks'
 
 const settingsSchema = z.object({
   supportEmail: z.string().email('Email invalide'),
@@ -33,6 +34,7 @@ const settingsSchema = z.object({
   payoutReport: z.boolean(),
   gymSettingsIntervalMs: z.coerce.number().int().min(5_000).max(3_600_000),
   userSettingsIntervalMs: z.coerce.number().int().min(5_000).max(3_600_000),
+  accessLogRetentionDays: z.coerce.number().int().min(1).max(3_650),
 })
 
 const passwordSchema = z
@@ -59,12 +61,15 @@ const defaults: SettingsFormValues = {
   payoutReport: false,
   gymSettingsIntervalMs: 60_000,
   userSettingsIntervalMs: 30_000,
+  accessLogRetentionDays: 90,
 }
 
 export default function SuperAdminSettingsPage() {
   const [loading, setLoading] = useState(true)
   const [pendingSettings, startSettingsTransition] = useTransition()
   const [pendingPassword, startPasswordTransition] = useTransition()
+  const [lastPurgeAt, setLastPurgeAt] = useState<Date | null>(null)
+  const purgeLogs = usePurgeAccessLogs()
 
   const settingsForm = useForm<SettingsFormValues>({
     resolver: zodResolver(settingsSchema),
@@ -98,7 +103,11 @@ export default function SuperAdminSettingsPage() {
             payoutReport: Boolean(data.payoutReport),
             gymSettingsIntervalMs: Number(data.gymSettingsIntervalMs ?? defaults.gymSettingsIntervalMs),
             userSettingsIntervalMs: Number(data.userSettingsIntervalMs ?? defaults.userSettingsIntervalMs),
+            accessLogRetentionDays: Number(
+              data.accessLogRetentionDays ?? defaults.accessLogRetentionDays,
+            ),
           })
+          setLastPurgeAt(data.lastPurgeAt ? new Date(data.lastPurgeAt) : null)
         }
       } catch (error) {
         toast.error(error instanceof Error ? error.message : 'Erreur de chargement')
@@ -149,6 +158,18 @@ export default function SuperAdminSettingsPage() {
     })
   }
 
+  const triggerPurge = () => {
+    purgeLogs.mutate(undefined, {
+      onSuccess: (data) => {
+        setLastPurgeAt(data?.lastPurgeAt ? new Date(data.lastPurgeAt) : new Date())
+      },
+    })
+  }
+
+  const lastPurgeLabel = lastPurgeAt
+    ? lastPurgeAt.toLocaleString('fr-FR', { dateStyle: 'medium', timeStyle: 'short' })
+    : 'Jamais'
+
   if (loading) {
     return (
       <div className="space-y-4">
@@ -175,6 +196,9 @@ export default function SuperAdminSettingsPage() {
         </Badge>
         <Badge variant="outline">
           Intervalle utilisateur: {settingsForm.watch('userSettingsIntervalMs') ?? defaults.userSettingsIntervalMs} ms
+        </Badge>
+        <Badge variant="outline">
+          Retention logs: {settingsForm.watch('accessLogRetentionDays') ?? defaults.accessLogRetentionDays} jours
         </Badge>
         <span className="text-xs text-muted-foreground">Valeurs chargees depuis la base</span>
       </div>
@@ -256,10 +280,46 @@ export default function SuperAdminSettingsPage() {
                           <Input type="number" min={5000} max={3600000} {...field} />
                         </FormControl>
                         <FormDescription>Anti-spam sur les préférences utilisateur.</FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+
+                <div className="grid gap-3 md:grid-cols-[2fr,1fr]">
+                  <FormField
+                    control={settingsForm.control}
+                    name="accessLogRetentionDays"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Retention logs (jours)</FormLabel>
+                        <FormControl>
+                          <Input type="number" min={1} max={3650} {...field} />
+                        </FormControl>
+                        <FormDescription>Duree de conservation des acces admin.</FormDescription>
                         <FormMessage />
                       </FormItem>
                     )}
                   />
+
+                  <div className="flex flex-col justify-between rounded-lg border p-3">
+                    <div className="space-y-1">
+                      <FormLabel>Purge manuelle</FormLabel>
+                      <FormDescription>Supprime les traces plus vieilles que la retention.</FormDescription>
+                      <p className="text-xs text-muted-foreground">
+                        Derniere purge: <span className="text-foreground">{lastPurgeLabel}</span>
+                      </p>
+                    </div>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="mt-3 w-full"
+                      disabled={purgeLogs.isPending}
+                      onClick={triggerPurge}
+                    >
+                      {purgeLogs.isPending ? 'Purge en cours...' : 'Purger maintenant'}
+                    </Button>
+                  </div>
                 </div>
 
                 <div className="grid gap-3">

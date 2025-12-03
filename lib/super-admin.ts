@@ -1,7 +1,7 @@
 import { GymSubscriptionStatus, UserRole } from "@prisma/client"
 import { prisma } from "./prisma"
 import { hashPassword } from "./auth"
-import { resolvePlanPrice } from "./subscription-plans"
+import { getPlanFeatures, resolvePlanPrice } from "./subscription-plans"
 import { GymPlanTier, GymBillingInterval } from "@prisma/client"
 
 function getMonthBoundaries(offset: number) {
@@ -46,6 +46,14 @@ function normalizeVariants(
   }
 
   return normalized
+}
+
+function resolveVariantMode(
+  count?: number,
+  variants?: { id: string }[],
+) {
+  const total = typeof count === "number" ? count : variants?.length ?? 0
+  return total > 1 ? "MULTI" : "SINGLE"
 }
 
 export async function getSuperAdminOverview() {
@@ -183,6 +191,7 @@ export async function listGymsForSuperAdmin() {
     const daysRemaining = gym.subscriptionExpiresAt
       ? Math.ceil((gym.subscriptionExpiresAt.getTime() - Date.now()) / (1000 * 60 * 60 * 24))
       : null
+    const variantMode = resolveVariantMode(gym._count.variants, gym.variants)
 
     return {
       id: gym.id,
@@ -217,6 +226,8 @@ export async function listGymsForSuperAdmin() {
       maxAdminAccounts: gym.maxAdminAccounts,
       variants: gym.variants,
       variantCount: gym._count.variants,
+      planFeatures: getPlanFeatures(gym.subscriptionPlan),
+      variantMode,
     }
   })
 }
@@ -286,6 +297,7 @@ export async function getSuperAdminGymDetail(gymId: string) {
   const daysRemaining = gym.subscriptionExpiresAt
     ? Math.ceil((gym.subscriptionExpiresAt.getTime() - Date.now()) / (1000 * 60 * 60 * 24))
     : null
+  const variantMode = resolveVariantMode(gym._count.variants, gym.variants)
 
   const paymentsLast30Days = await prisma.payment.aggregate({
     where: {
@@ -338,6 +350,8 @@ export async function getSuperAdminGymDetail(gymId: string) {
     admins,
     createdAt: gym.createdAt,
     updatedAt: gym.updatedAt,
+    planFeatures: getPlanFeatures(gym.subscriptionPlan),
+    variantMode,
   }
 }
 
@@ -374,7 +388,7 @@ export async function updateGymFromSuperAdmin(
     subscriptionPrice = resolvePlanPrice(plan, interval)
   }
 
-  return prisma.gym.update({
+  const updatedGym = await prisma.gym.update({
     where: { id: gymId },
     data: {
       name: data.name ?? undefined,
@@ -395,6 +409,14 @@ export async function updateGymFromSuperAdmin(
       demoEndsAt: data.demoEndsAt ?? undefined,
     },
   })
+
+  const variantCount = await prisma.gymVariant.count({ where: { gymId } })
+
+  return {
+    ...updatedGym,
+    planFeatures: getPlanFeatures(updatedGym.subscriptionPlan),
+    variantMode: resolveVariantMode(variantCount),
+  }
 }
 
 export async function createGymForSuperAdmin(data: {
@@ -526,7 +548,14 @@ export async function createGymForSuperAdmin(data: {
       }
     }
 
-    return { ...gym, owner, admins: adminUsers, variants }
+    return {
+      ...gym,
+      owner,
+      admins: adminUsers,
+      variants,
+      planFeatures: getPlanFeatures(gym.subscriptionPlan),
+      variantMode: resolveVariantMode(variants.length, variants),
+    }
   })
 }
 

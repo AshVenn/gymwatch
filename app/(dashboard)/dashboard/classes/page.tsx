@@ -26,6 +26,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { ClassForm, ClassFormValues } from '@/components/dashboard/classes/class-form'
 import { WeekCalendar } from '@/components/dashboard/classes/week-calendar'
 import { buildFeatureAccessItems, LockedFeatureState } from '@/components/dashboard/feature-access-grid'
+import { PaginationControls, usePagination } from '@/components/dashboard/pagination-controls'
 import { VariantSelector } from '@/components/dashboard/variant-selector'
 import { useVariantOptions } from '@/app/hooks/use-variants'
 import { usePlanFeatures } from '@/app/hooks/use-plan-features'
@@ -157,6 +158,9 @@ export default function ClassesPage() {
       return Array.isArray(data) ? data : []
     },
   })
+
+  const classes = classesQuery.data ?? []
+  const classesPagination = usePagination(classes, 10)
 
   const saveClass = useMutation({
     mutationFn: async () => {
@@ -353,7 +357,7 @@ export default function ClassesPage() {
           <>
             <WeekCalendar
               weekStart={weekStart}
-              sessions={classesQuery.data ?? []}
+              sessions={classes}
               onSelect={(id) => router.push(`/dashboard/classes/${id}`)}
             />
 
@@ -371,7 +375,7 @@ export default function ClassesPage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {(classesQuery.data ?? []).map((course) => {
+                  {classesPagination.data.map((course) => {
                     const start = new Date(course.startAt)
                     const end = new Date(course.endAt)
                     const timeRange = `${start.toLocaleTimeString('fr-FR', {
@@ -437,9 +441,16 @@ export default function ClassesPage() {
                   })}
                 </TableBody>
               </Table>
-              {classesQuery.data?.length === 0 ? (
+              {classes.length === 0 ? (
                 <p className="px-4 py-6 text-sm text-muted-foreground">Aucun cours sur cette semaine.</p>
               ) : null}
+              <PaginationControls
+                page={classesPagination.page}
+                pageCount={classesPagination.pageCount}
+                onPageChange={classesPagination.setPage}
+                pageSize={classesPagination.pageSize}
+                totalItems={classes.length}
+              />
             </div>
           </>
         )}

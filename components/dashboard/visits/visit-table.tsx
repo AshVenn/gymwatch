@@ -3,6 +3,7 @@
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
+import { PaginationControls } from '@/components/dashboard/pagination-controls'
 
 type VisitRow = {
   id: string
@@ -31,9 +32,16 @@ function formatDuration(minutes: number) {
 interface VisitTableProps {
   visits: VisitRow[]
   maxSessionMinutes?: number | null
+  pagination?: {
+    page: number
+    pageCount: number
+    pageSize: number
+    totalItems: number
+    onPageChange: (page: number) => void
+  }
 }
 
-export function VisitTable({ visits, maxSessionMinutes }: VisitTableProps) {
+export function VisitTable({ visits, maxSessionMinutes, pagination }: VisitTableProps) {
   if (!visits.length) {
     return (
       <Card className="border-dashed">
@@ -117,6 +125,15 @@ export function VisitTable({ visits, maxSessionMinutes }: VisitTableProps) {
             })}
           </TableBody>
         </Table>
+        {pagination ? (
+          <PaginationControls
+            page={pagination.page}
+            pageCount={pagination.pageCount}
+            onPageChange={pagination.onPageChange}
+            pageSize={pagination.pageSize}
+            totalItems={pagination.totalItems}
+          />
+        ) : null}
       </CardContent>
     </Card>
   )

@@ -11,6 +11,7 @@ import { useVariantOptions } from '@/app/hooks/use-variants'
 import { VisitCharts } from '@/components/dashboard/visits/charts'
 import { VisitFilters } from '@/components/dashboard/visits/filters'
 import { VisitTable } from '@/components/dashboard/visits/visit-table'
+import { usePagination } from '@/components/dashboard/pagination-controls'
 import { VariantSelector } from '@/components/dashboard/variant-selector'
 import { buildFeatureAccessItems, LockedFeatureState } from '@/components/dashboard/feature-access-grid'
 import { Badge } from '@/components/ui/badge'
@@ -245,6 +246,8 @@ export default function PresencePage() {
     setTo(todayStr)
     setSearch('')
   }
+
+  const visitPagination = usePagination(parsedVisits, 12)
 
   if (status === 'loading' || variantsLoading) {
     return (
@@ -527,7 +530,17 @@ export default function PresencePage() {
           </CardContent>
         </Card>
       ) : (
-        <VisitTable visits={parsedVisits} maxSessionMinutes={visitsQuery.data?.maxSessionMinutes ?? null} />
+        <VisitTable
+          visits={visitPagination.data}
+          maxSessionMinutes={visitsQuery.data?.maxSessionMinutes ?? null}
+          pagination={{
+            page: visitPagination.page,
+            pageCount: visitPagination.pageCount,
+            pageSize: visitPagination.pageSize,
+            totalItems: parsedVisits.length,
+            onPageChange: visitPagination.setPage,
+          }}
+        />
       )}
     </div>
   )

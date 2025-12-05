@@ -21,7 +21,7 @@ import { ClassForm, ClassFormValues } from '@/components/dashboard/classes/class
 import { usePlanFeatures } from '@/app/hooks/use-plan-features'
 import { useVariantOptions } from '@/app/hooks/use-variants'
 import { toast } from 'sonner'
-import { ArrowLeft, Clock, Loader2, Pencil, Plus, Trash2 } from 'lucide-react'
+import { ArrowLeft, CalendarDays, Clock, Loader2, MapPin, Pencil, Plus, Trash2, UserRound, Users } from 'lucide-react'
 
 type BookingStatus = 'CONFIRMED' | 'WAITLISTED' | 'CANCELLED'
 
@@ -312,62 +312,113 @@ export default function ClassDetailPage({ params }: { params: { id: string } }) 
     const booked = course.confirmedCount ?? 0
     const waitlist = course.waitlistCount ?? 0
     const freeSpots = Math.max(0, course.capacity - booked)
+    const dateLabel = start.toLocaleDateString('fr-FR', { weekday: 'long', day: '2-digit', month: 'long', year: 'numeric' })
+    const bookings = [...course.bookings].sort((a, b) => {
+      const order: Record<BookingStatus, number> = { CONFIRMED: 0, WAITLISTED: 1, CANCELLED: 2 }
+      const byStatus = order[a.status] - order[b.status]
+      if (byStatus !== 0) return byStatus
+      return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+    })
 
     return (
       <div className="space-y-6">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div className="flex items-center gap-3">
-            <Button variant="ghost" size="sm" asChild>
-              <Link href="/dashboard/classes">
-                <ArrowLeft className="mr-2 h-4 w-4" />
-                Retour
-              </Link>
-            </Button>
-            <div>
-              <h1 className="text-3xl font-bold">{course.title}</h1>
-              <p className="text-sm text-muted-foreground">
-                {start.toLocaleDateString('fr-FR')} · {timeRange}
-              </p>
+        <div className="rounded-2xl border border-border/70 bg-card/80 p-4">
+          <div className="flex flex-wrap items-start justify-between gap-4">
+            <div className="space-y-3">
+              <div className="flex flex-wrap items-center gap-3">
+                <Button variant="ghost" size="sm" asChild>
+                  <Link href="/dashboard/classes">
+                    <ArrowLeft className="mr-2 h-4 w-4" />
+                    Retour
+                  </Link>
+                </Button>
+                <div className="flex flex-wrap items-center gap-2">
+                  <h1 className="text-3xl font-bold">{course.title}</h1>
+                  {course.gymVariant?.name ? <Badge variant="secondary">{course.gymVariant.name}</Badge> : null}
+                </div>
+              </div>
+              <div className="flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
+                <div className="flex items-center gap-2">
+                  <CalendarDays className="h-4 w-4" />
+                  <span className="capitalize">{dateLabel}</span>
+                </div>
+                <span className="hidden h-4 w-px bg-border sm:block" />
+                <div className="flex items-center gap-2">
+                  <Clock className="h-4 w-4" />
+                  <span>{timeRange}</span>
+                </div>
+                <span className="hidden h-4 w-px bg-border sm:block" />
+                <div className="flex items-center gap-2">
+                  <UserRound className="h-4 w-4" />
+                  <span>{course.coach || 'Non renseigne'}</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <MapPin className="h-4 w-4" />
+                  <span>{course.room || 'Salle a definir'}</span>
+                </div>
+              </div>
             </div>
-          </div>
-          <div className="flex items-center gap-2">
-            {course.gymVariant?.name ? <Badge variant="secondary">{course.gymVariant.name}</Badge> : null}
-            <Button variant="outline" onClick={() => setEditOpen(true)}>
-              <Pencil className="mr-2 h-4 w-4" />
-              Modifier
-            </Button>
-            <Button
-              variant="destructive"
-              onClick={() => {
-                if (confirm('Supprimer ce cours ?')) {
-                  deleteClass.mutate()
-                }
-              }}
-              disabled={deleteClass.isPending}
-            >
-              {deleteClass.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Trash2 className="mr-2 h-4 w-4" />}
-              Supprimer
-            </Button>
+            <div className="flex flex-wrap items-center gap-2">
+              <Button variant="outline" onClick={() => setEditOpen(true)}>
+                <Pencil className="mr-2 h-4 w-4" />
+                Modifier
+              </Button>
+              <Button
+                variant="destructive"
+                onClick={() => {
+                  if (confirm('Supprimer ce cours ?')) {
+                    deleteClass.mutate()
+                  }
+                }}
+                disabled={deleteClass.isPending}
+              >
+                {deleteClass.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Trash2 className="mr-2 h-4 w-4" />}
+                Supprimer
+              </Button>
+            </div>
           </div>
         </div>
 
         <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-          <div className="rounded-2xl border border-border/70 bg-card/80 p-4">
-            <p className="text-sm text-muted-foreground">Capacite</p>
-            <p className="mt-1 text-2xl font-semibold">{course.capacity} places</p>
-            <p className="text-xs text-muted-foreground">
-              {booked} confirmes · {waitlist} attente · {freeSpots} libres
-            </p>
+          <div className="rounded-2xl border border-border/70 bg-card/80 p-4 space-y-3">
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <Users className="h-4 w-4" />
+              <span>Capacite et membres</span>
+            </div>
+            <div className="flex items-baseline gap-2">
+              <p className="text-3xl font-bold">{booked}</p>
+              <span className="text-sm text-muted-foreground">confirmes / {course.capacity} places</span>
+            </div>
+            <div className="grid grid-cols-3 gap-3 text-sm">
+              <div>
+                <p className="text-muted-foreground">En attente</p>
+                <p className="font-semibold">{waitlist}</p>
+              </div>
+              <div>
+                <p className="text-muted-foreground">Libres</p>
+                <p className="font-semibold">{freeSpots}</p>
+              </div>
+              <div className="space-y-1">
+                <p className="text-muted-foreground">Liste</p>
+                <Badge variant={course.waitlist ? 'secondary' : 'outline'}>{course.waitlist ? 'Activee' : 'Desactivee'}</Badge>
+              </div>
+            </div>
           </div>
-          <div className="rounded-2xl border border-border/70 bg-card/80 p-4">
-            <p className="text-sm text-muted-foreground">Coach</p>
-            <p className="mt-1 text-2xl font-semibold">{course.coach || 'Non renseigne'}</p>
-            <p className="text-xs text-muted-foreground">Salle: {course.room || 'A definir'}</p>
+          <div className="rounded-2xl border border-border/70 bg-card/80 p-4 space-y-3">
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <Clock className="h-4 w-4" />
+              <span>Horaires</span>
+            </div>
+            <p className="text-xl font-semibold">{timeRange}</p>
+            <p className="text-sm text-muted-foreground">{dateLabel}</p>
           </div>
-          <div className="rounded-2xl border border-border/70 bg-card/80 p-4">
-            <p className="text-sm text-muted-foreground">Liste d attente</p>
-            <p className="mt-1 text-2xl font-semibold">{course.waitlist ? 'Activee' : 'Desactivee'}</p>
-            <p className="text-xs text-muted-foreground">Reservation prioritaire par ordre d arrivee</p>
+          <div className="rounded-2xl border border-border/70 bg-card/80 p-4 space-y-3">
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <UserRound className="h-4 w-4" />
+              <span>Coach et salle</span>
+            </div>
+            <p className="text-xl font-semibold">{course.coach || 'Non renseigne'}</p>
+            <p className="text-sm text-muted-foreground">Salle: {course.room || 'A definir'}</p>
           </div>
         </div>
 
@@ -375,7 +426,9 @@ export default function ClassDetailPage({ params }: { params: { id: string } }) 
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
               <p className="text-lg font-semibold">Ajouter une reservation</p>
-              <p className="text-sm text-muted-foreground">Limite: {course.capacity} participants</p>
+              <p className="text-sm text-muted-foreground">
+                {booked} confirmes, {waitlist} en attente, limite {course.capacity} participants
+              </p>
             </div>
             <div className="flex items-end gap-2">
               <div className="grid gap-1">
@@ -424,13 +477,13 @@ export default function ClassDetailPage({ params }: { params: { id: string } }) 
               </TableRow>
             </TableHeader>
             <TableBody>
-              {course.bookings.map((booking) => (
+              {bookings.map((booking) => (
                 <TableRow key={booking.id}>
                   <TableCell className="font-semibold">
                     {booking.member.firstName} {booking.member.lastName}
                   </TableCell>
                   <TableCell className="text-sm text-muted-foreground">
-                    {booking.member.email || booking.member.phone || '—'}
+                    {booking.member.email || booking.member.phone || '-'}
                   </TableCell>
                   <TableCell>
                     <div className="flex items-center gap-2">
@@ -457,7 +510,7 @@ export default function ClassDetailPage({ params }: { params: { id: string } }) 
               ))}
             </TableBody>
           </Table>
-          {course.bookings.length === 0 ? (
+          {bookings.length === 0 ? (
             <p className="px-4 py-6 text-sm text-muted-foreground">Aucune reservation pour ce cours.</p>
           ) : null}
         </div>

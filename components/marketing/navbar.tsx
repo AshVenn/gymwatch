@@ -61,8 +61,10 @@ export function MarketingNavbar({ links = [], className }: MarketingNavbarProps)
   return (
     <header
       className={cn(
-        'sticky top-0 z-40 border-b border-border/30 backdrop-blur supports-[backdrop-filter]:bg-background/70',
-        isScrolled ? 'bg-background/80 shadow-sm' : 'bg-background/40',
+        'sticky top-0 z-40 border-b border-border/30',
+        isScrolled
+          ? 'bg-background/80 shadow-sm supports-[backdrop-filter]:bg-background/70 supports-[backdrop-filter]:backdrop-blur'
+          : 'bg-background/40 supports-[backdrop-filter]:bg-background/70 supports-[backdrop-filter]:backdrop-blur',
         className,
       )}
     >

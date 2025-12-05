@@ -40,16 +40,17 @@ export function FeatureAccessGrid({
 
   return (
     <div className={cn('space-y-3', className)}>
-      <div className="flex flex-wrap items-center justify-between gap-3 text-sm">
+      <div className="flex flex-wrap items-center justify-between gap-2 text-sm">
         <div className="space-y-0.5">
-          <p className="font-semibold">Modules essentiels</p>
-          <p className="text-muted-foreground">
-            Plan {planLabel ?? 'GymWatch'} · {activeCount}/{items.length} actifs
+          <p className="font-semibold">Modules</p>
+          <p className="text-xs text-muted-foreground">
+            {activeCount}/{items.length} actifs
+            {planLabel ? <> · Plan {planLabel}</> : null}
           </p>
         </div>
         {planLabel ? (
-          <Badge variant="outline" className="border-border/60 text-foreground">
-            Plan {planLabel}
+          <Badge variant="outline" className="border-border/60 text-[11px] uppercase tracking-[0.16em]">
+            {planLabel}
           </Badge>
         ) : null}
       </div>
@@ -63,64 +64,62 @@ export function FeatureAccessGrid({
             <div
               key={item.id}
               className={cn(
-                'relative flex h-full flex-col gap-2 rounded-xl border p-4 transition-colors',
-                isLocked
-                  ? 'border-dashed border-amber-200 bg-amber-50/60 text-amber-900'
-                  : 'border-emerald-100 bg-emerald-50/70 text-emerald-900',
+                'flex h-full flex-col gap-3 rounded-xl border bg-card/80 p-4 text-sm transition hover:bg-muted/60',
+                isLocked ? 'border-dashed border-border/60 opacity-80' : 'border-border/80',
               )}
             >
               <div className="flex items-start justify-between gap-2">
                 <div className="flex items-center gap-3">
                   <span
                     className={cn(
-                      'flex h-10 w-10 items-center justify-center rounded-full border text-sm',
+                      'flex h-9 w-9 items-center justify-center rounded-lg border text-xs',
                       isLocked
-                        ? 'border-amber-200 bg-white/70 text-amber-800'
-                        : 'border-emerald-200 bg-white/80 text-emerald-700',
+                        ? 'border-border/70 text-muted-foreground'
+                        : 'border-border/70 bg-muted/60 text-foreground',
                     )}
                   >
-                    <Icon size={18} />
+                    <Icon size={16} />
                   </span>
-                  <div>
-                    <p className="font-semibold leading-tight">{item.title}</p>
+                  <div className="space-y-0.5">
+                    <p className="font-medium leading-tight">{item.title}</p>
                     <p className="text-xs text-muted-foreground">{item.description}</p>
                   </div>
                 </div>
                 <Badge
-                  variant="secondary"
+                  variant="outline"
                   className={cn(
-                    'shrink-0 text-[11px] font-semibold uppercase tracking-wide',
-                    isLocked ? 'bg-amber-200 text-amber-900' : 'bg-emerald-200 text-emerald-800',
+                    'shrink-0 border-border/60 bg-transparent px-2 py-0.5 text-[10px] font-medium uppercase tracking-[0.16em]',
+                    isLocked ? 'text-muted-foreground' : 'text-foreground',
                   )}
                 >
-                  {isLocked ? item.requiredPlan ? `Plan ${item.requiredPlan}` : 'Upgrade' : 'Inclus'}
+                  {isLocked ? 'Non inclus' : 'Inclus'}
                 </Badge>
               </div>
 
               {showActions ? (
-                <div className="mt-auto flex flex-wrap items-center gap-2 pt-1 text-xs">
+                <div className="mt-auto flex items-center gap-2 pt-1 text-xs">
                   {isLocked ? (
-                    <>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="border-amber-300 text-amber-900 hover:bg-amber-100"
-                        asChild
-                      >
-                        <Link href={upgradeHref}>
-                          <Lock className="mr-2 h-4 w-4" />
-                          Debloquer
-                        </Link>
-                      </Button>
-                      <Button size="sm" variant="ghost" className="text-amber-900" asChild>
-                        <Link href="/faqs">Comparer les plans</Link>
-                      </Button>
-                    </>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="h-8 rounded-lg border-border/70 text-foreground hover:bg-muted"
+                      asChild
+                    >
+                      <Link href={upgradeHref}>
+                        <Lock className="mr-2 h-3.5 w-3.5" />
+                        Mettre à niveau
+                      </Link>
+                    </Button>
                   ) : (
-                    <Button size="sm" className="bg-emerald-600 text-white hover:bg-emerald-700" asChild>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="h-8 rounded-lg px-2 text-xs text-muted-foreground hover:text-foreground"
+                      asChild
+                    >
                       <Link href={item.href}>
                         Ouvrir
-                        <ArrowRight className="ml-2 h-3.5 w-3.5" />
+                        <ArrowRight className="ml-1.5 h-3.5 w-3.5" />
                       </Link>
                     </Button>
                   )}
@@ -152,14 +151,14 @@ export function LockedFeatureState({
   faqHref = '/faqs',
 }: LockedFeatureStateProps) {
   return (
-    <div className="space-y-4 rounded-2xl border border-amber-300/70 bg-amber-50 p-5 text-amber-900">
+    <div className="space-y-4 rounded-2xl border border-border/70 bg-muted/60 p-5">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="space-y-1">
-          <p className="text-lg font-semibold">{title}</p>
-          <p className="text-sm text-amber-800">{description}</p>
+          <p className="text-base font-semibold">{title}</p>
+          <p className="text-sm text-muted-foreground">{description}</p>
         </div>
         {planLabel ? (
-          <Badge variant="outline" className="border-amber-300 text-amber-900">
+          <Badge variant="outline" className="border-border/60 text-[11px] uppercase tracking-[0.16em]">
             Plan {planLabel}
           </Badge>
         ) : null}
@@ -167,12 +166,20 @@ export function LockedFeatureState({
 
       <FeatureAccessGrid items={items} planLabel={planLabel} compact showActions={false} />
 
-      <div className="flex flex-wrap gap-2">
-        <Button asChild variant="outline" className="border-amber-300 text-amber-900 hover:bg-amber-100">
-          <Link href={upgradeHref}>Mettre a niveau</Link>
+      <div className="flex flex-wrap gap-2 text-sm">
+        <Button
+          asChild
+          variant="outline"
+          className="h-8 rounded-lg border-border/70 px-3 text-xs text-foreground hover:bg-muted"
+        >
+          <Link href={upgradeHref}>Mettre à niveau</Link>
         </Button>
-        <Button asChild variant="ghost" className="text-amber-900 hover:text-amber-800">
-          <Link href={faqHref}>Voir le detail des plans</Link>
+        <Button
+          asChild
+          variant="ghost"
+          className="h-8 rounded-lg px-2 text-xs text-muted-foreground hover:text-foreground"
+        >
+          <Link href={faqHref}>Voir les plans</Link>
         </Button>
       </div>
     </div>
@@ -190,8 +197,8 @@ export function buildFeatureAccessItems(options: {
   return [
     {
       id: 'access' as const,
-      title: 'Controle acces',
-      description: 'Scans QR, simulateur et journaux detailes.',
+      title: 'Contrôle accès',
+      description: 'QR, simulateur et journaux.',
       href: '/dashboard/access-logs',
       requiredPlan: 'PRO' as const,
       available: hasAccessControl,
@@ -199,8 +206,8 @@ export function buildFeatureAccessItems(options: {
     },
     {
       id: 'presence' as const,
-      title: 'Presence temps reel',
-      description: 'Courbes de frequentation et visites marquees.',
+      title: 'Présence',
+      description: 'Vue temps réel des visites.',
       href: '/dashboard/presence',
       requiredPlan: 'PRO' as const,
       available: hasPresence,
@@ -208,8 +215,8 @@ export function buildFeatureAccessItems(options: {
     },
     {
       id: 'classes' as const,
-      title: 'Cours et planning',
-      description: 'Agenda hebdo, capacites et listes dattente.',
+      title: 'Cours & planning',
+      description: 'Agenda, capacités et listes.',
       href: '/dashboard/classes',
       requiredPlan: 'COMPLEX' as const,
       available: hasCourses,
@@ -218,7 +225,7 @@ export function buildFeatureAccessItems(options: {
     {
       id: 'reports' as const,
       title: 'Exports Excel',
-      description: 'Revenus, top membres et visites au format XLSX.',
+      description: 'Visites et membres en XLSX.',
       href: '/dashboard',
       requiredPlan: 'PRO' as const,
       available: hasExcelReports,

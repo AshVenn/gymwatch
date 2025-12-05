@@ -17,12 +17,24 @@ import { ACCESS_EVENT_STATUS_LABELS } from '@/lib/access-events'
 import { ExternalLink, Trash2 } from 'lucide-react'
 
 const statusColors: Record<AccessEventStatus, string> = {
-  GRANTED: 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-200',
-  CHECKED_OUT: 'bg-sky-500/15 text-sky-700 dark:text-sky-200',
-  ALREADY_CHECKED_IN: 'bg-amber-500/15 text-amber-700 dark:text-amber-200',
-  DENIED_EXPIRED: 'bg-red-500/15 text-red-700 dark:text-red-200',
-  DENIED_INACTIVE: 'bg-orange-500/15 text-orange-800 dark:text-orange-200',
-  DENIED_FORBIDDEN: 'bg-rose-500/15 text-rose-700 dark:text-rose-200',
+  GRANTED:
+    'border border-emerald-500 bg-emerald-50 text-emerald-800 ' +
+    'dark:border-emerald-400 dark:bg-emerald-500/40 dark:text-emerald-50',
+  CHECKED_OUT:
+    'border border-sky-500 bg-sky-50 text-sky-800 ' +
+    'dark:border-sky-400 dark:bg-sky-500/40 dark:text-sky-50',
+  ALREADY_CHECKED_IN:
+    'border border-amber-500 bg-amber-50 text-amber-800 ' +
+    'dark:border-amber-400 dark:bg-amber-500/40 dark:text-amber-50',
+  DENIED_EXPIRED:
+    'border border-red-500 bg-red-50 text-red-800 ' +
+    'dark:border-red-400 dark:bg-red-500/40 dark:text-red-50',
+  DENIED_INACTIVE:
+    'border border-orange-500 bg-orange-50 text-orange-800 ' +
+    'dark:border-orange-400 dark:bg-orange-500/40 dark:text-orange-50',
+  DENIED_FORBIDDEN:
+    'border border-rose-500 bg-rose-50 text-rose-800 ' +
+    'dark:border-rose-400 dark:bg-rose-500/40 dark:text-rose-50',
 }
 
 const sourceLabels: Record<AccessEventSource, string> = {
@@ -32,9 +44,15 @@ const sourceLabels: Record<AccessEventSource, string> = {
 }
 
 const sourceColors: Record<AccessEventSource, string> = {
-  QR_SCAN: 'bg-indigo-500/15 text-indigo-700 dark:text-indigo-200',
-  SIMULATOR: 'bg-sky-500/15 text-sky-700 dark:text-sky-200',
-  MANUAL: 'bg-slate-500/15 text-slate-700 dark:text-slate-200',
+  QR_SCAN:
+    'border border-indigo-500 bg-indigo-50 text-indigo-800 ' +
+    'dark:border-indigo-400 dark:bg-indigo-500/40 dark:text-indigo-50',
+  SIMULATOR:
+    'border border-sky-500 bg-sky-50 text-sky-800 ' +
+    'dark:border-sky-400 dark:bg-sky-500/40 dark:text-sky-50',
+  MANUAL:
+    'border border-slate-500 bg-slate-50 text-slate-800 ' +
+    'dark:border-slate-400 dark:bg-slate-500/40 dark:text-slate-50',
 }
 
 const dateFormatter = new Intl.DateTimeFormat('fr-FR', {
@@ -68,7 +86,7 @@ export function AccessLogTable({ events, onDelete, deletingId }: AccessLogTableP
   if (!events.length) {
     return (
       <div className="rounded-2xl border border-border/70 bg-card/70 p-8 text-center text-muted-foreground">
-        Aucun évènement d'accès pour le moment.
+        Aucun évènement d&apos;accès pour le moment.
       </div>
     )
   }
@@ -114,14 +132,17 @@ export function AccessLogTable({ events, onDelete, deletingId }: AccessLogTableP
                   <div className="flex flex-col gap-1">
                     <Badge
                       variant="outline"
-                      className={cn('text-xs font-semibold', statusColors[event.status])}
+                      className={cn(
+                        'text-xs font-semibold px-2 py-0.5',
+                        statusColors[event.status],
+                      )}
                     >
                       {statusLabel}
                     </Badge>
                     {event.sessionOverdue ? (
                       <Badge
                         variant="outline"
-                        className="text-xs font-semibold text-destructive border-destructive/40 bg-destructive/10"
+                        className="border border-destructive bg-destructive/10 px-2 py-0.5 text-xs font-semibold text-destructive"
                       >
                         Période dépassée
                       </Badge>
@@ -130,8 +151,11 @@ export function AccessLogTable({ events, onDelete, deletingId }: AccessLogTableP
                 </TableCell>
                 <TableCell>
                   <Badge
-                    variant="secondary"
-                    className={cn('text-xs font-semibold', sourceColors[event.source])}
+                    variant="outline"
+                    className={cn(
+                      'text-xs font-semibold px-2 py-0.5',
+                      sourceColors[event.source],
+                    )}
                   >
                     {sourceLabel}
                   </Badge>

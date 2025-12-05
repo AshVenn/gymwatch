@@ -6,18 +6,7 @@ import Link from 'next/link'
 import { useSession, signOut } from 'next-auth/react'
 import { usePathname, useRouter } from 'next/navigation'
 import type { LucideIcon } from 'lucide-react'
-import {
-  Bell,
-  ChevronRight,
-  Cloud,
-  LogOut,
-  Menu,
-  Search,
-  ShieldCheck,
-  Sparkles,
-  User,
-  X,
-} from 'lucide-react'
+import { ChevronRight, LogOut, Menu, ShieldCheck, User, X } from 'lucide-react'
 import { toast } from 'sonner'
 
 import { Badge } from '@/components/ui/badge'
@@ -29,7 +18,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { Input } from '@/components/ui/input'
-import { ScrollArea } from '@/components/ui/scroll-area'
+// ⛔️ removed: import { ScrollArea } from '@/components/ui/scroll-area'
 import { ThemeToggle } from '@/components/theme-toggle'
 import { cn } from '@/lib/utils'
 
@@ -132,9 +121,8 @@ export function DashboardShell({
     billingIntervalRaw === 'ANNUAL' ? 'Annuel' : billingIntervalRaw === 'MONTHLY' ? 'Mensuel' : 'Facturation'
 
   return (
-    <div className="relative min-h-screen bg-background text-foreground">
-      <div className="pointer-events-none fixed inset-0 -z-10 bg-[radial-gradient(circle_at_20%_18%,hsl(var(--primary)/0.25),transparent_32%),radial-gradient(circle_at_78%_10%,hsl(var(--muted-foreground)/0.18),transparent_35%),radial-gradient(circle_at_50%_60%,hsl(var(--primary)/0.12),transparent_45%)]" />
-      <div className="pointer-events-none fixed inset-0 -z-10 bg-[radial-gradient(120%_120%_at_20%_20%,hsl(var(--primary)/0.08),transparent)] blur-3xl" />
+    <div className="relative flex min-h-screen bg-background text-foreground">
+      <div className="pointer-events-none fixed inset-0 -z-10 bg-[radial-gradient(circle_at_14%_18%,hsl(var(--primary)/0.12),transparent_28%),radial-gradient(circle_at_70%_10%,hsl(var(--muted-foreground)/0.06),transparent_24%)]" />
 
       {sidebarOpen ? (
         <div
@@ -145,17 +133,17 @@ export function DashboardShell({
 
       <aside
         className={cn(
-          'fixed inset-y-0 left-0 z-50 w-72 bg-card/85 text-card-foreground shadow-2xl ring-1 ring-border/60 backdrop-blur-xl transition-transform duration-300 md:relative md:translate-x-0 md:shadow-none',
+          'fixed inset-y-0 left-0 z-50 h-full w-64 overflow-y-auto border-r border-border/60 bg-card/95 text-card-foreground shadow-xl backdrop-blur-xl transition-transform duration-300 md:translate-x-0',
+          // hide native scrollbar in the whole aside
+          '[&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]',
           sidebarOpen ? 'translate-x-0' : '-translate-x-full',
         )}
       >
         <div className="flex h-full flex-col">
           <div className="flex items-center justify-between border-b border-border/60 px-5 py-4">
             <div className="flex items-center gap-3">
-              <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-primary to-indigo-500 text-white shadow-lg shadow-primary/20">
-                <Sparkles size={20} />
-              </div>
-              <div>
+              <Image src="/GymWatch.svg" alt="GymWatch" width={44} height={44} className="rounded-xl" priority />
+              <div className="leading-tight">
                 <p className="text-[11px] uppercase tracking-[0.26em] text-muted-foreground">GymWatch</p>
                 <p className="text-base font-semibold">Console</p>
               </div>
@@ -169,19 +157,9 @@ export function DashboardShell({
             </button>
           </div>
 
-          <ScrollArea className="flex-1">
+          {/* Sidebar scrollable area WITHOUT visible scrollbar */}
+          <div className="flex-1 overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
             <div className="space-y-5 px-4 py-5">
-              <div className="rounded-2xl border border-border/50 bg-muted/50 px-3 py-2">
-                <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-muted-foreground">Recherche</p>
-                <div className="relative mt-2">
-                  <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                  <Input
-                    placeholder="Rechercher..."
-                    className="h-10 rounded-xl border-border/70 bg-background pl-9 text-sm focus-visible:ring-1 focus-visible:ring-primary"
-                  />
-                </div>
-              </div>
-
               <nav className="space-y-2">
                 {navigationItems.map((item) => {
                   const Icon = item.icon
@@ -191,17 +169,17 @@ export function DashboardShell({
                       key={item.href}
                       href={item.href}
                       className={cn(
-                        'group flex items-center gap-3 rounded-2xl border border-transparent px-4 py-3 text-sm font-medium transition',
+                        'group flex items-center gap-3 rounded-2xl border px-4 py-3 text-sm font-medium transition',
                         isActive
-                          ? 'border-primary/40 bg-gradient-to-r from-primary/15 via-primary/12 to-transparent text-foreground shadow-sm shadow-primary/10'
-                          : 'text-muted-foreground hover:border-border/60 hover:bg-muted/50 hover:text-foreground',
+                          ? 'border-primary/40 bg-primary/5 text-foreground shadow-sm'
+                          : 'border-transparent text-muted-foreground hover:border-border/60 hover:bg-muted/60 hover:text-foreground',
                       )}
                       onClick={() => setSidebarOpen(false)}
                     >
                       <div
                         className={cn(
-                          'flex h-10 w-10 items-center justify-center rounded-xl bg-muted/70 text-muted-foreground transition group-hover:bg-primary/10 group-hover:text-primary',
-                          isActive && 'bg-primary/15 text-primary',
+                          'flex h-10 w-10 items-center justify-center rounded-xl border border-border/60 bg-muted/50 text-muted-foreground transition group-hover:border-primary/40 group-hover:text-primary',
+                          isActive && 'border-primary/40 bg-primary/10 text-primary',
                         )}
                       >
                         <Icon size={18} />
@@ -219,7 +197,7 @@ export function DashboardShell({
                 })}
               </nav>
             </div>
-          </ScrollArea>
+          </div>
 
           <div className="border-t border-border/60 px-4 py-4">
             <div className="mb-3 flex items-center gap-3 rounded-2xl border border-border/60 bg-muted/50 px-3 py-2">
@@ -257,7 +235,8 @@ export function DashboardShell({
         </div>
       </aside>
 
-      <div className="flex flex-1 flex-col overflow-hidden">
+      {/* main content, offset by sidebar width on md+ */}
+      <div className={cn('flex flex-1 flex-col overflow-hidden transition-all', 'md:pl-64')}>
         <header className="sticky top-0 z-30 border-b border-border/60 bg-background/70 px-4 py-3 backdrop-blur-lg md:px-8">
           <div className="flex items-center gap-3">
             <Button
@@ -270,24 +249,7 @@ export function DashboardShell({
               <Menu size={18} />
             </Button>
 
-            <div className="hidden w-full max-w-xl items-center gap-2 rounded-2xl border border-border/60 bg-card px-3 py-1.5 shadow-sm md:flex">
-              <Search className="h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Rechercher un membre, un cours ou une action"
-                className="h-9 border-0 bg-transparent text-sm focus-visible:ring-0"
-              />
-            </div>
-
             <div className="ml-auto flex items-center gap-2 md:gap-3">
-              <Button variant="ghost" size="icon" className="rounded-xl">
-                <Cloud className="h-5 w-5" />
-              </Button>
-              <Button variant="ghost" size="icon" className="rounded-xl relative">
-                <Bell className="h-5 w-5" />
-                <span className="absolute -right-1 -top-1 h-4 w-4 rounded-full bg-primary text-[10px] font-semibold text-primary-foreground">
-                  3
-                </span>
-              </Button>
               <ThemeToggle />
 
               <div className="hidden flex-col items-end md:flex">
@@ -326,9 +288,9 @@ export function DashboardShell({
         </header>
 
         <main className="flex-1 overflow-auto px-4 py-6 md:px-8">
-          <div className="mx-auto w-full max-w-7xl space-y-6">
+          <div className="w-full space-y-6">
             {topSlot ? (
-              <div className="rounded-3xl border border-border/60 bg-card/80 p-4 shadow-sm backdrop-blur-sm">
+              <div className="rounded-2xl border border-border/50 bg-card/90 p-4 shadow-sm backdrop-blur-sm">
                 {topSlot}
               </div>
             ) : null}

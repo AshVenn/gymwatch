@@ -66,6 +66,7 @@ export default function AccessLogsPage() {
   const [from, setFrom] = useState<string>('')
   const [to, setTo] = useState<string>('')
   const [deletingId, setDeletingId] = useState<string | null>(null)
+
   const planLabel = tier === 'COMPLEX' ? 'Complex' : tier === 'PRO' ? 'Pro' : 'Basic'
   const featureItems = useMemo(
     () =>
@@ -121,7 +122,7 @@ export default function AccessLogsPage() {
       const response = await fetch(`/api/access-events?${params.toString()}`)
       const body = await response.json().catch(() => ({}))
       if (!response.ok) {
-        throw new Error(body.error || 'Impossible de charger les accès')
+        throw new Error(body.error || 'Impossible de charger les acces')
       }
       return {
         events: (body.events as AccessLogRow[] | undefined) ?? [],
@@ -149,7 +150,7 @@ export default function AccessLogsPage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['access-events'] })
-      toast.success('Évènement supprimé')
+      toast.success('Evenement supprime')
     },
     onError: (error) => {
       const message = error instanceof Error ? error.message : 'Suppression impossible'
@@ -194,37 +195,35 @@ export default function AccessLogsPage() {
   if (status === 'loading' || variantsLoading) {
     return (
       <div className="space-y-4">
-        <Skeleton className="h-10 w-64" />
-        <Skeleton className="h-24 w-full" />
+        <Skeleton className="h-6 w-40" />
+        <Skeleton className="h-20 w-full" />
         <Skeleton className="h-96 w-full" />
       </div>
     )
   }
 
   if (status === 'unauthenticated') {
-    return <div className="text-red-500 font-medium">Accès refusé.</div>
+    return <div className="text-sm font-medium text-destructive">Acces refuse.</div>
   }
 
   if (!hasAccessControl) {
     return (
       <LockedFeatureState
-        title="Controle d'acces reserve au plan Pro ou Complex"
-        description="Le journal des acces, les simulations QR et le marquage en direct sont inclus a partir du plan Pro."
+        title="Controle d'acces non inclus"
+        description="Le journal des acces est disponible a partir du plan Pro."
         planLabel={planLabel}
         items={featureItems}
       />
     )
   }
 
-
   return (
     <div className="space-y-6">
+      {/* Header */}
       <div className="flex flex-wrap items-start justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-bold">Journaux d&apos;accès</h1>
-          <p className="text-muted-foreground">
-            Historique des scans QR, simulations et marquages manuels.
-          </p>
+        <div className="space-y-1">
+          <h1 className="text-2xl font-semibold">Journaux d'acces</h1>
+          <p className="text-sm text-muted-foreground">Derniers passages, scans et marquages.</p>
         </div>
         <div className="flex items-center gap-3">
           <VariantSelector
@@ -238,29 +237,34 @@ export default function AccessLogsPage() {
           />
           <Button
             variant="outline"
+            size="sm"
             onClick={() => accessLogsQuery.refetch()}
             disabled={accessLogsQuery.isFetching}
+            className="rounded-lg"
           >
-            <RefreshCw className="mr-2 h-4 w-4 animate-spin" hidden={!accessLogsQuery.isFetching} />
+            <RefreshCw
+              className="mr-2 h-4 w-4"
+              hidden={!accessLogsQuery.isFetching}
+            />
             {accessLogsQuery.isFetching ? 'Actualisation...' : 'Actualiser'}
           </Button>
         </div>
       </div>
 
+      {/* Multi-variant notice – neutral & minimal */}
       {multiVariantLocked ? (
-        <div className="flex items-start gap-3 rounded-xl border border-amber-200/70 bg-amber-50 px-4 py-3 text-sm text-amber-900">
-          <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-600" />
-          <div className="space-y-1">
-            <p className="font-semibold">Aggregation multi-salles verrouillee</p>
+        <div className="flex items-start gap-2 rounded-xl border border-border/70 bg-muted/60 px-4 py-3 text-xs sm:text-sm text-muted-foreground">
+          <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
+          <div className="space-y-0.5">
+            <p className="font-medium text-foreground">Vue multi-salles indisponible</p>
             <p>
-              Les journaux consolides sont reserves au plan Complex. Selectionnez une salle ou{' '}
-              <Link href="/dashboard/settings" className="font-semibold text-amber-900 underline">mettez a niveau</Link>{' '}
-              pour debloquer la vue reseau.
+              Selectionnez une salle pour voir ses journaux. La vue combinee est incluse dans le plan Complex.
             </p>
           </div>
         </div>
       ) : null}
 
+      {/* Filters */}
       <AccessLogFilters
         search={search}
         status={statusFilter}
@@ -279,75 +283,81 @@ export default function AccessLogsPage() {
         onReset={resetFilters}
       />
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm text-muted-foreground">Total</CardTitle>
+      {/* Summary cards – neutral look */}
+      <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-5">
+        <Card className="rounded-xl border-border/70">
+          <CardHeader className="pb-1">
+            <CardTitle className="text-xs font-medium text-muted-foreground">Total</CardTitle>
           </CardHeader>
           <CardContent className="text-2xl font-semibold">{summary.total}</CardContent>
         </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm text-muted-foreground">Accès autorisés</CardTitle>
+
+        <Card className="rounded-xl border-border/70">
+          <CardHeader className="pb-1">
+            <CardTitle className="text-xs font-medium text-muted-foreground">Acces autorises</CardTitle>
           </CardHeader>
           <CardContent className="flex items-center gap-2">
             <span className="text-2xl font-semibold">{summary.granted}</span>
-            <Badge variant="outline" className="border-emerald-200 text-emerald-700">
-              {summary.successRate}% ok
+            <Badge
+              variant="outline"
+              className="border-border/70 bg-transparent text-[11px] font-normal text-muted-foreground"
+            >
+              {summary.successRate}% des entrees
             </Badge>
           </CardContent>
         </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm text-muted-foreground">Refus</CardTitle>
+
+        <Card className="rounded-xl border-border/70">
+          <CardHeader className="pb-1">
+            <CardTitle className="text-xs font-medium text-muted-foreground">Refus</CardTitle>
           </CardHeader>
-          <CardContent className="text-2xl font-semibold text-red-600 dark:text-red-300">
-            {summary.denied}
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm text-muted-foreground">Déjà comptés</CardTitle>
-          </CardHeader>
-          <CardContent className="text-2xl font-semibold text-amber-600 dark:text-amber-300">
-            {summary.already}
-          </CardContent>
+          <CardContent className="text-2xl font-semibold">{summary.denied}</CardContent>
         </Card>
 
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm text-muted-foreground">Sorties</CardTitle>
+        <Card className="rounded-xl border-border/70">
+          <CardHeader className="pb-1">
+            <CardTitle className="text-xs font-medium text-muted-foreground">Deja comptes</CardTitle>
           </CardHeader>
-          <CardContent className="text-2xl font-semibold text-sky-700 dark:text-sky-300">
-            {summary.checkouts}
-          </CardContent>
+          <CardContent className="text-2xl font-semibold">{summary.already}</CardContent>
+        </Card>
+
+        <Card className="rounded-xl border-border/70">
+          <CardHeader className="pb-1">
+            <CardTitle className="text-xs font-medium text-muted-foreground">Sorties</CardTitle>
+          </CardHeader>
+          <CardContent className="text-2xl font-semibold">{summary.checkouts}</CardContent>
         </Card>
       </div>
 
+      {/* Error message – still visible but simple */}
       {accessLogsQuery.isError ? (
-        <div className="flex items-center gap-2 rounded-lg border border-destructive/40 bg-destructive/10 p-4 text-sm text-destructive">
+        <div className="flex items-center gap-2 rounded-lg border border-destructive/30 bg-destructive/5 p-3 text-xs sm:text-sm text-destructive">
           <AlertTriangle className="h-4 w-4" />
-          Impossible de charger les accès.
+          <span>Impossible de charger les acces.</span>
         </div>
       ) : null}
 
-      <Card>
+      {/* Table */}
+      <Card className="rounded-xl border-border/70">
         <CardHeader className="flex flex-col gap-1 pb-2 sm:flex-row sm:items-center sm:justify-between">
-          <CardTitle className="text-base text-muted-foreground">
-            {events.length} évènement{events.length > 1 ? 's' : ''} (limité aux 200 derniers)
+          <CardTitle className="text-sm font-medium text-muted-foreground">
+            {events.length} evenement{events.length > 1 ? 's' : ''} (200 derniers)
           </CardTitle>
           {sessionLimit ? (
-            <Badge variant="outline" className="border-destructive/40 bg-destructive/5 text-xs text-muted-foreground">
-              Durée max: {sessionLimit} min
+            <Badge
+              variant="outline"
+              className="border-border/60 bg-transparent text-[11px] font-normal text-muted-foreground"
+            >
+              Duree max: {sessionLimit} min
             </Badge>
           ) : null}
         </CardHeader>
         <CardContent className="space-y-4">
           {accessLogsQuery.isLoading ? (
             <div className="space-y-3">
-              <Skeleton className="h-10 w-full" />
-              <Skeleton className="h-10 w-full" />
-              <Skeleton className="h-10 w-full" />
+              <Skeleton className="h-9 w-full" />
+              <Skeleton className="h-9 w-full" />
+              <Skeleton className="h-9 w-full" />
             </div>
           ) : (
             <>

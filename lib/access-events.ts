@@ -1,7 +1,14 @@
 import { AccessEventStatus } from "@prisma/client"
 import type { VisitResult } from "./visits"
 
-export function resolveAccessEventStatus(visit: VisitResult): AccessEventStatus {
+export function resolveAccessEventStatus(
+  visit: VisitResult,
+  mode: "CHECK_IN" | "CHECK_OUT" = "CHECK_IN",
+): AccessEventStatus {
+  if (mode === "CHECK_OUT") {
+    return AccessEventStatus.CHECKED_OUT
+  }
+
   if (!visit.active) {
     return visit.status === "EXPIRED"
       ? AccessEventStatus.DENIED_EXPIRED
@@ -16,9 +23,10 @@ export function resolveAccessEventStatus(visit: VisitResult): AccessEventStatus 
 }
 
 export const ACCESS_EVENT_STATUS_LABELS: Record<AccessEventStatus, string> = {
-  GRANTED: "Accès autorisé",
-  ALREADY_CHECKED_IN: "Déjà comptabilisé",
-  DENIED_EXPIRED: "Abonnement expiré",
+  GRANTED: "Acces autorise",
+  CHECKED_OUT: "Sortie enregistree",
+  ALREADY_CHECKED_IN: "Deja comptabilise",
+  DENIED_EXPIRED: "Abonnement expire",
   DENIED_INACTIVE: "Abonnement inactif",
-  DENIED_FORBIDDEN: "Non autorisé",
+  DENIED_FORBIDDEN: "Non autorise",
 }

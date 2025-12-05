@@ -7,7 +7,7 @@ import { authOptions } from "@/lib/auth-middleware"
 import { prisma } from "@/lib/prisma"
 import { hasPlanFeature } from "@/lib/subscription-plans"
 import { resolveAccessEventStatus } from "@/lib/access-events"
-import { markVisitForMember } from "@/lib/visits"
+import { markCheckoutForMember, markVisitForMember } from "@/lib/visits"
 import { resolveVariantAccess } from "@/lib/variant-access"
 
 const createSchema = z
@@ -16,9 +16,14 @@ const createSchema = z
     token: z.string().optional(),
     source: z.nativeEnum(AccessEventSource).optional(),
     markVisit: z.boolean().optional(),
+    direction: z.enum(["IN", "OUT"]).optional(),
+    visitId: z.string().optional(),
+    checkoutAt: z.string().optional(),
+    rangeFrom: z.string().optional(),
+    rangeTo: z.string().optional(),
   })
-  .refine((payload) => Boolean(payload.memberId || payload.token), {
-    message: "memberId ou token requis",
+  .refine((payload) => Boolean(payload.memberId || payload.token || payload.visitId), {
+    message: "memberId, token ou visitId requis",
   })
 
 function parseStatus(value: string | null): AccessEventStatus | null {
@@ -91,7 +96,7 @@ export async function GET(request: NextRequest) {
   if (from) {
     const fromDate = new Date(from)
     if (Number.isNaN(fromDate.getTime())) {
-      return NextResponse.json({ error: "Date de début invalide" }, { status: 400 })
+      return NextResponse.json({ error: "Date de debut invalide" }, { status: 400 })
     }
     createdAt.gte = fromDate
   }
@@ -145,7 +150,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ events })
   } catch (error) {
     console.error("[access-events][get]", error)
-    return NextResponse.json({ error: "Impossible de charger les accès" }, { status: 500 })
+    return NextResponse.json({ error: "Impossible de charger les acces" }, { status: 500 })
   }
 }
 
@@ -169,8 +174,34 @@ export async function POST(request: NextRequest) {
   try {
     const payload = createSchema.parse(await request.json())
     const shouldMarkVisit = payload.markVisit ?? false
+    const direction = payload.direction === "OUT" ? "OUT" : "IN"
     const variantGuard = role === "GYM_ADMIN" ? gymVariantId : undefined
 
+    const parseDate = (value?: string | null): Date | undefined | "INVALID" => {
+      if (!value) return undefined
+      const parsed = new Date(value)
+      return Number.isNaN(parsed.getTime()) ? "INVALID" : parsed
+    }
+
+    const checkoutAt = parseDate(payload.checkoutAt)
+    if (checkoutAt === "INVALID") {
+      return NextResponse.json({ error: "Heure de sortie invalide" }, { status: 400 })
+    }
+    let rangeFrom = parseDate(payload.rangeFrom)
+    if (rangeFrom === "INVALID") {
+      return NextResponse.json({ error: "Plage horaire (du) invalide" }, { status: 400 })
+    }
+    let rangeTo = parseDate(payload.rangeTo)
+    if (rangeTo === "INVALID") {
+      return NextResponse.json({ error: "Plage horaire (au) invalide" }, { status: 400 })
+    }
+    if (rangeFrom && rangeTo && rangeFrom.getTime() > rangeTo.getTime()) {
+      const swap = rangeFrom
+      rangeFrom = rangeTo
+      rangeTo = swap
+    }
+
+    const memberInclude = { gymVariant: { select: { id: true, name: true, slug: true } } }
     let member =
       payload.memberId && !payload.token
         ? await prisma.member.findFirst({
@@ -179,7 +210,7 @@ export async function POST(request: NextRequest) {
               gymId,
               ...(variantGuard ? { gymVariantId: variantGuard } : {}),
             },
-            include: { gymVariant: { select: { id: true, name: true, slug: true } } },
+            include: memberInclude,
           })
         : null
 
@@ -190,12 +221,67 @@ export async function POST(request: NextRequest) {
           gymId,
           ...(variantGuard ? { gymVariantId: variantGuard } : {}),
         },
-        include: { gymVariant: { select: { id: true, name: true, slug: true } } },
+        include: memberInclude,
       })
+    }
+
+    if (!member && payload.visitId) {
+      const visitLookup = await prisma.visit.findFirst({
+        where: {
+          id: payload.visitId,
+          gymId,
+          ...(variantGuard ? { gymVariantId: variantGuard } : {}),
+        },
+        select: { memberId: true },
+      })
+
+      if (visitLookup) {
+        member = await prisma.member.findFirst({
+          where: {
+            id: visitLookup.memberId,
+            gymId,
+            ...(variantGuard ? { gymVariantId: variantGuard } : {}),
+          },
+          include: memberInclude,
+        })
+      }
     }
 
     if (!member) {
       return NextResponse.json({ error: "Membre introuvable" }, { status: 404 })
+    }
+
+    if (direction === "OUT") {
+      const checkout = await markCheckoutForMember({
+        gymId,
+        memberId: member.id,
+        visitId: payload.visitId,
+        checkoutAt: checkoutAt === "INVALID" ? undefined : checkoutAt,
+        allowedVariantId: variantGuard,
+        rangeFrom: rangeFrom === "INVALID" ? undefined : rangeFrom,
+        rangeTo: rangeTo === "INVALID" ? undefined : rangeTo,
+      })
+      const status = AccessEventStatus.CHECKED_OUT
+      const event = await prisma.accessEvent.create({
+        data: {
+          memberId: member.id,
+          status,
+          source: payload.source ?? AccessEventSource.SIMULATOR,
+        },
+        include: {
+          member: {
+            select: {
+              id: true,
+              firstName: true,
+              lastName: true,
+              email: true,
+              gymVariant: { select: { id: true, name: true, slug: true } },
+            },
+          },
+        },
+      })
+
+      return NextResponse.json({ event, checkout, accessStatus: status, mode: "CHECK_OUT" })
     }
 
     const visit = await markVisitForMember({
@@ -204,7 +290,7 @@ export async function POST(request: NextRequest) {
       markVisit: shouldMarkVisit,
       allowedVariantId: variantGuard,
     })
-    const status = resolveAccessEventStatus(visit)
+    const status = resolveAccessEventStatus(visit, "CHECK_IN")
     const event = await prisma.accessEvent.create({
       data: {
         memberId: member.id,
@@ -229,16 +315,24 @@ export async function POST(request: NextRequest) {
     if (error instanceof z.ZodError) {
       return NextResponse.json({ error: "Payload invalide" }, { status: 400 })
     }
-    const message = error instanceof Error ? error.message : "Impossible d'enregistrer l'accès"
+    const message = error instanceof Error ? error.message : "Impossible d'enregistrer l'acces"
     const status =
       message === "Membre introuvable"
         ? 404
         : message === "Member not found"
           ? 404
-          : message === "FORBIDDEN_VARIANT"
+          : message === "FORBIDDEN_VARIANT" || message === "FORBIDDEN_VISIT"
             ? 403
-            : 500
+            : message === "OPEN_VISIT_NOT_FOUND"
+              ? 404
+              : 500
+    const displayMessage =
+      message === "OPEN_VISIT_NOT_FOUND"
+        ? "Aucune visite en cours pour ce membre"
+        : message === "FORBIDDEN_VISIT"
+          ? "Visite non autorisee pour cette salle"
+          : message
     console.error("[access-events][post]", error)
-    return NextResponse.json({ error: message }, { status })
+    return NextResponse.json({ error: displayMessage }, { status })
   }
 }

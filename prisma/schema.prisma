@@ -50,6 +50,7 @@ enum DemoRequestStatus {
 
 enum AccessEventStatus {
   GRANTED
+  CHECKED_OUT
   ALREADY_CHECKED_IN
   DENIED_EXPIRED
   DENIED_INACTIVE

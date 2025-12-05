@@ -3,8 +3,8 @@
 import Link from 'next/link'
 import { useEffect, useMemo, useState } from 'react'
 import { useSession } from 'next-auth/react'
-import { useQuery } from '@tanstack/react-query'
-import { Activity, AlertTriangle, Clock3, RefreshCw, Users } from 'lucide-react'
+import { useMutation, useQuery } from '@tanstack/react-query'
+import { Activity, AlertTriangle, Clock3, LogOut, RefreshCw, Users } from 'lucide-react'
 
 import { usePlanFeatures } from '@/app/hooks/use-plan-features'
 import { useVariantOptions } from '@/app/hooks/use-variants'
@@ -16,7 +16,26 @@ import { buildFeatureAccessItems, LockedFeatureState } from '@/components/dashbo
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 import { Skeleton } from '@/components/ui/skeleton'
+import { toast } from 'sonner'
 
 type VisitView = 'day' | 'period'
 
@@ -46,6 +65,13 @@ type VisitAnalyticsResponse = {
 }
 
 const formatInputDate = (date: Date) => date.toISOString().slice(0, 10)
+const formatTimeInput = (value: Date) => value.toISOString().slice(11, 16)
+const buildDateTimeString = (date: string, time?: string) => {
+  if (!date) return null
+  const base = time ? new Date(`${date}T${time}`) : new Date(date)
+  if (Number.isNaN(base.getTime())) return null
+  return base.toISOString()
+}
 
 const defaultSummary = {
   total: 0,
@@ -78,6 +104,12 @@ export default function PresencePage() {
   const [from, setFrom] = useState<string>(lastWeekStr)
   const [to, setTo] = useState<string>(todayStr)
   const [search, setSearch] = useState<string>('')
+  const [checkoutDialogOpen, setCheckoutDialogOpen] = useState(false)
+  const [checkoutVisitId, setCheckoutVisitId] = useState<string>('')
+  const [checkoutDate, setCheckoutDate] = useState<string>(todayStr)
+  const [checkoutTime, setCheckoutTime] = useState<string>(formatTimeInput(new Date()))
+  const [checkoutWindowStart, setCheckoutWindowStart] = useState<string>('')
+  const [checkoutWindowEnd, setCheckoutWindowEnd] = useState<string>('')
   const planLabel = tier === 'COMPLEX' ? 'Complex' : tier === 'PRO' ? 'Pro' : 'Basic'
   const featureItems = useMemo(
     () =>
@@ -142,8 +174,66 @@ export default function PresencePage() {
       })),
     [visitsQuery.data?.visits],
   )
+  const openVisits = useMemo(() => parsedVisits.filter((visit) => !visit.checkOut), [parsedVisits])
   const summary = visitsQuery.data?.summary ?? defaultSummary
   const charts = visitsQuery.data?.charts ?? { byHour: [], byDay: [], byVariant: [] }
+  const selectedOpenVisit = useMemo(
+    () => openVisits.find((visit) => visit.id === checkoutVisitId) ?? null,
+    [checkoutVisitId, openVisits],
+  )
+
+  useEffect(() => {
+    if (openVisits.length === 0) {
+      setCheckoutVisitId('')
+      return
+    }
+    const currentSelected = openVisits.find((visit) => visit.id === checkoutVisitId)
+    const fallback = currentSelected ?? openVisits[0]
+    setCheckoutVisitId(fallback.id)
+    setCheckoutDate(formatInputDate(fallback.checkIn))
+  }, [checkoutVisitId, openVisits])
+
+  const checkoutMutation = useMutation({
+    mutationFn: async () => {
+      if (!checkoutVisitId) {
+        throw new Error('Selectionnez une visite en cours')
+      }
+
+      const payload: Record<string, any> = {
+        direction: 'OUT',
+        visitId: checkoutVisitId,
+      }
+
+      const checkoutAtIso = buildDateTimeString(checkoutDate, checkoutTime)
+      const windowFromIso = checkoutWindowStart ? buildDateTimeString(checkoutDate, checkoutWindowStart) : null
+      const windowToIso = checkoutWindowEnd ? buildDateTimeString(checkoutDate, checkoutWindowEnd) : null
+
+      if (checkoutAtIso) payload.checkoutAt = checkoutAtIso
+      if (windowFromIso) payload.rangeFrom = windowFromIso
+      if (windowToIso) payload.rangeTo = windowToIso
+
+      const response = await fetch('/api/visits', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      })
+      const body = await response.json().catch(() => ({}))
+      if (!response.ok) {
+        throw new Error(body.error || 'Impossible de marquer la sortie')
+      }
+      return body as { memberName?: string }
+    },
+    onSuccess: (data) => {
+      const fullName = data?.memberName ? ` pour ${data.memberName}` : ''
+      toast.success(`Sortie enregistree${fullName}`)
+      setCheckoutDialogOpen(false)
+      visitsQuery.refetch()
+    },
+    onError: (error) => {
+      const message = error instanceof Error ? error.message : 'Impossible de marquer la sortie'
+      toast.error(message)
+    },
+  })
 
   const resetFilters = () => {
     setView('day')
@@ -198,6 +288,125 @@ export default function PresencePage() {
             loading={variantsLoading}
             allowAll={allowAllVariants}
           />
+          <Dialog open={checkoutDialogOpen} onOpenChange={setCheckoutDialogOpen}>
+            <DialogTrigger asChild>
+              <Button
+                variant="outline"
+                onClick={() => setCheckoutDialogOpen(true)}
+                disabled={!openVisits.length}
+                className="border-border/70"
+              >
+                <LogOut className="mr-2 h-4 w-4" />
+                Sortie manuelle
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-lg">
+              <DialogHeader>
+                <DialogTitle>Marquer une sortie</DialogTitle>
+                <DialogDescription>
+                  Enregistrez une sortie manuelle pour une visite en cours et ajustez l&apos;heure si besoin.
+                </DialogDescription>
+              </DialogHeader>
+              {openVisits.length === 0 ? (
+                <p className="text-sm text-muted-foreground">Aucune visite en cours.</p>
+              ) : (
+                <div className="space-y-4 py-2">
+                  <div className="space-y-2">
+                    <Label htmlFor="visit-select">Visite en cours</Label>
+                    <Select value={checkoutVisitId} onValueChange={setCheckoutVisitId}>
+                      <SelectTrigger id="visit-select">
+                        <SelectValue placeholder="Choisir une visite" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {openVisits.map((visit) => (
+                          <SelectItem key={visit.id} value={visit.id}>
+                            {visit.memberName} · {visit.checkIn.toLocaleDateString('fr-FR')}{' '}
+                            {visit.checkIn.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })} ·{' '}
+                            {visit.variantName}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="space-y-2">
+                      <Label htmlFor="checkout-date">Date de sortie</Label>
+                      <Input
+                        id="checkout-date"
+                        type="date"
+                        value={checkoutDate}
+                        onChange={(event) => setCheckoutDate(event.target.value)}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="checkout-time">Heure de sortie</Label>
+                      <Input
+                        id="checkout-time"
+                        type="time"
+                        value={checkoutTime}
+                        onChange={(event) => setCheckoutTime(event.target.value)}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="space-y-2">
+                      <Label htmlFor="window-from">Plage debut (optionnel)</Label>
+                      <Input
+                        id="window-from"
+                        type="time"
+                        value={checkoutWindowStart}
+                        onChange={(event) => setCheckoutWindowStart(event.target.value)}
+                        placeholder="08:00"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="window-to">Plage fin (optionnel)</Label>
+                      <Input
+                        id="window-to"
+                        type="time"
+                        value={checkoutWindowEnd}
+                        onChange={(event) => setCheckoutWindowEnd(event.target.value)}
+                        placeholder="22:00"
+                      />
+                    </div>
+                  </div>
+
+                  {selectedOpenVisit ? (
+                    <div className="rounded-lg border border-border/60 bg-muted/40 px-3 py-2 text-xs text-muted-foreground">
+                      Arrivee enregistree le{' '}
+                      {selectedOpenVisit.checkIn.toLocaleDateString('fr-FR', {
+                        day: '2-digit',
+                        month: '2-digit',
+                      })}{' '}
+                      a{' '}
+                      {selectedOpenVisit.checkIn.toLocaleTimeString('fr-FR', {
+                        hour: '2-digit',
+                        minute: '2-digit',
+                      })}{' '}
+                      · {selectedOpenVisit.variantName}
+                    </div>
+                  ) : null}
+                </div>
+              )}
+              <DialogFooter className="mt-2">
+                <Button
+                  variant="outline"
+                  onClick={() => setCheckoutDialogOpen(false)}
+                  className="border-border/70"
+                >
+                  Annuler
+                </Button>
+                <Button
+                  onClick={() => checkoutMutation.mutate()}
+                  disabled={!openVisits.length || checkoutMutation.isPending}
+                >
+                  {checkoutMutation.isPending ? 'Marquage...' : 'Enregistrer la sortie'}
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
           <Button
             variant="outline"
             onClick={() => visitsQuery.refetch()}

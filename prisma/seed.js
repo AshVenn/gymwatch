@@ -1048,6 +1048,12 @@ async function runSeed() {
         source: AccessEventSource.SIMULATOR,
         createdAt: addDays(today, -5),
       },
+      {
+        memberId: membersDemo[2].id,
+        status: AccessEventStatus.CHECKED_OUT,
+        source: AccessEventSource.MANUAL,
+        createdAt: today,
+      },
     ],
   })
   console.log('Seeded access events')

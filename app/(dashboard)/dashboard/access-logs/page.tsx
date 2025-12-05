@@ -22,11 +22,12 @@ import { Skeleton } from '@/components/ui/skeleton'
 
 const statusOptions = [
   { value: 'ALL', label: 'Tous les statuts' },
-  { value: AccessEventStatus.GRANTED, label: 'Accès autorisé' },
-  { value: AccessEventStatus.ALREADY_CHECKED_IN, label: 'Déjà compté' },
-  { value: AccessEventStatus.DENIED_EXPIRED, label: 'Abonnement expiré' },
+  { value: AccessEventStatus.GRANTED, label: 'Acces autorise' },
+  { value: AccessEventStatus.CHECKED_OUT, label: 'Sortie enregistree' },
+  { value: AccessEventStatus.ALREADY_CHECKED_IN, label: 'Deja compte' },
+  { value: AccessEventStatus.DENIED_EXPIRED, label: 'Abonnement expire' },
   { value: AccessEventStatus.DENIED_INACTIVE, label: 'Abonnement inactif' },
-  { value: AccessEventStatus.DENIED_FORBIDDEN, label: 'Non autorisé' },
+  { value: AccessEventStatus.DENIED_FORBIDDEN, label: 'Non autorise' },
 ]
 
 const sourceOptions = [
@@ -153,17 +154,20 @@ export default function AccessLogsPage() {
 
   const summary = useMemo(() => {
     const granted = events.filter((event) => event.status === AccessEventStatus.GRANTED).length
+    const checkouts = events.filter((event) => event.status === AccessEventStatus.CHECKED_OUT).length
     const denied = events.filter((event) =>
       [AccessEventStatus.DENIED_EXPIRED, AccessEventStatus.DENIED_INACTIVE, AccessEventStatus.DENIED_FORBIDDEN].includes(event.status),
     ).length
     const already = events.filter((event) => event.status === AccessEventStatus.ALREADY_CHECKED_IN).length
+    const entryEvents = events.length - checkouts
 
     return {
       total: events.length,
       granted,
       denied,
       already,
-      successRate: events.length ? Math.round((granted / events.length) * 100) : 0,
+      checkouts,
+      successRate: entryEvents > 0 ? Math.round((granted / entryEvents) * 100) : 0,
     }
   }, [events])
 
@@ -263,7 +267,7 @@ export default function AccessLogsPage() {
         onReset={resetFilters}
       />
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm text-muted-foreground">Total</CardTitle>
@@ -295,6 +299,15 @@ export default function AccessLogsPage() {
           </CardHeader>
           <CardContent className="text-2xl font-semibold text-amber-600 dark:text-amber-300">
             {summary.already}
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm text-muted-foreground">Sorties</CardTitle>
+          </CardHeader>
+          <CardContent className="text-2xl font-semibold text-sky-700 dark:text-sky-300">
+            {summary.checkouts}
           </CardContent>
         </Card>
       </div>

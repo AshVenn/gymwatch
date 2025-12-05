@@ -18,6 +18,7 @@ import { ExternalLink, Trash2 } from 'lucide-react'
 
 const statusColors: Record<AccessEventStatus, string> = {
   GRANTED: 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-200',
+  CHECKED_OUT: 'bg-sky-500/15 text-sky-700 dark:text-sky-200',
   ALREADY_CHECKED_IN: 'bg-amber-500/15 text-amber-700 dark:text-amber-200',
   DENIED_EXPIRED: 'bg-red-500/15 text-red-700 dark:text-red-200',
   DENIED_INACTIVE: 'bg-orange-500/15 text-orange-800 dark:text-orange-200',

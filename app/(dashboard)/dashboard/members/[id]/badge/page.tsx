@@ -42,6 +42,11 @@ const statusTone: Record<AccessEventStatus, { label: string; color: string; mess
     color: 'text-emerald-700 dark:text-emerald-300',
     message: 'Le badge est valide, abonnement actif.',
   },
+  CHECKED_OUT: {
+    label: 'Sortie enregistree',
+    color: 'text-sky-700 dark:text-sky-300',
+    message: 'Sortie marquee pour cette visite.',
+  },
   ALREADY_CHECKED_IN: {
     label: 'Déjà compté',
     color: 'text-amber-700 dark:text-amber-300',

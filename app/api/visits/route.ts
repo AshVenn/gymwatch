@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from "next/server"
 import { getServerSession } from "next-auth"
-import { AccessEventSource } from "@prisma/client"
+import { AccessEventSource, AccessEventStatus } from "@prisma/client"
 import { authOptions } from "@/lib/auth-middleware"
-import { getVisitAnalytics, markVisitForMember } from "@/lib/visits"
+import { getVisitAnalytics, markCheckoutForMember, markVisitForMember } from "@/lib/visits"
 import { hasPlanFeature } from "@/lib/subscription-plans"
 import { resolveAccessEventStatus } from "@/lib/access-events"
 import { prisma } from "@/lib/prisma"
@@ -135,26 +135,92 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Variant manquant" }, { status: 403 })
   }
 
-  const { memberId, markVisit = true } = await request.json()
+  const {
+    memberId,
+    markVisit = true,
+    direction = "IN",
+    visitId,
+    checkoutAt,
+    rangeFrom,
+    rangeTo,
+  } = await request.json()
+  const mode = typeof direction === "string" && direction.toUpperCase() === "OUT" ? "OUT" : "IN"
+  const memberIdentifier = typeof memberId === "string" ? memberId : undefined
+  const allowedVariantId = role === "GYM_ADMIN" ? gymVariantId : undefined
 
-  if (!memberId || typeof memberId !== "string") {
+  const parseDate = (value: unknown): Date | undefined | "INVALID" => {
+    if (!value || typeof value !== "string") return undefined
+    const parsed = new Date(value)
+    return Number.isNaN(parsed.getTime()) ? "INVALID" : parsed
+  }
+
+  const checkoutDate = parseDate(checkoutAt)
+  if (checkoutDate === "INVALID") {
+    return NextResponse.json({ error: "Heure de sortie invalide" }, { status: 400 })
+  }
+  let fromDate = parseDate(rangeFrom)
+  if (fromDate === "INVALID") {
+    return NextResponse.json({ error: "Plage horaire (du) invalide" }, { status: 400 })
+  }
+  let toDate = parseDate(rangeTo)
+  if (toDate === "INVALID") {
+    return NextResponse.json({ error: "Plage horaire (au) invalide" }, { status: 400 })
+  }
+  if (fromDate && toDate && fromDate.getTime() > toDate.getTime()) {
+    const swap = fromDate
+    fromDate = toDate
+    toDate = swap
+  }
+
+  if (mode === "OUT" && !memberIdentifier && (!visitId || typeof visitId !== "string")) {
+    return NextResponse.json({ error: "memberId ou visitId requis" }, { status: 400 })
+  }
+  if (mode === "IN" && !memberIdentifier) {
     return NextResponse.json({ error: "memberId requis" }, { status: 400 })
   }
 
   try {
+    if (mode === "OUT") {
+      const checkout = await markCheckoutForMember({
+        gymId,
+        memberId: memberIdentifier,
+        visitId: typeof visitId === "string" ? visitId : undefined,
+        checkoutAt: checkoutDate === "INVALID" ? undefined : checkoutDate,
+        allowedVariantId,
+        rangeFrom: fromDate === "INVALID" ? undefined : fromDate,
+        rangeTo: toDate === "INVALID" ? undefined : toDate,
+      })
+
+      if (hasPlanFeature(tier, "accessControl")) {
+        try {
+          await prisma.accessEvent.create({
+            data: {
+              memberId: checkout.memberId,
+              status: AccessEventStatus.CHECKED_OUT,
+              source: AccessEventSource.MANUAL,
+            },
+          })
+        } catch (error) {
+          console.error("[access-events][visits-checkout]", error)
+        }
+      }
+
+      return NextResponse.json({ ...checkout, mode: "CHECK_OUT" })
+    }
+
     const result = await markVisitForMember({
       gymId,
-      memberId,
+      memberId: memberIdentifier!,
       markVisit,
-      allowedVariantId: role === "GYM_ADMIN" ? gymVariantId : undefined,
+      allowedVariantId,
     })
 
     if (hasPlanFeature(tier, "accessControl")) {
       try {
-        const status = resolveAccessEventStatus(result)
+        const status = resolveAccessEventStatus(result, "CHECK_IN")
         await prisma.accessEvent.create({
           data: {
-            memberId,
+            memberId: memberIdentifier,
             status,
             source: AccessEventSource.MANUAL,
           },
@@ -164,10 +230,23 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    return NextResponse.json(result)
+    return NextResponse.json({ ...result, mode: "CHECK_IN" })
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unable to mark visit"
-    const status = message === "Member not found" ? 404 : message === "FORBIDDEN_VARIANT" ? 403 : 500
-    return NextResponse.json({ error: message }, { status })
+    const status =
+      message === "Member not found"
+        ? 404
+        : message === "FORBIDDEN_VARIANT" || message === "FORBIDDEN_VISIT"
+          ? 403
+          : message === "OPEN_VISIT_NOT_FOUND"
+            ? 404
+            : 500
+    const displayMessage =
+      message === "OPEN_VISIT_NOT_FOUND"
+        ? "Aucune visite en cours pour ce membre"
+        : message === "FORBIDDEN_VISIT"
+          ? "Visite non autorisee pour cette salle"
+          : message
+    return NextResponse.json({ error: displayMessage }, { status })
   }
 }

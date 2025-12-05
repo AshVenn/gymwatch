@@ -45,7 +45,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { MoreVertical, Plus, Edit2, Trash2, QrCode, FileDown, CheckCircle2 } from 'lucide-react'
+import { MoreVertical, Plus, Edit2, Trash2, QrCode, FileDown, CheckCircle2, LogIn, LogOut } from 'lucide-react'
 import QRCode from 'qrcode'
 import type { IScannerProps } from '@yudiel/react-qr-scanner/dist/components/Scanner'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
@@ -105,6 +105,7 @@ export default function MembersPage() {
   const [qrMember, setQrMember] = useState<Member | null>(null)
   const [qrImage, setQrImage] = useState<string>('')
   const [scannerEnabled, setScannerEnabled] = useState(false)
+  const [scanDirection, setScanDirection] = useState<'IN' | 'OUT'>('IN')
   const [scanStatus, setScanStatus] = useState<{
     status: 'success' | 'error'
     message: string
@@ -179,20 +180,37 @@ export default function MembersPage() {
     oscillator.stop(ctx.currentTime + 0.2)
   }
 
-  const handleScan = async (token: string | null) => {
+  
+const handleScan = async (token: string | null) => {
     if (!token || token.length < 10) return
-    if (lastTokenRef.current === token) return
-    lastTokenRef.current = token
+    const tokenKey = `${token}-${scanDirection}`
+    if (lastTokenRef.current === tokenKey) return
+    lastTokenRef.current = tokenKey
     try {
       const response = await fetch('/api/qr/verify', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ token, markVisit: true }),
+        body: JSON.stringify({ token, markVisit: scanDirection === 'IN', direction: scanDirection }),
       })
+      const payload = await response.json().catch(() => ({}))
       if (!response.ok) {
-        throw new Error('Scan invalide')
+        const message = (payload as any)?.error || 'Scan invalide'
+        throw new Error(message)
       }
-      const payload = await response.json()
+
+      if (payload.mode === 'CHECK_OUT') {
+        const fullName = `${payload.member?.firstName ?? ''} ${payload.member?.lastName ?? ''}`.trim()
+        const duration = typeof payload.visit?.durationMinutes === 'number' ? payload.visit.durationMinutes : null
+        const message = duration ? `Sortie enregistree (${duration} min)` : 'Sortie enregistree'
+        setScanStatus({
+          status: 'success',
+          message,
+          memberName: fullName || 'Membre inconnu',
+        })
+        playTone(780)
+        return
+      }
+
       const fullName = `${payload.member?.firstName ?? ''} ${payload.member?.lastName ?? ''}`.trim()
       const active = Boolean(payload.active)
       const alreadyVisited = Boolean(payload.alreadyVisited)
@@ -201,8 +219,8 @@ export default function MembersPage() {
       const message = !active
         ? 'Abonnement inactif'
         : alreadyVisited
-          ? "Déjà visité aujourd'hui"
-          : 'Accès valide'
+          ? "Deja visite aujourd'hui"
+          : 'Acces valide'
       setScanStatus({
         status: success ? 'success' : 'error',
         message,
@@ -210,10 +228,11 @@ export default function MembersPage() {
         daysRemaining: daysRemaining ?? undefined,
       })
       playTone(success ? 880 : alreadyVisited ? 520 : 240)
-    } catch {
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'QR invalide ou membre introuvable'
       setScanStatus({
         status: 'error',
-        message: 'QR invalide ou membre introuvable',
+        message,
         memberName: 'Erreur',
       })
       playTone(180)
@@ -812,9 +831,30 @@ export default function MembersPage() {
                   }}
                 />
               </div>
-              <div className="rounded-xl border bg-background/80 p-4">
+              <div className="rounded-xl border bg-background/80 p-4 space-y-3">
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="text-xs uppercase tracking-[0.15em] text-muted-foreground">Mode</span>
+                  <Button
+                    size="sm"
+                    variant={scanDirection === 'IN' ? 'default' : 'outline'}
+                    className="gap-1"
+                    onClick={() => setScanDirection('IN')}
+                  >
+                    <LogIn className="h-4 w-4" />
+                    Entree
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant={scanDirection === 'OUT' ? 'default' : 'outline'}
+                    className="gap-1"
+                    onClick={() => setScanDirection('OUT')}
+                  >
+                    <LogOut className="h-4 w-4" />
+                    Sortie
+                  </Button>
+                </div>
                 <p className="text-sm text-muted-foreground">
-                  Positionnez un QR code devant la caméra pour voir le résultat du
+                  Positionnez un QR code devant la camera pour voir le resultat du
                   scan.
                 </p>
               </div>

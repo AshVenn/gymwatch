@@ -33,6 +33,19 @@ export type VisitResult = {
   todayVisitorCount: number
 }
 
+export type CheckoutResult = {
+  visitId: string
+  memberId: string
+  memberName: string
+  firstName: string
+  lastName: string
+  variantId: string
+  variantName: string
+  checkIn: Date
+  checkOut: Date
+  durationMinutes: number
+}
+
 export type VisitRow = {
   id: string
   memberId: string
@@ -211,6 +224,121 @@ export async function markVisitForMember({
   alreadyVisited: false,
   daysRemaining,
   todayVisitorCount: updatedGym.todayVisitorCount,
+  }
+}
+
+export async function markCheckoutForMember({
+  gymId,
+  memberId,
+  visitId,
+  checkoutAt,
+  allowedVariantId,
+  rangeFrom,
+  rangeTo,
+}: {
+  gymId: string
+  memberId?: string
+  visitId?: string
+  checkoutAt?: Date
+  allowedVariantId?: string
+  rangeFrom?: Date
+  rangeTo?: Date
+}): Promise<CheckoutResult> {
+  const timeWindow: Prisma.DateTimeFilter | undefined =
+    rangeFrom || rangeTo
+      ? {
+          ...(rangeFrom ? { gte: rangeFrom } : {}),
+          ...(rangeTo ? { lte: rangeTo } : {}),
+        }
+      : undefined
+
+  const baseWhere: Prisma.VisitWhereInput = {
+    gymId,
+    checkOut: null,
+    ...(allowedVariantId ? { gymVariantId: allowedVariantId } : {}),
+    ...(memberId ? { memberId } : {}),
+    ...(timeWindow ? { checkIn: timeWindow } : {}),
+  }
+
+  const targetVisit = visitId
+    ? await prisma.visit.findFirst({
+        where: {
+          ...baseWhere,
+          id: visitId,
+        },
+        include: {
+          member: {
+            select: {
+              id: true,
+              firstName: true,
+              lastName: true,
+              gymVariant: { select: { id: true, name: true } },
+            },
+          },
+        },
+      })
+    : await prisma.visit.findFirst({
+        where: baseWhere,
+        orderBy: { checkIn: "desc" },
+        include: {
+          member: {
+            select: {
+              id: true,
+              firstName: true,
+              lastName: true,
+              gymVariant: { select: { id: true, name: true } },
+            },
+          },
+        },
+      })
+
+  if (!targetVisit) {
+    throw new Error("OPEN_VISIT_NOT_FOUND")
+  }
+
+  if (memberId && targetVisit.memberId !== memberId) {
+    throw new Error("FORBIDDEN_VISIT")
+  }
+
+  const resolvedCheckout = checkoutAt ?? new Date()
+  const checkoutDate =
+    resolvedCheckout.getTime() < targetVisit.checkIn.getTime()
+      ? targetVisit.checkIn
+      : resolvedCheckout
+
+  const updatedVisit = await prisma.visit.update({
+    where: { id: targetVisit.id },
+    data: { checkOut: checkoutDate },
+    include: {
+      member: {
+        select: {
+          id: true,
+          firstName: true,
+          lastName: true,
+          gymVariant: { select: { id: true, name: true } },
+        },
+      },
+    },
+  })
+
+  const durationMinutes = Math.max(
+    0,
+    Math.round((checkoutDate.getTime() - updatedVisit.checkIn.getTime()) / 60000),
+  )
+
+  const memberName = `${updatedVisit.member.firstName} ${updatedVisit.member.lastName}`.trim()
+
+  return {
+    visitId: updatedVisit.id,
+    memberId: updatedVisit.memberId,
+    memberName,
+    firstName: updatedVisit.member.firstName,
+    lastName: updatedVisit.member.lastName,
+    variantId: updatedVisit.member.gymVariant?.id ?? updatedVisit.gymVariantId,
+    variantName: updatedVisit.member.gymVariant?.name ?? "Salle",
+    checkIn: updatedVisit.checkIn,
+    checkOut: updatedVisit.checkOut ?? checkoutDate,
+    durationMinutes,
   }
 }
 

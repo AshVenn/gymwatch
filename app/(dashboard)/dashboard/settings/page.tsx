@@ -17,6 +17,7 @@ interface GymData {
   address?: string
   city?: string
   country?: string
+  maxSessionMinutes?: number | null
 }
 
 export default function SettingsPage() {
@@ -29,6 +30,7 @@ export default function SettingsPage() {
     address: '',
     city: '',
     country: '',
+    maxSessionMinutes: '',
   })
   const lockedFields = new Set(['name', 'email', 'address', 'city', 'country'])
 
@@ -61,16 +63,27 @@ export default function SettingsPage() {
         address: gym.address || '',
         city: gym.city || '',
         country: gym.country || '',
+        maxSessionMinutes: gym.maxSessionMinutes ? String(gym.maxSessionMinutes) : '',
       })
     }
   }, [gym])
 
   const updateGymMutation = useMutation({
     mutationFn: async () => {
+      const payload: Record<string, any> = { phone: formData.phone }
+      const durationValue = formData.maxSessionMinutes.trim()
+      if (durationValue) {
+        const parsed = Number(durationValue)
+        if (!Number.isFinite(parsed)) {
+          throw new Error('Durée max invalide')
+        }
+        payload.maxSessionMinutes = parsed
+      }
+
       const response = await fetch('/api/gym', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ phone: formData.phone }),
+        body: JSON.stringify(payload),
       })
 
       const data = await response.json().catch(() => ({}))
@@ -157,6 +170,23 @@ export default function SettingsPage() {
               onChange={handleInputChange}
               placeholder="+212..."
             />
+          </div>
+
+          <div>
+            <Label htmlFor="gym-session-limit">Durée max de session (minutes)</Label>
+            <Input
+              id="gym-session-limit"
+              name="maxSessionMinutes"
+              type="number"
+              min={30}
+              max={720}
+              value={formData.maxSessionMinutes}
+              onChange={handleInputChange}
+              placeholder="180"
+            />
+            <p className="mt-1 text-xs text-muted-foreground">
+              Au-delà de cette durée, les visites sont marquées "Période dépassée" dans présence et les journaux.
+            </p>
           </div>
 
           <div>

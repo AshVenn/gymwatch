@@ -49,6 +49,7 @@ type VisitAnalyticsResponse = {
     checkIn: string
     checkOut: string | null
     durationMinutes: number
+    isOverMaxDuration: boolean
   }>
   summary: {
     total: number
@@ -62,6 +63,7 @@ type VisitAnalyticsResponse = {
     byVariant: Array<{ label: string; value: number }>
   }
   range: { from: string; to: string; mode: VisitView }
+  maxSessionMinutes: number | null
 }
 
 const formatInputDate = (date: Date) => date.toISOString().slice(0, 10)
@@ -171,6 +173,7 @@ export default function PresencePage() {
         ...visit,
         checkIn: new Date(visit.checkIn),
         checkOut: visit.checkOut ? new Date(visit.checkOut) : null,
+        isOverMaxDuration: Boolean(visit.isOverMaxDuration),
       })),
     [visitsQuery.data?.visits],
   )
@@ -524,7 +527,7 @@ export default function PresencePage() {
           </CardContent>
         </Card>
       ) : (
-        <VisitTable visits={parsedVisits} />
+        <VisitTable visits={parsedVisits} maxSessionMinutes={visitsQuery.data?.maxSessionMinutes ?? null} />
       )}
     </div>
   )

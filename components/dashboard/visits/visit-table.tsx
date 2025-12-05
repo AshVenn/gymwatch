@@ -11,6 +11,7 @@ type VisitRow = {
   checkIn: Date
   checkOut: Date | null
   durationMinutes: number
+  isOverMaxDuration: boolean
 }
 
 function formatTime(value: Date | null) {
@@ -29,9 +30,10 @@ function formatDuration(minutes: number) {
 
 interface VisitTableProps {
   visits: VisitRow[]
+  maxSessionMinutes?: number | null
 }
 
-export function VisitTable({ visits }: VisitTableProps) {
+export function VisitTable({ visits, maxSessionMinutes }: VisitTableProps) {
   if (!visits.length) {
     return (
       <Card className="border-dashed">
@@ -47,8 +49,13 @@ export function VisitTable({ visits }: VisitTableProps) {
 
   return (
     <Card>
-      <CardHeader className="pb-3">
+      <CardHeader className="flex flex-col gap-1 pb-3 sm:flex-row sm:items-center sm:justify-between">
         <CardTitle>Dernières visites</CardTitle>
+        {maxSessionMinutes ? (
+          <Badge variant="outline" className="border-destructive/40 bg-destructive/5 text-xs text-muted-foreground">
+            Durée max: {maxSessionMinutes} min
+          </Badge>
+        ) : null}
       </CardHeader>
       <CardContent>
         <Table>
@@ -59,6 +66,7 @@ export function VisitTable({ visits }: VisitTableProps) {
               <TableHead>Date</TableHead>
               <TableHead>Entrée</TableHead>
               <TableHead>Sortie</TableHead>
+              <TableHead>Statut</TableHead>
               <TableHead>Durée</TableHead>
             </TableRow>
           </TableHeader>
@@ -66,6 +74,7 @@ export function VisitTable({ visits }: VisitTableProps) {
             {visits.map((visit) => {
               const checkInDate = visit.checkIn.toLocaleDateString('fr-FR')
               const checkOutLabel = visit.checkOut ? formatTime(visit.checkOut) : null
+              const overLimit = Boolean(visit.isOverMaxDuration)
               return (
                 <TableRow key={visit.id}>
                   <TableCell className="font-medium">{visit.memberName}</TableCell>
@@ -85,7 +94,24 @@ export function VisitTable({ visits }: VisitTableProps) {
                       </Badge>
                     )}
                   </TableCell>
-                  <TableCell>{formatDuration(visit.durationMinutes)}</TableCell>
+                  <TableCell>
+                    {overLimit ? (
+                      <Badge className="bg-destructive/15 text-destructive" variant="outline">
+                        Période dépassée
+                      </Badge>
+                    ) : visit.checkOut ? (
+                      <Badge variant="secondary" className="bg-slate-100 text-slate-700">
+                        Terminée
+                      </Badge>
+                    ) : (
+                      <Badge variant="secondary" className="bg-emerald-50 text-emerald-700">
+                        En cours
+                      </Badge>
+                    )}
+                  </TableCell>
+                  <TableCell className={overLimit ? 'font-semibold text-destructive' : undefined}>
+                    {formatDuration(visit.durationMinutes)}
+                  </TableCell>
                 </TableRow>
               )
             })}

@@ -129,25 +129,63 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const events = await prisma.accessEvent.findMany({
-      where,
-      orderBy: { createdAt: "desc" },
-      take: limit,
-      include: {
-        member: {
-          select: {
-            id: true,
-            firstName: true,
-            lastName: true,
-            email: true,
-            gymVariantId: true,
-            gymVariant: { select: { id: true, name: true, slug: true } },
+    const [gymSettings, events] = await Promise.all([
+      prisma.gym.findUnique({
+        where: { id: gymId },
+        select: { maxSessionMinutes: true },
+      }),
+      prisma.accessEvent.findMany({
+        where,
+        orderBy: { createdAt: "desc" },
+        take: limit,
+        include: {
+          member: {
+            select: {
+              id: true,
+              firstName: true,
+              lastName: true,
+              email: true,
+              gymVariantId: true,
+              gymVariant: { select: { id: true, name: true, slug: true } },
+            },
           },
         },
-      },
-    })
+      }),
+    ])
 
-    return NextResponse.json({ events })
+    const memberIds = Array.from(new Set(events.map((event) => event.memberId).filter(Boolean)))
+    const sessionLimit =
+      typeof gymSettings?.maxSessionMinutes === "number" && gymSettings.maxSessionMinutes > 0
+        ? gymSettings.maxSessionMinutes
+        : null
+
+    let overdueMembers: Set<string> | null = null
+
+    if (sessionLimit && memberIds.length) {
+      const openVisits = await prisma.visit.findMany({
+        where: {
+          gymId,
+          ...(variantId ? { gymVariantId: variantId } : {}),
+          memberId: { in: memberIds as string[] },
+          checkOut: null,
+        },
+        select: { memberId: true, checkIn: true },
+      })
+
+      const now = new Date()
+      overdueMembers = new Set(
+        openVisits
+          .filter((visit) => (now.getTime() - visit.checkIn.getTime()) / 60000 > sessionLimit)
+          .map((visit) => visit.memberId),
+      )
+    }
+
+    const decoratedEvents = events.map((event) => ({
+      ...event,
+      sessionOverdue: Boolean(overdueMembers?.has(event.memberId)),
+    }))
+
+    return NextResponse.json({ events: decoratedEvents, maxSessionMinutes: sessionLimit })
   } catch (error) {
     console.error("[access-events][get]", error)
     return NextResponse.json({ error: "Impossible de charger les acces" }, { status: 500 })

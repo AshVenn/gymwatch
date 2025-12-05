@@ -37,6 +37,11 @@ const sourceOptions = [
   { value: AccessEventSource.MANUAL, label: 'Marquage manuel' },
 ]
 
+type AccessLogResponse = {
+  events: AccessLogRow[]
+  maxSessionMinutes: number | null
+}
+
 export default function AccessLogsPage() {
   const { data: session, status } = useSession()
   const { tier, hasAccessControl, hasPresence, hasCourses, hasExcelReports, hasMultiLocations } = usePlanFeatures()
@@ -91,7 +96,7 @@ export default function AccessLogsPage() {
           ? null
           : defaultVariantId ?? variants[0]?.id ?? null
 
-  const accessLogsQuery = useQuery<AccessLogRow[]>({
+  const accessLogsQuery = useQuery<AccessLogResponse>({
     queryKey: [
       'access-events',
       session?.user?.gymId,
@@ -118,7 +123,13 @@ export default function AccessLogsPage() {
       if (!response.ok) {
         throw new Error(body.error || 'Impossible de charger les accès')
       }
-      return (body.events as AccessLogRow[] | undefined) ?? []
+      return {
+        events: (body.events as AccessLogRow[] | undefined) ?? [],
+        maxSessionMinutes:
+          typeof body.maxSessionMinutes === 'number' && body.maxSessionMinutes > 0
+            ? body.maxSessionMinutes
+            : null,
+      }
     },
   })
 
@@ -149,7 +160,8 @@ export default function AccessLogsPage() {
     },
   })
 
-  const events = useMemo(() => accessLogsQuery.data ?? [], [accessLogsQuery.data])
+  const events = useMemo(() => accessLogsQuery.data?.events ?? [], [accessLogsQuery.data?.events])
+  const sessionLimit = accessLogsQuery.data?.maxSessionMinutes ?? null
   const pagination = usePagination(events, 12)
 
   const summary = useMemo(() => {
@@ -320,10 +332,15 @@ export default function AccessLogsPage() {
       ) : null}
 
       <Card>
-        <CardHeader className="pb-2">
+        <CardHeader className="flex flex-col gap-1 pb-2 sm:flex-row sm:items-center sm:justify-between">
           <CardTitle className="text-base text-muted-foreground">
             {events.length} évènement{events.length > 1 ? 's' : ''} (limité aux 200 derniers)
           </CardTitle>
+          {sessionLimit ? (
+            <Badge variant="outline" className="border-destructive/40 bg-destructive/5 text-xs text-muted-foreground">
+              Durée max: {sessionLimit} min
+            </Badge>
+          ) : null}
         </CardHeader>
         <CardContent className="space-y-4">
           {accessLogsQuery.isLoading ? (

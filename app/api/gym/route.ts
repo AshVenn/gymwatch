@@ -63,11 +63,22 @@ export async function PUT(request: NextRequest) {
     }
 
     const payload = await request.json().catch(() => ({}))
+    const hasSessionLimit = Object.prototype.hasOwnProperty.call(payload, 'maxSessionMinutes')
+    let maxSessionMinutes: number | undefined
+
+    if (hasSessionLimit) {
+      const parsedLimit = Number(payload.maxSessionMinutes)
+      if (!Number.isFinite(parsedLimit) || parsedLimit < 30 || parsedLimit > 720) {
+        return NextResponse.json({ error: 'Durée max invalide (30-720 minutes)' }, { status: 400 })
+      }
+      maxSessionMinutes = Math.round(parsedLimit)
+    }
 
     const gym = await prisma.gym.update({
       where: { id: session.user.gymId },
       data: {
         phone: payload.phone || null,
+        ...(hasSessionLimit ? { maxSessionMinutes } : {}),
         lastSettingsUpdateAt: new Date(),
       },
     })

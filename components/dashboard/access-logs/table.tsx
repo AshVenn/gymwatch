@@ -48,6 +48,7 @@ export type AccessLogRow = {
   status: AccessEventStatus
   source: AccessEventSource
   createdAt: string
+  sessionOverdue?: boolean
   member?: {
     id: string
     firstName: string
@@ -110,12 +111,22 @@ export function AccessLogTable({ events, onDelete, deletingId }: AccessLogTableP
                   {event.member?.gymVariant?.name ?? '—'}
                 </TableCell>
                 <TableCell>
-                  <Badge
-                    variant="outline"
-                    className={cn('text-xs font-semibold', statusColors[event.status])}
-                  >
-                    {statusLabel}
-                  </Badge>
+                  <div className="flex flex-col gap-1">
+                    <Badge
+                      variant="outline"
+                      className={cn('text-xs font-semibold', statusColors[event.status])}
+                    >
+                      {statusLabel}
+                    </Badge>
+                    {event.sessionOverdue ? (
+                      <Badge
+                        variant="outline"
+                        className="text-xs font-semibold text-destructive border-destructive/40 bg-destructive/10"
+                      >
+                        Période dépassée
+                      </Badge>
+                    ) : null}
+                  </div>
                 </TableCell>
                 <TableCell>
                   <Badge

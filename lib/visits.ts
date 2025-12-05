@@ -55,6 +55,7 @@ export type VisitRow = {
   checkIn: Date
   checkOut: Date | null
   durationMinutes: number
+  isOverMaxDuration: boolean
 }
 
 export type VisitAnalytics = {
@@ -75,6 +76,7 @@ export type VisitAnalytics = {
     to: Date
     mode: "day" | "period"
   }
+  maxSessionMinutes: number | null
 }
 
 async function syncGymVisitorCounter(gymId: string, today: Date) {
@@ -351,6 +353,7 @@ export async function getVisitAnalytics({
   to,
   search,
   limit = 120,
+  maxSessionMinutes,
 }: {
   gymId: string
   variantId?: string | null
@@ -360,6 +363,7 @@ export async function getVisitAnalytics({
   to?: Date
   search?: string
   limit?: number
+  maxSessionMinutes?: number | null
 }): Promise<VisitAnalytics> {
   const now = new Date()
   const viewMode = view === "period" ? "period" : "day"
@@ -369,6 +373,10 @@ export async function getVisitAnalytics({
       : startOfDay(from ?? new Date(now.getTime() - 6 * 24 * 60 * 60 * 1000))
   const rangeEnd = viewMode === "day" ? endOfDay(date ?? now) : endOfDay(to ?? now)
   const safeLimit = Math.min(Math.max(Math.floor(limit ?? 120), 1), 500)
+  const sessionLimit =
+    typeof maxSessionMinutes === "number" && Number.isFinite(maxSessionMinutes) && maxSessionMinutes > 0
+      ? Math.round(maxSessionMinutes)
+      : null
 
   const where: Prisma.VisitWhereInput = {
     gymId,
@@ -479,6 +487,7 @@ export async function getVisitAnalytics({
     const memberName = `${visit.member.firstName} ${visit.member.lastName}`.trim()
     const end = visit.checkOut ?? now
     const durationMinutes = Math.max(0, Math.round((end.getTime() - visit.checkIn.getTime()) / 60000))
+    const isOverMaxDuration = sessionLimit ? durationMinutes > sessionLimit : false
     return {
       id: visit.id,
       memberId: visit.memberId,
@@ -488,6 +497,7 @@ export async function getVisitAnalytics({
       checkIn: visit.checkIn,
       checkOut: visit.checkOut,
       durationMinutes,
+      isOverMaxDuration,
     }
   })
 
@@ -509,5 +519,6 @@ export async function getVisitAnalytics({
       to: rangeEnd,
       mode: viewMode,
     },
+    maxSessionMinutes: sessionLimit,
   }
 }

@@ -93,6 +93,11 @@ export async function GET(request: NextRequest) {
   }
 
   try {
+    const gymSettings = await prisma.gym.findUnique({
+      where: { id: gymId },
+      select: { maxSessionMinutes: true },
+    })
+
     const analytics = await getVisitAnalytics({
       gymId,
       variantId,
@@ -102,6 +107,7 @@ export async function GET(request: NextRequest) {
       to,
       search: search || undefined,
       limit,
+      maxSessionMinutes: gymSettings?.maxSessionMinutes ?? null,
     })
 
     return NextResponse.json({

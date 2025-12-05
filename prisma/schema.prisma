@@ -142,6 +142,7 @@ model Gym {
   isDemo                      Boolean               @default(false)
   demoEndsAt                  DateTime?
   subscriptionGracePeriodDays Int                   @default(0)
+  maxSessionMinutes           Int                   @default(180)
   maxAdminAccounts            Int                   @default(3)
   lastSettingsUpdateAt        DateTime?
   todayVisitorCount           Int                   @default(0)

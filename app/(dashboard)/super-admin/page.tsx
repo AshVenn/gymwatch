@@ -17,12 +17,10 @@ import {
   CartesianGrid,
   Cell,
   Dot,
-  Label,
   Line,
   LineChart,
   Pie,
   PieChart,
-  PolarRadiusAxis,
   RadialBar,
   RadialBarChart,
   ResponsiveContainer,
@@ -61,20 +59,10 @@ const statusChartConfig: ChartConfig = {
   },
 }
 
-// FIX: Map colors explicitly to match the other charts
-const radialChartConfig: ChartConfig = {
-  active: {
-    label: 'Actives',
-    color: STATUS_COLORS[0],
-  },
-  suspended: {
-    label: 'Suspendues',
-    color: STATUS_COLORS[1],
-  },
-  expired: {
-    label: 'Expirées',
-    color: STATUS_COLORS[2],
-  },
+const radialStatusConfig: ChartConfig = {
+  Actives: { label: 'Actives', color: 'var(--color-active)' },
+  Suspendues: { label: 'Suspendues', color: 'var(--color-suspended)' },
+  Expirees: { label: 'Expirees', color: 'var(--color-expired)' },
 }
 
 export default function SuperAdminOverviewPage() {
@@ -233,17 +221,17 @@ export default function SuperAdminOverviewPage() {
 
 
   
-  // FIX: Ensure data keys match the config keys exactly
-    const radialChartData = [
-      {
-        name: 'Stats',
-        active: stats.activeGyms || 0,
-        suspended: stats.suspendedGyms || 0,
-        expired: Math.max(stats.totalGyms - stats.activeGyms - stats.suspendedGyms, 0),
-      },
-    ]
-  
-  const revenueChartData = (stats.revenueTrend ?? []).map((point, index) => {
+  const radialStatusData = [
+  { name: 'Actives', value: stats.activeGyms ?? 0, fill: STATUS_COLORS[0] },
+  { name: 'Suspendues', value: stats.suspendedGyms ?? 0, fill: STATUS_COLORS[1] },
+  {
+    name: 'Expirees',
+    value: Math.max((stats.totalGyms ?? 0) - (stats.activeGyms ?? 0) - (stats.suspendedGyms ?? 0), 0),
+    fill: STATUS_COLORS[2],
+  },
+]
+
+const revenueChartData = (stats.revenueTrend ?? []).map((point, index) => {
     const originalLabel = point.month ?? `M${index + 1}`
     const normalized = originalLabel
       .normalize('NFD')
@@ -423,87 +411,45 @@ export default function SuperAdminOverviewPage() {
       {/* RADIAL CHART */}
       <div className="grid gap-4 md:grid-cols-1 lg:grid-cols-2">
           <Card className="flex flex-col border-border/70">
-            <CardHeader className="items-center pb-0 text-center">
-              <CardTitle>Taux de salles actives</CardTitle>
-              <CardDescription>Sur l'ensemble du parc</CardDescription>
-            </CardHeader>
+  <CardHeader className="items-center pb-0 text-center">
+    <CardTitle>Taux de salles actives</CardTitle>
+    <CardDescription>Sur l'ensemble du parc</CardDescription>
+  </CardHeader>
 
-            <CardContent className="flex flex-1 items-center pb-0">
-              <ChartContainer
-                config={radialChartConfig}
-                className="mx-auto aspect-square w-full max-w-[250px]"
-              >
-                <RadialBarChart
-                  data={radialChartData}
-                  startAngle={90}
-                  endAngle={450} // Full 360 circle starting from top
-                  innerRadius={80}
-                  outerRadius={140}
-                >
-                  <ChartTooltip
-                    cursor={false}
-                    content={<ChartTooltipContent hideLabel />}
-                  />
+  <CardContent className="flex flex-1 items-center pb-0">
+    <ChartContainer config={radialStatusConfig} className="mx-auto w-full max-w-[320px]">
+      <div className="relative h-[260px]">
+        <ResponsiveContainer width="100%" height="100%">
+          <RadialBarChart
+            data={radialStatusData}
+            innerRadius="50%"
+            outerRadius="90%"
+            startAngle={90}
+            endAngle={-270}
+          >
+            <ChartTooltip cursor={false} content={<ChartTooltipContent />} />
+            <RadialBar dataKey="value" nameKey="name" background cornerRadius={10} />
+          </RadialBarChart>
+        </ResponsiveContainer>
+        <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
+          <div className="text-3xl font-bold">{activeShare}%</div>
+          <p className="text-sm text-muted-foreground">Actives</p>
+          <p className="text-xs text-muted-foreground">{stats.totalGyms} salles</p>
+        </div>
+      </div>
+    </ChartContainer>
+  </CardContent>
 
-                  <PolarRadiusAxis tick={false} tickLine={false} axisLine={false}>
-                    <Label
-                      content={({ viewBox }) => {
-                        if (!viewBox || !('cx' in viewBox) || !('cy' in viewBox)) return null
-                        return (
-                          <text x={viewBox.cx} y={viewBox.cy} textAnchor="middle">
-                            <tspan
-                              x={viewBox.cx}
-                              y={(viewBox.cy || 0) - 16}
-                              className="fill-foreground text-2xl font-bold"
-                            >
-                              {stats.activeGyms}
-                            </tspan>
-                            <tspan
-                              x={viewBox.cx}
-                              y={(viewBox.cy || 0) + 4}
-                              className="fill-muted-foreground"
-                            >
-                              Actives
-                            </tspan>
-                          </text>
-                        )
-                      }}
-                    />
-                  </PolarRadiusAxis>
-
-                  {/* 3 anneaux séparés */}
-                  <RadialBar
-                    dataKey="expired"
-                    fill={STATUS_COLORS[2]} // Expirées
-                    background
-                    cornerRadius={10}
-                  />
-                  <RadialBar
-                    dataKey="suspended"
-                    fill={STATUS_COLORS[1]} // Suspendues
-                    background
-                    cornerRadius={10}
-                  />
-                  <RadialBar
-                    dataKey="active"
-                    fill={STATUS_COLORS[0]} // Actives
-                    background
-                    cornerRadius={10}
-                  />
-                </RadialBarChart>
-              </ChartContainer>
-            </CardContent>
-
-            <CardFooter className="flex-col gap-2 text-sm">
-              <div className="flex items-center gap-2 leading-none font-medium">
-                <TrendingUp className="h-4 w-4" />
-                {activeShare}% de salles actives sur {stats.totalGyms} au total
-              </div>
-              <div className="text-muted-foreground leading-none">
-                Répartition des statuts sur l'ensemble du parc
-              </div>
-            </CardFooter>
-          </Card>
+  <CardFooter className="flex-col gap-2 text-sm">
+    <div className="flex items-center gap-2 leading-none font-medium">
+      <TrendingUp className="h-4 w-4" />
+      {activeShare}% de salles actives sur {stats.totalGyms} au total
+    </div>
+    <div className="text-muted-foreground leading-none">
+      Repartition des statuts sur l'ensemble du parc
+    </div>
+  </CardFooter>
+</Card>
 
 
         

@@ -395,6 +395,46 @@ async function runSeed() {
   const gym2Variants = await createVariantsForGym(gym2.id, ['Femmes', 'Hommes'])
   const gym2DefaultVariant = gym2Variants[0]
 
+  const complexGym = await prisma.gym.upsert({
+    where: { id: 'gym-complex' },
+    update: {
+      subscriptionPlan: 'COMPLEX',
+      billingInterval: 'MONTHLY',
+      subscriptionPrice: 520,
+      subscriptionStatus: 'ACTIVE',
+      subscriptionStartedAt: addDays(today, -45),
+      subscriptionExpiresAt: addDays(today, 25),
+      subscriptionGracePeriodDays: 5,
+      maxAdminAccounts: 10,
+      lastSettingsUpdateAt: today,
+      todayVisitorCount: 0,
+      todayVisitorDate: todayStart,
+      analyticsSnapshot: buildAnalyticsSnapshot(18500),
+    },
+    create: {
+      id: 'gym-complex',
+      name: 'Complex Network',
+      email: 'contact@complex.ma',
+      city: 'Tanger',
+      country: 'Maroc',
+      subscriptionPlan: 'COMPLEX',
+      billingInterval: 'MONTHLY',
+      subscriptionPrice: 520,
+      subscriptionStatus: 'ACTIVE',
+      subscriptionStartedAt: addDays(today, -45),
+      subscriptionExpiresAt: addDays(today, 25),
+      subscriptionGracePeriodDays: 5,
+      maxAdminAccounts: 10,
+      lastSettingsUpdateAt: today,
+      todayVisitorCount: 0,
+      todayVisitorDate: todayStart,
+      analyticsSnapshot: buildAnalyticsSnapshot(18500),
+    },
+  })
+  console.log('Created Complex gym:', complexGym.name)
+  const complexVariants = await createVariantsForGym(complexGym.id, ['Centre', 'Nord', 'Sud'])
+  const complexDefaultVariant = complexVariants[0]
+
   const demoGym = await prisma.gym.upsert({
     where: { id: 'gym-demo' },
     update: {
@@ -507,6 +547,36 @@ async function runSeed() {
   ])
   console.log('Created gym2 admins:', powerGymAdmins.map((a) => a.email).join(', '))
 
+  const complexOwner = await upsertOwner({
+    email: 'owner@complex.ma',
+    password: 'Owner123!',
+    firstName: 'Kenza',
+    lastName: 'El Idrissi',
+    gymId: complexGym.id,
+    gymVariantId: complexDefaultVariant.id,
+  })
+  await prisma.gym.update({ where: { id: complexGym.id }, data: { ownerId: complexOwner.id } })
+
+  const complexAdmins = await Promise.all([
+    upsertAdmin({
+      email: 'admin@complex.ma',
+      password: 'Password123!',
+      firstName: 'Youssef',
+      lastName: 'Nord',
+      gymId: complexGym.id,
+      gymVariantId: complexVariants[1].id,
+    }),
+    upsertAdmin({
+      email: 'coach@complex.ma',
+      password: 'Password123!',
+      firstName: 'Imane',
+      lastName: 'Sud',
+      gymId: complexGym.id,
+      gymVariantId: complexVariants[2].id,
+    }),
+  ])
+  console.log('Created complex gym admins:', complexAdmins.map((a) => a.email).join(', '))
+
   const plans1 = await Promise.all([
     prisma.membershipPlan.upsert({
       where: { id: `plan-${gym1.id}-monthly` },
@@ -609,6 +679,49 @@ async function runSeed() {
     }),
   ])
   console.log('Created membership plan for Demo gym')
+
+  const plansComplex = await Promise.all([
+    prisma.membershipPlan.upsert({
+      where: { id: `plan-${complexGym.id}-centre` },
+      update: {},
+      create: {
+        id: `plan-${complexGym.id}-centre`,
+        gymId: complexGym.id,
+        gymVariantId: complexVariants[0].id,
+        name: 'Centre Premium',
+        durationDays: 30,
+        price: 450,
+        isActive: true,
+      },
+    }),
+    prisma.membershipPlan.upsert({
+      where: { id: `plan-${complexGym.id}-nord` },
+      update: {},
+      create: {
+        id: `plan-${complexGym.id}-nord`,
+        gymId: complexGym.id,
+        gymVariantId: complexVariants[1].id,
+        name: 'Nord Annual',
+        durationDays: 365,
+        price: 4800,
+        isActive: true,
+      },
+    }),
+    prisma.membershipPlan.upsert({
+      where: { id: `plan-${complexGym.id}-sud` },
+      update: {},
+      create: {
+        id: `plan-${complexGym.id}-sud`,
+        gymId: complexGym.id,
+        gymVariantId: complexVariants[2].id,
+        name: 'Sud Family',
+        durationDays: 90,
+        price: 1100,
+        isActive: true,
+      },
+    }),
+  ])
+  console.log('Created membership plans for Complex gym')
 
   const members1 = await Promise.all([
     prisma.member.create({
@@ -718,6 +831,70 @@ async function runSeed() {
   ])
   console.log('Created members for Gym 2')
 
+  const membersComplex = await Promise.all([
+    prisma.member.create({
+      data: {
+        gymId: complexGym.id,
+        gymVariantId: complexVariants[0].id,
+        firstName: 'Amine',
+        lastName: 'Centre',
+        email: 'amine.centre@example.com',
+        phone: '+212600000015',
+      },
+    }),
+    prisma.member.create({
+      data: {
+        gymId: complexGym.id,
+        gymVariantId: complexVariants[0].id,
+        firstName: 'Ikram',
+        lastName: 'Premium',
+        email: 'ikram.premium@example.com',
+        phone: '+212600000016',
+      },
+    }),
+    prisma.member.create({
+      data: {
+        gymId: complexGym.id,
+        gymVariantId: complexVariants[1].id,
+        firstName: 'Rachid',
+        lastName: 'Nord',
+        email: 'rachid.nord@example.com',
+        phone: '+212600000017',
+      },
+    }),
+    prisma.member.create({
+      data: {
+        gymId: complexGym.id,
+        gymVariantId: complexVariants[1].id,
+        firstName: 'Soumia',
+        lastName: 'Nord',
+        email: 'soumia.nord@example.com',
+        phone: '+212600000018',
+      },
+    }),
+    prisma.member.create({
+      data: {
+        gymId: complexGym.id,
+        gymVariantId: complexVariants[2].id,
+        firstName: 'Nizar',
+        lastName: 'Sud',
+        email: 'nizar.sud@example.com',
+        phone: '+212600000019',
+      },
+    }),
+    prisma.member.create({
+      data: {
+        gymId: complexGym.id,
+        gymVariantId: complexVariants[2].id,
+        firstName: 'Dounia',
+        lastName: 'Family',
+        email: 'dounia.family@example.com',
+        phone: '+212600000020',
+      },
+    }),
+  ])
+  console.log('Created members for Complex gym')
+
   const membersDemo = await Promise.all([
     prisma.member.create({
       data: {
@@ -767,6 +944,12 @@ async function runSeed() {
   const members2VariantB = members2.slice(3)
   await createSubscriptions(members2VariantA, gym2, [plans2[0]], 5)
   await createSubscriptions(members2VariantB, gym2, [plans2[1]], 8)
+  const membersComplexA = membersComplex.filter((m) => m.gymVariantId === complexVariants[0].id)
+  const membersComplexB = membersComplex.filter((m) => m.gymVariantId === complexVariants[1].id)
+  const membersComplexC = membersComplex.filter((m) => m.gymVariantId === complexVariants[2].id)
+  await createSubscriptions(membersComplexA, complexGym, [plansComplex[0]])
+  await createSubscriptions(membersComplexB, complexGym, [plansComplex[1]], 3)
+  await createSubscriptions(membersComplexC, complexGym, [plansComplex[2]], 6)
   const demoVariantMembersA = membersDemo.filter((m) => m.gymVariantId === demoVariants[0].id)
   const demoVariantMembersB = membersDemo.filter((m) => m.gymVariantId === demoVariants[1].id)
   const demoVariantMembersC = membersDemo.filter((m) => m.gymVariantId === demoVariants[2].id)
@@ -790,6 +973,14 @@ async function runSeed() {
     { member: members2[1], dayOffset: -2, hour: 12, durationMinutes: 70, checkout: false },
     { member: members2[2], dayOffset: -3, hour: 17, durationMinutes: 65 },
     { member: members2[3], dayOffset: 0, hour: 18, durationMinutes: 45 },
+  ])
+
+  await seedVisitsForGym(complexGym, [
+    { member: membersComplex[0], dayOffset: 0, hour: 7, durationMinutes: 60 },
+    { member: membersComplex[1], dayOffset: -1, hour: 18, durationMinutes: 80 },
+    { member: membersComplex[2], dayOffset: -2, hour: 12, durationMinutes: 90, checkout: false },
+    { member: membersComplex[3], dayOffset: -3, hour: 17, durationMinutes: 55 },
+    { member: membersComplex[4], dayOffset: 0, hour: 9, durationMinutes: 70 },
   ])
 
   await seedVisitsForGym(demoGym, [
@@ -825,6 +1016,18 @@ async function runSeed() {
         status: AccessEventStatus.DENIED_INACTIVE,
         source: AccessEventSource.MANUAL,
         createdAt: addDays(today, -1),
+      },
+      {
+        memberId: membersComplex[0].id,
+        status: AccessEventStatus.GRANTED,
+        source: AccessEventSource.QR_SCAN,
+        createdAt: addDays(today, -2),
+      },
+      {
+        memberId: membersComplex[2].id,
+        status: AccessEventStatus.ALREADY_CHECKED_IN,
+        source: AccessEventSource.SIMULATOR,
+        createdAt: addDays(today, -4),
       },
       {
         memberId: membersDemo[0].id,
@@ -872,8 +1075,8 @@ async function runSeed() {
   console.log('Created demo requests')
 
   return {
-    gymsSeeded: 3,
-    membersSeeded: members1.length + members2.length,
+    gymsSeeded: 4,
+    membersSeeded: members1.length + members2.length + membersComplex.length + membersDemo.length,
   }
 }
 

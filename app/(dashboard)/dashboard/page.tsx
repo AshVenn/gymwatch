@@ -15,10 +15,8 @@ import {
   CartesianGrid,
   ResponsiveContainer,
   Dot,
-  PolarRadiusAxis,
   RadialBar,
   RadialBarChart,
-  Label,
 } from 'recharts'
 import {
   ChartConfig,
@@ -204,6 +202,21 @@ export default function DashboardPage() {
     },
   }
 
+const memberRadialConfig: ChartConfig = {
+    Actifs: { label: 'Actifs', color: computedColors[0] },
+    Inactifs: { label: 'Inactifs', color: computedColors[3] },
+  }
+
+  const totalMembers = Math.max(
+    stats.activeMembers ?? 0,
+    planDistribution.reduce((sum, p) => sum + (p.value ?? 0), 0),
+  )
+
+  const memberRadialData = [
+    { name: 'Actifs', value: stats.activeMembers ?? 0, fill: computedColors[0] },
+    { name: 'Inactifs', value: Math.max(totalMembers - (stats.activeMembers ?? 0), 0), fill: computedColors[3] },
+  ]
+
   const downloadExcel = async (type: 'earnings' | 'top-members' | 'loyal-members') => {
     if (type === 'earnings' && !canViewRevenue) {
       toast.error('Acces revenus reserve au proprietaire')
@@ -366,77 +379,43 @@ export default function DashboardPage() {
       {/* Radial Chart and Expiring Soon */}
       <div className="grid gap-4 lg:grid-cols-2">
         <Card className="flex flex-col border-border/70">
-          <CardHeader className="items-center pb-0 text-center">
-            <CardTitle>Taux d'abonnements actifs</CardTitle>
-            <CardDescription>Sur l'ensemble des membres</CardDescription>
-          </CardHeader>
-          <CardContent className="flex flex-1 items-center pb-0">
-            <ChartContainer config={planChartConfig} className="mx-auto aspect-square w-full max-w-[250px]">
-              <RadialBarChart
-                data={[
-                  {
-                    active: stats.activeMembers,
-                    inactive: Math.max(0, planDistribution.reduce((sum, p) => sum + p.value, 0) - stats.activeMembers),
-                  },
-                ]}
-                endAngle={180}
-                innerRadius={80}
-                outerRadius={130}
-              >
-                <ChartTooltip cursor={false} content={<ChartTooltipContent hideLabel />} />
-                <PolarRadiusAxis tick={false} tickLine={false} axisLine={false}>
-                  <Label
-                    content={({ viewBox }) => {
-                      if (viewBox && 'cx' in viewBox && 'cy' in viewBox) {
-                        return (
-                          <text x={viewBox.cx} y={viewBox.cy} textAnchor="middle">
-                            <tspan
-                              x={viewBox.cx}
-                              y={(viewBox.cy || 0) - 16}
-                              className="fill-foreground text-2xl font-bold"
-                            >
-                              {stats.activeMembers.toLocaleString()}
-                            </tspan>
-                            <tspan
-                              x={viewBox.cx}
-                              y={(viewBox.cy || 0) + 4}
-                              className="fill-muted-foreground"
-                            >
-                              Actifs
-                            </tspan>
-                          </text>
-                        )
-                      }
-                    }}
-                  />
-                </PolarRadiusAxis>
-                <RadialBar
-                  dataKey="active"
-                  stackId="a"
-                  cornerRadius={5}
-                  fill="var(--chart-1)"
-                  className="stroke-transparent stroke-2"
-                />
-                <RadialBar
-                  dataKey="inactive"
-                  fill="var(--chart-2)"
-                  stackId="a"
-                  cornerRadius={5}
-                  className="stroke-transparent stroke-2"
-                />
-              </RadialBarChart>
-            </ChartContainer>
-          </CardContent>
-          <CardFooter className="flex-col gap-2 text-sm">
-            <div className="flex items-center gap-2 leading-none font-medium">
-              <TrendingUp className="h-4 w-4" />
-              {planDistribution.reduce((sum, p) => sum + p.value, 0) || stats.activeMembers} membres au total
+        <CardHeader className="items-center pb-0 text-center">
+          <CardTitle>Taux d'abonnements actifs</CardTitle>
+          <CardDescription>Sur l'ensemble des membres</CardDescription>
+        </CardHeader>
+        <CardContent className="flex flex-1 items-center pb-0">
+          <ChartContainer config={memberRadialConfig} className="mx-auto w-full max-w-[320px]">
+            <div className="relative h-[260px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <RadialBarChart
+                  data={memberRadialData}
+                  innerRadius="50%"
+                  outerRadius="90%"
+                  startAngle={90}
+                  endAngle={-270}
+                >
+                  <ChartTooltip cursor={false} content={<ChartTooltipContent />} />
+                  <RadialBar dataKey="value" nameKey="name" background cornerRadius={10} />
+                </RadialBarChart>
+              </ResponsiveContainer>
+              <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
+                <div className="text-3xl font-bold">{stats.activeMembers.toLocaleString()}</div>
+                <p className="text-sm text-muted-foreground">Actifs</p>
+                <p className="text-xs text-muted-foreground">{totalMembers.toLocaleString()} membres</p>
+              </div>
             </div>
-            <div className="text-muted-foreground leading-none">
-              Répartition des abonnements actifs
-            </div>
-          </CardFooter>
-        </Card>
+          </ChartContainer>
+        </CardContent>
+        <CardFooter className="flex-col gap-2 text-sm">
+          <div className="flex items-center gap-2 leading-none font-medium">
+            <TrendingUp className="h-4 w-4" />
+            {stats.activeMembers.toLocaleString()} actifs sur {totalMembers.toLocaleString()} membres
+          </div>
+          <div className="text-muted-foreground leading-none">
+            Repartition des statuts d'abonnement
+          </div>
+        </CardFooter>
+      </Card>
 
         {/* Expiring Soon */}
         <Card className="border-border/70">

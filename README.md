@@ -1,36 +1,72 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# GymWatch
+
+GymWatch is a multi-tenant gym management platform built with Next.js. It provides dashboards for gym teams and super admins to manage members, classes, subscriptions, access control, and reporting (Excel/PDF exports).
+
+## Features
+- Member lifecycle: registration, subscription management, attendance and visit history.
+- Access control: QR verification, access events, retention and purge tooling.
+- Class scheduling: create classes, bookings, attendance tracking, and weekly calendar views.
+- Analytics and reports: dashboards for usage, plans, and exports (Excel/PDF).
+- Super admin console: manage gyms, teams, plan settings, demo requests, and variants.
+- Theming and UI: Radix-based components, charts, QR scanner, and responsive layouts.
+
+## Stack
+- Next.js 15 (App Router) + React 19 + TypeScript
+- Prisma ORM with PostgreSQL
+- NextAuth for authentication
+- TanStack Query for data fetching and caching
+- Tailwind CSS 4 + Radix UI + Recharts
 
 ## Getting Started
+### Prerequisites
+- Node.js 18+ and npm
+- PostgreSQL database (local or hosted, e.g., Neon)
 
-First, run the development server:
+### Setup
+1. Install dependencies:
+   ```bash
+   npm install
+   ```
+2. Copy `.env.example` (or create new) to `.env.local` and fill values (see Environment below).
+3. Apply migrations and seed:
+   ```bash
+   npx prisma migrate dev
+   npx prisma db seed
+   ```
+4. Run the dev server:
+   ```bash
+   npm run dev
+   ```
+   App runs at http://localhost:3000.
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+### Scripts
+- `npm run dev` – start development server
+- `npm run build` – create production build
+- `npm run start` – run built app
+- `npm run lint` – lint codebase
+
+## Environment
+The app expects these variables (values omitted for safety):
 ```
+DATABASE_URL=
+PRISMA_DATABASE_URL=
+POSTGRES_URL=
+NEXTAUTH_URL=
+NEXTAUTH_SECRET=
+VERCEL_OIDC_TOKEN=
+```
+At minimum, set `DATABASE_URL` and `NEXTAUTH_SECRET`; keep `NEXTAUTH_URL` aligned with your site URL.
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Database
+- Migrations live in `prisma/migrations`.
+- Seed script: `prisma/seed.js` (invoked via `npx prisma db seed`).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Key Paths
+- UI: `components/` (dashboard, superadmin, marketing, ui primitives)
+- App routes: `app/` (dashboards, auth, APIs)
+- APIs: `app/api/*` (access events, classes, reports, gyms, subscriptions, variants, etc.)
+- Prisma schema: `prisma/schema.prisma`
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Deployment
+- Build with `npm run build` and serve with `npm start`.
+- Add production env vars to your hosting provider (e.g., Vercel) before deploying.

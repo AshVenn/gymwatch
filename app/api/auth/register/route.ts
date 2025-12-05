@@ -3,7 +3,7 @@ import { Prisma } from '@prisma/client'
 import { db } from '@/lib/db'
 import { hashPassword } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
-import { resolvePlanPrice } from '@/lib/subscription-plans'
+import { resolvePlanPrice } from '@/lib/plan-settings'
 
 function addDays(base: Date, days: number) {
   const copy = new Date(base)
@@ -36,13 +36,14 @@ export async function POST(request: NextRequest) {
     const { gym, owner } = await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
       const subscriptionPlan = 'BASIC'
       const billingInterval = 'MONTHLY'
+      const subscriptionPrice = await resolvePlanPrice(subscriptionPlan, billingInterval)
       const createdGym = await tx.gym.create({
         data: {
           name: gymName,
           email: gymEmail,
           subscriptionPlan,
           billingInterval,
-          subscriptionPrice: resolvePlanPrice(subscriptionPlan, billingInterval),
+          subscriptionPrice,
           subscriptionStatus: 'ACTIVE',
           subscriptionStartedAt: new Date(),
           subscriptionExpiresAt: addDays(new Date(), 30),

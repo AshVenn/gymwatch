@@ -22,7 +22,7 @@
   import { Button } from '@/components/ui/button'
   import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
   import { cn } from '@/lib/utils'
-  import { getPlanCatalogAsList } from '@/lib/subscription-plans'
+  import { DEFAULT_ANNUAL_DISCOUNT, getPlanCatalogAsList } from '@/lib/subscription-plans'
 
   const navigationLinks = [
     { label: 'Fonctionnalites', href: '#features' },
@@ -80,13 +80,13 @@
     },
   ]
 
-  const planCatalog = getPlanCatalogAsList()
-
   export default function Home() {
     const router = useRouter()
     const [parallaxOffset, setParallaxOffset] = useState(0)
     const [hoveredDevice, setHoveredDevice] = useState<string | null>(null)
     const [billingCycle, setBillingCycle] = useState<'MONTHLY' | 'ANNUAL'>('MONTHLY')
+    const [planCatalog, setPlanCatalog] = useState(() => getPlanCatalogAsList())
+    const [annualDiscount, setAnnualDiscount] = useState(DEFAULT_ANNUAL_DISCOUNT)
     const priceFormatter = new Intl.NumberFormat('fr-MA', { style: 'currency', currency: 'MAD' })
 
     useEffect(() => {
@@ -101,6 +101,26 @@
       }
       window.addEventListener('scroll', handleScroll)
       return () => window.removeEventListener('scroll', handleScroll)
+    }, [])
+
+    useEffect(() => {
+      const loadPricing = async () => {
+        try {
+          const response = await fetch('/api/plan-settings')
+          if (!response.ok) return
+          const payload = await response.json()
+          if (payload?.pricing) {
+            setPlanCatalog(getPlanCatalogAsList(payload.pricing))
+          }
+          if (typeof payload?.settings?.annualDiscountPercent === 'number') {
+            setAnnualDiscount(payload.settings.annualDiscountPercent)
+          }
+        } catch (error) {
+          console.error('[plan-settings][home]', error)
+        }
+      }
+
+      loadPricing()
     }, [])
 
     return (
@@ -306,7 +326,7 @@
                 )}
                 onClick={() => setBillingCycle('ANNUAL')}
               >
-                Annuel (-15%)
+                Annuel (-{annualDiscount}%)
               </button>
             </div>
             <div className="mt-8 grid gap-6 md:grid-cols-3">

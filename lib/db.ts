@@ -1,5 +1,5 @@
 import { prisma } from "./prisma"
-import { resolvePlanPrice } from "./subscription-plans"
+import { resolvePlanPrice } from "./plan-settings"
 import { GymPlanTier, GymBillingInterval } from "@prisma/client"
 
 export const db = {
@@ -26,6 +26,8 @@ export const db = {
   }) => {
     const plan: GymPlanTier = data.subscriptionPlan ?? "BASIC"
     const interval: GymBillingInterval = data.billingInterval ?? "MONTHLY"
+    const subscriptionPrice = await resolvePlanPrice(plan, interval)
+
     return prisma.gym.create({
       data: {
         name: data.name,
@@ -34,7 +36,7 @@ export const db = {
         country: data.country ?? null,
         subscriptionPlan: plan,
         billingInterval: interval,
-        subscriptionPrice: resolvePlanPrice(plan, interval),
+        subscriptionPrice,
         maxAdminAccounts: data.maxAdminAccounts ?? 3,
       },
     })

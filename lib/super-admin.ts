@@ -1,7 +1,8 @@
 import { GymSubscriptionStatus, UserRole } from "@prisma/client"
 import { prisma } from "./prisma"
 import { hashPassword } from "./auth"
-import { getPlanFeatures, resolvePlanPrice } from "./subscription-plans"
+import { getPlanFeatures } from "./subscription-plans"
+import { resolvePlanPrice } from "./plan-settings"
 import { GymPlanTier, GymBillingInterval } from "@prisma/client"
 
 function getMonthBoundaries(offset: number) {
@@ -385,7 +386,7 @@ export async function updateGymFromSuperAdmin(
 
     const plan = data.subscriptionPlan ?? current?.subscriptionPlan ?? "BASIC"
     const interval = data.billingInterval ?? current?.billingInterval ?? "MONTHLY"
-    subscriptionPrice = resolvePlanPrice(plan, interval)
+    subscriptionPrice = await resolvePlanPrice(plan, interval)
   }
 
   const updatedGym = await prisma.gym.update({
@@ -452,7 +453,7 @@ export async function createGymForSuperAdmin(data: {
 }) {
   const hashedPassword = await hashPassword(data.owner.password)
   const interval = data.billingInterval ?? "MONTHLY"
-  const subscriptionPrice = resolvePlanPrice(data.subscriptionPlan, interval)
+  const subscriptionPrice = await resolvePlanPrice(data.subscriptionPlan, interval)
   const adminLimit = data.maxAdminAccounts ?? 3
   const variantsPayload = normalizeVariants(data.variants)
 

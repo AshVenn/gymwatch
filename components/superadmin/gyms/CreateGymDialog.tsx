@@ -6,7 +6,7 @@ import { useForm } from 'react-hook-form'
 import { z } from 'zod'
 import { zodResolver } from '@hookform/resolvers/zod'
 
-import { useCreateGym, GymSubscriptionStatus, GymPlanTier, GymBillingInterval } from '@/app/(dashboard)/super-admin/hooks'
+import { useCreateGym, usePlanSettings, GymSubscriptionStatus, GymPlanTier, GymBillingInterval } from '@/app/(dashboard)/super-admin/hooks'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
@@ -82,13 +82,15 @@ export function CreateGymDialog() {
     defaultValues,
   })
   const createGym = useCreateGym()
+  const planSettings = usePlanSettings()
 
   const selectedTier = form.watch('tier') as GymPlanTier
   const selectedInterval = form.watch('interval') as GymBillingInterval
   const gymType = form.watch('gymType') as 'SINGLE' | 'MULTI'
   const variantNamesValue = form.watch('variantNames') ?? ''
   const gymNameValue = form.watch('name')
-  const estimatedPrice = PLAN_PRICING[selectedTier][selectedInterval]
+  const pricingTable = planSettings.data?.pricing ?? PLAN_PRICING
+  const estimatedPrice = pricingTable[selectedTier][selectedInterval]
   const selectedFeatures = useMemo(() => getPlanFeatures(selectedTier), [selectedTier])
   const parsedVariants = useMemo(() => {
     if (gymType === 'SINGLE') {

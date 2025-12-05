@@ -296,6 +296,19 @@ async function runSeed() {
   })
   console.log('System settings initialized')
 
+  await prisma.planSettings.upsert({
+    where: { id: 1 },
+    update: {},
+    create: {
+      id: 1,
+      basicMonthlyPrice: 200,
+      proMonthlyPrice: 350,
+      complexMonthlyPrice: 520,
+      annualDiscountPercent: 15,
+    },
+  })
+  console.log('Plan settings initialized')
+
   const adminPassword = await hashPassword('Admin123!')
   const superAdmin = await prisma.user.upsert({
     where: { email: 'admin@gymwatch.com' },

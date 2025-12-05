@@ -9,6 +9,7 @@ export type PlanFeatureKey =
   | "qrDownloads"
   | "excelReports"
 export type PlanFeatures = Record<PlanFeatureKey, boolean>
+export type PlanPricingTable = Record<PlanTier, Record<GymBillingInterval, number>>
 
 export interface PlanCatalogEntry {
   tier: PlanTier
@@ -22,20 +23,48 @@ export interface PlanCatalogEntry {
   annualPrice: number
 }
 
-export const PLAN_PRICING: Record<PlanTier, Record<GymBillingInterval, number>> = {
-  BASIC: {
-    MONTHLY: 200,
-    ANNUAL: 2000,
-  },
-  PRO: {
-    MONTHLY: 350,
-    ANNUAL: 3300,
-  },
-  COMPLEX: {
-    MONTHLY: 520,
-    ANNUAL: 5200,
-  },
+export const DEFAULT_ANNUAL_DISCOUNT = 15
+
+const DEFAULT_MONTHLY_PRICING: Record<PlanTier, number> = {
+  BASIC: 200,
+  PRO: 350,
+  COMPLEX: 520,
 }
+
+export function calculateAnnualPrice(monthly: number, discountPercent: number) {
+  const safeDiscount = Math.min(Math.max(discountPercent, 0), 90)
+  const annual = monthly * 12 * (1 - safeDiscount / 100)
+  return Math.round(annual * 100) / 100
+}
+
+export function computePricingFromSettings(settings: {
+  basicMonthlyPrice: number
+  proMonthlyPrice: number
+  complexMonthlyPrice: number
+  annualDiscountPercent: number
+}): PlanPricingTable {
+  return {
+    BASIC: {
+      MONTHLY: settings.basicMonthlyPrice,
+      ANNUAL: calculateAnnualPrice(settings.basicMonthlyPrice, settings.annualDiscountPercent),
+    },
+    PRO: {
+      MONTHLY: settings.proMonthlyPrice,
+      ANNUAL: calculateAnnualPrice(settings.proMonthlyPrice, settings.annualDiscountPercent),
+    },
+    COMPLEX: {
+      MONTHLY: settings.complexMonthlyPrice,
+      ANNUAL: calculateAnnualPrice(settings.complexMonthlyPrice, settings.annualDiscountPercent),
+    },
+  }
+}
+
+export const PLAN_PRICING: PlanPricingTable = computePricingFromSettings({
+  basicMonthlyPrice: DEFAULT_MONTHLY_PRICING.BASIC,
+  proMonthlyPrice: DEFAULT_MONTHLY_PRICING.PRO,
+  complexMonthlyPrice: DEFAULT_MONTHLY_PRICING.COMPLEX,
+  annualDiscountPercent: DEFAULT_ANNUAL_DISCOUNT,
+})
 
 const EMPTY_FEATURES: PlanFeatures = {
   accessControl: false,
@@ -68,7 +97,7 @@ const FEATURE_MATRIX: Record<PlanTier, PlanFeatures> = {
   },
 }
 
-export const PLAN_CATALOG: Record<PlanTier, PlanCatalogEntry> = {
+const PLAN_METADATA: Record<PlanTier, Omit<PlanCatalogEntry, "monthlyPrice" | "annualPrice">> = {
   BASIC: {
     tier: "BASIC",
     name: "Basic",
@@ -80,8 +109,6 @@ export const PLAN_CATALOG: Record<PlanTier, PlanCatalogEntry> = {
       "Analyses essentielles",
       "Support email prioritaire",
     ],
-    monthlyPrice: PLAN_PRICING.BASIC.MONTHLY,
-    annualPrice: PLAN_PRICING.BASIC.ANNUAL,
   },
   PRO: {
     tier: "PRO",
@@ -96,8 +123,6 @@ export const PLAN_CATALOG: Record<PlanTier, PlanCatalogEntry> = {
       "Exports Excel revenus & fidelite",
       "Exports PDF/Excel multi-salles",
     ],
-    monthlyPrice: PLAN_PRICING.PRO.MONTHLY,
-    annualPrice: PLAN_PRICING.PRO.ANNUAL,
   },
   COMPLEX: {
     tier: "COMPLEX",
@@ -115,14 +140,22 @@ export const PLAN_CATALOG: Record<PlanTier, PlanCatalogEntry> = {
       "Statistiques detaillees multi-sites",
       "Scenarios marketing (emails/SMS) en preparation",
     ],
-    monthlyPrice: PLAN_PRICING.COMPLEX.MONTHLY,
-    annualPrice: PLAN_PRICING.COMPLEX.ANNUAL,
   },
 }
 
-export function resolvePlanPrice(tier: PlanTier, interval: GymBillingInterval) {
-  return PLAN_PRICING[tier][interval]
+export function getPlanCatalog(pricing: PlanPricingTable = PLAN_PRICING): Record<PlanTier, PlanCatalogEntry> {
+  return {
+    BASIC: { ...PLAN_METADATA.BASIC, monthlyPrice: pricing.BASIC.MONTHLY, annualPrice: pricing.BASIC.ANNUAL },
+    PRO: { ...PLAN_METADATA.PRO, monthlyPrice: pricing.PRO.MONTHLY, annualPrice: pricing.PRO.ANNUAL },
+    COMPLEX: {
+      ...PLAN_METADATA.COMPLEX,
+      monthlyPrice: pricing.COMPLEX.MONTHLY,
+      annualPrice: pricing.COMPLEX.ANNUAL,
+    },
+  }
 }
+
+export const PLAN_CATALOG = getPlanCatalog()
 
 export function getPlanFeatures(tier: GymPlanTier | null | undefined): PlanFeatures {
   if (!tier) return EMPTY_FEATURES
@@ -134,8 +167,8 @@ export function hasPlanFeature(tier: GymPlanTier | null | undefined, feature: Pl
   return Boolean(features[feature])
 }
 
-export function getPlanCatalogAsList(): PlanCatalogEntry[] {
-  return Object.values(PLAN_CATALOG)
+export function getPlanCatalogAsList(pricing?: PlanPricingTable): PlanCatalogEntry[] {
+  return Object.values(getPlanCatalog(pricing ?? PLAN_PRICING))
 }
 
 export function isMultiLocationPlan(tier: GymPlanTier | null | undefined) {

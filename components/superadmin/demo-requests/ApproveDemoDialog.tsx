@@ -7,7 +7,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { CalendarClock, Sparkles } from 'lucide-react'
 
 import type { DemoRequest, GymBillingInterval, GymPlanTier } from '@/app/(dashboard)/super-admin/hooks'
-import { useApproveDemoRequest } from '@/app/(dashboard)/super-admin/hooks'
+import { useApproveDemoRequest, usePlanSettings } from '@/app/(dashboard)/super-admin/hooks'
 import { PLAN_PRICING } from '@/lib/subscription-plans'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form'
@@ -88,6 +88,7 @@ type Props = {
 export function ApproveDemoDialog({ request, open, onOpenChange }: Props) {
   const approveDemo = useApproveDemoRequest()
   const [prefilled, setPrefilled] = useState(false)
+  const planSettings = usePlanSettings()
 
   const form = useForm<ApproveValues>({
     resolver: zodResolver(schema),
@@ -146,11 +147,13 @@ export function ApproveDemoDialog({ request, open, onOpenChange }: Props) {
     }
   }, [form, open, request])
 
+  const pricingTable = planSettings.data?.pricing ?? PLAN_PRICING
+
   const estimatedPrice = useMemo(() => {
     const plan = form.watch('plan') as GymPlanTier
     const interval = form.watch('billingInterval') as GymBillingInterval
-    return PLAN_PRICING[plan][interval]
-  }, [form])
+    return pricingTable[plan][interval]
+  }, [form, pricingTable])
 
   const onSubmit = (values: ApproveValues) => {
     if (!request) return

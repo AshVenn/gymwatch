@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState, useTransition } from 'react'
+import { useTransition } from 'react'
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -10,32 +10,15 @@ import { signOut } from 'next-auth/react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Switch } from '@/components/ui/switch'
-import { Badge } from '@/components/ui/badge'
 import {
   Form,
   FormControl,
-  FormDescription,
   FormField,
   FormItem,
   FormLabel,
   FormMessage,
 } from '@/components/ui/form'
-import { Skeleton } from '@/components/ui/skeleton'
-import { usePurgeAccessLogs } from '@/app/(dashboard)/super-admin/hooks'
-
-const settingsSchema = z.object({
-  supportEmail: z.string().email('Email invalide'),
-  supportPhone: z.string().min(6, 'Numéro trop court'),
-  brandColor: z.string().min(4, 'Couleur hex attendue'),
-  expiryReminder: z.boolean(),
-  weeklyDigest: z.boolean(),
-  incidentAlerts: z.boolean(),
-  payoutReport: z.boolean(),
-  gymSettingsIntervalMs: z.coerce.number().int().min(5_000).max(3_600_000),
-  userSettingsIntervalMs: z.coerce.number().int().min(5_000).max(3_600_000),
-  accessLogRetentionDays: z.coerce.number().int().min(1).max(3_650),
-})
+import { PlanSettingsForm } from '@/components/superadmin/PlanSettingsForm'
 
 const passwordSchema = z
   .object({
@@ -48,33 +31,10 @@ const passwordSchema = z
     path: ['confirmPassword'],
   })
 
-type SettingsFormValues = z.infer<typeof settingsSchema>
 type PasswordFormValues = z.infer<typeof passwordSchema>
 
-const defaults: SettingsFormValues = {
-  supportEmail: 'support@gymwatch.ma',
-  supportPhone: '+212 6 12 34 56 78',
-  brandColor: '#5b4bff',
-  expiryReminder: true,
-  weeklyDigest: true,
-  incidentAlerts: true,
-  payoutReport: false,
-  gymSettingsIntervalMs: 60_000,
-  userSettingsIntervalMs: 30_000,
-  accessLogRetentionDays: 90,
-}
-
 export default function SuperAdminSettingsPage() {
-  const [loading, setLoading] = useState(true)
-  const [pendingSettings, startSettingsTransition] = useTransition()
   const [pendingPassword, startPasswordTransition] = useTransition()
-  const [lastPurgeAt, setLastPurgeAt] = useState<Date | null>(null)
-  const purgeLogs = usePurgeAccessLogs()
-
-  const settingsForm = useForm<SettingsFormValues>({
-    resolver: zodResolver(settingsSchema),
-    defaultValues: defaults,
-  })
 
   const passwordForm = useForm<PasswordFormValues>({
     resolver: zodResolver(passwordSchema),
@@ -84,58 +44,6 @@ export default function SuperAdminSettingsPage() {
       confirmPassword: '',
     },
   })
-
-  useEffect(() => {
-    let active = true
-    const load = async () => {
-      try {
-        const response = await fetch('/api/super-admin/settings')
-        if (!response.ok) throw new Error('Impossible de charger les paramètres')
-        const data = await response.json()
-        if (active) {
-          settingsForm.reset({
-            supportEmail: data.supportEmail ?? defaults.supportEmail,
-            supportPhone: data.supportPhone ?? defaults.supportPhone,
-            brandColor: data.brandColor ?? defaults.brandColor,
-            expiryReminder: Boolean(data.expiryReminder),
-            weeklyDigest: Boolean(data.weeklyDigest),
-            incidentAlerts: Boolean(data.incidentAlerts),
-            payoutReport: Boolean(data.payoutReport),
-            gymSettingsIntervalMs: Number(data.gymSettingsIntervalMs ?? defaults.gymSettingsIntervalMs),
-            userSettingsIntervalMs: Number(data.userSettingsIntervalMs ?? defaults.userSettingsIntervalMs),
-            accessLogRetentionDays: Number(
-              data.accessLogRetentionDays ?? defaults.accessLogRetentionDays,
-            ),
-          })
-          setLastPurgeAt(data.lastPurgeAt ? new Date(data.lastPurgeAt) : null)
-        }
-      } catch (error) {
-        toast.error(error instanceof Error ? error.message : 'Erreur de chargement')
-      } finally {
-        if (active) setLoading(false)
-      }
-    }
-    load()
-    return () => {
-      active = false
-    }
-  }, [settingsForm])
-
-  const submitSettings = (values: SettingsFormValues) => {
-    startSettingsTransition(async () => {
-      try {
-        const response = await fetch('/api/super-admin/settings', {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(values),
-        })
-        if (!response.ok) throw new Error('Impossible de sauvegarder les paramètres')
-        toast.success('Paramètres mis à jour')
-      } catch (error) {
-        toast.error(error instanceof Error ? error.message : 'Erreur inattendue')
-      }
-    })
-  }
 
   const submitPassword = (values: PasswordFormValues) => {
     startPasswordTransition(async () => {
@@ -158,296 +66,71 @@ export default function SuperAdminSettingsPage() {
     })
   }
 
-  const triggerPurge = () => {
-    purgeLogs.mutate(undefined, {
-      onSuccess: (data) => {
-        setLastPurgeAt(data?.lastPurgeAt ? new Date(data.lastPurgeAt) : new Date())
-      },
-    })
-  }
-
-  const lastPurgeLabel = lastPurgeAt
-    ? lastPurgeAt.toLocaleString('fr-FR', { dateStyle: 'medium', timeStyle: 'short' })
-    : 'Jamais'
-
-  if (loading) {
-    return (
-      <div className="space-y-4">
-        <Skeleton className="h-10 w-48" />
-        <div className="grid gap-4 lg:grid-cols-2">
-          {Array.from({ length: 2 }).map((_, idx) => (
-            <Skeleton key={idx} className="h-80 rounded-2xl" />
-          ))}
-        </div>
-      </div>
-    )
-  }
-
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-semibold">Paramètres</h1>
-        <p className="text-muted-foreground">Pilotez l'identité, les intervalles et la sécurité de la plateforme.</p>
+        <h1 className="text-3xl font-semibold">Paramétrage des plans</h1>
+        <p className="text-muted-foreground">
+          Ajustez les prix des offres et la remise annuelle appliquée aux salles.
+        </p>
       </div>
 
-      <div className="flex flex-wrap items-center gap-3 rounded-xl border border-border/70 bg-muted/40 p-3 text-sm">
-        <Badge variant="outline">
-          Intervalle gym: {settingsForm.watch('gymSettingsIntervalMs') ?? defaults.gymSettingsIntervalMs} ms
-        </Badge>
-        <Badge variant="outline">
-          Intervalle utilisateur: {settingsForm.watch('userSettingsIntervalMs') ?? defaults.userSettingsIntervalMs} ms
-        </Badge>
-        <Badge variant="outline">
-          Retention logs: {settingsForm.watch('accessLogRetentionDays') ?? defaults.accessLogRetentionDays} jours
-        </Badge>
-        <span className="text-xs text-muted-foreground">Valeurs chargees depuis la base</span>
-      </div>
+      <PlanSettingsForm />
 
-      <div className="grid gap-6 lg:grid-cols-2">
-        <Card>
-          <CardHeader>
-            <CardTitle>Identité & alertes</CardTitle>
-            <CardDescription>Coordonnées, couleurs et notifications automatiques.</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Form {...settingsForm}>
-              <form className="space-y-4" onSubmit={settingsForm.handleSubmit(submitSettings)}>
-                <FormField
-                  control={settingsForm.control}
-                  name="supportEmail"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Email support</FormLabel>
-                      <FormControl>
-                        <Input type="email" placeholder="support@gymwatch.ma" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={settingsForm.control}
-                  name="supportPhone"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Téléphone support</FormLabel>
-                      <FormControl>
-                        <Input placeholder="+212 ..." {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={settingsForm.control}
-                  name="brandColor"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Couleur principale</FormLabel>
-                      <FormControl>
-                        <Input type="text" placeholder="#5b4bff" {...field} />
-                      </FormControl>
-                      <FormDescription>Utilisée sur la home et les e-mails marque blanche.</FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <div className="grid gap-3 md:grid-cols-2">
-                  <FormField
-                    control={settingsForm.control}
-                    name="gymSettingsIntervalMs"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Intervalle maj salle (ms)</FormLabel>
-                        <FormControl>
-                          <Input type="number" min={5000} max={3600000} {...field} />
-                        </FormControl>
-                        <FormDescription>Fenêtre minimale entre deux mises à jour du gym.</FormDescription>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={settingsForm.control}
-                    name="userSettingsIntervalMs"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Intervalle maj profil (ms)</FormLabel>
-                        <FormControl>
-                          <Input type="number" min={5000} max={3600000} {...field} />
-                        </FormControl>
-                        <FormDescription>Anti-spam sur les préférences utilisateur.</FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-
-                <div className="grid gap-3 md:grid-cols-[2fr,1fr]">
-                  <FormField
-                    control={settingsForm.control}
-                    name="accessLogRetentionDays"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Retention logs (jours)</FormLabel>
-                        <FormControl>
-                          <Input type="number" min={1} max={3650} {...field} />
-                        </FormControl>
-                        <FormDescription>Duree de conservation des acces admin.</FormDescription>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <div className="flex flex-col justify-between rounded-lg border p-3">
-                    <div className="space-y-1">
-                      <FormLabel>Purge manuelle</FormLabel>
-                      <FormDescription>Supprime les traces plus vieilles que la retention.</FormDescription>
-                      <p className="text-xs text-muted-foreground">
-                        Derniere purge: <span className="text-foreground">{lastPurgeLabel}</span>
-                      </p>
-                    </div>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      className="mt-3 w-full"
-                      disabled={purgeLogs.isPending}
-                      onClick={triggerPurge}
-                    >
-                      {purgeLogs.isPending ? 'Purge en cours...' : 'Purger maintenant'}
-                    </Button>
-                  </div>
-                </div>
-
-                <div className="grid gap-3">
-                  <FormField
-                    control={settingsForm.control}
-                    name="expiryReminder"
-                    render={({ field }) => (
-                      <FormItem className="flex items-center justify-between rounded-lg border p-3">
-                        <div>
-                          <FormLabel>Alertes d'expiration</FormLabel>
-                          <FormDescription>Prévenir les salles 10 jours avant la fin de l'abonnement.</FormDescription>
-                        </div>
-                        <FormControl>
-                          <Switch checked={field.value} onCheckedChange={field.onChange} />
-                        </FormControl>
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={settingsForm.control}
-                    name="weeklyDigest"
-                    render={({ field }) => (
-                      <FormItem className="flex items-center justify-between rounded-lg border p-3">
-                        <div>
-                          <FormLabel>Digest hebdomadaire</FormLabel>
-                          <FormDescription>Résumé des nouveaux membres, revenus et incidents.</FormDescription>
-                        </div>
-                        <FormControl>
-                          <Switch checked={field.value} onCheckedChange={field.onChange} />
-                        </FormControl>
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={settingsForm.control}
-                    name="incidentAlerts"
-                    render={({ field }) => (
-                      <FormItem className="flex items-center justify-between rounded-lg border p-3">
-                        <div>
-                          <FormLabel>Alertes critiques</FormLabel>
-                          <FormDescription>Pannes d'API, erreurs de paiement, incidents sensibles.</FormDescription>
-                        </div>
-                        <FormControl>
-                          <Switch checked={field.value} onCheckedChange={field.onChange} />
-                        </FormControl>
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={settingsForm.control}
-                    name="payoutReport"
-                    render={({ field }) => (
-                      <FormItem className="flex items-center justify-between rounded-lg border p-3">
-                        <div>
-                          <FormLabel>Rapport de versement</FormLabel>
-                          <FormDescription>Envoi automatique du rapport détaillé des paiements.</FormDescription>
-                        </div>
-                        <FormControl>
-                          <Switch checked={field.value} onCheckedChange={field.onChange} />
-                        </FormControl>
-                      </FormItem>
-                    )}
-                  />
-                </div>
-
-                <Button type="submit" className="w-full" disabled={pendingSettings}>
-                  {pendingSettings ? 'Enregistrement...' : 'Enregistrer'}
-                </Button>
-              </form>
-            </Form>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Changer le mot de passe</CardTitle>
-            <CardDescription>Valide immédiatement et force la reconnexion.</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Form {...passwordForm}>
-              <form className="space-y-4" onSubmit={passwordForm.handleSubmit(submitPassword)}>
-                <FormField
-                  control={passwordForm.control}
-                  name="currentPassword"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Mot de passe actuel</FormLabel>
-                      <FormControl>
-                        <Input type="password" autoComplete="current-password" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={passwordForm.control}
-                  name="newPassword"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Nouveau mot de passe</FormLabel>
-                      <FormControl>
-                        <Input type="password" autoComplete="new-password" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={passwordForm.control}
-                  name="confirmPassword"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Confirmer</FormLabel>
-                      <FormControl>
-                        <Input type="password" autoComplete="new-password" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <Button type="submit" className="w-full" disabled={pendingPassword}>
-                  {pendingPassword ? 'Mise à jour...' : 'Mettre à jour'}
-                </Button>
-              </form>
-            </Form>
-          </CardContent>
-        </Card>
-      </div>
+      <Card>
+        <CardHeader>
+          <CardTitle>Changer le mot de passe</CardTitle>
+          <CardDescription>Valide immédiatement et force la reconnexion.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Form {...passwordForm}>
+            <form className="space-y-4" onSubmit={passwordForm.handleSubmit(submitPassword)}>
+              <FormField
+                control={passwordForm.control}
+                name="currentPassword"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Mot de passe actuel</FormLabel>
+                    <FormControl>
+                      <Input type="password" autoComplete="current-password" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={passwordForm.control}
+                name="newPassword"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Nouveau mot de passe</FormLabel>
+                    <FormControl>
+                      <Input type="password" autoComplete="new-password" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={passwordForm.control}
+                name="confirmPassword"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Confirmer</FormLabel>
+                    <FormControl>
+                      <Input type="password" autoComplete="new-password" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <Button type="submit" className="w-full" disabled={pendingPassword}>
+                {pendingPassword ? 'Mise à jour...' : 'Mettre à jour'}
+              </Button>
+            </form>
+          </Form>
+        </CardContent>
+      </Card>
     </div>
   )
 }

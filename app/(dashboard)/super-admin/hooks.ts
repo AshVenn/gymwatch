@@ -1,11 +1,23 @@
 ﻿import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import type { PlanFeatures } from '@/lib/subscription-plans'
+import type { PlanPricingTable } from '@/lib/subscription-plans'
 
 export type GymPlanTier = 'BASIC' | 'PRO' | 'COMPLEX'
 export type GymSubscriptionStatus = 'ACTIVE' | 'SUSPENDED' | 'EXPIRED'
 export type GymBillingInterval = 'MONTHLY' | 'ANNUAL'
 export type DemoRequestStatus = 'PENDING' | 'RESOLVED' | 'REFUSED'
+export interface PlanSettingsResponse {
+  settings: {
+    basicMonthlyPrice: number
+    proMonthlyPrice: number
+    complexMonthlyPrice: number
+    annualDiscountPercent: number
+    updatedAt?: string
+  }
+  pricing: PlanPricingTable
+}
+export type PlanSettingsInput = Omit<PlanSettingsResponse['settings'], 'updatedAt'>
 
 export interface SuperAdminStats {
   totalGyms: number
@@ -138,6 +150,33 @@ export function useSuperAdminStats() {
   return useQuery<SuperAdminStats>({
     queryKey: ['super-admin', 'stats'],
     queryFn: () => fetchJSON('/api/super-admin/stats'),
+  })
+}
+
+export function usePlanSettings() {
+  return useQuery<PlanSettingsResponse>({
+    queryKey: ['plan-settings'],
+    queryFn: () => fetchJSON('/api/plan-settings'),
+  })
+}
+
+export function useUpdatePlanSettings() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async (payload: PlanSettingsInput) => {
+      return fetchJSON('/api/plan-settings', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      })
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['plan-settings'] })
+      toast.success('Plans mis à jour')
+    },
+    onError: (error: Error) => {
+      toast.error(error.message)
+    },
   })
 }
 

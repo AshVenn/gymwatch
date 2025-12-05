@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Mail, MapPin, Phone, CheckCircle2, XCircle, Info } from 'lucide-react'
 
 import { useDemoRequests, useUpdateDemoRequestStatus, type DemoRequest, type DemoRequestStatus } from '../hooks'
@@ -44,9 +44,29 @@ export default function DemoRequestsPage() {
   const [searchTerm, setSearchTerm] = useState('')
   const [selected, setSelected] = useState<DemoRequest | null>(null)
   const [approvalTarget, setApprovalTarget] = useState<DemoRequest | null>(null)
+  const selectedHasDemo = selected?.status === 'RESOLVED' || Boolean(selected?.createdGymId)
 
   const { data: requests = [], isLoading, isError } = useDemoRequests(statusFilter)
   const updateStatus = useUpdateDemoRequestStatus()
+
+  useEffect(() => {
+    if (!selected) return
+    const freshVersion = requests.find((req) => req.id === selected.id)
+    if (!freshVersion) return
+
+    const selectedResolved = selected.status === 'RESOLVED' || Boolean(selected.createdGymId)
+    const freshResolved = freshVersion.status === 'RESOLVED' || Boolean(freshVersion.createdGymId)
+
+    if (selectedResolved && !freshResolved) return
+
+    if (
+      freshVersion.status !== selected.status ||
+      freshVersion.createdGymId !== selected.createdGymId ||
+      freshVersion.resolvedAt !== selected.resolvedAt
+    ) {
+      setSelected(freshVersion)
+    }
+  }, [requests, selected])
 
   const filteredRequests = useMemo(() => {
     const normalizedSearch = searchTerm.trim().toLowerCase()
@@ -171,36 +191,40 @@ export default function DemoRequestsPage() {
                 </TableRow>
               ))
             ) : pagination.data.length ? (
-              pagination.data.map((req) => (
-                <TableRow key={req.id} className="border-border/60">
-                  <TableCell className="font-semibold">
-                    <div>{req.gymName}</div>
-                    <div className="text-xs text-muted-foreground">{req.gymEmail}</div>
-                  </TableCell>
-                  <TableCell>
-                    <div>{req.adminEmail}</div>
-                    <div className="text-xs text-muted-foreground">
-                      {(req.adminFirstName || req.adminLastName) && `${req.adminFirstName ?? ''} ${req.adminLastName ?? ''}`}
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <Badge variant="outline">{req.plan}</Badge>
-                  </TableCell>
-                  <TableCell>
-                    <Badge variant={statusTone[req.status] as any}>{STATUS_LABEL[req.status]}</Badge>
-                  </TableCell>
-                  <TableCell>{formatDate(req.createdAt)}</TableCell>
-                  <TableCell>{formatDate(req.resolvedAt)}</TableCell>
-                  <TableCell className="text-right space-x-2">
-                    <Button size="sm" variant="outline" onClick={() => setSelected(req)}>
-                      Voir
-                    </Button>
-                    <Button size="sm" onClick={() => setApprovalTarget(req)} disabled={req.status === 'RESOLVED'}>
-                      Creer la demo
-                    </Button>
-                  </TableCell>
-                </TableRow>
-              ))
+              pagination.data.map((req) => {
+                const demoAlreadyCreated = req.status === 'RESOLVED' || Boolean(req.createdGymId)
+
+                return (
+                  <TableRow key={req.id} className="border-border/60">
+                    <TableCell className="font-semibold">
+                      <div>{req.gymName}</div>
+                      <div className="text-xs text-muted-foreground">{req.gymEmail}</div>
+                    </TableCell>
+                    <TableCell>
+                      <div>{req.adminEmail}</div>
+                      <div className="text-xs text-muted-foreground">
+                        {(req.adminFirstName || req.adminLastName) && `${req.adminFirstName ?? ''} ${req.adminLastName ?? ''}`}
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant="outline">{req.plan}</Badge>
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant={statusTone[req.status] as any}>{STATUS_LABEL[req.status]}</Badge>
+                    </TableCell>
+                    <TableCell>{formatDate(req.createdAt)}</TableCell>
+                    <TableCell>{formatDate(req.resolvedAt)}</TableCell>
+                    <TableCell className="text-right space-x-2">
+                      <Button size="sm" variant="outline" onClick={() => setSelected(req)}>
+                        Voir
+                      </Button>
+                      <Button size="sm" onClick={() => setApprovalTarget(req)} disabled={demoAlreadyCreated}>
+                        Creer la demo
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                )
+              })
             ) : (
               <TableRow>
                 <TableCell colSpan={7} className="text-center text-muted-foreground">
@@ -267,9 +291,11 @@ export default function DemoRequestsPage() {
               </Card>
 
               <div className="flex flex-wrap gap-2">
-                <Button variant="secondary" onClick={() => setApprovalTarget(selected)}>
-                  Creer la demo
-                </Button>
+                {!selectedHasDemo && (
+                  <Button variant="secondary" onClick={() => setApprovalTarget(selected)}>
+                    Creer la demo
+                  </Button>
+                )}
                 <Button
                   variant="outline"
                   onClick={() => handleStatusChange(selected, 'RESOLVED')}
@@ -299,6 +325,18 @@ export default function DemoRequestsPage() {
         onOpenChange={(open) => {
           if (!open) setApprovalTarget(null)
           else if (!approvalTarget && selected) setApprovalTarget(selected)
+        }}
+        onApproved={({ requestId, createdGymId }) => {
+          setSelected((current) => {
+            if (!current || current.id !== requestId) return current
+
+            return {
+              ...current,
+              status: 'RESOLVED',
+              resolvedAt: new Date().toISOString(),
+              createdGymId: createdGymId ?? current.createdGymId,
+            }
+          })
         }}
       />
     </div>

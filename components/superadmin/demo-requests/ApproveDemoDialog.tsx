@@ -83,9 +83,10 @@ type Props = {
   request: DemoRequest | null
   open: boolean
   onOpenChange: (open: boolean) => void
+  onApproved?: (payload: { requestId: string; createdGymId?: string }) => void
 }
 
-export function ApproveDemoDialog({ request, open, onOpenChange }: Props) {
+export function ApproveDemoDialog({ request, open, onOpenChange, onApproved }: Props) {
   const approveDemo = useApproveDemoRequest()
   const [prefilled, setPrefilled] = useState(false)
   const planSettings = usePlanSettings()
@@ -200,8 +201,12 @@ export function ApproveDemoDialog({ request, open, onOpenChange }: Props) {
         },
       },
       {
-        onSuccess: () => {
+        onSuccess: (createdGym) => {
           onOpenChange(false)
+          onApproved?.({
+            requestId: request.id,
+            createdGymId: (createdGym as any)?.id,
+          })
           toast.success('Compte demo provisionne')
         },
       },

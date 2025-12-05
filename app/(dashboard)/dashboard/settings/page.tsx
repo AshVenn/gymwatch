@@ -1,40 +1,26 @@
-'use client'
+"use client"
 //(dashboard)/dashboard/settings/page.tsx
-import { useSession } from 'next-auth/react'
-import { useEffect, useMemo, useState } from 'react'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { toast } from 'sonner'
+import { useSession } from "next-auth/react"
+import { useMemo } from "react"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { useQuery } from "@tanstack/react-query"
 
 interface GymData {
   id: string
   name: string
   email: string
-  phone?: string
-  address?: string
-  city?: string
-  country?: string
+  phone?: string | null
+  address?: string | null
+  city?: string | null
+  country?: string | null
   maxSessionMinutes?: number | null
 }
 
 export default function SettingsPage() {
   const { data: session } = useSession()
-  const queryClient = useQueryClient()
-  const [formData, setFormData] = useState({
-    name: '',
-    email: '',
-    phone: '',
-    address: '',
-    city: '',
-    country: '',
-    maxSessionMinutes: '',
-  })
-  const lockedFields = new Set(['name', 'email', 'address', 'city', 'country'])
-
-  const gymKey = useMemo(() => ['gym', session?.user?.gymId ?? 'no-gym'] as const, [session?.user?.gymId])
+  const gymKey = useMemo(() => ["gym", session?.user?.gymId ?? "no-gym"] as const, [session?.user?.gymId])
 
   const {
     data: gym,
@@ -44,195 +30,215 @@ export default function SettingsPage() {
     queryKey: gymKey,
     enabled: Boolean(session?.user?.gymId),
     queryFn: async () => {
-      const response = await fetch('/api/gym')
+      const response = await fetch("/api/gym")
 
       if (!response.ok) {
-        throw new Error('Impossible de charger les paramètres du gymnase')
+        throw new Error("Impossible de charger les parametres du gymnase")
       }
 
       return response.json()
     },
   })
 
-  useEffect(() => {
-    if (gym) {
-      setFormData({
-        name: gym.name,
-        email: gym.email,
-        phone: gym.phone || '',
-        address: gym.address || '',
-        city: gym.city || '',
-        country: gym.country || '',
-        maxSessionMinutes: gym.maxSessionMinutes ? String(gym.maxSessionMinutes) : '',
-      })
-    }
-  }, [gym])
-
-  const updateGymMutation = useMutation({
-    mutationFn: async () => {
-      const payload: Record<string, any> = { phone: formData.phone }
-      const durationValue = formData.maxSessionMinutes.trim()
-      if (durationValue) {
-        const parsed = Number(durationValue)
-        if (!Number.isFinite(parsed)) {
-          throw new Error('Durée max invalide')
-        }
-        payload.maxSessionMinutes = parsed
-      }
-
-      const response = await fetch('/api/gym', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      })
-
-      const data = await response.json().catch(() => ({}))
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Une erreur est survenue lors de la mise à jour')
-      }
-
-      return data
-    },
-    onSuccess: () => {
-      toast.success('Paramètres mis à jour avec succès')
-      queryClient.invalidateQueries({ queryKey: gymKey })
-    },
-    onError: (error) => {
-      toast.error(error instanceof Error ? error.message : 'Une erreur est survenue')
-    },
-  })
-
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target
-    setFormData((prev) => ({ ...prev, [name]: value }))
+  const roleLabels: Record<string, string> = {
+    GYM_OWNER: "Proprietaire",
+    GYM_ADMIN: "Admin",
   }
 
-  const handleSubmit = () => {
-    updateGymMutation.mutate()
+  const formatValue = (value?: string | number | null) => {
+    if (value === null || value === undefined) return "Non renseigne"
+    const text = String(value).trim()
+    return text.length ? text : "Non renseigne"
+  }
+
+  const formatPlan = (plan?: string | null) => {
+    if (!plan) return "Non renseigne"
+    if (plan === "BASIC") return "Basic"
+    if (plan === "PRO") return "Pro"
+    if (plan === "COMPLEX") return "Complex"
+    return plan
+  }
+
+  const formatInterval = (interval?: string | null) => {
+    if (!interval) return "Non renseigne"
+    return interval === "ANNUAL" ? "Annuel" : "Mensuel"
   }
 
   if (isLoading) {
-    return <div>Chargement des paramètres...</div>
+    return <div>Chargement des parametres...</div>
   }
 
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold">Paramètres</h1>
-        <p className="text-muted-foreground mt-2">Gérez les informations de votre salle</p>
+        <h1 className="text-3xl font-bold">Parametres</h1>
+        <p className="text-muted-foreground mt-2">
+          Ces informations sont en lecture seule pour les comptes salle. Contactez le support pour toute mise a jour.
+        </p>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Informations de la salle de sport</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {isError && (
-            <div className="p-3 rounded-md text-sm bg-red-100 text-red-800">
-              Une erreur est survenue lors du chargement
+      <div className="grid gap-4 lg:grid-cols-2">
+        <Card>
+          <CardHeader>
+            <CardTitle>Profil utilisateur</CardTitle>
+            <CardDescription>Informations issues de votre compte et de votre abonnement.</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div>
+              <Label htmlFor="user-name">Nom complet</Label>
+              <Input
+                id="user-name"
+                value={formatValue(session?.user?.name)}
+                readOnly
+                disabled
+                className="bg-muted/50"
+              />
             </div>
-          )}
+            <div>
+              <Label htmlFor="user-email">Email</Label>
+              <Input
+                id="user-email"
+                value={formatValue(session?.user?.email)}
+                readOnly
+                disabled
+                className="bg-muted/50"
+              />
+            </div>
+            <div>
+              <Label htmlFor="user-role">Role</Label>
+              <Input
+                id="user-role"
+                value={roleLabels[session?.user?.role as string] ?? "Non renseigne"}
+                readOnly
+                disabled
+                className="bg-muted/50"
+              />
+            </div>
+            <div className="grid gap-4 md:grid-cols-2">
+              <div>
+                <Label htmlFor="user-plan">Plan</Label>
+                <Input
+                  id="user-plan"
+                  value={formatPlan(session?.user?.subscriptionPlan as string | null | undefined)}
+                  readOnly
+                  disabled
+                  className="bg-muted/50"
+                />
+              </div>
+              <div>
+                <Label htmlFor="user-interval">Facturation</Label>
+                <Input
+                  id="user-interval"
+                  value={formatInterval(session?.user?.billingInterval as string | null | undefined)}
+                  readOnly
+                  disabled
+                  className="bg-muted/50"
+                />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
 
-          <div>
-            <Label htmlFor="gym-name">Nom de la salle</Label>
-            <Input
-              id="gym-name"
-              name="name"
-              value={formData.name}
-              onChange={handleInputChange}
-              placeholder="Nom de la salle de sport"
-              disabled={lockedFields.has('name')}
-              readOnly={lockedFields.has('name')}
-            />
-          </div>
+        <Card>
+          <CardHeader>
+            <CardTitle>Informations de la salle</CardTitle>
+            <CardDescription>Repris automatiquement du profil salle.</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {isError && (
+              <div className="p-3 rounded-md text-sm bg-red-100 text-red-800">
+                Une erreur est survenue lors du chargement
+              </div>
+            )}
 
-          <div>
-            <Label htmlFor="gym-email">Email</Label>
-            <Input
-              id="gym-email"
-              type="email"
-              name="email"
-              value={formData.email}
-              onChange={handleInputChange}
-              placeholder="contact@salle.ma"
-              disabled={lockedFields.has('email')}
-              readOnly={lockedFields.has('email')}
-            />
-          </div>
+            <div>
+              <Label htmlFor="gym-name">Nom</Label>
+              <Input
+                id="gym-name"
+                value={formatValue(gym?.name)}
+                readOnly
+                disabled
+                className="bg-muted/50"
+              />
+            </div>
 
-          <div>
-            <Label htmlFor="gym-phone">Téléphone</Label>
-            <Input
-              id="gym-phone"
-              name="phone"
-              value={formData.phone}
-              onChange={handleInputChange}
-              placeholder="+212..."
-            />
-          </div>
+            <div>
+              <Label htmlFor="gym-email">Email</Label>
+              <Input
+                id="gym-email"
+                value={formatValue(gym?.email)}
+                readOnly
+                disabled
+                className="bg-muted/50"
+              />
+            </div>
 
-          <div>
-            <Label htmlFor="gym-session-limit">Durée max de session (minutes)</Label>
-            <Input
-              id="gym-session-limit"
-              name="maxSessionMinutes"
-              type="number"
-              min={30}
-              max={720}
-              value={formData.maxSessionMinutes}
-              onChange={handleInputChange}
-              placeholder="180"
-            />
-            <p className="mt-1 text-xs text-muted-foreground">
-              Au-delà de cette durée, les visites sont marquées "Période dépassée" dans présence et les journaux.
+            <div>
+              <Label htmlFor="gym-phone">Telephone</Label>
+              <Input
+                id="gym-phone"
+                value={formatValue(gym?.phone)}
+                readOnly
+                disabled
+                className="bg-muted/50"
+              />
+            </div>
+
+            <div className="grid gap-4 md:grid-cols-2">
+              <div>
+                <Label htmlFor="gym-city">Ville</Label>
+                <Input
+                  id="gym-city"
+                  value={formatValue(gym?.city)}
+                  readOnly
+                  disabled
+                  className="bg-muted/50"
+                />
+              </div>
+              <div>
+                <Label htmlFor="gym-country">Pays</Label>
+                <Input
+                  id="gym-country"
+                  value={formatValue(gym?.country)}
+                  readOnly
+                  disabled
+                  className="bg-muted/50"
+                />
+              </div>
+            </div>
+
+            <div>
+              <Label htmlFor="gym-address">Adresse</Label>
+              <Input
+                id="gym-address"
+                value={formatValue(gym?.address)}
+                readOnly
+                disabled
+                className="bg-muted/50"
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="gym-session-limit">Duree max de session</Label>
+              <Input
+                id="gym-session-limit"
+                value={
+                  gym?.maxSessionMinutes
+                    ? `${gym.maxSessionMinutes} minutes`
+                    : formatValue(gym?.maxSessionMinutes)
+                }
+                readOnly
+                disabled
+                className="bg-muted/50"
+              />
+            </div>
+
+            <p className="text-sm text-muted-foreground">
+              Mise a jour des parametres globale desactivee pour les comptes owner/admin.
             </p>
-          </div>
-
-          <div>
-            <Label htmlFor="gym-address">Adresse</Label>
-            <Input
-              id="gym-address"
-              name="address"
-              value={formData.address}
-              onChange={handleInputChange}
-              placeholder="Adresse complète"
-              disabled={lockedFields.has('address')}
-              readOnly={lockedFields.has('address')}
-            />
-          </div>
-
-          <div>
-            <Label htmlFor="gym-city">Ville</Label>
-            <Input
-              id="gym-city"
-              name="city"
-              value={formData.city}
-              onChange={handleInputChange}
-              placeholder="Ville"
-              disabled={lockedFields.has('city')}
-              readOnly={lockedFields.has('city')}
-            />
-          </div>
-
-          <div>
-            <Label htmlFor="gym-country">Pays</Label>
-            <Input
-              id="gym-country"
-              name="country"
-              value={formData.country}
-              onChange={handleInputChange}
-              placeholder="Pays"
-              disabled={lockedFields.has('country')}
-              readOnly={lockedFields.has('country')}
-            />
-          </div>
-
-          <Button onClick={handleSubmit} disabled={updateGymMutation.isPending} className="w-full">
-            {updateGymMutation.isPending ? 'Enregistrement en cours...' : 'Enregistrer les modifications'}
-          </Button>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   )
 }

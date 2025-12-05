@@ -6,9 +6,21 @@ import Link from 'next/link'
 import { useSession, signOut } from 'next-auth/react'
 import { usePathname, useRouter } from 'next/navigation'
 import type { LucideIcon } from 'lucide-react'
-import { LogOut, Menu, X, User } from 'lucide-react'
+import {
+  Bell,
+  ChevronRight,
+  Cloud,
+  LogOut,
+  Menu,
+  Search,
+  ShieldCheck,
+  Sparkles,
+  User,
+  X,
+} from 'lucide-react'
 import { toast } from 'sonner'
 
+import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import {
   DropdownMenu,
@@ -16,6 +28,8 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
+import { Input } from '@/components/ui/input'
+import { ScrollArea } from '@/components/ui/scroll-area'
 import { ThemeToggle } from '@/components/theme-toggle'
 import { cn } from '@/lib/utils'
 
@@ -44,7 +58,7 @@ interface DashboardShellProps {
 const roleLabels: Record<string, string> = {
   SUPER_ADMIN: 'Super Admin',
   ADMIN: 'Admin',
-  OWNER: 'Propriétaire',
+  OWNER: 'Proprietaire',
   USER: 'Utilisateur',
 }
 
@@ -92,14 +106,14 @@ export function DashboardShell({
 
   useEffect(() => {
     if (!subscriptionPastDue || status !== 'authenticated') return
-    toast.error('Votre abonnement est suspendu ou expiré. Merci de contacter le support.')
+    toast.error('Votre abonnement est suspendu ou expire. Merci de contacter le support.')
     signOut({ callbackUrl: '/login' })
   }, [status, subscriptionPastDue])
 
   if (status === 'loading') {
     return (
       <div className="flex h-screen items-center justify-center">
-        <p className="text-lg font-semibold text-muted-foreground">Chargement…</p>
+        <p className="text-lg font-semibold text-muted-foreground">Chargement...</p>
       </div>
     )
   }
@@ -112,128 +126,212 @@ export function DashboardShell({
   const userRole = roleLabels[session.user.role as string] || session.user.role || 'Utilisateur'
   const userInitial = userDisplayName.charAt(0).toUpperCase()
   const isDemoGym = Boolean((session.user as any).isDemo)
+  const planLabel = (session.user as any)?.subscriptionPlan ?? 'Plan'
+  const billingIntervalRaw = (session.user as any)?.billingInterval
+  const billingInterval =
+    billingIntervalRaw === 'ANNUAL' ? 'Annuel' : billingIntervalRaw === 'MONTHLY' ? 'Mensuel' : 'Facturation'
 
   return (
-    <div className="flex min-h-screen bg-background text-foreground">
+    <div className="relative min-h-screen bg-background text-foreground">
+      <div className="pointer-events-none fixed inset-0 -z-10 bg-[radial-gradient(circle_at_20%_18%,hsl(var(--primary)/0.25),transparent_32%),radial-gradient(circle_at_78%_10%,hsl(var(--muted-foreground)/0.18),transparent_35%),radial-gradient(circle_at_50%_60%,hsl(var(--primary)/0.12),transparent_45%)]" />
+      <div className="pointer-events-none fixed inset-0 -z-10 bg-[radial-gradient(120%_120%_at_20%_20%,hsl(var(--primary)/0.08),transparent)] blur-3xl" />
+
       {sidebarOpen ? (
         <div
-          className="fixed inset-0 z-40 bg-background/80 backdrop-blur-sm md:hidden"
+          className="fixed inset-0 z-40 bg-background/70 backdrop-blur-sm md:hidden"
           onClick={() => setSidebarOpen(false)}
         />
       ) : null}
+
       <aside
         className={cn(
-          'fixed inset-y-0 left-0 z-50 w-72 border-r border-sidebar-border bg-sidebar/95 text-sidebar-foreground shadow-xl transition-transform md:relative md:translate-x-0 md:shadow-none',
+          'fixed inset-y-0 left-0 z-50 w-72 bg-card/85 text-card-foreground shadow-2xl ring-1 ring-border/60 backdrop-blur-xl transition-transform duration-300 md:relative md:translate-x-0 md:shadow-none',
           sidebarOpen ? 'translate-x-0' : '-translate-x-full',
         )}
       >
         <div className="flex h-full flex-col">
-          <div className="flex items-center justify-between border-b border-sidebar-border/70 px-6 py-5">
+          <div className="flex items-center justify-between border-b border-border/60 px-5 py-4">
             <div className="flex items-center gap-3">
-              <Image src="/GymWatch.svg" alt="GymWatch" width={44} height={44} priority className="rounded-lg" />
+              <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-primary to-indigo-500 text-white shadow-lg shadow-primary/20">
+                <Sparkles size={20} />
+              </div>
               <div>
-                <p className="text-xs uppercase tracking-[0.3em] text-sidebar-foreground/70">GymWatch</p>
-                <p className="text-base font-semibold text-sidebar-foreground">Console</p>
+                <p className="text-[11px] uppercase tracking-[0.26em] text-muted-foreground">GymWatch</p>
+                <p className="text-base font-semibold">Console</p>
               </div>
             </div>
             <button
               onClick={() => setSidebarOpen(false)}
-              className="rounded-md border border-sidebar-border/70 p-1 text-sidebar-foreground/70 transition hover:bg-sidebar-accent hover:text-sidebar-accent-foreground md:hidden"
-              aria-label="Fermer le menu latéral"
+              className="rounded-lg border border-border/60 p-1.5 text-muted-foreground transition hover:bg-muted md:hidden"
+              aria-label="Fermer le menu lateral"
             >
-              <X size={20} />
+              <X size={18} />
             </button>
           </div>
 
-          <nav className="flex-1 space-y-1 p-4">
-            {navigationItems.map((item) => {
-              const Icon = item.icon
-              const isActive = pathname === item.href || pathname.startsWith(`${item.href}/`)
-              return (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className={cn(
-                    'flex items-center gap-3 rounded-lg px-4 py-2 text-sm transition',
-                    isActive
-                      ? 'bg-sidebar-primary text-sidebar-primary-foreground shadow-sm'
-                      : 'text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground',
-                  )}
-                  onClick={() => setSidebarOpen(false)}
-                >
-                  <Icon size={18} />
-                  <span>{item.label}</span>
-                </Link>
-              )
-            })}
-          </nav>
+          <ScrollArea className="flex-1">
+            <div className="space-y-5 px-4 py-5">
+              <div className="rounded-2xl border border-border/50 bg-muted/50 px-3 py-2">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-muted-foreground">Recherche</p>
+                <div className="relative mt-2">
+                  <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                  <Input
+                    placeholder="Rechercher..."
+                    className="h-10 rounded-xl border-border/70 bg-background pl-9 text-sm focus-visible:ring-1 focus-visible:ring-primary"
+                  />
+                </div>
+              </div>
 
-          <div className="border-t border-sidebar-border/70 p-4">
-            <Button
-              variant="ghost"
-              className="w-full justify-start rounded-lg border border-sidebar-border text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
-              onClick={() => signOut()}
-            >
-              <LogOut size={18} className="mr-3" />
-              Se déconnecter
-            </Button>
+              <nav className="space-y-2">
+                {navigationItems.map((item) => {
+                  const Icon = item.icon
+                  const isActive = pathname === item.href || pathname.startsWith(`${item.href}/`)
+                  return (
+                    <Link
+                      key={item.href}
+                      href={item.href}
+                      className={cn(
+                        'group flex items-center gap-3 rounded-2xl border border-transparent px-4 py-3 text-sm font-medium transition',
+                        isActive
+                          ? 'border-primary/40 bg-gradient-to-r from-primary/15 via-primary/12 to-transparent text-foreground shadow-sm shadow-primary/10'
+                          : 'text-muted-foreground hover:border-border/60 hover:bg-muted/50 hover:text-foreground',
+                      )}
+                      onClick={() => setSidebarOpen(false)}
+                    >
+                      <div
+                        className={cn(
+                          'flex h-10 w-10 items-center justify-center rounded-xl bg-muted/70 text-muted-foreground transition group-hover:bg-primary/10 group-hover:text-primary',
+                          isActive && 'bg-primary/15 text-primary',
+                        )}
+                      >
+                        <Icon size={18} />
+                      </div>
+                      <div className="flex-1">{item.label}</div>
+                      <ChevronRight
+                        size={16}
+                        className={cn(
+                          'text-muted-foreground transition',
+                          isActive ? 'translate-x-1 text-primary' : 'group-hover:translate-x-1',
+                        )}
+                      />
+                    </Link>
+                  )
+                })}
+              </nav>
+            </div>
+          </ScrollArea>
+
+          <div className="border-t border-border/60 px-4 py-4">
+            <div className="mb-3 flex items-center gap-3 rounded-2xl border border-border/60 bg-muted/50 px-3 py-2">
+              <Image src="/GymWatch.svg" alt="GymWatch" width={42} height={42} className="rounded-xl" />
+              <div className="flex-1">
+                <p className="text-sm font-semibold">{userDisplayName}</p>
+                <p className="text-xs text-muted-foreground">{userRole}</p>
+              </div>
+              {isDemoGym ? (
+                <Badge variant="outline" className="rounded-full border-amber-200 bg-amber-50 text-amber-800">
+                  Demo
+                </Badge>
+              ) : null}
+            </div>
+            <div className="flex items-center justify-between">
+              <div className="flex flex-col gap-1 text-xs text-muted-foreground">
+                <span className="flex items-center gap-1.5 font-semibold text-foreground">
+                  <ShieldCheck size={14} /> {planLabel}
+                </span>
+                <span className="rounded-full bg-muted px-2 py-0.5 text-[11px] uppercase tracking-[0.22em]">
+                  {billingInterval}
+                </span>
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                className="rounded-xl border-border/70 bg-background text-foreground hover:bg-muted"
+                onClick={() => signOut()}
+              >
+                <LogOut size={16} className="mr-2" />
+                Quitter
+              </Button>
+            </div>
           </div>
         </div>
       </aside>
 
       <div className="flex flex-1 flex-col overflow-hidden">
-        <header className="flex items-center justify-between border-b border-border/60 bg-background/80 px-6 py-4 backdrop-blur supports-backdrop-filter:bg-background/60">
-          <button
-            onClick={() => setSidebarOpen(!sidebarOpen)}
-            className="rounded-full border border-border/80 p-2 text-muted-foreground transition hover:bg-muted/70 md:hidden"
-            aria-label="Ouvrir le menu latéral"
-          >
-            <Menu size={22} />
-          </button>
-          <div className="ml-auto flex items-center gap-4">
-            <ThemeToggle />
-            
-            <div className="hidden flex-col items-end md:flex">
-              <p className="text-sm font-semibold text-foreground">{userDisplayName}</p>
-              <p className="text-xs text-muted-foreground flex items-center gap-2">
-                {userRole}
-                {isDemoGym ? (
-                  <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-amber-800 dark:bg-amber-500/20 dark:text-amber-100">
-                    Demo
-                  </span>
-                ) : null}
-              </p>
+        <header className="sticky top-0 z-30 border-b border-border/60 bg-background/70 px-4 py-3 backdrop-blur-lg md:px-8">
+          <div className="flex items-center gap-3">
+            <Button
+              variant="outline"
+              size="icon"
+              className="rounded-xl border-border/60 bg-card text-muted-foreground hover:text-foreground md:hidden"
+              onClick={() => setSidebarOpen(!sidebarOpen)}
+              aria-label="Ouvrir le menu lateral"
+            >
+              <Menu size={18} />
+            </Button>
+
+            <div className="hidden w-full max-w-xl items-center gap-2 rounded-2xl border border-border/60 bg-card px-3 py-1.5 shadow-sm md:flex">
+              <Search className="h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Rechercher un membre, un cours ou une action"
+                className="h-9 border-0 bg-transparent text-sm focus-visible:ring-0"
+              />
             </div>
 
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline" className="h-10 w-10 rounded-full border-border/70 bg-card text-card-foreground">
-                  {userInitial}
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-56">
-                <div className="flex items-center gap-3 px-2 py-3 text-sm">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10">
-                    <User size={16} className="text-primary" />
+            <div className="ml-auto flex items-center gap-2 md:gap-3">
+              <Button variant="ghost" size="icon" className="rounded-xl">
+                <Cloud className="h-5 w-5" />
+              </Button>
+              <Button variant="ghost" size="icon" className="rounded-xl relative">
+                <Bell className="h-5 w-5" />
+                <span className="absolute -right-1 -top-1 h-4 w-4 rounded-full bg-primary text-[10px] font-semibold text-primary-foreground">
+                  3
+                </span>
+              </Button>
+              <ThemeToggle />
+
+              <div className="hidden flex-col items-end md:flex">
+                <p className="text-sm font-semibold text-foreground">{userDisplayName}</p>
+                <p className="text-xs text-muted-foreground">{userRole}</p>
+              </div>
+
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className="h-10 w-10 rounded-full border-border/70 bg-card text-card-foreground shadow-sm"
+                  >
+                    {userInitial}
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-56">
+                  <div className="flex items-center gap-3 px-2 py-3 text-sm">
+                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10">
+                      <User size={16} className="text-primary" />
+                    </div>
+                    <div className="flex flex-col gap-0.5">
+                      <p className="font-semibold">{userDisplayName}</p>
+                      <p className="text-xs text-muted-foreground">{userRole}</p>
+                    </div>
                   </div>
-                  <div className="flex flex-col gap-0.5">
-                    <p className="font-semibold">{userDisplayName}</p>
-                    <p className="text-xs text-muted-foreground">{userRole}</p>
-                  </div>
-                </div>
-                <div className="border-t border-border/60" />
-                <DropdownMenuItem onClick={() => signOut()}>
-                  <LogOut size={16} className="mr-2" />
-                  Se déconnecter
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+                  <div className="border-t border-border/60" />
+                  <DropdownMenuItem onClick={() => signOut()}>
+                    <LogOut size={16} className="mr-2" />
+                    Se deconnecter
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
           </div>
         </header>
 
-        <main className="flex-1 overflow-auto bg-background px-6 py-8">
-          <div className="space-y-6">
-            {topSlot}
+        <main className="flex-1 overflow-auto px-4 py-6 md:px-8">
+          <div className="mx-auto w-full max-w-7xl space-y-6">
+            {topSlot ? (
+              <div className="rounded-3xl border border-border/60 bg-card/80 p-4 shadow-sm backdrop-blur-sm">
+                {topSlot}
+              </div>
+            ) : null}
             {children}
           </div>
         </main>

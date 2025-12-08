@@ -16,7 +16,7 @@ type Props = {
 
 const schema = z.object({
   email: z.string().email('Email invalide'),
-  firstName: z.string().min(2, 'Prenom invalide'),
+  firstName: z.string().min(2, 'Prénom invalide'),
   lastName: z.string().min(2, 'Nom invalide'),
   password: z.string().min(6, 'Mot de passe trop court'),
   variantId: z.string().optional(),
@@ -37,9 +37,10 @@ export function GymTeam({ gym }: Props) {
     }
   }, [createAdmin.isPending, form])
 
+  const adminCount = gym.adminCount ?? gym.admins?.length ?? 0
   const safeMaxAdmins = Math.max(gym.maxAdminAccounts ?? 0, 0)
   const adminUsage =
-    safeMaxAdmins > 0 ? Math.min(100, Math.round(((gym.adminCount ?? 0) / safeMaxAdmins) * 100)) : 0
+    safeMaxAdmins > 0 ? Math.min(100, Math.round((adminCount / safeMaxAdmins) * 100)) : 0
 
   const onSubmit = (values: CreateAdminValues) => {
     const targetVariant =
@@ -60,7 +61,7 @@ export function GymTeam({ gym }: Props) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Équipe ({gym.adminCount}/{gym.maxAdminAccounts})</CardTitle>
+        <CardTitle>Équipe ({adminCount}/{safeMaxAdmins || '∞'})</CardTitle>
         <CardDescription>
           Capacité utilisée : <span className="font-semibold text-primary">{adminUsage}%</span>
         </CardDescription>
@@ -76,7 +77,7 @@ export function GymTeam({ gym }: Props) {
         <div className="space-y-2 text-sm">
           {gym.admins?.length ? (
             gym.admins.map((admin) => (
-              <div key={admin.id} className="rounded-md border border-border/70 p-3">
+              <div key={admin.id} className="rounded-md border border-border/60 bg-muted/40 p-3">
                 <p className="font-medium">
                   {[admin.firstName, admin.lastName].filter(Boolean).join(' ') || admin.email}
                 </p>
@@ -115,7 +116,7 @@ export function GymTeam({ gym }: Props) {
                 name="firstName"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Prenom</FormLabel>
+                    <FormLabel>Prénom</FormLabel>
                     <FormControl>
                       <Input {...field} />
                     </FormControl>
@@ -147,13 +148,13 @@ export function GymTeam({ gym }: Props) {
                   <Select onValueChange={field.onChange} value={field.value}>
                     <FormControl>
                       <SelectTrigger>
-                        <SelectValue placeholder="Par defaut" />
+                        <SelectValue placeholder="Par défaut" />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
                       {(gym.variants ?? []).map((variant) => (
                         <SelectItem key={variant.id} value={variant.id}>
-                          {variant.name} {variant.isDefault ? '(defaut)' : ''}
+                          {variant.name} {variant.isDefault ? '(défaut)' : ''}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -177,8 +178,11 @@ export function GymTeam({ gym }: Props) {
               )}
             />
 
-            <Button type="submit" disabled={createAdmin.isPending || gym.adminCount >= gym.maxAdminAccounts}>
-              {createAdmin.isPending ? 'Creation...' : 'Ajouter'}
+            <Button
+              type="submit"
+              disabled={createAdmin.isPending || (safeMaxAdmins > 0 && adminCount >= safeMaxAdmins)}
+            >
+              {createAdmin.isPending ? 'Création...' : 'Ajouter'}
             </Button>
           </form>
         </Form>

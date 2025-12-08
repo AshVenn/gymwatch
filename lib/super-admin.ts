@@ -352,7 +352,8 @@ export async function getSuperAdminGymDetail(gymId: string) {
     createdAt: gym.createdAt,
     updatedAt: gym.updatedAt,
     planFeatures: getPlanFeatures(gym.subscriptionPlan),
-    variantMode,
+      variantMode,
+    adminCount: admins.length,
   }
 }
 

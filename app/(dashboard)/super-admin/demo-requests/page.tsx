@@ -16,8 +16,8 @@ import { Skeleton } from '@/components/ui/skeleton'
 
 const STATUS_LABEL: Record<DemoRequestStatus, string> = {
   PENDING: 'En attente',
-  RESOLVED: 'Resolue',
-  REFUSED: 'Refusee',
+  RESOLVED: 'Résolue',
+  REFUSED: 'Refusée',
 }
 
 const statusTone: Record<DemoRequestStatus, 'default' | 'secondary' | 'destructive'> = {
@@ -102,8 +102,8 @@ export default function DemoRequestsPage() {
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-semibold">Demandes de demo</h1>
-          <p className="text-muted-foreground">Validez les demandes et provisionnez des comptes demo.</p>
+          <h1 className="text-3xl font-semibold">Demandes de démo</h1>
+          <p className="text-muted-foreground">Validez les demandes et provisionnez des comptes démo.</p>
         </div>
       </div>
 
@@ -141,7 +141,7 @@ export default function DemoRequestsPage() {
           className="max-w-sm"
         />
         <span className="text-sm text-muted-foreground">
-          {filteredRequests.length} demande{filteredRequests.length > 1 ? 's' : ''} trouvee{filteredRequests.length > 1 ? 's' : ''}
+          {filteredRequests.length} demande{filteredRequests.length > 1 ? 's' : ''} trouvée{filteredRequests.length > 1 ? 's' : ''}
         </span>
       </div>
 
@@ -153,8 +153,8 @@ export default function DemoRequestsPage() {
               <TableHead>Contact admin</TableHead>
               <TableHead>Plan</TableHead>
               <TableHead>Statut</TableHead>
-              <TableHead>Demandee</TableHead>
-              <TableHead>Resolution</TableHead>
+              <TableHead>Demandée</TableHead>
+              <TableHead>Résolution</TableHead>
               <TableHead className="text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
@@ -219,7 +219,7 @@ export default function DemoRequestsPage() {
                         Voir
                       </Button>
                       <Button size="sm" onClick={() => setApprovalTarget(req)} disabled={demoAlreadyCreated}>
-                        Creer la demo
+                        Créer la démo
                       </Button>
                     </TableCell>
                   </TableRow>
@@ -228,7 +228,7 @@ export default function DemoRequestsPage() {
             ) : (
               <TableRow>
                 <TableCell colSpan={7} className="text-center text-muted-foreground">
-                  {isError ? "Impossible de charger les demandes." : "Aucune demande ne correspond a vos filtres."}
+                  {isError ? "Impossible de charger les demandes." : "Aucune demande ne correspond à vos filtres."}
                 </TableCell>
               </TableRow>
             )}
@@ -249,14 +249,14 @@ export default function DemoRequestsPage() {
       <Dialog open={Boolean(selected)} onOpenChange={(open) => !open && setSelected(null)}>
         <DialogContent className="max-w-2xl">
           <DialogHeader>
-            <DialogTitle>Details de la demande</DialogTitle>
+            <DialogTitle>Détails de la demande</DialogTitle>
           </DialogHeader>
 
           {selected && (
             <div className="space-y-4">
               <div className="flex flex-wrap items-center gap-2">
                 <Badge variant={statusTone[selected.status] as any}>{STATUS_LABEL[selected.status]}</Badge>
-                <span className="text-sm text-muted-foreground">Envoyee le {formatDate(selected.createdAt)}</span>
+                <span className="text-sm text-muted-foreground">Envoyée le {formatDate(selected.createdAt)}</span>
               </div>
 
               <Card className="border border-border/70">
@@ -267,7 +267,7 @@ export default function DemoRequestsPage() {
                 <CardContent className="grid gap-3">
                   <div className="flex items-center gap-2 text-sm text-muted-foreground">
                     <Phone className="h-4 w-4 text-primary" />
-                    {selected.phone || 'Non renseigne'}
+                    {selected.phone || 'Non renseigné'}
                   </div>
                   <div className="flex items-center gap-2 text-sm text-muted-foreground">
                     <Mail className="h-4 w-4 text-primary" />
@@ -284,35 +284,39 @@ export default function DemoRequestsPage() {
                   ) : (
                     <div className="flex items-center gap-2 text-sm text-muted-foreground">
                       <Info className="h-4 w-4 text-muted-foreground" />
-                      Aucun message ajoute.
+                      Aucun message ajouté.
                     </div>
                   )}
                 </CardContent>
               </Card>
 
               <div className="flex flex-wrap gap-2">
-                {!selectedHasDemo && (
+                {!selectedHasDemo && selected.status !== 'REFUSED' && (
                   <Button variant="secondary" onClick={() => setApprovalTarget(selected)}>
-                    Creer la demo
+                    Créer la démo
                   </Button>
                 )}
-                <Button
-                  variant="outline"
-                  onClick={() => handleStatusChange(selected, 'RESOLVED')}
-                  disabled={selected.status === 'RESOLVED'}
-                >
-                  <CheckCircle2 className="mr-2 h-4 w-4" />
-                  Marquer resolu
-                </Button>
-                <Button
-                  variant="ghost"
-                  className="text-destructive hover:text-destructive"
-                  onClick={() => handleStatusChange(selected, 'REFUSED')}
-                  disabled={selected.status === 'REFUSED'}
-                >
-                  <XCircle className="mr-2 h-4 w-4" />
-                  Refuser
-                </Button>
+                {selected.status !== 'RESOLVED' && (
+                  <Button
+                    variant="outline"
+                    onClick={() => handleStatusChange(selected, 'RESOLVED')}
+                    disabled={selected.status === 'RESOLVED' || selected.status === 'REFUSED'}
+                  >
+                    <CheckCircle2 className="mr-2 h-4 w-4" />
+                    Marquer résolue
+                  </Button>
+                )}
+                {selected.status !== 'RESOLVED' && (
+                  <Button
+                    variant="ghost"
+                    className="text-destructive hover:text-destructive"
+                    onClick={() => handleStatusChange(selected, 'REFUSED')}
+                    disabled={selected.status === 'REFUSED'}
+                  >
+                    <XCircle className="mr-2 h-4 w-4" />
+                    Refuser
+                  </Button>
+                )}
               </div>
             </div>
           )}

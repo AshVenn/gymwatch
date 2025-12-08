@@ -140,10 +140,25 @@ export interface DemoRequest {
 async function fetchJSON<T>(input: string | URL, init?: RequestInit): Promise<T> {
   const response = await fetch(input, init)
   if (!response.ok) {
-    const message = await response.text()
-    throw new Error(message || 'Une erreur est survenue')
+    const contentType = response.headers.get('content-type') ?? ''
+    try {
+      if (contentType.includes('application/json')) {
+        const body = await response.json()
+        const detail = (body as any)?.error ?? (body as any)?.message
+        throw new Error(detail || JSON.stringify(body) || 'Une erreur est survenue')
+      }
+      const message = await response.text()
+      throw new Error(message || 'Une erreur est survenue')
+    } catch (error) {
+      if (error instanceof Error) throw error
+      throw new Error('Une erreur est survenue')
+    }
   }
-  return response.json()
+  const contentType = response.headers.get('content-type') ?? ''
+  if (contentType.includes('application/json')) {
+    return response.json()
+  }
+  return response.text() as T
 }
 
 export function useSuperAdminStats() {

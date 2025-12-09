@@ -55,7 +55,7 @@ export const metadata: Metadata = {
   twitter: {
     card: 'summary_large_image',
     creator: '@gymwatch',
-    title: 'GymWatch – La solution de gestion des salles de sport',
+    title: 'GymWatch - La solution de gestion des salles de sport',
     description:
       'Automatisez vos abonnements, simplifiez vos opérations et inspirez vos membres avec GymWatch.',
     images: ['/hero-grid.svg'],

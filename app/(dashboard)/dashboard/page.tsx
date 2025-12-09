@@ -297,7 +297,7 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-8">
-      <div className="relative overflow-hidden rounded-3xl border border-primary/25 bg-gradient-to-r from-primary/15 via-primary/10 to-background p-6 shadow-lg md:p-8">
+      <div className="relative overflow-hidden rounded-3xl border border-primary/25 bg-linear-to-r from-primary/15 via-primary/10 to-background p-6 shadow-lg md:p-8">
         <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_10%_20%,hsl(var(--primary)/0.25),transparent_32%),radial-gradient(circle_at_80%_0%,hsl(var(--primary)/0.18),transparent_30%)]" />
         <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_60%_80%,hsl(var(--primary)/0.08),transparent_30%)] blur-2xl" />
         <div className="relative flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
@@ -411,7 +411,7 @@ export default function DashboardPage() {
               key={card.title}
               className="relative overflow-hidden rounded-2xl border border-border/70 bg-card/80 shadow-sm backdrop-blur transition hover:-translate-y-1 hover:shadow-md"
             >
-              <div className={`pointer-events-none absolute inset-0 bg-gradient-to-br ${card.accent} opacity-60 blur-2xl`} />
+              <div className={`pointer-events-none absolute inset-0 bg-linear-to-br ${card.accent} opacity-60 blur-2xl`} />
               <CardHeader className="relative pb-2">
                 <div className="flex items-start justify-between gap-3">
                   <div>
@@ -540,7 +540,7 @@ export default function DashboardPage() {
                     endAngle={-270}
                   >
                     <ChartTooltip cursor={false} content={<ChartTooltipContent />} />
-                    <RadialBar dataKey="value" nameKey="name" background cornerRadius={10} />
+                    <RadialBar dataKey="value"  background cornerRadius={10} />
                   </RadialBarChart>
                 </ResponsiveContainer>
                 <div className="absolute inset-0 flex flex-col items-center justify-center text-center">

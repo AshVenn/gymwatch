@@ -6,6 +6,22 @@ import { authOptions } from '@/lib/auth-middleware'
 import { prisma } from '@/lib/prisma'
 import { resolveGymPlanLimits } from '@/lib/plan-settings'
 
+function normalizeVisitsPerDay(raw: unknown) {
+  if (raw === undefined || raw === null) {
+    return undefined
+  }
+  const parsed = typeof raw === 'string' ? Number(raw) : raw
+  if (typeof parsed !== 'number' || !Number.isFinite(parsed)) {
+    throw new Error('VISITS_PER_DAY_INVALID')
+  }
+  const intValue = Math.trunc(parsed)
+  if (intValue === -1) return -1
+  if (intValue < 1) {
+    throw new Error('VISITS_PER_DAY_INVALID')
+  }
+  return intValue
+}
+
 export async function PUT(request: NextRequest, { params }: any) {
   try {
     const session = await getServerSession(authOptions)
@@ -19,7 +35,14 @@ export async function PUT(request: NextRequest, { params }: any) {
       return NextResponse.json({ error: 'Variant manquant' }, { status: 403 })
     }
 
-    const { name, durationDays, price, isActive } = await request.json()
+    const payload = await request.json()
+    const { name, durationDays, price, isActive } = payload
+    let visitsPerDay: number | undefined
+    try {
+      visitsPerDay = normalizeVisitsPerDay(payload.visitsPerDay)
+    } catch {
+      return NextResponse.json({ error: 'VISITS_PER_DAY_INVALID' }, { status: 400 })
+    }
 
     const planRecord = await prisma.membershipPlan.findUnique({ where: { id: params.planId } })
 
@@ -68,6 +91,7 @@ export async function PUT(request: NextRequest, { params }: any) {
       durationDays,
       price,
       isActive,
+      visitsPerDay,
     })
 
     return NextResponse.json(plan)

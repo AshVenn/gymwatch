@@ -6,6 +6,22 @@ import { db } from "@/lib/db"
 import { prisma } from "@/lib/prisma"
 import { resolveGymPlanLimits } from "@/lib/plan-settings"
 
+function normalizeVisitsPerDay(raw: unknown, defaultValue?: number) {
+  if (raw === undefined || raw === null) {
+    return defaultValue
+  }
+  const parsed = typeof raw === "string" ? Number(raw) : raw
+  if (typeof parsed !== "number" || !Number.isFinite(parsed)) {
+    throw new Error("VISITS_PER_DAY_INVALID")
+  }
+  const intValue = Math.trunc(parsed)
+  if (intValue === -1) return -1
+  if (intValue < 1) {
+    throw new Error("VISITS_PER_DAY_INVALID")
+  }
+  return intValue
+}
+
 export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions)
@@ -50,7 +66,14 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const { name, durationDays, price, gymVariantId: payloadVariantId, isActive } = await request.json()
+    const payload = await request.json()
+    const { name, durationDays, price, gymVariantId: payloadVariantId, isActive } = payload
+    let visitsPerDay: number
+    try {
+      visitsPerDay = normalizeVisitsPerDay(payload.visitsPerDay, 1) ?? 1
+    } catch {
+      return NextResponse.json({ error: "VISITS_PER_DAY_INVALID" }, { status: 400 })
+    }
 
     const role = (session.user as any).role as string | undefined
     const sessionVariantId = (session.user as any).gymVariantId as string | undefined
@@ -124,6 +147,7 @@ export async function POST(request: NextRequest) {
       durationDays,
       price,
       isActive: isActive ?? true,
+      visitsPerDay,
     })
 
     return NextResponse.json(plan, { status: 201 })

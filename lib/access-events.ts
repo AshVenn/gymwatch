@@ -15,7 +15,11 @@ export function resolveAccessEventStatus(
       : AccessEventStatus.DENIED_INACTIVE
   }
 
-  if (visit.alreadyVisited) {
+  if (visit.overDailyLimit) {
+    return AccessEventStatus.DENIED_DAILY_LIMIT
+  }
+
+  if (visit.markVisitAttempted && !visit.visitRecorded) {
     return AccessEventStatus.ALREADY_CHECKED_IN
   }
 
@@ -26,6 +30,7 @@ export const ACCESS_EVENT_STATUS_LABELS: Record<AccessEventStatus, string> = {
   GRANTED: "Acces autorise",
   CHECKED_OUT: "Sortie enregistree",
   ALREADY_CHECKED_IN: "Deja comptabilise",
+  DENIED_DAILY_LIMIT: "Limite journaliere atteinte",
   DENIED_EXPIRED: "Abonnement expire",
   DENIED_INACTIVE: "Abonnement inactif",
   DENIED_FORBIDDEN: "Non autorise",

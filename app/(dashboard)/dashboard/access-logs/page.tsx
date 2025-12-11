@@ -25,6 +25,7 @@ const statusOptions = [
   { value: AccessEventStatus.GRANTED, label: 'Acces autorise' },
   { value: AccessEventStatus.CHECKED_OUT, label: 'Sortie enregistree' },
   { value: AccessEventStatus.ALREADY_CHECKED_IN, label: 'Deja compte' },
+  { value: AccessEventStatus.DENIED_DAILY_LIMIT, label: 'Limite journaliere' },
   { value: AccessEventStatus.DENIED_EXPIRED, label: 'Abonnement expire' },
   { value: AccessEventStatus.DENIED_INACTIVE, label: 'Abonnement inactif' },
   { value: AccessEventStatus.DENIED_FORBIDDEN, label: 'Non autorise' },
@@ -169,7 +170,12 @@ export default function AccessLogsPage() {
     const granted = events.filter((event) => event.status === AccessEventStatus.GRANTED).length
     const checkouts = events.filter((event) => event.status === AccessEventStatus.CHECKED_OUT).length
     const denied = events.filter((event) =>
-      [AccessEventStatus.DENIED_EXPIRED, AccessEventStatus.DENIED_INACTIVE, AccessEventStatus.DENIED_FORBIDDEN].includes(event.status),
+      [
+        AccessEventStatus.DENIED_EXPIRED,
+        AccessEventStatus.DENIED_INACTIVE,
+        AccessEventStatus.DENIED_FORBIDDEN,
+        AccessEventStatus.DENIED_DAILY_LIMIT,
+      ].includes(event.status),
     ).length
     const already = events.filter((event) => event.status === AccessEventStatus.ALREADY_CHECKED_IN).length
     const entryEvents = events.length - checkouts

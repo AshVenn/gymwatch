@@ -29,6 +29,11 @@ export type VisitResult = {
   status: SubscriptionStatus
   active: boolean
   alreadyVisited: boolean
+  visitsToday: number
+  visitLimit: number | null
+  overDailyLimit: boolean
+  visitRecorded: boolean
+  markVisitAttempted: boolean
   daysRemaining: number | null
   todayVisitorCount: number
 }
@@ -163,19 +168,23 @@ export async function markVisitForMember({
     })
   }
 
-  let alreadyVisited = isSameDay(member.lastVisitedAt, today)
-  if (!alreadyVisited) {
-    const existingVisit = await prisma.visit.findFirst({
-      where: {
-        memberId: member.id,
-        checkIn: { gte: today, lte: endOfDay(today) },
-      },
-      select: { id: true },
-    })
-    alreadyVisited = Boolean(existingVisit)
-  }
+  const visitLimitRaw = latestSubscription?.plan?.visitsPerDay
+  const visitLimit =
+    typeof visitLimitRaw === "number" && Number.isFinite(visitLimitRaw)
+      ? visitLimitRaw < 0
+        ? null
+        : Math.max(1, Math.trunc(visitLimitRaw))
+      : 1
+  const visitsToday = await prisma.visit.count({
+    where: {
+      memberId: member.id,
+      checkIn: { gte: today, lte: endOfDay(today) },
+    },
+  })
+  const markAttempted = Boolean(markVisit)
+  const overDailyLimit = visitLimit !== null && visitsToday >= visitLimit
 
-  if (!markVisit || !isActive || alreadyVisited) {
+  if (!markAttempted || !isActive || overDailyLimit) {
     return {
       memberId: member.id,
       firstName: member.firstName,
@@ -185,7 +194,12 @@ export async function markVisitForMember({
       subscriptionEndsAt: latestSubscription?.endDate ?? null,
       status,
       active: isActive,
-      alreadyVisited,
+      alreadyVisited: visitsToday > 0,
+      visitsToday,
+      visitLimit,
+      overDailyLimit,
+      visitRecorded: false,
+      markVisitAttempted: markAttempted,
       daysRemaining,
       todayVisitorCount: gym.todayVisitorCount,
     }
@@ -214,6 +228,8 @@ export async function markVisitForMember({
     }),
   ])
 
+  const updatedVisitsToday = visitsToday + 1
+
   return {
     memberId: member.id,
     firstName: member.firstName,
@@ -223,9 +239,14 @@ export async function markVisitForMember({
     subscriptionEndsAt: latestSubscription?.endDate ?? null,
     status,
     active: isActive,
-  alreadyVisited: false,
-  daysRemaining,
-  todayVisitorCount: updatedGym.todayVisitorCount,
+    alreadyVisited: visitsToday > 0,
+    visitsToday: updatedVisitsToday,
+    visitLimit,
+    overDailyLimit: false,
+    visitRecorded: true,
+    markVisitAttempted: markAttempted,
+    daysRemaining,
+    todayVisitorCount: updatedGym.todayVisitorCount,
   }
 }
 

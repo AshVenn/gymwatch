@@ -26,6 +26,9 @@ const statusColors: Record<AccessEventStatus, string> = {
   ALREADY_CHECKED_IN:
     'border border-amber-500 bg-amber-50 text-amber-800 ' +
     'dark:border-amber-400 dark:bg-amber-500/40 dark:text-amber-50',
+  DENIED_DAILY_LIMIT:
+    'border border-purple-500 bg-purple-50 text-purple-800 ' +
+    'dark:border-purple-400 dark:bg-purple-500/40 dark:text-purple-50',
   DENIED_EXPIRED:
     'border border-red-500 bg-red-50 text-red-800 ' +
     'dark:border-red-400 dark:bg-red-500/40 dark:text-red-50',

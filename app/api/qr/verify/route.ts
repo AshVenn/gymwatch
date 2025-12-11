@@ -140,6 +140,9 @@ export async function POST(request: NextRequest) {
       active: visit.active,
       daysRemaining: visit.daysRemaining,
       alreadyVisited: visit.alreadyVisited,
+      visitsToday: visit.visitsToday,
+      visitLimit: visit.visitLimit,
+      overDailyLimit: visit.overDailyLimit,
       todayVisitorCount: visit.todayVisitorCount,
     })
   } catch (error) {

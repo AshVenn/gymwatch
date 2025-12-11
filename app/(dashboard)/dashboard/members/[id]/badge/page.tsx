@@ -47,6 +47,11 @@ const statusTone: Record<AccessEventStatus, { label: string; color: string; mess
     color: 'text-sky-700 dark:text-sky-300',
     message: 'Sortie marquee pour cette visite.',
   },
+  DENIED_DAILY_LIMIT: {
+    label: 'Limite journaliere atteinte',
+    color: 'text-purple-700 dark:text-purple-300',
+    message: "Quota quotidien depasse pour ce membre.",
+  },
   ALREADY_CHECKED_IN: {
     label: 'Déjà compté',
     color: 'text-amber-700 dark:text-amber-300',

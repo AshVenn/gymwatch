@@ -81,6 +81,7 @@ interface Plan {
   durationDays: number
   price: number
   isActive: boolean
+  visitsPerDay: number
   gymVariantId?: string
   gymVariant?: { id: string; name: string; slug: string; isDefault?: boolean }
 }
@@ -213,13 +214,21 @@ const handleScan = async (token: string | null) => {
 
       const fullName = `${payload.member?.firstName ?? ''} ${payload.member?.lastName ?? ''}`.trim()
       const active = Boolean(payload.active)
+      const visitLimit = typeof payload.visitLimit === 'number' ? payload.visitLimit : null
+      const visitsToday = typeof payload.visitsToday === 'number' ? payload.visitsToday : null
+      const overDailyLimit =
+        typeof payload.overDailyLimit === 'boolean'
+          ? payload.overDailyLimit
+          : visitLimit !== null && visitLimit > 0 && visitsToday !== null
+            ? visitsToday >= visitLimit
+            : false
       const alreadyVisited = Boolean(payload.alreadyVisited)
-      const success = active && !alreadyVisited
+      const success = active && !overDailyLimit
       const daysRemaining = typeof payload.daysRemaining === 'number' ? payload.daysRemaining : null
       const message = !active
         ? 'Abonnement inactif'
-        : alreadyVisited
-          ? "Deja visite aujourd'hui"
+        : overDailyLimit
+          ? 'Limite journaliere atteinte'
           : 'Acces valide'
       setScanStatus({
         status: success ? 'success' : 'error',
@@ -227,7 +236,7 @@ const handleScan = async (token: string | null) => {
         memberName: fullName || 'Membre inconnu',
         daysRemaining: daysRemaining ?? undefined,
       })
-      playTone(success ? 880 : alreadyVisited ? 520 : 240)
+      playTone(success ? 880 : overDailyLimit ? 240 : alreadyVisited ? 520 : 240)
     } catch (error) {
       const message = error instanceof Error ? error.message : 'QR invalide ou membre introuvable'
       setScanStatus({
@@ -535,11 +544,19 @@ const handleScan = async (token: string | null) => {
         throw new Error(data.error || 'Impossible de marquer la visite')
       }
       const fullName = data.memberName || 'Membre'
+      const visitLimit = typeof data.visitLimit === 'number' ? data.visitLimit : null
+      const visitsToday = typeof data.visitsToday === 'number' ? data.visitsToday : null
+      const overDailyLimit =
+        typeof (data as any).overDailyLimit === 'boolean'
+          ? (data as any).overDailyLimit
+          : visitLimit !== null && visitLimit > 0 && visitsToday !== null
+            ? visitsToday >= visitLimit
+            : false
 
       if (!data.active) {
         toast.error('Abonnement inactif ou expiré')
-      } else if (data.alreadyVisited) {
-        toast.warning(`${fullName} déjà comptabilisé aujourd'hui`)
+      } else if (overDailyLimit) {
+        toast.warning(`${fullName} a atteint sa limite journaliere`)
       } else {
         toast.success(
           `${fullName} marqué présent (${
@@ -1051,5 +1068,3 @@ const handleScan = async (token: string | null) => {
     </div>
   )
 }
-
-

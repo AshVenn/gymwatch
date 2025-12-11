@@ -65,6 +65,7 @@ interface Plan {
   id: string
   name: string
   durationDays?: number
+  visitsPerDay?: number
   gymVariantId?: string
   gymVariant?: { id: string; name: string; slug: string; isDefault?: boolean }
 }
@@ -373,10 +374,18 @@ export default function SubscriptionsPage() {
         throw new Error(data.error || 'Impossible de marquer la visite')
       }
       const fullName = data.memberName || 'Membre'
+      const visitLimit = typeof data.visitLimit === 'number' ? data.visitLimit : null
+      const visitsToday = typeof data.visitsToday === 'number' ? data.visitsToday : null
+      const overDailyLimit =
+        typeof (data as any).overDailyLimit === 'boolean'
+          ? (data as any).overDailyLimit
+          : visitLimit !== null && visitLimit > 0 && visitsToday !== null
+            ? visitsToday >= visitLimit
+            : false
       if (!data.active) {
         toast.error('Abonnement inactif ou expire')
-      } else if (data.alreadyVisited) {
-        toast.warning(`${fullName} deja comptabilise aujourd'hui`)
+      } else if (overDailyLimit) {
+        toast.warning(`${fullName} a atteint la limite journaliere`)
       } else {
         toast.success(`${fullName} marque present (${data.todayVisitorCount ?? 0} visites aujourd'hui)`)
       }

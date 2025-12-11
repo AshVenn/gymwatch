@@ -43,6 +43,7 @@ interface Plan {
   durationDays: number
   price: number
   isActive: boolean
+  visitsPerDay: number
   gymVariantId?: string
   gymVariant?: { id: string; name: string; slug: string; isDefault?: boolean }
 }
@@ -68,6 +69,8 @@ export default function PlansPage() {
     durationDays: '',
     price: '',
     isActive: true,
+    visitsPerDay: '',
+    unlimitedVisits: false,
   })
   const [isOpen, setIsOpen] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -134,7 +137,7 @@ export default function PlansPage() {
 
   const handleAddPlan = () => {
     setEditingId(null)
-    setFormData({ name: '', durationDays: '', price: '', isActive: true })
+    setFormData({ name: '', durationDays: '', price: '', isActive: true, visitsPerDay: '1', unlimitedVisits: false })
     const fallbackVariant =
       (selectedVariant !== 'all' ? selectedVariant : '') ||
       lockedVariantId ||
@@ -147,18 +150,21 @@ export default function PlansPage() {
 
   const handleEditPlan = (plan: Plan) => {
     setEditingId(plan.id)
+    const unlimited = typeof plan.visitsPerDay === 'number' && plan.visitsPerDay < 0
     setFormData({
       name: plan.name,
       durationDays: String(plan.durationDays),
       price: String(plan.price),
       isActive: plan.isActive,
+      visitsPerDay: unlimited ? '' : String(plan.visitsPerDay ?? 1),
+      unlimitedVisits: unlimited,
     })
     setPlanVariantId(plan.gymVariantId ?? plan.gymVariant?.id ?? lockedVariantId ?? '')
     setIsOpen(true)
   }
 
   const savePlanMutation = useMutation({
-    mutationFn: async () => {
+    mutationFn: async (visitsPerDayValue: number) => {
       const method = editingId ? 'PUT' : 'POST'
       const url = editingId ? `/api/plans/${editingId}` : '/api/plans'
 
@@ -171,6 +177,7 @@ export default function PlansPage() {
           price: parseFloat(formData.price),
           isActive: formData.isActive,
           gymVariantId: effectivePlanVariantId || undefined,
+          visitsPerDay: visitsPerDayValue,
         }),
       })
 
@@ -185,7 +192,7 @@ export default function PlansPage() {
     onSuccess: () => {
       setError(null)
       setIsOpen(false)
-      setFormData({ name: '', durationDays: '', price: '', isActive: true })
+      setFormData({ name: '', durationDays: '', price: '', isActive: true, visitsPerDay: '1', unlimitedVisits: false })
       setEditingId(null)
       queryClient.invalidateQueries({ queryKey: planQueryKey })
       toast.success(editingId ? 'Plan mis a jour avec succes' : 'Plan cree avec succes')
@@ -224,7 +231,12 @@ export default function PlansPage() {
       toast.error('Choisissez une variante pour ce plan.')
       return
     }
-    savePlanMutation.mutate()
+    const parsedVisits = formData.unlimitedVisits ? -1 : parseInt(formData.visitsPerDay, 10)
+    if (!formData.unlimitedVisits && (!Number.isFinite(parsedVisits) || parsedVisits < 1)) {
+      toast.error('Nombre de visites par jour invalide.')
+      return
+    }
+    savePlanMutation.mutate(parsedVisits)
   }
 
   const handleDeletePlan = (planId: string) => {
@@ -364,6 +376,40 @@ export default function PlansPage() {
                 />
               </div>
 
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="plan-visits">Visites par jour</Label>
+                  <div className="flex items-center gap-2">
+                    <Switch
+                      id="plan-visits-unlimited"
+                      checked={formData.unlimitedVisits}
+                      onCheckedChange={(checked) =>
+                        setFormData((prev) => ({
+                          ...prev,
+                          unlimitedVisits: checked,
+                          visitsPerDay: checked ? '' : prev.visitsPerDay || '1',
+                        }))
+                      }
+                    />
+                    <Label htmlFor="plan-visits-unlimited" className="text-sm text-muted-foreground">
+                      Illimite
+                    </Label>
+                  </div>
+                </div>
+                <Input
+                  id="plan-visits"
+                  type="number"
+                  min={1}
+                  disabled={formData.unlimitedVisits}
+                  value={formData.unlimitedVisits ? '' : formData.visitsPerDay}
+                  onChange={(e) => setFormData({ ...formData, visitsPerDay: e.target.value })}
+                  placeholder="1"
+                />
+                <p className="text-xs text-muted-foreground">
+                  Limitez les passages quotidiens ou activez le mode illimite.
+                </p>
+              </div>
+
               <div className="flex items-center justify-between">
                 <Label htmlFor="plan-active" className="text-sm font-medium">
                   Actif
@@ -408,6 +454,7 @@ export default function PlansPage() {
                   <TableHead>Nom du plan</TableHead>
                   <TableHead>Duree (jours)</TableHead>
                   <TableHead>Prix (MAD)</TableHead>
+                  <TableHead>Visites/jour</TableHead>
                   <TableHead>Actif</TableHead>
                   <TableHead>Variante</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
@@ -420,6 +467,7 @@ export default function PlansPage() {
                     <TableCell className="font-medium">{plan.name}</TableCell>
                     <TableCell>{plan.durationDays}</TableCell>
                     <TableCell>{plan.price.toLocaleString('fr-FR')}</TableCell>
+                    <TableCell>{plan.visitsPerDay < 0 ? 'Illimite' : plan.visitsPerDay}</TableCell>
                     <TableCell>
                       <Badge variant={plan.isActive ? 'default' : 'secondary'}>
                         {plan.isActive ? 'Oui' : 'Non'}

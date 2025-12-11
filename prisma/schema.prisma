@@ -52,6 +52,7 @@ enum AccessEventStatus {
   GRANTED
   CHECKED_OUT
   ALREADY_CHECKED_IN
+  DENIED_DAILY_LIMIT
   DENIED_EXPIRED
   DENIED_INACTIVE
   DENIED_FORBIDDEN
@@ -211,6 +212,7 @@ model MembershipPlan {
   name         String
   durationDays Int
   price        Float
+  visitsPerDay Int     @default(1)
   isActive     Boolean @default(true)
   gymVariantId String
   gymVariant   GymVariant @relation(fields: [gymVariantId], references: [id], onDelete: Cascade)

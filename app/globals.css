@@ -70,6 +70,18 @@
   --ring: oklch(0.556 0 0);
 }
 
+html[dir='rtl'] {
+  scrollbar-gutter: stable both-edges;
+}
+
+[dir='rtl'] body {
+  direction: rtl;
+}
+
+[dir='rtl'] * {
+  letter-spacing: normal;
+}
+
 @layer base {
   * {
     @apply border-border outline-ring/50;

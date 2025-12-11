@@ -1,4 +1,4 @@
-import type { SuperAdminGymDetail } from '@/app/(dashboard)/super-admin/hooks'
+import type { SuperAdminGymDetail } from "@/app/[locale]/(dashboard)/super-admin/hooks"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 
 type Props = {

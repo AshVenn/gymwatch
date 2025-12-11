@@ -1,7 +1,7 @@
 'use client'
 
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from '@/components/ui/sheet'
-import { useSuperAdminGym } from '@/app/(dashboard)/super-admin/hooks'
+import { useSuperAdminGym } from '@/app/[locale]/(dashboard)/super-admin/hooks'
 import { GymTeam } from './GymDetailDialog/GymTeam'
 import { GymPlans } from './GymDetailDialog/GymPlans'
 import { GymSubscriptionSettings } from './GymDetailDialog/GymSubscriptionSettings'

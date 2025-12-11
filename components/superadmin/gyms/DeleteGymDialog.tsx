@@ -1,6 +1,6 @@
 'use client'
 
-import type { SuperAdminGym } from '@/app/(dashboard)/super-admin/hooks'
+import type { SuperAdminGym } from '@/app/[locale]/(dashboard)/super-admin/hooks'
 import { Badge } from '@/components/ui/badge'
 import {
   AlertDialog,
@@ -12,7 +12,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
-import { useDeleteGym } from '@/app/(dashboard)/super-admin/hooks'
+import { useDeleteGym } from '@/app/[locale]/(dashboard)/super-admin/hooks'
 
 const STATUS_LABEL: Record<string, string> = {
   ACTIVE: 'Actif',

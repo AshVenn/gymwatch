@@ -1,6 +1,6 @@
 import { Building2, Users2, Activity, Gauge } from 'lucide-react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import type { SuperAdminGym } from '@/app/(dashboard)/super-admin/hooks'
+import type { SuperAdminGym } from '@/app/[locale]/(dashboard)/super-admin/hooks'
 
 type Props = {
   gyms: SuperAdminGym[]

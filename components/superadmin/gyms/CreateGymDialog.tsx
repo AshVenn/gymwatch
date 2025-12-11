@@ -6,7 +6,7 @@ import { useForm } from 'react-hook-form'
 import { z } from 'zod'
 import { zodResolver } from '@hookform/resolvers/zod'
 
-import { useCreateGym, usePlanSettings, GymSubscriptionStatus, GymPlanTier, GymBillingInterval } from '@/app/(dashboard)/super-admin/hooks'
+import { useCreateGym, usePlanSettings, GymSubscriptionStatus, GymPlanTier, GymBillingInterval } from '@/app/[locale]/(dashboard)/super-admin/hooks'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'

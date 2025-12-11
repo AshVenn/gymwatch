@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
-import type { SuperAdminGymDetail } from '@/app/(dashboard)/super-admin/hooks'
-import { useUpdateGym } from '@/app/(dashboard)/super-admin/hooks'
+import type { SuperAdminGymDetail } from '@/app/[locale]/(dashboard)/super-admin/hooks'
+import { useUpdateGym } from '@/app/[locale]/(dashboard)/super-admin/hooks'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Input } from '@/components/ui/input'

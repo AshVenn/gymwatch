@@ -1,7 +1,7 @@
 'use client'
 
 import { BarChart3, ClipboardList, FileCog, PenSquare, Trash2, Users } from 'lucide-react'
-import type { SuperAdminGym } from '@/app/(dashboard)/super-admin/hooks'
+import type { SuperAdminGym } from '@/app/[locale]/(dashboard)/super-admin/hooks'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import {

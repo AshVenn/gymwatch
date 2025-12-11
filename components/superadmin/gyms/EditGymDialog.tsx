@@ -21,7 +21,7 @@ import {
   FormMessage,
 } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
-import { useSuperAdminGym, useUpdateGymProfile } from '@/app/(dashboard)/super-admin/hooks'
+import { useSuperAdminGym, useUpdateGymProfile } from '@/app/[locale]/(dashboard)/super-admin/hooks'
 
 const schema = z.object({
   name: z.string().min(2, 'Nom requis'),

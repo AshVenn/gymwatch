@@ -1,7 +1,7 @@
 'use client'
 
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog'
-import { useSuperAdminGym } from '@/app/(dashboard)/super-admin/hooks'
+import { useSuperAdminGym } from '@/app/[locale]/(dashboard)/super-admin/hooks'
 import { GymStats } from './GymStats'
 import { GymAnalytics } from './GymAnalytics'
 import { Badge } from '@/components/ui/badge'

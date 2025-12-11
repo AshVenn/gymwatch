@@ -25,7 +25,7 @@ import {
   computePricingFromSettings,
   isUnlimitedLimit,
 } from '@/lib/subscription-plans'
-import { usePlanSettings, useUpdatePlanSettings, type PlanSettingsInput } from '@/app/(dashboard)/super-admin/hooks'
+import { usePlanSettings, useUpdatePlanSettings, type PlanSettingsInput } from '@/app/[locale]/(dashboard)/super-admin/hooks'
 
 const schema = z.object({
   basicMonthlyPrice: z.coerce.number().min(0),

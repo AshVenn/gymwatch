@@ -1,7 +1,7 @@
 import { Input } from '@/components/ui/input'
 import { Search } from 'lucide-react'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import type { GymPlanTier, GymSubscriptionStatus } from '@/app/(dashboard)/super-admin/hooks'
+import type { GymPlanTier, GymSubscriptionStatus } from '@/app/[locale]/(dashboard)/super-admin/hooks'
 import { ReactNode } from 'react'
 
 type Props = {

@@ -51,6 +51,7 @@ type VisitAnalyticsResponse = {
     checkOut: string | null
     durationMinutes: number
     isOverMaxDuration: boolean
+    sessionLimitMinutes?: number | null
   }>
   summary: {
     total: number
@@ -175,6 +176,7 @@ export default function PresencePage() {
         checkIn: new Date(visit.checkIn),
         checkOut: visit.checkOut ? new Date(visit.checkOut) : null,
         isOverMaxDuration: Boolean(visit.isOverMaxDuration),
+        sessionLimitMinutes: visit.sessionLimitMinutes ?? null,
       })),
     [visitsQuery.data?.visits],
   )
@@ -225,11 +227,21 @@ export default function PresencePage() {
       if (!response.ok) {
         throw new Error(body.error || 'Impossible de marquer la sortie')
       }
-      return body as { memberName?: string }
+      return body as { memberName?: string; isOverMaxDuration?: boolean; sessionLimitMinutes?: number | null; durationMinutes?: number }
     },
     onSuccess: (data) => {
       const fullName = data?.memberName ? ` pour ${data.memberName}` : ''
-      toast.success(`Sortie enregistree${fullName}`)
+      const durationLabel =
+        typeof data?.durationMinutes === 'number' ? ` (${data.durationMinutes} min)` : ''
+      const limitLabel =
+        data?.isOverMaxDuration && typeof data.sessionLimitMinutes === 'number'
+          ? ` - limite ${data.sessionLimitMinutes} min depassee`
+          : data?.isOverMaxDuration
+            ? ' - session depassee'
+            : ''
+      const message = `Sortie enregistree${fullName}${durationLabel}${limitLabel}`
+      const notify = data?.isOverMaxDuration ? toast.warning : toast.success
+      notify(message)
       setCheckoutDialogOpen(false)
       visitsQuery.refetch()
     },

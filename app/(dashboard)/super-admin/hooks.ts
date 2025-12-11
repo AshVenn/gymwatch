@@ -115,6 +115,7 @@ export interface SuperAdminGymDetail extends SuperAdminGym {
     price: number
     isActive: boolean
     visitsPerDay?: number
+    maxSessionMinutes?: number | null
     gymVariantId?: string
     gymVariant?: {
       id: string

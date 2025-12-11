@@ -22,6 +22,24 @@ function normalizeVisitsPerDay(raw: unknown, defaultValue?: number) {
   return intValue
 }
 
+function normalizeSessionLimit(raw: unknown, { allowUndefined = false }: { allowUndefined?: boolean } = {}) {
+  if (raw === undefined) {
+    return allowUndefined ? undefined : null
+  }
+  if (raw === null || raw === "") {
+    return null
+  }
+  const parsed = typeof raw === "string" ? Number(raw) : raw
+  if (typeof parsed !== "number" || !Number.isFinite(parsed)) {
+    throw new Error("SESSION_LIMIT_INVALID")
+  }
+  const intValue = Math.trunc(parsed)
+  if (intValue <= 0) {
+    throw new Error("SESSION_LIMIT_INVALID")
+  }
+  return intValue
+}
+
 export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions)
@@ -69,10 +87,16 @@ export async function POST(request: NextRequest) {
     const payload = await request.json()
     const { name, durationDays, price, gymVariantId: payloadVariantId, isActive } = payload
     let visitsPerDay: number
+    let maxSessionMinutes: number | null
     try {
       visitsPerDay = normalizeVisitsPerDay(payload.visitsPerDay, 1) ?? 1
     } catch {
       return NextResponse.json({ error: "VISITS_PER_DAY_INVALID" }, { status: 400 })
+    }
+    try {
+      maxSessionMinutes = normalizeSessionLimit(payload.maxSessionMinutes) ?? null
+    } catch {
+      return NextResponse.json({ error: "SESSION_LIMIT_INVALID" }, { status: 400 })
     }
 
     const role = (session.user as any).role as string | undefined
@@ -124,6 +148,8 @@ export async function POST(request: NextRequest) {
           {
             error: "PLAN_LIMIT_REACHED",
             message: `Limite atteinte: ${limits.perVariant} plan(s) actif(s) pour cette variante.`,
+            limits,
+            usage: { variantActivePlans, networkActivePlans },
           },
           { status: 409 },
         )
@@ -134,6 +160,8 @@ export async function POST(request: NextRequest) {
           {
             error: "PLAN_LIMIT_REACHED",
             message: `Limite reseau atteinte: ${limits.perNetwork} plan(s) actif(s) pour ce reseau.`,
+            limits,
+            usage: { variantActivePlans, networkActivePlans },
           },
           { status: 409 },
         )
@@ -148,6 +176,7 @@ export async function POST(request: NextRequest) {
       price,
       isActive: isActive ?? true,
       visitsPerDay,
+      maxSessionMinutes,
     })
 
     return NextResponse.json(plan, { status: 201 })

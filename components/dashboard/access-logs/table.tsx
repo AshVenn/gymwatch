@@ -23,6 +23,9 @@ const statusColors: Record<AccessEventStatus, string> = {
   CHECKED_OUT:
     'border border-sky-500 bg-sky-50 text-sky-800 ' +
     'dark:border-sky-400 dark:bg-sky-500/40 dark:text-sky-50',
+  SESSION_OVERSTAY:
+    'border border-red-500 bg-red-50 text-red-800 ' +
+    'dark:border-red-400 dark:bg-red-500/40 dark:text-red-50',
   ALREADY_CHECKED_IN:
     'border border-amber-500 bg-amber-50 text-amber-800 ' +
     'dark:border-amber-400 dark:bg-amber-500/40 dark:text-amber-50',
@@ -89,7 +92,7 @@ export function AccessLogTable({ events, onDelete, deletingId }: AccessLogTableP
   if (!events.length) {
     return (
       <div className="rounded-2xl border border-border/70 bg-card/70 p-8 text-center text-muted-foreground">
-        Aucun évènement d&apos;accès pour le moment.
+        Aucun evenement d'acces pour le moment.
       </div>
     )
   }
@@ -113,32 +116,34 @@ export function AccessLogTable({ events, onDelete, deletingId }: AccessLogTableP
             const sourceLabel = sourceLabels[event.source]
             const memberName = event.member
               ? `${event.member.firstName} ${event.member.lastName}`.trim()
-              : 'Membre supprimé'
+              : 'Membre supprime'
+            const flagged =
+              event.sessionOverdue ||
+              event.status === AccessEventStatus.SESSION_OVERSTAY ||
+              event.status === AccessEventStatus.DENIED_DAILY_LIMIT ||
+              event.status === AccessEventStatus.DENIED_FORBIDDEN ||
+              event.status === AccessEventStatus.DENIED_EXPIRED ||
+              event.status === AccessEventStatus.DENIED_INACTIVE
 
             return (
-              <TableRow key={event.id}>
+              <TableRow key={event.id} className={cn(flagged ? 'bg-destructive/5' : undefined)}>
                 <TableCell className="whitespace-nowrap text-sm font-medium">
                   {dateFormatter.format(new Date(event.createdAt))}
                 </TableCell>
                 <TableCell>
                   <div className="flex flex-col">
                     <span className="font-semibold">{memberName}</span>
-                    <span className="text-xs text-muted-foreground">
-                      {event.member?.email ?? '—'}
-                    </span>
+                    <span className="text-xs text-muted-foreground">{event.member?.email ?? 'N/A'}</span>
                   </div>
                 </TableCell>
                 <TableCell className="text-sm text-muted-foreground">
-                  {event.member?.gymVariant?.name ?? '—'}
+                  {event.member?.gymVariant?.name ?? 'N/A'}
                 </TableCell>
                 <TableCell>
                   <div className="flex flex-col gap-1">
                     <Badge
                       variant="outline"
-                      className={cn(
-                        'text-xs font-semibold px-2 py-0.5',
-                        statusColors[event.status],
-                      )}
+                      className={cn('text-xs font-semibold px-2 py-0.5', statusColors[event.status])}
                     >
                       {statusLabel}
                     </Badge>
@@ -147,7 +152,17 @@ export function AccessLogTable({ events, onDelete, deletingId }: AccessLogTableP
                         variant="outline"
                         className="border border-destructive bg-destructive/10 px-2 py-0.5 text-xs font-semibold text-destructive"
                       >
-                        Période dépassée
+                        Periode depassee
+                      </Badge>
+                    ) : null}
+                    {[AccessEventStatus.DENIED_DAILY_LIMIT, AccessEventStatus.SESSION_OVERSTAY].includes(
+                      event.status,
+                    ) ? (
+                      <Badge
+                        variant="outline"
+                        className="border border-destructive/60 bg-destructive/5 px-2 py-0.5 text-[11px] font-semibold text-destructive"
+                      >
+                        Alerte limite
                       </Badge>
                     ) : null}
                   </div>
@@ -155,10 +170,7 @@ export function AccessLogTable({ events, onDelete, deletingId }: AccessLogTableP
                 <TableCell>
                   <Badge
                     variant="outline"
-                    className={cn(
-                      'text-xs font-semibold px-2 py-0.5',
-                      sourceColors[event.source],
-                    )}
+                    className={cn('text-xs font-semibold px-2 py-0.5', sourceColors[event.source])}
                   >
                     {sourceLabel}
                   </Badge>
@@ -166,12 +178,7 @@ export function AccessLogTable({ events, onDelete, deletingId }: AccessLogTableP
                 <TableCell className="text-right">
                   <div className="flex justify-end gap-2">
                     {event.member?.id ? (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        asChild
-                        className="border-border/70"
-                      >
+                      <Button variant="outline" size="sm" asChild className="border-border/70">
                         <Link href={`/dashboard/members/${event.member.id}/badge`}>
                           <ExternalLink className="mr-2 h-4 w-4" />
                           Badge

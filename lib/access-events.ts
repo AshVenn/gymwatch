@@ -29,6 +29,7 @@ export function resolveAccessEventStatus(
 export const ACCESS_EVENT_STATUS_LABELS: Record<AccessEventStatus, string> = {
   GRANTED: "Acces autorise",
   CHECKED_OUT: "Sortie enregistree",
+  SESSION_OVERSTAY: "Session depassee",
   ALREADY_CHECKED_IN: "Deja comptabilise",
   DENIED_DAILY_LIMIT: "Limite journaliere atteinte",
   DENIED_EXPIRED: "Abonnement expire",

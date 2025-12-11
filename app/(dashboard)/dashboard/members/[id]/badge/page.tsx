@@ -47,6 +47,11 @@ const statusTone: Record<AccessEventStatus, { label: string; color: string; mess
     color: 'text-sky-700 dark:text-sky-300',
     message: 'Sortie marquee pour cette visite.',
   },
+  SESSION_OVERSTAY: {
+    label: 'Session depassee',
+    color: 'text-red-700 dark:text-red-300',
+    message: 'Duree maximale de session depassee pour cette visite.',
+  },
   DENIED_DAILY_LIMIT: {
     label: 'Limite journaliere atteinte',
     color: 'text-purple-700 dark:text-purple-300',
@@ -143,7 +148,30 @@ export default function MemberBadgePage() {
     },
     onSuccess: (data) => {
       const tone = statusTone[data.accessStatus]
-      toast.success(tone?.label ?? 'Simulation enregistrée')
+      const limitState = (data as any)?.visit?.limitState as string | undefined
+      const visitsRemaining =
+        typeof (data as any)?.visit?.visitsRemaining === 'number'
+          ? Math.max((data as any).visit.visitsRemaining, 0)
+          : null
+      const blocked =
+        data.accessStatus === AccessEventStatus.DENIED_DAILY_LIMIT ||
+        data.accessStatus === AccessEventStatus.DENIED_EXPIRED ||
+        data.accessStatus === AccessEventStatus.DENIED_INACTIVE ||
+        data.accessStatus === AccessEventStatus.DENIED_FORBIDDEN ||
+        limitState === 'BLOCKED'
+      const warning =
+        data.accessStatus === AccessEventStatus.SESSION_OVERSTAY ||
+        data.accessStatus === AccessEventStatus.ALREADY_CHECKED_IN ||
+        limitState === 'WARNING'
+      const baseLabel = tone?.label ?? 'Simulation enregistree'
+      const labelWithRemaining = visitsRemaining !== null ? `${baseLabel} (${visitsRemaining} restant${visitsRemaining > 1 ? 's' : ''})` : baseLabel
+      if (blocked) {
+        toast.error(labelWithRemaining)
+      } else if (warning) {
+        toast.warning(labelWithRemaining)
+      } else {
+        toast.success(labelWithRemaining)
+      }
       eventsQuery.refetch()
     },
     onError: (error) => {

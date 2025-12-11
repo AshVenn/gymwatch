@@ -78,10 +78,13 @@ export async function POST(request: NextRequest) {
       })
 
       try {
+        const accessStatus = checkout.isOverMaxDuration
+          ? AccessEventStatus.SESSION_OVERSTAY
+          : AccessEventStatus.CHECKED_OUT
         await prisma.accessEvent.create({
           data: {
             memberId: checkout.memberId,
-            status: AccessEventStatus.CHECKED_OUT,
+            status: accessStatus,
             source: AccessEventSource.QR_SCAN,
           },
         })
@@ -103,6 +106,8 @@ export async function POST(request: NextRequest) {
           checkIn: checkout.checkIn,
           checkOut: checkout.checkOut,
           durationMinutes: checkout.durationMinutes,
+          isOverMaxDuration: checkout.isOverMaxDuration,
+          sessionLimitMinutes: checkout.sessionLimitMinutes,
         },
       })
     }
@@ -143,6 +148,8 @@ export async function POST(request: NextRequest) {
       visitsToday: visit.visitsToday,
       visitLimit: visit.visitLimit,
       overDailyLimit: visit.overDailyLimit,
+      visitsRemaining: visit.visitsRemaining,
+      limitState: visit.limitState,
       todayVisitorCount: visit.todayVisitorCount,
     })
   } catch (error) {

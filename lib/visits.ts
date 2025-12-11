@@ -1,6 +1,7 @@
 import type { Prisma, SubscriptionStatus } from "@prisma/client"
 import { prisma } from "./prisma"
 import { computeSubscriptionStatus, daysUntilExpiry } from "./subscription-status"
+import { buildSessionLimitResolver } from "./session-limits"
 
 const startOfDay = (value: Date) => {
   const day = new Date(value)
@@ -32,6 +33,8 @@ export type VisitResult = {
   visitsToday: number
   visitLimit: number | null
   overDailyLimit: boolean
+  visitsRemaining: number | null
+  limitState: "OK" | "WARNING" | "BLOCKED"
   visitRecorded: boolean
   markVisitAttempted: boolean
   daysRemaining: number | null
@@ -49,6 +52,8 @@ export type CheckoutResult = {
   checkIn: Date
   checkOut: Date
   durationMinutes: number
+  sessionLimitMinutes: number | null
+  isOverMaxDuration: boolean
 }
 
 export type VisitRow = {
@@ -61,6 +66,7 @@ export type VisitRow = {
   checkOut: Date | null
   durationMinutes: number
   isOverMaxDuration: boolean
+  sessionLimitMinutes: number | null
 }
 
 export type VisitAnalytics = {
@@ -183,6 +189,14 @@ export async function markVisitForMember({
   })
   const markAttempted = Boolean(markVisit)
   const overDailyLimit = visitLimit !== null && visitsToday >= visitLimit
+  const effectiveCount = markAttempted && isActive && !overDailyLimit ? visitsToday + 1 : visitsToday
+  const visitsRemaining = visitLimit !== null ? Math.max(visitLimit - effectiveCount, 0) : null
+  const limitState: VisitResult["limitState"] =
+    overDailyLimit || (!markAttempted && visitLimit !== null && visitsToday >= visitLimit)
+      ? "BLOCKED"
+      : visitLimit !== null && markAttempted && effectiveCount >= visitLimit
+        ? "WARNING"
+        : "OK"
 
   if (!markAttempted || !isActive || overDailyLimit) {
     return {
@@ -198,6 +212,8 @@ export async function markVisitForMember({
       visitsToday,
       visitLimit,
       overDailyLimit,
+      visitsRemaining,
+      limitState,
       visitRecorded: false,
       markVisitAttempted: markAttempted,
       daysRemaining,
@@ -242,6 +258,8 @@ export async function markVisitForMember({
     alreadyVisited: visitsToday > 0,
     visitsToday: updatedVisitsToday,
     visitLimit,
+    visitsRemaining,
+    limitState,
     overDailyLimit: false,
     visitRecorded: true,
     markVisitAttempted: markAttempted,
@@ -349,6 +367,16 @@ export async function markCheckoutForMember({
     Math.round((checkoutDate.getTime() - updatedVisit.checkIn.getTime()) / 60000),
   )
 
+  const sessionLimitResolver = await buildSessionLimitResolver({
+    gymId,
+    memberIds: [updatedVisit.memberId],
+  })
+
+  const sessionLimit =
+    sessionLimitResolver.resolve(updatedVisit.memberId, updatedVisit.member.gymVariant?.id ?? targetVisit.gymVariantId) ??
+    null
+  const isOverMaxDuration = sessionLimit !== null ? durationMinutes > sessionLimit : false
+
   const memberName = `${updatedVisit.member.firstName} ${updatedVisit.member.lastName}`.trim()
 
   return {
@@ -362,6 +390,8 @@ export async function markCheckoutForMember({
     checkIn: updatedVisit.checkIn,
     checkOut: updatedVisit.checkOut ?? checkoutDate,
     durationMinutes,
+    sessionLimitMinutes: sessionLimit,
+    isOverMaxDuration,
   }
 }
 
@@ -374,7 +404,6 @@ export async function getVisitAnalytics({
   to,
   search,
   limit = 120,
-  maxSessionMinutes,
 }: {
   gymId: string
   variantId?: string | null
@@ -384,7 +413,6 @@ export async function getVisitAnalytics({
   to?: Date
   search?: string
   limit?: number
-  maxSessionMinutes?: number | null
 }): Promise<VisitAnalytics> {
   const now = new Date()
   const viewMode = view === "period" ? "period" : "day"
@@ -394,10 +422,6 @@ export async function getVisitAnalytics({
       : startOfDay(from ?? new Date(now.getTime() - 6 * 24 * 60 * 60 * 1000))
   const rangeEnd = viewMode === "day" ? endOfDay(date ?? now) : endOfDay(to ?? now)
   const safeLimit = Math.min(Math.max(Math.floor(limit ?? 120), 1), 500)
-  const sessionLimit =
-    typeof maxSessionMinutes === "number" && Number.isFinite(maxSessionMinutes) && maxSessionMinutes > 0
-      ? Math.round(maxSessionMinutes)
-      : null
 
   const where: Prisma.VisitWhereInput = {
     gymId,
@@ -458,6 +482,11 @@ export async function getVisitAnalytics({
     }),
   ])
 
+  const memberIds = Array.from(new Set(visits.map((visit) => visit.memberId)))
+  const sessionLimitResolver = await buildSessionLimitResolver({ gymId, memberIds })
+  const detectedLimits = new Set<number>()
+  const defaultLimit = sessionLimitResolver.variantLimit(variantId ?? null) ?? sessionLimitResolver.defaultLimit
+
   const variantNames = await prisma.gymVariant.findMany({
     where: { id: { in: variantGroups.map((group) => group.gymVariantId) } },
     select: { id: true, name: true },
@@ -508,7 +537,11 @@ export async function getVisitAnalytics({
     const memberName = `${visit.member.firstName} ${visit.member.lastName}`.trim()
     const end = visit.checkOut ?? now
     const durationMinutes = Math.max(0, Math.round((end.getTime() - visit.checkIn.getTime()) / 60000))
-    const isOverMaxDuration = sessionLimit ? durationMinutes > sessionLimit : false
+    const sessionLimit = sessionLimitResolver.resolve(visit.memberId, visit.member.gymVariant?.id ?? visit.gymVariantId)
+    if (sessionLimit !== null) {
+      detectedLimits.add(sessionLimit)
+    }
+    const isOverMaxDuration = sessionLimit !== null ? durationMinutes > sessionLimit : false
     return {
       id: visit.id,
       memberId: visit.memberId,
@@ -519,8 +552,12 @@ export async function getVisitAnalytics({
       checkOut: visit.checkOut,
       durationMinutes,
       isOverMaxDuration,
+      sessionLimitMinutes: sessionLimit,
     }
   })
+
+  const uniqueLimit = detectedLimits.size === 1 ? Array.from(detectedLimits)[0] : null
+  const resolvedMaxSessionMinutes = uniqueLimit ?? defaultLimit ?? null
 
   return {
     visits: rows,
@@ -540,6 +577,6 @@ export async function getVisitAnalytics({
       to: rangeEnd,
       mode: viewMode,
     },
-    maxSessionMinutes: sessionLimit,
+    maxSessionMinutes: resolvedMaxSessionMinutes,
   }
 }

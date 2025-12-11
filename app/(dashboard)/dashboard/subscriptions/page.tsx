@@ -66,6 +66,7 @@ interface Plan {
   name: string
   durationDays?: number
   visitsPerDay?: number
+  maxSessionMinutes?: number | null
   gymVariantId?: string
   gymVariant?: { id: string; name: string; slug: string; isDefault?: boolean }
 }
@@ -382,12 +383,25 @@ export default function SubscriptionsPage() {
           : visitLimit !== null && visitLimit > 0 && visitsToday !== null
             ? visitsToday >= visitLimit
             : false
+      const visitsRemaining =
+        typeof (data as any).visitsRemaining === 'number' ? Math.max((data as any).visitsRemaining, 0) : null
+      const limitState = ((data as any).limitState as string) ?? 'OK'
+      const limitWarning = limitState === 'WARNING'
+      const blocked = limitState === 'BLOCKED' || overDailyLimit
       if (!data.active) {
         toast.error('Abonnement inactif ou expire')
-      } else if (overDailyLimit) {
-        toast.warning(`${fullName} a atteint la limite journaliere`)
+      } else if (blocked) {
+        toast.error(`${fullName} a atteint la limite journaliere`)
+      } else if (limitWarning) {
+        const remainingLabel =
+          visitsRemaining !== null ? ` (${visitsRemaining} restante${visitsRemaining > 1 ? 's' : ''})` : ''
+        toast.warning(`Derniere visite du jour pour ${fullName}${remainingLabel}`)
       } else {
-        toast.success(`${fullName} marque present (${data.todayVisitorCount ?? 0} visites aujourd'hui)`)
+        const remainingLabel =
+          visitsRemaining !== null ? ` - ${visitsRemaining} reste${visitsRemaining > 1 ? 's' : ''}` : ''
+        toast.success(
+          `${fullName} marque present (${data.todayVisitorCount ?? 0} visites aujourd'hui)${remainingLabel}`,
+        )
       }
       setVisitDialogOpen(false)
     } catch (error) {

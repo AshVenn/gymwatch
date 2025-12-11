@@ -22,6 +22,24 @@ function normalizeVisitsPerDay(raw: unknown) {
   return intValue
 }
 
+function normalizeSessionLimit(raw: unknown, { allowUndefined = false }: { allowUndefined?: boolean } = {}) {
+  if (raw === undefined) {
+    return allowUndefined ? undefined : null
+  }
+  if (raw === null || raw === '') {
+    return null
+  }
+  const parsed = typeof raw === 'string' ? Number(raw) : raw
+  if (typeof parsed !== 'number' || !Number.isFinite(parsed)) {
+    throw new Error('SESSION_LIMIT_INVALID')
+  }
+  const intValue = Math.trunc(parsed)
+  if (intValue <= 0) {
+    throw new Error('SESSION_LIMIT_INVALID')
+  }
+  return intValue
+}
+
 export async function PUT(request: NextRequest, { params }: any) {
   try {
     const session = await getServerSession(authOptions)
@@ -38,10 +56,16 @@ export async function PUT(request: NextRequest, { params }: any) {
     const payload = await request.json()
     const { name, durationDays, price, isActive } = payload
     let visitsPerDay: number | undefined
+    let maxSessionMinutes: number | null | undefined
     try {
       visitsPerDay = normalizeVisitsPerDay(payload.visitsPerDay)
     } catch {
       return NextResponse.json({ error: 'VISITS_PER_DAY_INVALID' }, { status: 400 })
+    }
+    try {
+      maxSessionMinutes = normalizeSessionLimit(payload.maxSessionMinutes, { allowUndefined: true })
+    } catch {
+      return NextResponse.json({ error: 'SESSION_LIMIT_INVALID' }, { status: 400 })
     }
 
     const planRecord = await prisma.membershipPlan.findUnique({ where: { id: params.planId } })
@@ -74,13 +98,23 @@ export async function PUT(request: NextRequest, { params }: any) {
 
       if (!limits.unlimitedPerVariant && variantActivePlans >= limits.perVariant!) {
         return NextResponse.json(
-          { error: 'PLAN_LIMIT_REACHED', message: 'Limite atteinte pour cette variante.' },
+          {
+            error: 'PLAN_LIMIT_REACHED',
+            message: 'Limite atteinte pour cette variante.',
+            limits,
+            usage: { variantActivePlans, networkActivePlans },
+          },
           { status: 409 },
         )
       }
       if (!limits.unlimitedPerNetwork && networkActivePlans >= limits.perNetwork!) {
         return NextResponse.json(
-          { error: 'PLAN_LIMIT_REACHED', message: 'Limite reseau atteinte.' },
+          {
+            error: 'PLAN_LIMIT_REACHED',
+            message: 'Limite reseau atteinte.',
+            limits,
+            usage: { variantActivePlans, networkActivePlans },
+          },
           { status: 409 },
         )
       }
@@ -92,6 +126,7 @@ export async function PUT(request: NextRequest, { params }: any) {
       price,
       isActive,
       visitsPerDay,
+      maxSessionMinutes,
     })
 
     return NextResponse.json(plan)

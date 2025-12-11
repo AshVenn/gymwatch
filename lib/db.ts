@@ -141,6 +141,7 @@ export const db = {
     price: number
     isActive?: boolean
     visitsPerDay?: number
+    maxSessionMinutes?: number | null
   }) =>
     prisma.membershipPlan.create({
       data: {
@@ -151,6 +152,12 @@ export const db = {
         price: data.price,
         isActive: data.isActive ?? true,
         visitsPerDay: typeof data.visitsPerDay === "number" ? data.visitsPerDay : undefined,
+        maxSessionMinutes:
+          typeof data.maxSessionMinutes === "number"
+            ? data.maxSessionMinutes
+            : data.maxSessionMinutes === null
+              ? null
+              : undefined,
       },
     }),
 
@@ -159,10 +166,11 @@ export const db = {
     data: {
       name: string
       durationDays: number
-      price: number
-      isActive?: boolean
-      visitsPerDay?: number
-    },
+    price: number
+    isActive?: boolean
+    visitsPerDay?: number
+    maxSessionMinutes?: number | null
+  },
   ) =>
     prisma.membershipPlan.update({
       where: { id },
@@ -172,6 +180,12 @@ export const db = {
         price: data.price,
         isActive: typeof data.isActive === "boolean" ? data.isActive : undefined,
         visitsPerDay: typeof data.visitsPerDay === "number" ? data.visitsPerDay : undefined,
+        maxSessionMinutes:
+          typeof data.maxSessionMinutes === "number"
+            ? data.maxSessionMinutes
+            : data.maxSessionMinutes === null
+              ? null
+              : undefined,
       },
     }),
 

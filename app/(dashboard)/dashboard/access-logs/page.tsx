@@ -24,6 +24,7 @@ const statusOptions = [
   { value: 'ALL', label: 'Tous les statuts' },
   { value: AccessEventStatus.GRANTED, label: 'Acces autorise' },
   { value: AccessEventStatus.CHECKED_OUT, label: 'Sortie enregistree' },
+  { value: AccessEventStatus.SESSION_OVERSTAY, label: 'Session depassee' },
   { value: AccessEventStatus.ALREADY_CHECKED_IN, label: 'Deja compte' },
   { value: AccessEventStatus.DENIED_DAILY_LIMIT, label: 'Limite journaliere' },
   { value: AccessEventStatus.DENIED_EXPIRED, label: 'Abonnement expire' },
@@ -165,10 +166,27 @@ export default function AccessLogsPage() {
   const events = useMemo(() => accessLogsQuery.data?.events ?? [], [accessLogsQuery.data?.events])
   const sessionLimit = accessLogsQuery.data?.maxSessionMinutes ?? null
   const pagination = usePagination(events, 12)
+  const flaggedCount = useMemo(
+    () =>
+      events.filter(
+        (event) =>
+          [
+            AccessEventStatus.SESSION_OVERSTAY,
+            AccessEventStatus.DENIED_DAILY_LIMIT,
+            AccessEventStatus.DENIED_FORBIDDEN,
+            AccessEventStatus.DENIED_EXPIRED,
+            AccessEventStatus.DENIED_INACTIVE,
+          ].includes(event.status) ||
+          Boolean(event.sessionOverdue),
+      ).length,
+    [events],
+  )
 
   const summary = useMemo(() => {
     const granted = events.filter((event) => event.status === AccessEventStatus.GRANTED).length
-    const checkouts = events.filter((event) => event.status === AccessEventStatus.CHECKED_OUT).length
+    const checkouts = events.filter((event) =>
+      [AccessEventStatus.CHECKED_OUT, AccessEventStatus.SESSION_OVERSTAY].includes(event.status),
+    ).length
     const denied = events.filter((event) =>
       [
         AccessEventStatus.DENIED_EXPIRED,
@@ -349,14 +367,24 @@ export default function AccessLogsPage() {
           <CardTitle className="text-sm font-medium text-muted-foreground">
             {events.length} evenement{events.length > 1 ? 's' : ''} (200 derniers)
           </CardTitle>
-          {sessionLimit ? (
-            <Badge
-              variant="outline"
-              className="border-border/60 bg-transparent text-[11px] font-normal text-muted-foreground"
-            >
-              Duree max: {sessionLimit} min
-            </Badge>
-          ) : null}
+          <div className="flex flex-wrap items-center gap-2">
+            {flaggedCount > 0 ? (
+              <Badge
+                variant="outline"
+                className="border-destructive/50 bg-destructive/5 text-[11px] font-semibold text-destructive"
+              >
+                Alertes limites: {flaggedCount}
+              </Badge>
+            ) : null}
+            {sessionLimit ? (
+              <Badge
+                variant="outline"
+                className="border-border/60 bg-transparent text-[11px] font-normal text-muted-foreground"
+              >
+                Duree max: {sessionLimit} min
+              </Badge>
+            ) : null}
+          </div>
         </CardHeader>
         <CardContent className="space-y-4">
           {accessLogsQuery.isLoading ? (

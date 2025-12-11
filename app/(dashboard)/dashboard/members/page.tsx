@@ -202,13 +202,22 @@ const handleScan = async (token: string | null) => {
       if (payload.mode === 'CHECK_OUT') {
         const fullName = `${payload.member?.firstName ?? ''} ${payload.member?.lastName ?? ''}`.trim()
         const duration = typeof payload.visit?.durationMinutes === 'number' ? payload.visit.durationMinutes : null
-        const message = duration ? `Sortie enregistree (${duration} min)` : 'Sortie enregistree'
+        const overstay = Boolean(payload.visit?.isOverMaxDuration)
+        const limitLabel =
+          typeof payload.visit?.sessionLimitMinutes === 'number' && payload.visit.sessionLimitMinutes > 0
+            ? `${payload.visit.sessionLimitMinutes} min`
+            : null
+        const message = overstay
+          ? `Sortie enregistree (limite ${limitLabel ?? 'de session'} depassee)`
+          : duration
+            ? `Sortie enregistree (${duration} min)`
+            : 'Sortie enregistree'
         setScanStatus({
-          status: 'success',
+          status: overstay ? 'error' : 'success',
           message,
           memberName: fullName || 'Membre inconnu',
         })
-        playTone(780)
+        playTone(overstay ? 360 : 780)
         return
       }
 
@@ -222,21 +231,29 @@ const handleScan = async (token: string | null) => {
           : visitLimit !== null && visitLimit > 0 && visitsToday !== null
             ? visitsToday >= visitLimit
             : false
+      const visitsRemaining =
+        typeof payload.visitsRemaining === 'number' ? Math.max(payload.visitsRemaining, 0) : null
+      const limitState = (payload.limitState as string) ?? 'OK'
+      const limitWarning = limitState === 'WARNING'
+      const blocked = limitState === 'BLOCKED' || overDailyLimit
       const alreadyVisited = Boolean(payload.alreadyVisited)
-      const success = active && !overDailyLimit
+      const success = active && !blocked
       const daysRemaining = typeof payload.daysRemaining === 'number' ? payload.daysRemaining : null
       const message = !active
         ? 'Abonnement inactif'
-        : overDailyLimit
+        : blocked
           ? 'Limite journaliere atteinte'
-          : 'Acces valide'
+          : limitWarning && visitsRemaining !== null
+            ? `Derniere visite disponible (${visitsRemaining} restant${visitsRemaining > 1 ? 's' : ''})`
+            : 'Acces valide'
       setScanStatus({
         status: success ? 'success' : 'error',
         message,
         memberName: fullName || 'Membre inconnu',
         daysRemaining: daysRemaining ?? undefined,
       })
-      playTone(success ? 880 : overDailyLimit ? 240 : alreadyVisited ? 520 : 240)
+      const tone = blocked ? 240 : limitWarning ? 520 : success ? 880 : alreadyVisited ? 520 : 240
+      playTone(tone)
     } catch (error) {
       const message = error instanceof Error ? error.message : 'QR invalide ou membre introuvable'
       setScanStatus({
@@ -552,16 +569,25 @@ const handleScan = async (token: string | null) => {
           : visitLimit !== null && visitLimit > 0 && visitsToday !== null
             ? visitsToday >= visitLimit
             : false
+      const visitsRemaining =
+        typeof (data as any).visitsRemaining === 'number' ? Math.max((data as any).visitsRemaining, 0) : null
+      const limitState = ((data as any).limitState as string) ?? 'OK'
+      const limitWarning = limitState === 'WARNING'
+      const blocked = limitState === 'BLOCKED' || overDailyLimit
 
       if (!data.active) {
-        toast.error('Abonnement inactif ou expiré')
-      } else if (overDailyLimit) {
-        toast.warning(`${fullName} a atteint sa limite journaliere`)
+        toast.error('Abonnement inactif ou expire')
+      } else if (blocked) {
+        toast.error(`${fullName} a atteint la limite journaliere`)
+      } else if (limitWarning) {
+        const remainingLabel =
+          visitsRemaining !== null ? ` (${visitsRemaining} restante${visitsRemaining > 1 ? 's' : ''})` : ''
+        toast.warning(`Derniere visite du jour pour ${fullName}${remainingLabel}`)
       } else {
+        const remainingLabel =
+          visitsRemaining !== null ? ` - ${visitsRemaining} reste${visitsRemaining > 1 ? 's' : ''}` : ''
         toast.success(
-          `${fullName} marqué présent (${
-            data.todayVisitorCount ?? 0
-          } visites aujourd'hui)`,
+          `${fullName} marque present (${data.todayVisitorCount ?? 0} visites aujourd'hui)${remainingLabel}`,
         )
       }
       setVisitDialogOpen(false)

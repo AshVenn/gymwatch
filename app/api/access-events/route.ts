@@ -9,6 +9,7 @@ import { hasPlanFeature } from "@/lib/subscription-plans"
 import { resolveAccessEventStatus } from "@/lib/access-events"
 import { markCheckoutForMember, markVisitForMember } from "@/lib/visits"
 import { resolveVariantAccess } from "@/lib/variant-access"
+import { buildSessionLimitResolver } from "@/lib/session-limits"
 
 const createSchema = z
   .object({
@@ -129,39 +130,31 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const [gymSettings, events] = await Promise.all([
-      prisma.gym.findUnique({
-        where: { id: gymId },
-        select: { maxSessionMinutes: true },
-      }),
-      prisma.accessEvent.findMany({
-        where,
-        orderBy: { createdAt: "desc" },
-        take: limit,
-        include: {
-          member: {
-            select: {
-              id: true,
-              firstName: true,
-              lastName: true,
-              email: true,
-              gymVariantId: true,
-              gymVariant: { select: { id: true, name: true, slug: true } },
-            },
+    const events = await prisma.accessEvent.findMany({
+      where,
+      orderBy: { createdAt: "desc" },
+      take: limit,
+      include: {
+        member: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            email: true,
+            gymVariantId: true,
+            gymVariant: { select: { id: true, name: true, slug: true } },
           },
         },
-      }),
-    ])
+      },
+    })
 
     const memberIds = Array.from(new Set(events.map((event) => event.memberId).filter(Boolean)))
-    const sessionLimit =
-      typeof gymSettings?.maxSessionMinutes === "number" && gymSettings.maxSessionMinutes > 0
-        ? gymSettings.maxSessionMinutes
-        : null
+    const sessionLimitResolver = await buildSessionLimitResolver({ gymId, memberIds })
+    const detectedLimits = new Set<number>()
 
     let overdueMembers: Set<string> | null = null
 
-    if (sessionLimit && memberIds.length) {
+    if (memberIds.length) {
       const openVisits = await prisma.visit.findMany({
         where: {
           gymId,
@@ -169,23 +162,34 @@ export async function GET(request: NextRequest) {
           memberId: { in: memberIds as string[] },
           checkOut: null,
         },
-        select: { memberId: true, checkIn: true },
+        select: { memberId: true, checkIn: true, gymVariantId: true },
       })
 
       const now = new Date()
       overdueMembers = new Set(
         openVisits
-          .filter((visit) => (now.getTime() - visit.checkIn.getTime()) / 60000 > sessionLimit)
+          .filter((visit) => {
+            const limit = sessionLimitResolver.resolve(visit.memberId, visit.gymVariantId)
+            if (limit !== null) {
+              detectedLimits.add(limit)
+            }
+            return limit !== null && (now.getTime() - visit.checkIn.getTime()) / 60000 > limit
+          })
           .map((visit) => visit.memberId),
       )
     }
 
     const decoratedEvents = events.map((event) => ({
       ...event,
-      sessionOverdue: Boolean(overdueMembers?.has(event.memberId)),
+      sessionOverdue:
+        event.status === AccessEventStatus.SESSION_OVERSTAY || Boolean(overdueMembers?.has(event.memberId)),
     }))
 
-    return NextResponse.json({ events: decoratedEvents, maxSessionMinutes: sessionLimit })
+    const uniqueLimit = detectedLimits.size === 1 ? Array.from(detectedLimits)[0] : null
+    const resolvedLimit =
+      uniqueLimit ?? sessionLimitResolver.variantLimit(variantId ?? null) ?? sessionLimitResolver.defaultLimit ?? null
+
+    return NextResponse.json({ events: decoratedEvents, maxSessionMinutes: resolvedLimit })
   } catch (error) {
     console.error("[access-events][get]", error)
     return NextResponse.json({ error: "Impossible de charger les acces" }, { status: 500 })
@@ -299,7 +303,7 @@ export async function POST(request: NextRequest) {
         rangeFrom: rangeFrom === "INVALID" ? undefined : rangeFrom,
         rangeTo: rangeTo === "INVALID" ? undefined : rangeTo,
       })
-      const status = AccessEventStatus.CHECKED_OUT
+      const status = checkout.isOverMaxDuration ? AccessEventStatus.SESSION_OVERSTAY : AccessEventStatus.CHECKED_OUT
       const event = await prisma.accessEvent.create({
         data: {
           memberId: member.id,

@@ -13,6 +13,7 @@ type VisitRow = {
   checkOut: Date | null
   durationMinutes: number
   isOverMaxDuration: boolean
+  sessionLimitMinutes?: number | null
 }
 
 function formatTime(value: Date | null) {
@@ -21,7 +22,7 @@ function formatTime(value: Date | null) {
 }
 
 function formatDuration(minutes: number) {
-  if (minutes <= 0) return 'Instantané'
+  if (minutes <= 0) return 'Instantane'
   const hours = Math.floor(minutes / 60)
   const remaining = minutes % 60
   if (hours === 0) return `${remaining} min`
@@ -58,10 +59,10 @@ export function VisitTable({ visits, maxSessionMinutes, pagination }: VisitTable
   return (
     <Card>
       <CardHeader className="flex flex-col gap-1 pb-3 sm:flex-row sm:items-center sm:justify-between">
-        <CardTitle>Dernières visites</CardTitle>
+        <CardTitle>Dernieres visites</CardTitle>
         {maxSessionMinutes ? (
           <Badge variant="outline" className="border-destructive/40 bg-destructive/5 text-xs text-muted-foreground">
-            Durée max: {maxSessionMinutes} min
+            Duree max: {maxSessionMinutes} min
           </Badge>
         ) : null}
       </CardHeader>
@@ -72,10 +73,10 @@ export function VisitTable({ visits, maxSessionMinutes, pagination }: VisitTable
               <TableHead>Membre</TableHead>
               <TableHead>Salle</TableHead>
               <TableHead>Date</TableHead>
-              <TableHead>Entrée</TableHead>
+              <TableHead>Entree</TableHead>
               <TableHead>Sortie</TableHead>
               <TableHead>Statut</TableHead>
-              <TableHead>Durée</TableHead>
+              <TableHead>Duree</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -83,8 +84,12 @@ export function VisitTable({ visits, maxSessionMinutes, pagination }: VisitTable
               const checkInDate = visit.checkIn.toLocaleDateString('fr-FR')
               const checkOutLabel = visit.checkOut ? formatTime(visit.checkOut) : null
               const overLimit = Boolean(visit.isOverMaxDuration)
+              const limitLabel =
+                typeof visit.sessionLimitMinutes === 'number' && visit.sessionLimitMinutes > 0
+                  ? `${visit.sessionLimitMinutes} min`
+                  : null
               return (
-                <TableRow key={visit.id}>
+                <TableRow key={visit.id} className={overLimit ? 'bg-destructive/5' : undefined}>
                   <TableCell className="font-medium">{visit.memberName}</TableCell>
                   <TableCell>
                     <Badge variant="outline" className="border-border/70">
@@ -104,12 +109,17 @@ export function VisitTable({ visits, maxSessionMinutes, pagination }: VisitTable
                   </TableCell>
                   <TableCell>
                     {overLimit ? (
-                      <Badge className="bg-destructive/15 text-destructive" variant="outline">
-                        Période dépassée
-                      </Badge>
+                      <div className="flex flex-col gap-1">
+                        <Badge className="bg-destructive/15 text-destructive" variant="outline">
+                          Periode depassee
+                        </Badge>
+                        {limitLabel ? (
+                          <span className="text-xs text-muted-foreground">Limite {limitLabel}</span>
+                        ) : null}
+                      </div>
                     ) : visit.checkOut ? (
                       <Badge variant="secondary" className="bg-slate-100 text-slate-700">
-                        Terminée
+                        Terminee
                       </Badge>
                     ) : (
                       <Badge variant="secondary" className="bg-emerald-50 text-emerald-700">

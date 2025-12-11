@@ -375,6 +375,10 @@ async function runSeed() {
   console.log('Created gym 1:', gym1.name)
   const gym1Variants = await createVariantsForGym(gym1.id, ['Principal'])
   const gym1DefaultVariant = gym1Variants[0]
+  await prisma.gymVariant.update({
+    where: { id: gym1DefaultVariant.id },
+    data: { maxSessionMinutes: 160 },
+  })
 
   const gym2 = await prisma.gym.upsert({
     where: { id: 'gym-powergym' },
@@ -417,6 +421,14 @@ async function runSeed() {
   console.log('Created gym 2:', gym2.name)
   const gym2Variants = await createVariantsForGym(gym2.id, ['Femmes', 'Hommes'])
   const gym2DefaultVariant = gym2Variants[0]
+  await prisma.gymVariant.update({
+    where: { id: gym2DefaultVariant.id },
+    data: { maxSessionMinutes: 140 },
+  })
+  await prisma.gymVariant.update({
+    where: { id: gym2Variants[1].id },
+    data: { maxSessionMinutes: 120 },
+  })
 
   const enterpriseGym = await prisma.gym.upsert({
     where: { id: 'gym-enterprise' },
@@ -459,6 +471,10 @@ async function runSeed() {
   console.log('Created Enterprise gym:', enterpriseGym.name)
   const enterpriseVariants = await createVariantsForGym(enterpriseGym.id, ['Centre', 'Nord', 'Sud'])
   const enterpriseDefaultVariant = enterpriseVariants[0]
+  await prisma.gymVariant.update({
+    where: { id: enterpriseDefaultVariant.id },
+    data: { maxSessionMinutes: 200 },
+  })
 
   const demoGym = await prisma.gym.upsert({
     where: { id: 'gym-demo' },
@@ -616,6 +632,7 @@ async function runSeed() {
         durationDays: 30,
         price: 300,
         isActive: true,
+        maxSessionMinutes: 150,
       },
     }),
     prisma.membershipPlan.upsert({
@@ -629,6 +646,7 @@ async function runSeed() {
         durationDays: 90,
         price: 800,
         isActive: true,
+        maxSessionMinutes: 180,
       },
     }),
   ])
@@ -646,6 +664,7 @@ async function runSeed() {
         durationDays: 30,
         price: 350,
         isActive: true,
+        maxSessionMinutes: 140,
       },
     }),
     prisma.membershipPlan.upsert({
@@ -659,6 +678,7 @@ async function runSeed() {
         durationDays: 365,
         price: 3000,
         isActive: true,
+        maxSessionMinutes: 170,
       },
     }),
   ])
@@ -676,6 +696,7 @@ async function runSeed() {
         durationDays: 30,
         price: 0,
         isActive: true,
+        maxSessionMinutes: 90,
       },
     }),
     prisma.membershipPlan.upsert({
@@ -689,6 +710,7 @@ async function runSeed() {
         durationDays: 30,
         price: 120,
         isActive: true,
+        maxSessionMinutes: 130,
       },
     }),
     prisma.membershipPlan.upsert({
@@ -702,6 +724,7 @@ async function runSeed() {
         durationDays: 45,
         price: 200,
         isActive: true,
+        maxSessionMinutes: 110,
       },
     }),
   ])
@@ -719,6 +742,7 @@ async function runSeed() {
         durationDays: 30,
         price: 450,
         isActive: true,
+        maxSessionMinutes: 200,
       },
     }),
     prisma.membershipPlan.upsert({
@@ -732,6 +756,7 @@ async function runSeed() {
         durationDays: 365,
         price: 4800,
         isActive: true,
+        maxSessionMinutes: 190,
       },
     }),
     prisma.membershipPlan.upsert({
@@ -745,6 +770,7 @@ async function runSeed() {
         durationDays: 90,
         price: 1100,
         isActive: true,
+        maxSessionMinutes: 210,
       },
     }),
   ])

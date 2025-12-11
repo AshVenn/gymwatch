@@ -51,6 +51,7 @@ enum DemoRequestStatus {
 enum AccessEventStatus {
   GRANTED
   CHECKED_OUT
+  SESSION_OVERSTAY
   ALREADY_CHECKED_IN
   DENIED_DAILY_LIMIT
   DENIED_EXPIRED
@@ -179,6 +180,7 @@ model GymVariant {
   name        String
   slug        String
   isDefault   Boolean  @default(false)
+  maxSessionMinutes Int?
   members     Member[]
   subscriptions Subscription[]
   membershipPlans MembershipPlan[]
@@ -213,6 +215,7 @@ model MembershipPlan {
   durationDays Int
   price        Float
   visitsPerDay Int     @default(1)
+  maxSessionMinutes Int?
   isActive     Boolean @default(true)
   gymVariantId String
   gymVariant   GymVariant @relation(fields: [gymVariantId], references: [id], onDelete: Cascade)

@@ -1,13 +1,6 @@
 import type { SuperAdminGymDetail } from '@/app/(dashboard)/super-admin/hooks'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table'
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Badge } from '@/components/ui/badge'
 
 const MAD = new Intl.NumberFormat('fr-MA', { style: 'currency', currency: 'MAD', maximumFractionDigits: 0 })
@@ -20,8 +13,8 @@ export function GymPlans({ gym }: Props) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Plans commercialisés</CardTitle>
-        <CardDescription>Tarifs actuellement proposés par la salle.</CardDescription>
+        <CardTitle>Plans commercialises</CardTitle>
+        <CardDescription>Tarifs actuellement proposes par la salle.</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         {gym.membershipPlans?.length ? (
@@ -29,9 +22,10 @@ export function GymPlans({ gym }: Props) {
             <TableHeader>
               <TableRow>
                 <TableHead>Nom</TableHead>
-                <TableHead>Durée</TableHead>
+                <TableHead>Duree</TableHead>
                 <TableHead>Prix</TableHead>
                 <TableHead>Visites/jour</TableHead>
+                <TableHead>Session max</TableHead>
                 <TableHead>Variante</TableHead>
                 <TableHead>Statut</TableHead>
               </TableRow>
@@ -42,7 +36,10 @@ export function GymPlans({ gym }: Props) {
                   <TableCell>{plan.name}</TableCell>
                   <TableCell>{plan.durationDays} jours</TableCell>
                   <TableCell>{MAD.format(plan.price)}</TableCell>
-                  <TableCell>{plan.visitsPerDay && plan.visitsPerDay < 0 ? 'Illimite' : plan.visitsPerDay ?? '1'}</TableCell>
+                  <TableCell>
+                    {plan.visitsPerDay && plan.visitsPerDay < 0 ? 'Illimite' : plan.visitsPerDay ?? '1'}
+                  </TableCell>
+                  <TableCell>{plan.maxSessionMinutes ? `${plan.maxSessionMinutes} min` : 'Variante/gym'}</TableCell>
                   <TableCell>{plan.gymVariant?.name ?? '-'}</TableCell>
                   <TableCell>
                     <Badge variant={plan.isActive ? 'secondary' : 'outline'}>
@@ -54,7 +51,7 @@ export function GymPlans({ gym }: Props) {
             </TableBody>
           </Table>
         ) : (
-          <p className="text-sm text-muted-foreground">Aucun plan configuré.</p>
+          <p className="text-sm text-muted-foreground">Aucun plan configure.</p>
         )}
       </CardContent>
     </Card>

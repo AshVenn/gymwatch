@@ -44,8 +44,18 @@ interface Plan {
   price: number
   isActive: boolean
   visitsPerDay: number
+  maxSessionMinutes?: number | null
   gymVariantId?: string
   gymVariant?: { id: string; name: string; slug: string; isDefault?: boolean }
+}
+
+interface GymPlanLimits {
+  planLimits?: {
+    perVariant: number | null
+    perNetwork: number | null
+    unlimitedPerVariant: boolean
+    unlimitedPerNetwork: boolean
+  }
 }
 
 export default function PlansPage() {
@@ -62,6 +72,19 @@ export default function PlansPage() {
     isLoading: variantsLoading,
   } = useVariantOptions()
 
+  const { data: gymInfo } = useQuery<GymPlanLimits>({
+    queryKey: ['gym', 'plan-limits', gymId],
+    enabled: Boolean(gymId),
+    queryFn: async () => {
+      const response = await fetch('/api/gym')
+      const body = await response.json().catch(() => ({}))
+      if (!response.ok) {
+        throw new Error(body.error || 'Impossible de charger les limites des plans')
+      }
+      return body as GymPlanLimits
+    },
+  })
+
   const [planVariantId, setPlanVariantId] = useState<string>('')
   const [editingId, setEditingId] = useState<string | null>(null)
   const [formData, setFormData] = useState({
@@ -71,6 +94,7 @@ export default function PlansPage() {
     isActive: true,
     visitsPerDay: '',
     unlimitedVisits: false,
+    maxSessionMinutes: '',
   })
   const [isOpen, setIsOpen] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -135,9 +159,51 @@ export default function PlansPage() {
     return { total: plans.length, active, inactive }
   }, [plans])
 
+  const activePlans = useMemo(() => plans.filter((plan) => plan.isActive), [plans])
+  const activeVariantCount = useMemo(() => {
+    if (!effectivePlanVariantId) return activePlans.length
+    return activePlans.filter((plan) => plan.gymVariantId === effectivePlanVariantId).length
+  }, [activePlans, effectivePlanVariantId])
+
+  const planLimits = gymInfo?.planLimits
+  const variantLimit = planLimits?.perVariant ?? null
+  const networkLimit = planLimits?.perNetwork ?? null
+  const computeCapState = (limit: number | null, count: number) => {
+    if (limit === null || limit < 0) return 'OK'
+    if (count >= limit) return 'BLOCKED'
+    if (count >= limit - 1) return 'WARNING'
+    return 'OK'
+  }
+  const variantCapState = computeCapState(variantLimit, activeVariantCount)
+  const networkCapState = computeCapState(networkLimit, activePlans.length)
+  const capBlocked = variantCapState === 'BLOCKED' || networkCapState === 'BLOCKED'
+  const capWarning = !capBlocked && (variantCapState === 'WARNING' || networkCapState === 'WARNING')
+  const formatLimitLabel = (limit: number | null, unlimited?: boolean) =>
+    unlimited || limit === null || limit < 0 ? 'Illimite' : String(limit)
+
+  const selectedVariantLimit = useMemo(() => {
+    const variant = variants.find((entry) => entry.id === effectivePlanVariantId)
+    return variant?.maxSessionMinutes ?? null
+  }, [effectivePlanVariantId, variants])
+
   const handleAddPlan = () => {
+    if (capBlocked) {
+      toast.error('Limite de plans atteinte pour votre configuration. Desactivez un plan ou upgradez.')
+      return
+    }
+    if (capWarning) {
+      toast.warning('Derniere creation active disponible sur ce perimetre.')
+    }
     setEditingId(null)
-    setFormData({ name: '', durationDays: '', price: '', isActive: true, visitsPerDay: '1', unlimitedVisits: false })
+    setFormData({
+      name: '',
+      durationDays: '',
+      price: '',
+      isActive: true,
+      visitsPerDay: '1',
+      unlimitedVisits: false,
+      maxSessionMinutes: '',
+    })
     const fallbackVariant =
       (selectedVariant !== 'all' ? selectedVariant : '') ||
       lockedVariantId ||
@@ -158,13 +224,14 @@ export default function PlansPage() {
       isActive: plan.isActive,
       visitsPerDay: unlimited ? '' : String(plan.visitsPerDay ?? 1),
       unlimitedVisits: unlimited,
+      maxSessionMinutes: plan.maxSessionMinutes ? String(plan.maxSessionMinutes) : '',
     })
     setPlanVariantId(plan.gymVariantId ?? plan.gymVariant?.id ?? lockedVariantId ?? '')
     setIsOpen(true)
   }
 
   const savePlanMutation = useMutation({
-    mutationFn: async (visitsPerDayValue: number) => {
+    mutationFn: async (payload: { visitsPerDay: number; maxSessionMinutes: number | null }) => {
       const method = editingId ? 'PUT' : 'POST'
       const url = editingId ? `/api/plans/${editingId}` : '/api/plans'
 
@@ -177,14 +244,16 @@ export default function PlansPage() {
           price: parseFloat(formData.price),
           isActive: formData.isActive,
           gymVariantId: effectivePlanVariantId || undefined,
-          visitsPerDay: visitsPerDayValue,
+          visitsPerDay: payload.visitsPerDay,
+          maxSessionMinutes: payload.maxSessionMinutes,
         }),
       })
 
       const data = await response.json().catch(() => ({}))
 
       if (!response.ok) {
-        throw new Error(data.error || 'Erreur lors de la sauvegarde')
+        const detail = (data as any)?.message || data.error
+        throw new Error(detail || 'Erreur lors de la sauvegarde')
       }
 
       return data
@@ -192,7 +261,15 @@ export default function PlansPage() {
     onSuccess: () => {
       setError(null)
       setIsOpen(false)
-      setFormData({ name: '', durationDays: '', price: '', isActive: true, visitsPerDay: '1', unlimitedVisits: false })
+      setFormData({
+        name: '',
+        durationDays: '',
+        price: '',
+        isActive: true,
+        visitsPerDay: '1',
+        unlimitedVisits: false,
+        maxSessionMinutes: '',
+      })
       setEditingId(null)
       queryClient.invalidateQueries({ queryKey: planQueryKey })
       toast.success(editingId ? 'Plan mis a jour avec succes' : 'Plan cree avec succes')
@@ -236,7 +313,17 @@ export default function PlansPage() {
       toast.error('Nombre de visites par jour invalide.')
       return
     }
-    savePlanMutation.mutate(parsedVisits)
+    const trimmedLimit = formData.maxSessionMinutes.trim()
+    let parsedSessionLimit: number | null = null
+    if (trimmedLimit) {
+      const numericLimit = Number(trimmedLimit)
+      if (!Number.isFinite(numericLimit) || numericLimit <= 0) {
+        toast.error('Durée max de session invalide.')
+        return
+      }
+      parsedSessionLimit = Math.trunc(numericLimit)
+    }
+    savePlanMutation.mutate({ visitsPerDay: parsedVisits, maxSessionMinutes: parsedSessionLimit })
   }
 
   const handleDeletePlan = (planId: string) => {
@@ -312,6 +399,42 @@ export default function PlansPage() {
             </Button>
           </CardContent>
         </Card>
+
+        {planLimits ? (
+          <div
+            className={`rounded-2xl border px-4 py-3 ${
+              capBlocked
+                ? 'border-destructive/60 bg-destructive/5'
+                : capWarning
+                  ? 'border-amber-300/60 bg-amber-50'
+                  : 'border-border/70 bg-muted/40'
+            }`}
+          >
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div className="space-y-1">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-muted-foreground">Limites plans</p>
+                <p className="text-xs text-muted-foreground">
+                  Limites actives selon votre formule. Desactivez un plan pour liberer un slot.
+                </p>
+              </div>
+              <div className="flex flex-wrap items-center gap-2 text-xs">
+                <Badge variant="outline" className="border-border/70 bg-background/60">
+                  Variante: {activeVariantCount}/{formatLimitLabel(variantLimit, planLimits.unlimitedPerVariant)}
+                </Badge>
+                <Badge variant="outline" className="border-border/70 bg-background/60">
+                  Reseau: {activePlans.length}/{formatLimitLabel(networkLimit, planLimits.unlimitedPerNetwork)}
+                </Badge>
+              </div>
+            </div>
+            {capBlocked ? (
+              <p className="mt-2 text-xs font-semibold text-destructive">
+                Limite atteinte: desactivez un plan actif ou passez au plan superieur pour augmenter le catalogue.
+              </p>
+            ) : capWarning ? (
+              <p className="mt-2 text-xs font-medium text-amber-800">Dernier plan actif disponible sur ce perimetre.</p>
+            ) : null}
+          </div>
+        ) : null}
 
         <Dialog open={isOpen} onOpenChange={setIsOpen}>
           <DialogContent className="max-w-md sm:max-w-lg w-[95vw]">
@@ -410,6 +533,26 @@ export default function PlansPage() {
                 </p>
               </div>
 
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="plan-session-limit">Duree max par session (minutes)</Label>
+                  <span className="text-xs text-muted-foreground">
+                    {selectedVariantLimit ? `Variante: ${selectedVariantLimit} min` : 'Suit la limite globale'}
+                  </span>
+                </div>
+                <Input
+                  id="plan-session-limit"
+                  type="number"
+                  min={1}
+                  value={formData.maxSessionMinutes}
+                  onChange={(e) => setFormData({ ...formData, maxSessionMinutes: e.target.value })}
+                  placeholder={selectedVariantLimit ? String(selectedVariantLimit) : 'Herite du variant'}
+                />
+                <p className="text-xs text-muted-foreground">
+                  Laissez vide pour utiliser la valeur de la variante ou du gymnase.
+                </p>
+              </div>
+
               <div className="flex items-center justify-between">
                 <Label htmlFor="plan-active" className="text-sm font-medium">
                   Actif
@@ -455,6 +598,7 @@ export default function PlansPage() {
                   <TableHead>Duree (jours)</TableHead>
                   <TableHead>Prix (MAD)</TableHead>
                   <TableHead>Visites/jour</TableHead>
+                  <TableHead>Session max (min)</TableHead>
                   <TableHead>Actif</TableHead>
                   <TableHead>Variante</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
@@ -468,6 +612,11 @@ export default function PlansPage() {
                     <TableCell>{plan.durationDays}</TableCell>
                     <TableCell>{plan.price.toLocaleString('fr-FR')}</TableCell>
                     <TableCell>{plan.visitsPerDay < 0 ? 'Illimite' : plan.visitsPerDay}</TableCell>
+                    <TableCell>
+                      {plan.maxSessionMinutes ? `${plan.maxSessionMinutes} min` : (
+                        <span className="text-xs text-muted-foreground">Variante/gym</span>
+                      )}
+                    </TableCell>
                     <TableCell>
                       <Badge variant={plan.isActive ? 'default' : 'secondary'}>
                         {plan.isActive ? 'Oui' : 'Non'}

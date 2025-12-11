@@ -23,7 +23,7 @@ export async function GET() {
       ...(role === "GYM_ADMIN" && sessionVariantId ? { id: sessionVariantId } : {}),
     },
     orderBy: [{ isDefault: "desc" }, { name: "asc" }],
-    select: { id: true, name: true, slug: true, isDefault: true },
+    select: { id: true, name: true, slug: true, isDefault: true, maxSessionMinutes: true },
   })
 
   return NextResponse.json(variants)

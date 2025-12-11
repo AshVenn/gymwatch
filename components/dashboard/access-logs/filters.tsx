@@ -1,5 +1,7 @@
 'use client'
 
+import { useTranslations } from 'next-intl'
+
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -42,24 +44,26 @@ export function AccessLogFilters({
   onDateChange,
   onReset,
 }: AccessLogFiltersProps) {
+  const t = useTranslations('dashboard.accessLogs.filters')
+
   return (
     <div className="rounded-2xl border border-border/70 bg-card/80 p-5 shadow-sm">
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <div>
-          <Label htmlFor="access-search">Recherche</Label>
+          <Label htmlFor="access-search">{t('searchLabel')}</Label>
           <Input
             id="access-search"
-            placeholder="Nom, email..."
+            placeholder={t('searchPlaceholder')}
             value={search}
             onChange={(event) => onSearchChange(event.target.value)}
             className="mt-2"
           />
         </div>
         <div>
-          <Label htmlFor="access-status">Statut</Label>
+          <Label htmlFor="access-status">{t('statusLabel')}</Label>
           <Select value={status} onValueChange={onStatusChange}>
             <SelectTrigger id="access-status" className="mt-2">
-              <SelectValue placeholder="Tous" />
+              <SelectValue placeholder={t('allPlaceholder')} />
             </SelectTrigger>
             <SelectContent>
               {statusOptions.map((option) => (
@@ -71,10 +75,10 @@ export function AccessLogFilters({
           </Select>
         </div>
         <div>
-          <Label htmlFor="access-source">Source</Label>
+          <Label htmlFor="access-source">{t('sourceLabel')}</Label>
           <Select value={source} onValueChange={onSourceChange}>
             <SelectTrigger id="access-source" className="mt-2">
-              <SelectValue placeholder="Toutes" />
+              <SelectValue placeholder={t('allPlaceholder')} />
             </SelectTrigger>
             <SelectContent>
               {sourceOptions.map((option) => (
@@ -87,7 +91,7 @@ export function AccessLogFilters({
         </div>
         <div className="grid grid-cols-2 gap-2">
           <div>
-            <Label htmlFor="access-from">Du</Label>
+            <Label htmlFor="access-from">{t('from')}</Label>
             <Input
               id="access-from"
               type="date"
@@ -97,7 +101,7 @@ export function AccessLogFilters({
             />
           </div>
           <div>
-            <Label htmlFor="access-to">Au</Label>
+            <Label htmlFor="access-to">{t('to')}</Label>
             <Input
               id="access-to"
               type="date"
@@ -111,7 +115,7 @@ export function AccessLogFilters({
 
       <div className="mt-4 flex flex-wrap justify-end gap-2">
         <Button type="button" variant="outline" onClick={onReset}>
-          Réinitialiser
+          {t('reset')}
         </Button>
       </div>
     </div>

@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 import Image from 'next/image'
 import Link from 'next/link'
-import { getLocale } from 'next-intl/server'
+import { getLocale, getTranslations } from 'next-intl/server'
 import {
   ArrowRight,
   BarChart3,
@@ -24,128 +24,12 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { routing, type AppLocale } from '@/i18n/routing'
-import { buildMarketingMetadata, getMarketingCopy } from '@/lib/marketing-content'
+import { buildMarketingMetadata } from '@/lib/marketing-content'
 import { DEFAULT_ANNUAL_DISCOUNT, getPlanCatalogAsList } from '@/lib/subscription-plans'
 
 type HomePageProps = {
   params: { locale: string }
 }
-
-const stats = [
-  { label: 'Clubs gérés', value: '+180', detail: 'SaaS pour salles de sport et réseaux multi-sites' },
-  { label: 'Membres suivis', value: '42k', detail: 'Gestion des abonnements et du contrôle d’accès' },
-  { label: 'Satisfaction', value: '98%', detail: 'Accompagnement premium et support dédié' },
-]
-
-const pillars = [
-  {
-    title: 'Multi-salles / multi-sites',
-    description: 'Vue consolidée des clubs, pilotage centralisé et droits granulaires par équipe.',
-    icon: Building2,
-  },
-  {
-    title: 'Contrôle d’accès en temps réel',
-    description: 'QR codes, badges et suivi de présence pour sécuriser vos entrées.',
-    icon: ShieldCheck,
-  },
-  {
-    title: 'Abonnements et paiements',
-    description: 'Encaissement, factures propres et relances automatiques sans tableur.',
-    icon: CreditCard,
-  },
-]
-
-const featureCards = [
-  {
-    title: 'Vue directeur réseau',
-    description: 'Tableaux de bord consolidés pour vos KPI multi-sites et la fréquentation par club.',
-    icon: BarChart3,
-  },
-  {
-    title: 'Contrôle d’accès',
-    description: 'Logs instantanés, alertes et contrôle des droits par salle, badge ou QR code.',
-    icon: QrCode,
-  },
-  {
-    title: 'Automatisations et relances',
-    description: 'Emails/SMS sur échéances, impayés et renouvellements pour réduire le churn.',
-    icon: Bell,
-  },
-  {
-    title: 'Gestion des abonnements',
-    description: 'Contrats, freeze, reconductions et prorata pour une facturation claire.',
-    icon: Workflow,
-  },
-  {
-    title: 'Supervision des équipes',
-    description: 'Rôles, permissions et audit des actions sensibles pour chaque club.',
-    icon: Users,
-  },
-  {
-    title: 'Reporting exportable',
-    description: 'Exports CSV/PDF pour finances, comptabilité et franchiseurs.',
-    icon: LayoutDashboard,
-  },
-  {
-    title: 'Fiabilité et sécurité',
-    description: 'Chiffrement, sauvegardes et disponibilité pour un logiciel de gestion de salle de sport robuste.',
-    icon: ShieldCheck,
-  },
-  {
-    title: 'API et intégrations',
-    description: 'Connexion à votre CRM, site vitrine ou tourniquets sans perdre de données.',
-    icon: Globe2,
-  },
-]
-
-const testimonials = [
-  {
-    quote:
-      'GymWatch a structuré notre réseau multi-salles. Les indicateurs sont clairs et le contrôle d’accès évite les abus.',
-    author: 'Amine L.',
-    role: 'Directeur réseau (8 salles)',
-  },
-  {
-    quote:
-      'Les relances automatisées ont fait baisser nos impayés et libéré du temps à l’accueil. Interface premium, zéro friction.',
-    author: 'Sarah M.',
-    role: 'COO franchise fitness',
-  },
-  {
-    quote:
-      'Onboarding en 48h, équipe réactive, données sécurisées. C’est le SaaS pour salles de sport que l’on cherchait.',
-    author: 'Youssef K.',
-    role: 'Responsable opérations',
-  },
-]
-
-const faqItems = [
-  {
-    question: 'Le logiciel gère-t-il les réseaux multi-salles / multi-sites ?',
-    answer:
-      'Oui. GymWatch offre une vue consolidée et des filtres par club pour vos membres, abonnements, contrôle d’accès et reporting.',
-  },
-  {
-    question: 'Comment fonctionne le contrôle d’accès ?',
-    answer:
-      'QR codes ou badges, validation en temps réel et alertes immédiates. Les droits sont pilotés par site, type d’abonnement et plage horaire.',
-  },
-  {
-    question: 'Peut-on automatiser les relances et paiements ?',
-    answer:
-      'Oui, les relances email/SMS sur échéances et impayés sont natives. Les factures sont générées automatiquement et exportables.',
-  },
-  {
-    question: 'Y a-t-il un accompagnement au déploiement ?',
-    answer:
-      'Notre équipe vous accompagne dans la migration des données, la mise en place des accès et la formation des équipes en quelques jours.',
-  },
-  {
-    question: 'Le service est-il sécurisé ?',
-    answer:
-      'Chiffrement, sauvegardes, rôles granulaires et audit des actions sensibles pour un logiciel de gestion de salle de sport fiable.',
-  },
-]
 
 export async function generateMetadata({ params }: HomePageProps): Promise<Metadata> {
   const locale = routing.locales.includes(params.locale as AppLocale)
@@ -157,19 +41,81 @@ export async function generateMetadata({ params }: HomePageProps): Promise<Metad
 
 export default async function Home() {
   const locale = (await getLocale()) as AppLocale
-  const heroCopy = getMarketingCopy(locale).hero.home
+  const t = await getTranslations('marketing.home')
+
+  const heroCopy = {
+    eyebrow: t('hero.eyebrow'),
+    title: t('hero.title'),
+    subtitle: t('hero.subtitle'),
+    description: t('hero.description'),
+    primaryCta: t('hero.primaryCta'),
+    secondaryCta: t('hero.secondaryCta'),
+    dashboardTitle: t('hero.dashboard.title'),
+    dashboardDescription: t('hero.dashboard.description'),
+    chipAccess: t('hero.dashboard.chips.access'),
+    chipKpi: t('hero.dashboard.chips.kpi'),
+    chipPayments: t('hero.dashboard.chips.payments'),
+  }
 
   const planCatalog = getPlanCatalogAsList()
-  const priceFormatter = new Intl.NumberFormat('fr-MA', { style: 'currency', currency: 'MAD' })
+  const priceFormatter = new Intl.NumberFormat(
+    locale === 'fr' ? 'fr-MA' : locale === 'ar' ? 'ar-MA' : 'en-US',
+    { style: 'currency', currency: 'MAD' }
+  )
+
+  const stats = [
+    { value: t('stats.clubs.value'), label: t('stats.clubs.label'), detail: t('stats.clubs.detail') },
+    { value: t('stats.members.value'), label: t('stats.members.label'), detail: t('stats.members.detail') },
+    { value: t('stats.satisfaction.value'), label: t('stats.satisfaction.label'), detail: t('stats.satisfaction.detail') },
+  ]
+
+  const pillars = [
+    { title: t('pillars.multiSite.title'), description: t('pillars.multiSite.body'), icon: Building2 },
+    { title: t('pillars.accessControl.title'), description: t('pillars.accessControl.body'), icon: ShieldCheck },
+    { title: t('pillars.billing.title'), description: t('pillars.billing.body'), icon: CreditCard },
+  ]
+
+  const featureCards = [
+    { title: t('features.directorView.title'), description: t('features.directorView.body'), icon: BarChart3 },
+    { title: t('features.access.title'), description: t('features.access.body'), icon: QrCode },
+    { title: t('features.automation.title'), description: t('features.automation.body'), icon: Bell },
+    { title: t('features.subscriptions.title'), description: t('features.subscriptions.body'), icon: Workflow },
+    { title: t('features.teams.title'), description: t('features.teams.body'), icon: Users },
+    { title: t('features.reporting.title'), description: t('features.reporting.body'), icon: LayoutDashboard },
+    { title: t('features.security.title'), description: t('features.security.body'), icon: ShieldCheck },
+    { title: t('features.api.title'), description: t('features.api.body'), icon: Globe2 },
+  ]
+
+  const testimonials = [
+    { quote: t('testimonials.amine.quote'), author: t('testimonials.amine.author'), role: t('testimonials.amine.role') },
+    { quote: t('testimonials.sarah.quote'), author: t('testimonials.sarah.author'), role: t('testimonials.sarah.role') },
+    { quote: t('testimonials.youssef.quote'), author: t('testimonials.youssef.author'), role: t('testimonials.youssef.role') },
+  ]
+
+  const faqItems = [
+    { question: t('faq.q1.question'), answer: t('faq.q1.answer') },
+    { question: t('faq.q2.question'), answer: t('faq.q2.answer') },
+    { question: t('faq.q3.question'), answer: t('faq.q3.answer') },
+    { question: t('faq.q4.question'), answer: t('faq.q4.answer') },
+    { question: t('faq.q5.question'), answer: t('faq.q5.answer') },
+  ]
+
   const renderPlanCards = (mode: 'monthly' | 'annual') =>
     planCatalog.map((plan, index) => {
       const annualTotal = plan.annualPrice ?? plan.monthlyPrice * 12
       const annualMonthly = Math.round((annualTotal / 12) * 100) / 100
       const price = mode === 'annual' ? annualMonthly : plan.monthlyPrice
+
       const billingHint =
         mode === 'annual'
-          ? `Facturé ${priceFormatter.format(annualTotal)} / an`
-          : 'Facturation mensuelle, sans engagement'
+          ? t('plans.billing.annualHint', { amount: priceFormatter.format(annualTotal) })
+          : t('plans.billing.monthlyHint')
+
+      const tierKey = plan.tier.toLowerCase() as 'basic' | 'pro' | 'enterprise'
+      const planName = t(`plans.catalog.${tierKey}.name`)
+      const planDescription = t(`plans.catalog.${tierKey}.description`)
+      const badges = (t.raw(`plans.catalog.${tierKey}.badges`) ?? []) as string[]
+      const features = (t.raw(`plans.catalog.${tierKey}.features`) ?? []) as string[]
 
       return (
         <Card
@@ -181,24 +127,26 @@ export default async function Home() {
         >
           {plan.highlight && (
             <span className="absolute right-4 top-4 rounded-full bg-primary px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-primary-foreground shadow-md">
-              Recommandé
+              {t('plans.recommended')}
             </span>
           )}
           <CardHeader className="space-y-3">
-            <CardTitle className="text-2xl">{plan.name}</CardTitle>
-            <CardDescription>{plan.description}</CardDescription>
+            <CardTitle className="text-2xl">{planName}</CardTitle>
+            <CardDescription>{planDescription}</CardDescription>
             <div className="flex items-baseline gap-2">
               <span className="text-4xl font-bold text-foreground">{priceFormatter.format(price)}</span>
-              <span className="text-sm text-muted-foreground">/ mois</span>
+              <span className="text-sm text-muted-foreground">{t('plans.billing.perMonth')}</span>
             </div>
             <p className="text-sm text-muted-foreground">{billingHint}</p>
             {mode === 'annual' && (
-              <p className="text-xs font-semibold text-primary">Économisez {DEFAULT_ANNUAL_DISCOUNT}% avec l&apos;annuel</p>
+              <p className="text-xs font-semibold text-primary">
+                {t('plans.billing.annualSave', { discount: DEFAULT_ANNUAL_DISCOUNT })}
+              </p>
             )}
           </CardHeader>
           <CardContent className="space-y-3 text-sm">
             <div className="flex flex-wrap gap-2">
-              {plan.badges.map((badge) => (
+              {badges.map((badge) => (
                 <span
                   key={badge}
                   className="rounded-full border border-border/70 bg-primary/5 px-2 py-1 text-[12px] font-semibold text-primary"
@@ -207,14 +155,14 @@ export default async function Home() {
                 </span>
               ))}
             </div>
-            {plan.features.map((feature) => (
+            {features.map((feature) => (
               <div key={feature} className="flex items-center gap-2 text-muted-foreground">
                 <CheckCircle2 className="h-4 w-4 text-primary" aria-hidden />
                 <span>{feature}</span>
               </div>
             ))}
             <Button asChild variant={plan.highlight ? 'default' : 'outline'} className="w-full mt-2">
-              <Link href="/request-demo">Demander une démo</Link>
+              <Link href="/request-demo">{t('plans.cta')}</Link>
             </Button>
           </CardContent>
         </Card>
@@ -228,12 +176,13 @@ export default async function Home() {
       <MarketingNavbar />
 
       <main className="relative mx-auto flex max-w-6xl flex-col gap-20 px-4 pb-16 pt-10 md:pt-16">
+        {/* HERO */}
         <header
           id="hero"
           className="relative overflow-hidden rounded-3xl border border-border/50 bg-card/80 px-6 py-12 shadow-lg backdrop-blur md:px-12"
         >
-          <div className="floating-orb-primary left-[-60px] top-[-80px]" />
-          <div className="floating-orb-secondary right-[-40px] top-[20%]" />
+          <div className="floating-orb-primary left-[-60px] -top-20" />
+          <div className="floating-orb-secondary -right-10 top-[20%]" />
           <div className="floating-orb-tertiary left-[10%] bottom-[-60px]" />
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_30%,rgba(59,130,246,0.08),transparent_32%)]" />
 
@@ -272,14 +221,14 @@ export default async function Home() {
             <div className="relative animate-fade-in" style={{ animationDelay: '0.15s' }}>
               <Card className="relative overflow-hidden border-border/70 bg-background/70 shadow-2xl backdrop-blur">
                 <CardHeader className="pb-3">
-                  <CardTitle className="text-xl">Dashboard GymWatch</CardTitle>
-                  <CardDescription>Vue consolidée multi-salles, contrôles d’accès et flux financiers.</CardDescription>
+                  <CardTitle className="text-xl">{heroCopy.dashboardTitle}</CardTitle>
+                  <CardDescription>{heroCopy.dashboardDescription}</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <div className="relative aspect-[4/3] overflow-hidden rounded-xl border border-border/60 bg-card/70 shadow-lg">
+                  <div className="relative aspect-4/3 overflow-hidden rounded-xl border border-border/60 bg-card/70 shadow-lg">
                     <Image
                       src="/featured-plateforme.png"
-                      alt="Dashboard GymWatch – logiciel de gestion de salle de sport"
+                      alt={t('hero.dashboard.imageAlt')}
                       width={1200}
                       height={900}
                       priority
@@ -289,13 +238,13 @@ export default async function Home() {
                   </div>
                   <div className="mt-4 flex flex-wrap gap-3 text-sm text-muted-foreground">
                     <span className="inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-3 py-1 text-primary">
-                      <ShieldCheck className="h-4 w-4" aria-hidden /> Contrôle d’accès
+                      <ShieldCheck className="h-4 w-4" aria-hidden /> {heroCopy.chipAccess}
                     </span>
                     <span className="inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-3 py-1 text-primary">
-                      <BarChart3 className="h-4 w-4" aria-hidden /> KPI en direct
+                      <BarChart3 className="h-4 w-4" aria-hidden /> {heroCopy.chipKpi}
                     </span>
                     <span className="inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-3 py-1 text-primary">
-                      <CreditCard className="h-4 w-4" aria-hidden /> Paiements sécurisés
+                      <CreditCard className="h-4 w-4" aria-hidden /> {heroCopy.chipPayments}
                     </span>
                   </div>
                 </CardContent>
@@ -304,17 +253,18 @@ export default async function Home() {
           </div>
         </header>
 
+        {/* SECTION: WHY */}
         <section id="pourquoi" className="space-y-6 animate-fade-in" style={{ animationDelay: '0.05s' }}>
           <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
             <div className="space-y-2">
-              <p className="text-xs font-semibold uppercase tracking-[0.3em] text-primary">Pourquoi GymWatch ?</p>
-              <h2 className="text-3xl font-bold">Pensé pour les réseaux multi-salles</h2>
-              <p className="max-w-2xl text-muted-foreground">
-                Un logiciel de gestion de salle de sport qui aligne vos équipes siège et clubs : contrôle d’accès, abonnements, reporting et automatisations dans une seule interface.
+              <p className="text-xs font-semibold uppercase tracking-[0.3em] text-primary">
+                {t('sections.why.eyebrow')}
               </p>
+              <h2 className="text-3xl font-bold">{t('sections.why.title')}</h2>
+              <p className="max-w-2xl text-muted-foreground">{t('sections.why.description')}</p>
             </div>
             <Button asChild variant="ghost" className="text-primary underline-offset-4 hover:underline">
-              <Link href="/features">Voir toutes les fonctionnalités</Link>
+              <Link href="/features">{t('sections.why.cta')}</Link>
             </Button>
           </div>
 
@@ -341,17 +291,18 @@ export default async function Home() {
           </div>
         </section>
 
+        {/* SECTION: FEATURES */}
         <section id="features" className="space-y-6 animate-fade-in" style={{ animationDelay: '0.1s' }}>
           <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
             <div className="space-y-2">
-              <p className="text-xs font-semibold uppercase tracking-[0.3em] text-primary">Fonctionnalités</p>
-              <h2 className="text-3xl font-bold">Une plateforme complète et évolutive</h2>
-              <p className="max-w-2xl text-muted-foreground">
-                Pilotage multi-sites, gestion des abonnements et du contrôle d’accès, automatisations et reporting exportable.
+              <p className="text-xs font-semibold uppercase tracking-[0.3em] text-primary">
+                {t('sections.features.eyebrow')}
               </p>
+              <h2 className="text-3xl font-bold">{t('sections.features.title')}</h2>
+              <p className="max-w-2xl text-muted-foreground">{t('sections.features.description')}</p>
             </div>
             <Button asChild variant="outline" className="rounded-full">
-              <Link href="/features">Explorer en détail</Link>
+              <Link href="/features">{t('sections.features.cta')}</Link>
             </Button>
           </div>
 
@@ -379,6 +330,7 @@ export default async function Home() {
           </div>
         </section>
 
+        {/* SECTION: PLANS */}
         <section
           id="plans"
           className="relative overflow-hidden rounded-3xl border border-border/60 bg-card/70 px-6 py-12 shadow-lg backdrop-blur"
@@ -386,10 +338,12 @@ export default async function Home() {
           <div className="floating-orb-primary right-[12%] top-[-140px] opacity-30" />
           <div className="floating-orb-secondary left-[8%] bottom-[-120px] opacity-20" />
           <div className="relative space-y-3 text-center">
-            <p className="text-xs font-semibold uppercase tracking-[0.3em] text-primary">Plans</p>
-            <h2 className="text-3xl font-bold">Plans et tarifs conçus pour la croissance</h2>
+            <p className="text-xs font-semibold uppercase tracking-[0.3em] text-primary">
+              {t('sections.plans.eyebrow')}
+            </p>
+            <h2 className="text-3xl font-bold">{t('sections.plans.title')}</h2>
             <p className="mx-auto max-w-2xl text-muted-foreground">
-              Comparez les offres mensuelles ou annuelles (-{DEFAULT_ANNUAL_DISCOUNT}%) et déployez GymWatch sur une ou plusieurs salles en quelques jours.
+              {t('sections.plans.description', { discount: DEFAULT_ANNUAL_DISCOUNT })}
             </p>
           </div>
 
@@ -402,13 +356,13 @@ export default async function Home() {
                 htmlFor="billing-monthly"
                 className="flex-1 cursor-pointer rounded-full px-3 py-2 text-center text-sm font-semibold text-muted-foreground transition peer-checked/billing-monthly:bg-primary peer-checked/billing-monthly:text-primary-foreground peer-checked/billing-monthly:shadow-md"
               >
-                Mensuel
+                {t('plans.toggle.monthly')}
               </label>
               <label
                 htmlFor="billing-annual"
                 className="flex-1 cursor-pointer rounded-full px-3 py-2 text-center text-sm font-semibold text-muted-foreground transition peer-checked/billing-annual:bg-primary peer-checked/billing-annual:text-primary-foreground peer-checked/billing-annual:shadow-md"
               >
-                Annuel (-{DEFAULT_ANNUAL_DISCOUNT}%)
+                {t('plans.toggle.annual', { discount: DEFAULT_ANNUAL_DISCOUNT })}
               </label>
             </div>
 
@@ -421,13 +375,14 @@ export default async function Home() {
           </div>
         </section>
 
+        {/* SECTION: TESTIMONIALS */}
         <section id="temoignages" className="space-y-6 animate-fade-in" style={{ animationDelay: '0.1s' }}>
           <div className="flex flex-col gap-2">
-            <p className="text-xs font-semibold uppercase tracking-[0.3em] text-primary">Témoignages</p>
-            <h2 className="text-3xl font-bold">Des réseaux qui exploitent déjà GymWatch</h2>
-            <p className="max-w-2xl text-muted-foreground">
-              Des franchises et groupes indépendants qui pilotent leurs clubs avec un SaaS de gestion de salle de sport premium.
+            <p className="text-xs font-semibold uppercase tracking-[0.3em] text-primary">
+              {t('sections.testimonials.eyebrow')}
             </p>
+            <h2 className="text-3xl font-bold">{t('sections.testimonials.title')}</h2>
+            <p className="max-w-2xl text-muted-foreground">{t('sections.testimonials.description')}</p>
           </div>
           <div className="grid gap-6 md:grid-cols-3">
             {testimonials.map((item, index) => (
@@ -453,17 +408,18 @@ export default async function Home() {
           </div>
         </section>
 
+        {/* SECTION: FAQ */}
         <section id="faq" className="space-y-6 animate-fade-in" style={{ animationDelay: '0.12s' }}>
           <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
             <div className="space-y-2">
-              <p className="text-xs font-semibold uppercase tracking-[0.3em] text-primary">FAQ</p>
-              <h2 className="text-3xl font-bold">Questions fréquentes</h2>
-              <p className="max-w-2xl text-muted-foreground">
-                Les réponses clés sur le contrôle d’accès, la gestion des abonnements, les réseaux multi-salles et la sécurité.
+              <p className="text-xs font-semibold uppercase tracking-[0.3em] text-primary">
+                {t('sections.faq.eyebrow')}
               </p>
+              <h2 className="text-3xl font-bold">{t('sections.faq.title')}</h2>
+              <p className="max-w-2xl text-muted-foreground">{t('sections.faq.description')}</p>
             </div>
             <Button asChild variant="ghost" className="text-primary underline-offset-4 hover:underline">
-              <Link href="/faqs">Voir toutes les questions</Link>
+              <Link href="/faqs">{t('sections.faq.cta')}</Link>
             </Button>
           </div>
           <Card className="border border-border/60 bg-card/80 shadow-lg backdrop-blur">
@@ -488,26 +444,27 @@ export default async function Home() {
           </Card>
         </section>
 
+        {/* SECTION: CONTACT */}
         <section
           id="contact"
           className="relative overflow-hidden rounded-3xl border border-border/60 bg-linear-to-br from-card via-card/80 to-card/60 px-8 py-12 shadow-lg animate-fade-in"
           style={{ animationDelay: '0.14s' }}
         >
-          <div className="floating-orb-secondary right-[-60px] top-[-80px] opacity-25" />
-          <div className="floating-orb-tertiary left-[-40px] bottom-[-80px] opacity-20" />
+          <div className="floating-orb-secondary right-[-60px] -top-20 opacity-25" />
+          <div className="floating-orb-tertiary -left-10 -bottom-20 opacity-20" />
           <div className="relative flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
             <div className="space-y-3">
-              <p className="text-xs font-semibold uppercase tracking-[0.3em] text-primary">Contact / Support</p>
-              <h2 className="text-3xl font-bold">Besoin d’un déploiement multi-salles ?</h2>
-              <p className="max-w-2xl text-muted-foreground">
-                Notre équipe vous accompagne pour la mise en place de GymWatch dans votre réseau : cadrage, migration, formation et optimisation continue.
+              <p className="text-xs font-semibold uppercase tracking-[0.3em] text-primary">
+                {t('sections.contact.eyebrow')}
               </p>
+              <h2 className="text-3xl font-bold">{t('sections.contact.title')}</h2>
+              <p className="max-w-2xl text-muted-foreground">{t('sections.contact.description')}</p>
               <div className="flex flex-wrap gap-3">
                 <Button asChild className="transition hover:scale-[1.02] hover:shadow-lg">
-                  <Link href="/request-demo">Demander une démo</Link>
+                  <Link href="/request-demo">{t('sections.contact.primaryCta')}</Link>
                 </Button>
                 <Button asChild variant="secondary" className="transition hover:scale-[1.02] hover:shadow-lg">
-                  <Link href="mailto:hello@gymwatch.ma">Nous écrire</Link>
+                  <Link href="mailto:hello@gymwatch.ma">{t('sections.contact.secondaryCta')}</Link>
                 </Button>
               </div>
             </div>
@@ -517,19 +474,19 @@ export default async function Home() {
                   <Headphones className="h-5 w-5" aria-hidden />
                 </div>
                 <div>
-                  <p className="text-sm font-semibold text-foreground">Support premium</p>
-                  <p className="text-sm text-muted-foreground">Réponse en moins de 24h ouvrées</p>
+                  <p className="text-sm font-semibold text-foreground">{t('sections.contact.supportTitle')}</p>
+                  <p className="text-sm text-muted-foreground">{t('sections.contact.supportSubtitle')}</p>
                 </div>
               </div>
               <div className="mt-4 space-y-2 text-sm text-muted-foreground">
                 <p>
-                  Email :{' '}
+                  {t('sections.contact.emailLabel')}{' '}
                   <Link href="mailto:hello@gymwatch.ma" className="font-semibold text-primary hover:underline">
                     hello@gymwatch.ma
                   </Link>
                 </p>
-                <p>Disponibilité : 8h00 - 19h00 CET</p>
-                <p>Déploiement : multi-salles, multi-sites, franchises.</p>
+                <p>{t('sections.contact.availability')}</p>
+                <p>{t('sections.contact.deployment')}</p>
               </div>
             </div>
           </div>

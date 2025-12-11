@@ -7,6 +7,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { AccessEventSource, AccessEventStatus } from '@prisma/client'
 import { toast } from 'sonner'
 import { AlertTriangle, RefreshCw } from 'lucide-react'
+import { useTranslations } from 'next-intl'
 
 import { AccessLogFilters } from '@/components/dashboard/access-logs/filters'
 import { AccessLogTable, type AccessLogRow } from '@/components/dashboard/access-logs/table'
@@ -20,31 +21,13 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 
-const statusOptions = [
-  { value: 'ALL', label: 'Tous les statuts' },
-  { value: AccessEventStatus.GRANTED, label: 'Acces autorise' },
-  { value: AccessEventStatus.CHECKED_OUT, label: 'Sortie enregistree' },
-  { value: AccessEventStatus.SESSION_OVERSTAY, label: 'Session depassee' },
-  { value: AccessEventStatus.ALREADY_CHECKED_IN, label: 'Deja compte' },
-  { value: AccessEventStatus.DENIED_DAILY_LIMIT, label: 'Limite journaliere' },
-  { value: AccessEventStatus.DENIED_EXPIRED, label: 'Abonnement expire' },
-  { value: AccessEventStatus.DENIED_INACTIVE, label: 'Abonnement inactif' },
-  { value: AccessEventStatus.DENIED_FORBIDDEN, label: 'Non autorise' },
-]
-
-const sourceOptions = [
-  { value: 'ALL', label: 'Toutes les sources' },
-  { value: AccessEventSource.QR_SCAN, label: 'Scan QR' },
-  { value: AccessEventSource.SIMULATOR, label: 'Simulateur' },
-  { value: AccessEventSource.MANUAL, label: 'Marquage manuel' },
-]
-
 type AccessLogResponse = {
   events: AccessLogRow[]
   maxSessionMinutes: number | null
 }
 
 export default function AccessLogsPage() {
+  const t = useTranslations('dashboard.accessLogs')
   const { data: session, status } = useSession()
   const { tier, hasAccessControl, hasPresence, hasCourses, hasExcelReports, hasMultiLocations } = usePlanFeatures()
   const queryClient = useQueryClient()
@@ -70,6 +53,29 @@ export default function AccessLogsPage() {
   const [deletingId, setDeletingId] = useState<string | null>(null)
 
   const planLabel = tier === 'ENTERPRISE' ? 'Enterprise' : tier === 'PRO' ? 'Pro' : 'Basic'
+  const statusOptions = useMemo(
+    () => [
+      { value: 'ALL', label: t('filters.statusOptions.all') },
+      { value: AccessEventStatus.GRANTED, label: t('filters.statusOptions.granted') },
+      { value: AccessEventStatus.CHECKED_OUT, label: t('filters.statusOptions.checkedOut') },
+      { value: AccessEventStatus.SESSION_OVERSTAY, label: t('filters.statusOptions.sessionOverstay') },
+      { value: AccessEventStatus.ALREADY_CHECKED_IN, label: t('filters.statusOptions.alreadyCheckedIn') },
+      { value: AccessEventStatus.DENIED_DAILY_LIMIT, label: t('filters.statusOptions.dailyLimit') },
+      { value: AccessEventStatus.DENIED_EXPIRED, label: t('filters.statusOptions.expired') },
+      { value: AccessEventStatus.DENIED_INACTIVE, label: t('filters.statusOptions.inactive') },
+      { value: AccessEventStatus.DENIED_FORBIDDEN, label: t('filters.statusOptions.forbidden') },
+    ],
+    [t],
+  )
+  const sourceOptions = useMemo(
+    () => [
+      { value: 'ALL', label: t('filters.sourceOptions.all') },
+      { value: AccessEventSource.QR_SCAN, label: t('filters.sourceOptions.qr') },
+      { value: AccessEventSource.SIMULATOR, label: t('filters.sourceOptions.simulator') },
+      { value: AccessEventSource.MANUAL, label: t('filters.sourceOptions.manual') },
+    ],
+    [t],
+  )
   const featureItems = useMemo(
     () =>
       buildFeatureAccessItems({
@@ -124,7 +130,7 @@ export default function AccessLogsPage() {
       const response = await fetch(`/api/access-events?${params.toString()}`)
       const body = await response.json().catch(() => ({}))
       if (!response.ok) {
-        throw new Error(body.error || 'Impossible de charger les acces')
+        throw new Error(body.error || t('errors.load'))
       }
       return {
         events: (body.events as AccessLogRow[] | undefined) ?? [],
@@ -143,7 +149,7 @@ export default function AccessLogsPage() {
       })
       const body = await response.json().catch(() => ({}))
       if (!response.ok) {
-        throw new Error(body.error || 'Suppression impossible')
+        throw new Error(body.error || t('errors.delete'))
       }
       return true
     },
@@ -152,10 +158,10 @@ export default function AccessLogsPage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['access-events'] })
-      toast.success('Evenement supprime')
+      toast.success(t('toasts.deleted'))
     },
     onError: (error) => {
-      const message = error instanceof Error ? error.message : 'Suppression impossible'
+      const message = error instanceof Error ? error.message : t('errors.delete')
       toast.error(message)
     },
     onSettled: () => {
@@ -227,7 +233,7 @@ export default function AccessLogsPage() {
   }
 
   if (status === 'unauthenticated') {
-    return <div className="text-sm font-medium text-destructive">Acces refuse.</div>
+    return <div className="text-sm font-medium text-destructive">{t('errors.unauthenticated')}</div>
   }
 
   if (!hasAccessControl) {
@@ -246,8 +252,8 @@ export default function AccessLogsPage() {
       {/* Header */}
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div className="space-y-1">
-          <h1 className="text-2xl font-semibold">Journaux d'acces</h1>
-          <p className="text-sm text-muted-foreground">Derniers passages, scans et marquages.</p>
+          <h1 className="text-2xl font-semibold">{t('title')}</h1>
+          <p className="text-sm text-muted-foreground">{t('subtitle')}</p>
         </div>
         <div className="flex items-center gap-3">
           <VariantSelector
@@ -270,20 +276,18 @@ export default function AccessLogsPage() {
               className="mr-2 h-4 w-4"
               hidden={!accessLogsQuery.isFetching}
             />
-            {accessLogsQuery.isFetching ? 'Actualisation...' : 'Actualiser'}
+            {accessLogsQuery.isFetching ? t('actions.refreshing') : t('actions.refresh')}
           </Button>
         </div>
       </div>
 
-      {/* Multi-variant notice – neutral & minimal */}
+      {/* Multi-variant notice */}
       {multiVariantLocked ? (
         <div className="flex items-start gap-2 rounded-xl border border-border/70 bg-muted/60 px-4 py-3 text-xs sm:text-sm text-muted-foreground">
           <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
           <div className="space-y-0.5">
-            <p className="font-medium text-foreground">Vue multi-salles indisponible</p>
-            <p>
-              Selectionnez une salle pour voir ses journaux. La vue combinee est incluse dans le plan Enterprise.
-            </p>
+            <p className="font-medium text-foreground">{t('multiVariantLocked.title')}</p>
+            <p>{t('multiVariantLocked.body')}</p>
           </div>
         </div>
       ) : null}
@@ -311,14 +315,14 @@ export default function AccessLogsPage() {
       <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-5">
         <Card className="rounded-xl border-border/70">
           <CardHeader className="pb-1">
-            <CardTitle className="text-xs font-medium text-muted-foreground">Total</CardTitle>
+            <CardTitle className="text-xs font-medium text-muted-foreground">{t('summary.total')}</CardTitle>
           </CardHeader>
           <CardContent className="text-2xl font-semibold">{summary.total}</CardContent>
         </Card>
 
         <Card className="rounded-xl border-border/70">
           <CardHeader className="pb-1">
-            <CardTitle className="text-xs font-medium text-muted-foreground">Acces autorises</CardTitle>
+            <CardTitle className="text-xs font-medium text-muted-foreground">{t('summary.granted')}</CardTitle>
           </CardHeader>
           <CardContent className="flex items-center gap-2">
             <span className="text-2xl font-semibold">{summary.granted}</span>
@@ -326,28 +330,28 @@ export default function AccessLogsPage() {
               variant="outline"
               className="border-border/70 bg-transparent text-[11px] font-normal text-muted-foreground"
             >
-              {summary.successRate}% des entrees
+              {t('summary.successRate', { rate: summary.successRate })}
             </Badge>
           </CardContent>
         </Card>
 
         <Card className="rounded-xl border-border/70">
           <CardHeader className="pb-1">
-            <CardTitle className="text-xs font-medium text-muted-foreground">Refus</CardTitle>
+            <CardTitle className="text-xs font-medium text-muted-foreground">{t('summary.denied')}</CardTitle>
           </CardHeader>
           <CardContent className="text-2xl font-semibold">{summary.denied}</CardContent>
         </Card>
 
         <Card className="rounded-xl border-border/70">
           <CardHeader className="pb-1">
-            <CardTitle className="text-xs font-medium text-muted-foreground">Deja comptes</CardTitle>
+            <CardTitle className="text-xs font-medium text-muted-foreground">{t('summary.already')}</CardTitle>
           </CardHeader>
           <CardContent className="text-2xl font-semibold">{summary.already}</CardContent>
         </Card>
 
         <Card className="rounded-xl border-border/70">
           <CardHeader className="pb-1">
-            <CardTitle className="text-xs font-medium text-muted-foreground">Sorties</CardTitle>
+            <CardTitle className="text-xs font-medium text-muted-foreground">{t('summary.checkouts')}</CardTitle>
           </CardHeader>
           <CardContent className="text-2xl font-semibold">{summary.checkouts}</CardContent>
         </Card>
@@ -357,7 +361,7 @@ export default function AccessLogsPage() {
       {accessLogsQuery.isError ? (
         <div className="flex items-center gap-2 rounded-lg border border-destructive/30 bg-destructive/5 p-3 text-xs sm:text-sm text-destructive">
           <AlertTriangle className="h-4 w-4" />
-          <span>Impossible de charger les acces.</span>
+          <span>{t('errors.load')}</span>
         </div>
       ) : null}
 
@@ -365,7 +369,7 @@ export default function AccessLogsPage() {
       <Card className="rounded-xl border-border/70">
         <CardHeader className="flex flex-col gap-1 pb-2 sm:flex-row sm:items-center sm:justify-between">
           <CardTitle className="text-sm font-medium text-muted-foreground">
-            {events.length} evenement{events.length > 1 ? 's' : ''} (200 derniers)
+            {t('tableCount', { count: events.length })}
           </CardTitle>
           <div className="flex flex-wrap items-center gap-2">
             {flaggedCount > 0 ? (
@@ -373,7 +377,7 @@ export default function AccessLogsPage() {
                 variant="outline"
                 className="border-destructive/50 bg-destructive/5 text-[11px] font-semibold text-destructive"
               >
-                Alertes limites: {flaggedCount}
+                {t('limitAlerts', { count: flaggedCount })}
               </Badge>
             ) : null}
             {sessionLimit ? (
@@ -381,7 +385,7 @@ export default function AccessLogsPage() {
                 variant="outline"
                 className="border-border/60 bg-transparent text-[11px] font-normal text-muted-foreground"
               >
-                Duree max: {sessionLimit} min
+                {t('sessionLimit', { value: sessionLimit })}
               </Badge>
             ) : null}
           </div>
@@ -414,3 +418,4 @@ export default function AccessLogsPage() {
     </div>
   )
 }
+

@@ -8,6 +8,7 @@ import { usePathname, useRouter } from 'next/navigation'
 import type { LucideIcon } from 'lucide-react'
 import { ChevronRight, LogOut, Menu, ShieldCheck, User, X } from 'lucide-react'
 import { toast } from 'sonner'
+import { useLocale, useTranslations } from 'next-intl'
 
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -44,13 +45,6 @@ interface DashboardShellProps {
   topSlot?: ReactNode
 }
 
-const roleLabels: Record<string, string> = {
-  SUPER_ADMIN: 'Super Admin',
-  ADMIN: 'Admin',
-  OWNER: 'Proprietaire',
-  USER: 'Utilisateur',
-}
-
 export function DashboardShell({
   children,
   navigationItems,
@@ -58,6 +52,9 @@ export function DashboardShell({
   fallbackRoute = '/login',
   topSlot,
 }: DashboardShellProps) {
+  const locale = useLocale()
+  const tShell = useTranslations('dashboard.shell')
+  const isRtl = locale === 'ar'
   const { data: session, status } = useSession()
   const router = useRouter()
   const pathname = usePathname()
@@ -95,14 +92,14 @@ export function DashboardShell({
 
   useEffect(() => {
     if (!subscriptionPastDue || status !== 'authenticated') return
-    toast.error('Votre abonnement est suspendu ou expire. Merci de contacter le support.')
+    toast.error(tShell('subscriptionExpired'))
     signOut({ callbackUrl: '/login' })
-  }, [status, subscriptionPastDue])
+  }, [status, subscriptionPastDue, tShell])
 
   if (status === 'loading') {
     return (
       <div className="flex h-screen items-center justify-center">
-        <p className="text-lg font-semibold text-muted-foreground">Chargement...</p>
+        <p className="text-lg font-semibold text-muted-foreground">{tShell('loading')}</p>
       </div>
     )
   }
@@ -111,17 +108,30 @@ export function DashboardShell({
     return null
   }
 
-  const userDisplayName = session.user.name || session.user.email || 'Utilisateur'
-  const userRole = roleLabels[session.user.role as string] || session.user.role || 'Utilisateur'
+  const roleLabels: Record<string, string> = {
+    SUPER_ADMIN: tShell('roles.superAdmin'),
+    ADMIN: tShell('roles.admin'),
+    OWNER: tShell('roles.owner'),
+    USER: tShell('roles.user'),
+    GYM_ADMIN: tShell('roles.admin'),
+    GYM_OWNER: tShell('roles.owner'),
+  }
+
+  const userDisplayName = session.user.name || session.user.email || tShell('userFallback')
+  const userRole = roleLabels[session.user.role as string] || session.user.role || tShell('userFallback')
   const userInitial = userDisplayName.charAt(0).toUpperCase()
   const isDemoGym = Boolean((session.user as any).isDemo)
-  const planLabel = (session.user as any)?.subscriptionPlan ?? 'Plan'
+  const planLabel = (session.user as any)?.subscriptionPlan ?? tShell('planLabel')
   const billingIntervalRaw = (session.user as any)?.billingInterval
   const billingInterval =
-    billingIntervalRaw === 'ANNUAL' ? 'Annuel' : billingIntervalRaw === 'MONTHLY' ? 'Mensuel' : 'Facturation'
+    billingIntervalRaw === 'ANNUAL'
+      ? tShell('billing.annual')
+      : billingIntervalRaw === 'MONTHLY'
+        ? tShell('billing.monthly')
+        : tShell('billing.generic')
 
   return (
-    <div className="relative flex min-h-screen bg-background text-foreground">
+    <div className={cn('relative flex min-h-screen bg-background text-foreground', isRtl && 'md:flex-row-reverse')}>
       <div className="pointer-events-none fixed inset-0 -z-10 bg-[radial-gradient(circle_at_14%_18%,hsl(var(--primary)/0.12),transparent_28%),radial-gradient(circle_at_70%_10%,hsl(var(--muted-foreground)/0.06),transparent_24%)]" />
 
       {sidebarOpen ? (
@@ -133,10 +143,11 @@ export function DashboardShell({
 
       <aside
         className={cn(
-          'fixed inset-y-0 left-0 z-50 h-full w-64 overflow-y-auto border-r border-border/60 bg-card/95 text-card-foreground shadow-xl backdrop-blur-xl transition-transform duration-300 md:translate-x-0',
+          'fixed inset-y-0 z-50 h-full w-64 overflow-y-auto border-r border-border/60 bg-card/95 text-card-foreground shadow-xl backdrop-blur-xl transition-transform duration-300 md:translate-x-0',
+          isRtl ? 'right-0 left-auto border-l border-r-0' : 'left-0',
           // hide native scrollbar in the whole aside
           '[&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]',
-          sidebarOpen ? 'translate-x-0' : '-translate-x-full',
+          sidebarOpen ? 'translate-x-0' : isRtl ? 'translate-x-full' : '-translate-x-full',
         )}
       >
         <div className="flex h-full flex-col">
@@ -145,13 +156,13 @@ export function DashboardShell({
               <Image src="/GymWatch.svg" alt="GymWatch" width={44} height={44} className="rounded-xl" priority />
               <div className="leading-tight">
                 <p className="text-[11px] uppercase tracking-[0.26em] text-muted-foreground">GymWatch</p>
-                <p className="text-base font-semibold">Console</p>
+                <p className="text-base font-semibold">{tShell('console')}</p>
               </div>
             </div>
             <button
               onClick={() => setSidebarOpen(false)}
               className="rounded-lg border border-border/60 p-1.5 text-muted-foreground transition hover:bg-muted md:hidden"
-              aria-label="Fermer le menu lateral"
+              aria-label={tShell('closeMenu')}
             >
               <X size={18} />
             </button>
@@ -208,7 +219,7 @@ export function DashboardShell({
               </div>
               {isDemoGym ? (
                 <Badge variant="outline" className="rounded-full border-amber-200 bg-amber-50 text-amber-800">
-                  Demo
+                  {tShell('demoBadge')}
                 </Badge>
               ) : null}
             </div>
@@ -228,7 +239,7 @@ export function DashboardShell({
                 onClick={() => signOut()}
               >
                 <LogOut size={16} className="mr-2" />
-                Quitter
+                {tShell('exit')}
               </Button>
             </div>
           </div>
@@ -236,7 +247,12 @@ export function DashboardShell({
       </aside>
 
       {/* main content, offset by sidebar width on md+ */}
-      <div className={cn('flex flex-1 flex-col overflow-hidden transition-all', 'md:pl-64')}>
+      <div
+        className={cn(
+          'flex flex-1 flex-col overflow-hidden transition-all',
+          isRtl ? 'md:pr-64 md:pl-0' : 'md:pl-64',
+        )}
+      >
         <header className="sticky top-0 z-30 border-b border-border/60 bg-background/70 px-4 py-3 backdrop-blur-lg md:px-8">
           <div className="flex items-center gap-3">
             <Button
@@ -244,7 +260,7 @@ export function DashboardShell({
               size="icon"
               className="rounded-xl border-border/60 bg-card text-muted-foreground hover:text-foreground md:hidden"
               onClick={() => setSidebarOpen(!sidebarOpen)}
-              aria-label="Ouvrir le menu lateral"
+              aria-label={tShell('openMenu')}
             >
               <Menu size={18} />
             </Button>
@@ -279,7 +295,7 @@ export function DashboardShell({
                   <div className="border-t border-border/60" />
                   <DropdownMenuItem onClick={() => signOut()}>
                     <LogOut size={16} className="mr-2" />
-                    Se deconnecter
+                    {tShell('signOut')}
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>

@@ -8,6 +8,7 @@ import QRCode from 'qrcode'
 import { AccessEventSource, AccessEventStatus, SubscriptionStatus } from '@prisma/client'
 import { toast } from 'sonner'
 import { AlertTriangle, ArrowLeft, Copy, Download, QrCode, RefreshCw, ShieldCheck, Sparkles } from 'lucide-react'
+import { useTranslations, useLocale } from 'next-intl'
 
 import { AccessLogTable, type AccessLogRow } from '@/components/dashboard/access-logs/table'
 import { Badge } from '@/components/ui/badge'
@@ -36,50 +37,11 @@ interface MemberDetail {
   } | null
 }
 
-const statusTone: Record<AccessEventStatus, { label: string; color: string; message: string }> = {
-  GRANTED: {
-    label: 'Accès autorisé',
-    color: 'text-emerald-700 dark:text-emerald-300',
-    message: 'Le badge est valide, abonnement actif.',
-  },
-  CHECKED_OUT: {
-    label: 'Sortie enregistree',
-    color: 'text-sky-700 dark:text-sky-300',
-    message: 'Sortie marquee pour cette visite.',
-  },
-  SESSION_OVERSTAY: {
-    label: 'Session depassee',
-    color: 'text-red-700 dark:text-red-300',
-    message: 'Duree maximale de session depassee pour cette visite.',
-  },
-  DENIED_DAILY_LIMIT: {
-    label: 'Limite journaliere atteinte',
-    color: 'text-purple-700 dark:text-purple-300',
-    message: "Quota quotidien depasse pour ce membre.",
-  },
-  ALREADY_CHECKED_IN: {
-    label: 'Déjà compté',
-    color: 'text-amber-700 dark:text-amber-300',
-    message: 'Ce membre a déjà été comptabilisé aujourd’hui.',
-  },
-  DENIED_EXPIRED: {
-    label: 'Abonnement expiré',
-    color: 'text-red-700 dark:text-red-300',
-    message: 'L’abonnement est expiré. Renouvelez avant de débloquer l’accès.',
-  },
-  DENIED_INACTIVE: {
-    label: 'Abonnement inactif',
-    color: 'text-orange-700 dark:text-orange-300',
-    message: 'Aucun abonnement actif ou démarrage différé.',
-  },
-  DENIED_FORBIDDEN: {
-    label: 'Variante non autorisée',
-    color: 'text-rose-700 dark:text-rose-300',
-    message: 'Ce badge n’est pas autorisé pour cette variante.',
-  },
-}
-
 export default function MemberBadgePage() {
+  const t = useTranslations('dashboard.members.badge')
+  const tNav = useTranslations('dashboard.nav')
+  const locale = useLocale()
+
   const params = useParams()
   const memberId = useMemo(() => {
     const raw = (params as any)?.id
@@ -90,6 +52,53 @@ export default function MemberBadgePage() {
   const [qrImage, setQrImage] = useState<string>('')
   const [markVisit, setMarkVisit] = useState(false)
 
+  const statusTone = useMemo(
+    () =>
+      ({
+        [AccessEventStatus.GRANTED]: {
+          label: t('status.GRANTED.label'),
+          color: 'text-emerald-700 dark:text-emerald-300',
+          message: t('status.GRANTED.message'),
+        },
+        [AccessEventStatus.CHECKED_OUT]: {
+          label: t('status.CHECKED_OUT.label'),
+          color: 'text-sky-700 dark:text-sky-300',
+          message: t('status.CHECKED_OUT.message'),
+        },
+        [AccessEventStatus.SESSION_OVERSTAY]: {
+          label: t('status.SESSION_OVERSTAY.label'),
+          color: 'text-red-700 dark:text-red-300',
+          message: t('status.SESSION_OVERSTAY.message'),
+        },
+        [AccessEventStatus.DENIED_DAILY_LIMIT]: {
+          label: t('status.DENIED_DAILY_LIMIT.label'),
+          color: 'text-purple-700 dark:text-purple-300',
+          message: t('status.DENIED_DAILY_LIMIT.message'),
+        },
+        [AccessEventStatus.ALREADY_CHECKED_IN]: {
+          label: t('status.ALREADY_CHECKED_IN.label'),
+          color: 'text-amber-700 dark:text-amber-300',
+          message: t('status.ALREADY_CHECKED_IN.message'),
+        },
+        [AccessEventStatus.DENIED_EXPIRED]: {
+          label: t('status.DENIED_EXPIRED.label'),
+          color: 'text-red-700 dark:text-red-300',
+          message: t('status.DENIED_EXPIRED.message'),
+        },
+        [AccessEventStatus.DENIED_INACTIVE]: {
+          label: t('status.DENIED_INACTIVE.label'),
+          color: 'text-orange-700 dark:text-orange-300',
+          message: t('status.DENIED_INACTIVE.message'),
+        },
+        [AccessEventStatus.DENIED_FORBIDDEN]: {
+          label: t('status.DENIED_FORBIDDEN.label'),
+          color: 'text-rose-700 dark:text-rose-300',
+          message: t('status.DENIED_FORBIDDEN.message'),
+        },
+      }) as Record<AccessEventStatus, { label: string; color: string; message: string }>,
+    [t],
+  )
+
   const memberQuery = useQuery<MemberDetail>({
     queryKey: ['member', memberId],
     enabled: Boolean(memberId),
@@ -97,7 +106,7 @@ export default function MemberBadgePage() {
       const response = await fetch(`/api/members/${memberId}`)
       const body = await response.json().catch(() => ({}))
       if (!response.ok) {
-        throw new Error(body.error || 'Impossible de charger le membre')
+        throw new Error(body.error || t('errors.loadMember'))
       }
       return body as MemberDetail
     },
@@ -111,7 +120,7 @@ export default function MemberBadgePage() {
       const response = await fetch(`/api/access-events?${params.toString()}`)
       const body = await response.json().catch(() => ({}))
       if (!response.ok) {
-        throw new Error(body.error || 'Impossible de charger les accès')
+        throw new Error(body.error || t('errors.loadAccess'))
       }
       return (body.events as AccessLogRow[] | undefined) ?? []
     },
@@ -142,7 +151,7 @@ export default function MemberBadgePage() {
       })
       const body = await response.json().catch(() => ({}))
       if (!response.ok) {
-        throw new Error(body.error || 'Simulation impossible')
+        throw new Error(body.error || t('errors.simulation'))
       }
       return body as { accessStatus: AccessEventStatus; event?: AccessLogRow; visit?: any }
     },
@@ -163,8 +172,12 @@ export default function MemberBadgePage() {
         data.accessStatus === AccessEventStatus.SESSION_OVERSTAY ||
         data.accessStatus === AccessEventStatus.ALREADY_CHECKED_IN ||
         limitState === 'WARNING'
-      const baseLabel = tone?.label ?? 'Simulation enregistree'
-      const labelWithRemaining = visitsRemaining !== null ? `${baseLabel} (${visitsRemaining} restant${visitsRemaining > 1 ? 's' : ''})` : baseLabel
+      const baseLabel = tone?.label ?? t('simulator.toasts.base')
+      const labelWithRemaining =
+        visitsRemaining !== null
+          ? `${baseLabel} (${visitsRemaining})`
+          : baseLabel
+
       if (blocked) {
         toast.error(labelWithRemaining)
       } else if (warning) {
@@ -175,7 +188,7 @@ export default function MemberBadgePage() {
       eventsQuery.refetch()
     },
     onError: (error) => {
-      const message = error instanceof Error ? error.message : 'Simulation impossible'
+      const message = error instanceof Error ? error.message : t('errors.simulation')
       toast.error(message)
     },
   })
@@ -187,8 +200,8 @@ export default function MemberBadgePage() {
   const handleCopy = () => {
     if (!member?.qrToken) return
     navigator.clipboard?.writeText(member.qrToken).then(
-      () => toast.success('Token copié'),
-      () => toast.error('Impossible de copier le token'),
+      () => toast.success(t('toasts.tokenCopied')),
+      () => toast.error(t('toasts.tokenCopyError')),
     )
   }
 
@@ -204,18 +217,26 @@ export default function MemberBadgePage() {
     if (!member?.subscription) return null
     const status = member.subscription.status
     const isExpired = status === 'EXPIRED'
-    const label =
+    const statusKey =
       status === 'ACTIVE'
-        ? 'Actif'
+        ? 'active'
         : status === 'EXPIRES_TODAY'
-          ? "Expire aujourd'hui"
-          : 'Expiré'
+          ? 'expiresToday'
+          : 'expired'
+    const endDateLabel = member.subscription.endDate
+      ? new Date(member.subscription.endDate).toLocaleDateString(locale)
+      : null
+
     return (
-      <Badge variant="outline" className={isExpired ? 'border-red-300 text-red-700' : 'border-emerald-200 text-emerald-700'}>
-        {label} {member.subscription.endDate ? `· ${new Date(member.subscription.endDate).toLocaleDateString('fr-FR')}` : ''}
+      <Badge
+        variant="outline"
+        className={isExpired ? 'border-red-300 text-red-700' : 'border-emerald-200 text-emerald-700'}
+      >
+        {t(`subscription.status.${statusKey}`)}{' '}
+        {endDateLabel ? `· ${endDateLabel}` : ''}
       </Badge>
     )
-  }, [member?.subscription])
+  }, [member?.subscription, locale, t])
 
   if (memberQuery.isLoading) {
     return (
@@ -232,13 +253,15 @@ export default function MemberBadgePage() {
       <div className="rounded-2xl border border-destructive/40 bg-destructive/10 p-6 text-destructive">
         <div className="flex items-center gap-2 font-semibold">
           <AlertTriangle className="h-5 w-5" />
-          Membre introuvable
+          {t('errors.notFoundTitle')}
         </div>
-        <p className="mt-2 text-sm">Vérifiez l&apos;identifiant ou retournez à la liste des membres.</p>
+        <p className="mt-2 text-sm">
+          {t('errors.notFoundBody')}
+        </p>
         <Button asChild className="mt-4" variant="outline">
           <Link href="/dashboard/members">
             <ArrowLeft className="mr-2 h-4 w-4" />
-            Retour aux membres
+            {t('page.backToMembers')}
           </Link>
         </Button>
       </div>
@@ -251,21 +274,28 @@ export default function MemberBadgePage() {
         <Button asChild variant="outline" size="sm">
           <Link href="/dashboard/members">
             <ArrowLeft className="mr-2 h-4 w-4" />
-            Membres
+            {tNav('members')}
           </Link>
         </Button>
         <div>
           <h1 className="text-2xl font-semibold">
-            Badge de {member.firstName} {member.lastName}
+            {t('page.title', {
+              firstName: member.firstName,
+              lastName: member.lastName,
+            })}
           </h1>
-          <p className="text-sm text-muted-foreground">QR, statut d&apos;abonnement et simulations d&apos;accès.</p>
+          <p className="text-sm text-muted-foreground">
+            {t('page.subtitle')}
+          </p>
         </div>
       </div>
 
       <div className="grid gap-4 md:grid-cols-2">
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-base text-muted-foreground">Profil</CardTitle>
+            <CardTitle className="text-base text-muted-foreground">
+              {t('profile.title')}
+            </CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
             <div>
@@ -273,20 +303,24 @@ export default function MemberBadgePage() {
                 {member.firstName} {member.lastName}
               </p>
               <p className="text-sm text-muted-foreground">
-                {member.email || member.phone || 'Aucun contact'}
+                {member.email || member.phone || t('profile.noContact')}
               </p>
             </div>
             <div className="flex flex-wrap gap-2">
-              {member.gymVariant?.name ? <Badge variant="secondary">{member.gymVariant.name}</Badge> : null}
+              {member.gymVariant?.name ? (
+                <Badge variant="secondary">{member.gymVariant.name}</Badge>
+              ) : null}
               {subscriptionBadge}
               {member.lastVisitedAt ? (
                 <Badge variant="outline" className="border-blue-200 text-blue-700">
-                  Dernière visite : {new Date(member.lastVisitedAt).toLocaleDateString('fr-FR')}
+                  {t('profile.lastVisit', {
+                    date: new Date(member.lastVisitedAt).toLocaleDateString(locale),
+                  })}
                 </Badge>
               ) : null}
             </div>
             <div className="grid gap-2">
-              <Label>Token</Label>
+              <Label>{t('profile.tokenLabel')}</Label>
               <div className="flex items-center gap-2">
                 <Input value={member.qrToken} readOnly />
                 <Button variant="outline" size="icon" onClick={handleCopy}>
@@ -299,30 +333,43 @@ export default function MemberBadgePage() {
 
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-base text-muted-foreground">Badge QR</CardTitle>
+            <CardTitle className="text-base text-muted-foreground">
+              {t('qr.title')}
+            </CardTitle>
           </CardHeader>
           <CardContent className="flex flex-col items-center gap-3">
             {!hasQrTools ? (
               <div className="w-full rounded-xl border border-amber-200 bg-amber-50 p-4 text-center text-amber-900">
-                <p className="font-semibold">QR codes réservés au plan Pro</p>
-                <p className="text-sm">Mettez à niveau pour afficher et télécharger les badges.</p>
+                <p className="font-semibold">{t('qr.lockedTitle')}</p>
+                <p className="text-sm">{t('qr.lockedBody')}</p>
               </div>
             ) : (
               <>
                 {qrImage ? (
-                  <img src={qrImage || '/placeholder.svg'} alt="QR code membre" className="h-auto w-48 rounded-xl border bg-white p-3" />
+                  <img
+                    src={qrImage || '/placeholder.svg'}
+                    alt={t('qr.imageAlt')}
+                    className="h-auto w-48 rounded-xl border bg-white p-3"
+                  />
                 ) : (
-                  <p className="text-sm text-muted-foreground">Génération du QR…</p>
+                  <p className="text-sm text-muted-foreground">
+                    {t('qr.generating')}
+                  </p>
                 )}
                 <div className="flex flex-wrap items-center justify-center gap-2">
                   <Button variant="outline" size="sm" onClick={handleCopy}>
                     <Copy className="mr-2 h-4 w-4" />
-                    Copier le token
+                    {t('qr.copyToken')}
                   </Button>
                   {hasQrDownloads ? (
-                    <Button variant="secondary" size="sm" onClick={handleDownload} disabled={!qrImage}>
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      onClick={handleDownload}
+                      disabled={!qrImage}
+                    >
                       <Download className="mr-2 h-4 w-4" />
-                      Télécharger
+                      {t('qr.download')}
                     </Button>
                   ) : null}
                 </div>
@@ -336,7 +383,7 @@ export default function MemberBadgePage() {
         <CardHeader className="pb-2">
           <CardTitle className="flex items-center gap-2 text-base text-muted-foreground">
             <QrCode className="h-4 w-4" />
-            Simulateur de scan
+            {t('simulator.title')}
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -344,25 +391,31 @@ export default function MemberBadgePage() {
             <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-amber-900">
               <div className="flex items-center gap-2 font-semibold">
                 <ShieldCheck className="h-4 w-4" />
-                Plan Pro ou Enterprise requis
+                {t('simulator.lockedTitle')}
               </div>
               <p className="text-sm">
-                Activez le contrôle d&apos;accès pour simuler les scans et enregistrer les évènements.
+                {t('simulator.lockedBody')}
               </p>
             </div>
           ) : (
             <>
               <div className="flex items-center justify-between gap-3 rounded-lg border border-border/60 bg-muted/40 p-3">
                 <div className="space-y-1">
-                  <p className="text-sm font-semibold">Simuler un passage</p>
+                  <p className="text-sm font-semibold">
+                    {t('simulator.panelTitle')}
+                  </p>
                   <p className="text-xs text-muted-foreground">
-                    Enregistre un évènement d&apos;accès avec ce badge. Optionnellement, marque la visite.
+                    {t('simulator.panelDescription')}
                   </p>
                 </div>
                 <div className="flex items-center gap-2">
-                  <Switch id="mark-visit" checked={markVisit} onCheckedChange={setMarkVisit} />
+                  <Switch
+                    id="mark-visit"
+                    checked={markVisit}
+                    onCheckedChange={setMarkVisit}
+                  />
                   <Label htmlFor="mark-visit" className="text-sm">
-                    Marquer la visite
+                    {t('simulator.panelMarkVisit')}
                   </Label>
                 </div>
               </div>
@@ -373,22 +426,26 @@ export default function MemberBadgePage() {
                 {simulateScan.isPending ? (
                   <>
                     <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
-                    Simulation...
+                    {t('simulator.runPending')}
                   </>
                 ) : (
                   <>
                     <Sparkles className="mr-2 h-4 w-4" />
-                    Lancer la simulation
+                    {t('simulator.runLabel')}
                   </>
                 )}
               </Button>
               {eventsQuery.data?.length ? (
                 <div className="rounded-lg border border-border/60 bg-muted/30 p-3 text-sm">
-                  <p className="mb-2 font-semibold">Dernier statut</p>
+                  <p className="mb-2 font-semibold">
+                    {t('simulator.latestTitle')}
+                  </p>
                   {latestTone ? (
                     <p className={latestTone.color}>{latestTone.label}</p>
                   ) : (
-                    <p className="text-muted-foreground">Aucun évènement récent.</p>
+                    <p className="text-muted-foreground">
+                      {t('simulator.latestEmpty')}
+                    </p>
                   )}
                 </div>
               ) : null}
@@ -400,7 +457,9 @@ export default function MemberBadgePage() {
       {hasAccessControl ? (
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-base text-muted-foreground">Derniers évènements</CardTitle>
+            <CardTitle className="text-base text-muted-foreground">
+              {t('events.title')}
+            </CardTitle>
           </CardHeader>
           <CardContent>
             {eventsQuery.isLoading ? (

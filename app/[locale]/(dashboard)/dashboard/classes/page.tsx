@@ -7,6 +7,8 @@ import { useSession } from 'next-auth/react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { CalendarRange, Clock, Eye, MoreVertical, Pencil, Plus, Trash2 } from 'lucide-react'
 import { toast } from 'sonner'
+import { useTranslations, useLocale } from 'next-intl'
+
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
@@ -80,6 +82,10 @@ export default function ClassesPage() {
   const router = useRouter()
   const queryClient = useQueryClient()
   const { tier, hasAccessControl, hasPresence, hasCourses, hasExcelReports } = usePlanFeatures()
+  const t = useTranslations('dashboard.classes')
+  const tNav = useTranslations('dashboard.nav')
+  const locale = useLocale()
+
   const [weekStart, setWeekStart] = useState<Date>(startOfWeek(new Date()))
   const weekEnd = useMemo(() => endOfWeek(weekStart), [weekStart])
 
@@ -95,7 +101,11 @@ export default function ClassesPage() {
 
   const gymId = session?.user?.gymId ?? null
   const variantFilter = selectedVariant === 'all' ? null : selectedVariant
-  const planLabel = tier === 'ENTERPRISE' ? 'Enterprise' : tier === 'PRO' ? 'Pro' : 'Basic'
+
+  const planLabelKey =
+    tier === 'ENTERPRISE' ? 'enterprise' : tier === 'PRO' ? 'pro' : 'basic'
+  const planLabel = t(`planLabel.${planLabelKey}`)
+
   const featureItems = useMemo(
     () =>
       buildFeatureAccessItems({
@@ -153,7 +163,7 @@ export default function ClassesPage() {
       const response = await fetch(`/api/classes?${params.toString()}`)
       const data = await response.json().catch(() => ({}))
       if (!response.ok) {
-        throw new Error(data.error || 'Impossible de charger les cours')
+        throw new Error(data.error || t('errors.load'))
       }
       return Array.isArray(data) ? data : []
     },
@@ -167,14 +177,16 @@ export default function ClassesPage() {
       const startAt = combineDateTime(formValues.date, formValues.startTime)
       const endAt = combineDateTime(formValues.date, formValues.endTime)
       if (!startAt || !endAt) {
-        throw new Error('Date ou heure invalide')
+        throw new Error(t('validation.dateTime'))
       }
       const variantId = isGymAdmin
         ? lockedVariantId
-        : formValues.gymVariantId || (selectedVariant !== 'all' ? selectedVariant : defaultVariantId) || variants[0]?.id
+        : formValues.gymVariantId ||
+          (selectedVariant !== 'all' ? selectedVariant : defaultVariantId) ||
+          variants[0]?.id
 
       if (!variantId) {
-        throw new Error('Variante obligatoire')
+        throw new Error(t('validation.variantRequired'))
       }
 
       const payload = {
@@ -198,7 +210,7 @@ export default function ClassesPage() {
       })
       const data = await response.json().catch(() => ({}))
       if (!response.ok) {
-        throw new Error(data.error || 'Erreur lors de la sauvegarde')
+        throw new Error(data.error || t('errors.save'))
       }
       return data
     },
@@ -215,10 +227,10 @@ export default function ClassesPage() {
         startTime: '09:00',
         endTime: '10:00',
       }))
-      toast.success('Cours enregistre')
+      toast.success(t('toasts.saved'))
     },
     onError: (error) => {
-      const message = error instanceof Error ? error.message : 'Erreur lors de la sauvegarde'
+      const message = error instanceof Error ? error.message : t('errors.save')
       toast.error(message)
     },
   })
@@ -228,15 +240,15 @@ export default function ClassesPage() {
       const response = await fetch(`/api/classes/${classId}`, { method: 'DELETE' })
       const data = await response.json().catch(() => ({}))
       if (!response.ok) {
-        throw new Error(data.error || 'Suppression impossible')
+        throw new Error(data.error || t('errors.delete'))
       }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: classQueryKey })
-      toast.success('Cours supprime')
+      toast.success(t('toasts.deleted'))
     },
     onError: (error) => {
-      const message = error instanceof Error ? error.message : 'Suppression impossible'
+      const message = error instanceof Error ? error.message : t('errors.delete')
       toast.error(message)
     },
   })
@@ -253,7 +265,11 @@ export default function ClassesPage() {
       endTime: '10:00',
       waitlist: true,
       gymVariantId:
-        (selectedVariant !== 'all' ? selectedVariant : '') || lockedVariantId || defaultVariantId || variants[0]?.id || '',
+        (selectedVariant !== 'all' ? selectedVariant : '') ||
+        lockedVariantId ||
+        defaultVariantId ||
+        variants[0]?.id ||
+        '',
     })
     setDialogOpen(true)
   }
@@ -280,9 +296,10 @@ export default function ClassesPage() {
   }
 
   const weekLabel = useMemo(() => {
-    const format = (date: Date) => date.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' })
+    const format = (date: Date) =>
+      date.toLocaleDateString(locale, { day: '2-digit', month: '2-digit' })
     return `${format(weekStart)} → ${format(weekEnd)}`
-  }, [weekEnd, weekStart])
+  }, [locale, weekEnd, weekStart])
 
   const renderContent = () => {
     if (status === 'loading' || variantsLoading) {
@@ -296,18 +313,26 @@ export default function ClassesPage() {
     }
 
     if (status === 'unauthenticated') {
-      return <div className="text-red-500 font-medium">Acces refuse. Connectez-vous.</div>
+      return (
+        <div className="text-red-500 font-medium">
+          {t('page.unauthenticated')}
+        </div>
+      )
     }
 
     if (!gymId) {
-      return <div className="text-red-500 font-medium">Aucun gym associe a votre compte.</div>
+      return (
+        <div className="text-red-500 font-medium">
+          {t('page.noGym')}
+        </div>
+      )
     }
 
     if (!hasCourses) {
       return (
         <LockedFeatureState
-          title="Cours et planning indisponibles sur ce plan"
-          description="La creation de cours, l'agenda hebdomadaire et les listes dattente sont inclus dans le plan Enterprise."
+          title={t('locked.title')}
+          description={t('locked.description')}
           planLabel={planLabel}
           items={featureItems}
         />
@@ -318,8 +343,10 @@ export default function ClassesPage() {
       <div className="space-y-6">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
-            <h1 className="text-3xl font-bold">Cours</h1>
-            <p className="text-muted-foreground">Planifiez vos sessions et suivez les reservations.</p>
+            <h1 className="text-3xl font-bold">{tNav('classes')}</h1>
+            <p className="text-muted-foreground">
+              {t('page.subtitle')}
+            </p>
           </div>
           <div className="flex flex-wrap items-center gap-3">
             <VariantSelector
@@ -334,24 +361,42 @@ export default function ClassesPage() {
               <CalendarRange size={16} />
               <span className="text-sm font-medium">{weekLabel}</span>
               <div className="flex items-center gap-1">
-                <Button variant="ghost" size="sm" onClick={() => setWeekStart((prev) => new Date(prev.getTime() - 7 * 24 * 60 * 60 * 1000))}>
-                  -1w
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() =>
+                    setWeekStart(
+                      (prev) =>
+                        new Date(prev.getTime() - 7 * 24 * 60 * 60 * 1000),
+                    )
+                  }
+                >
+                  {t('week.prev')}
                 </Button>
-                <Button variant="ghost" size="sm" onClick={() => setWeekStart((prev) => new Date(prev.getTime() + 7 * 24 * 60 * 60 * 1000))}>
-                  +1w
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() =>
+                    setWeekStart(
+                      (prev) =>
+                        new Date(prev.getTime() + 7 * 24 * 60 * 60 * 1000),
+                    )
+                  }
+                >
+                  {t('week.next')}
                 </Button>
               </div>
             </div>
             <Button onClick={openCreate}>
               <Plus className="mr-2 h-4 w-4" />
-              Nouveau cours
+              {t('actions.new')}
             </Button>
           </div>
         </div>
 
         {classesQuery.isError ? (
           <div className="rounded-xl border border-destructive/40 bg-destructive/10 p-4 text-destructive">
-            Impossible de charger les cours.
+            {t('errors.load')}
           </div>
         ) : (
           <>
@@ -365,44 +410,65 @@ export default function ClassesPage() {
               <Table>
                 <TableHeader>
                   <TableRow className="bg-muted/40 text-muted-foreground">
-                    <TableHead>Cours</TableHead>
-                    <TableHead>Coach</TableHead>
-                    <TableHead>Salle</TableHead>
-                    <TableHead>Horaire</TableHead>
-                    <TableHead>Variante</TableHead>
-                    <TableHead>Places</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
+                    <TableHead>{t('table.columns.title')}</TableHead>
+                    <TableHead>{t('table.columns.coach')}</TableHead>
+                    <TableHead>{t('table.columns.room')}</TableHead>
+                    <TableHead>{t('table.columns.schedule')}</TableHead>
+                    <TableHead>{t('table.columns.variant')}</TableHead>
+                    <TableHead>{t('table.columns.capacity')}</TableHead>
+                    <TableHead className="text-right">
+                      {t('table.columns.actions')}
+                    </TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {classesPagination.data.map((course) => {
                     const start = new Date(course.startAt)
                     const end = new Date(course.endAt)
-                    const timeRange = `${start.toLocaleTimeString('fr-FR', {
+                    const timeRange = `${start.toLocaleTimeString(locale, {
                       hour: '2-digit',
                       minute: '2-digit',
-                    })} - ${end.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}`
+                    })} - ${end.toLocaleTimeString(locale, {
+                      hour: '2-digit',
+                      minute: '2-digit',
+                    })}`
                     const confirmed = course.confirmedCount ?? 0
                     const waitlist = course.waitlistCount ?? 0
 
                     return (
                       <TableRow key={course.id}>
-                        <TableCell className="font-semibold">{course.title}</TableCell>
+                        <TableCell className="font-semibold">
+                          {course.title}
+                        </TableCell>
                         <TableCell>{course.coach || '-'}</TableCell>
                         <TableCell>{course.room || '-'}</TableCell>
                         <TableCell>
                           <div className="flex items-center gap-2 text-sm text-muted-foreground">
                             <Clock size={14} />
-                            <span>{start.toLocaleDateString('fr-FR')}</span>
+                            <span>
+                              {start.toLocaleDateString(locale)}
+                            </span>
                             <span>{timeRange}</span>
                           </div>
                         </TableCell>
-                        <TableCell>{course.gymVariant?.name ?? '-'}</TableCell>
                         <TableCell>
-                          <Badge variant={confirmed >= course.capacity ? 'destructive' : 'secondary'}>
+                          {course.gymVariant?.name ?? '-'}
+                        </TableCell>
+                        <TableCell>
+                          <Badge
+                            variant={
+                              confirmed >= course.capacity
+                                ? 'destructive'
+                                : 'secondary'
+                            }
+                          >
                             {confirmed}/{course.capacity}
                           </Badge>
-                          {waitlist > 0 ? <span className="ml-2 text-xs text-muted-foreground">+{waitlist} attente</span> : null}
+                          {waitlist > 0 ? (
+                            <span className="ml-2 text-xs text-muted-foreground">
+                              {t('table.waitlist', { count: waitlist })}
+                            </span>
+                          ) : null}
                         </TableCell>
                         <TableCell className="text-right">
                           <DropdownMenu>
@@ -413,25 +479,30 @@ export default function ClassesPage() {
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
                               <DropdownMenuItem asChild>
-                                <Link href={`/dashboard/classes/${course.id}`} className="flex items-center">
+                                <Link
+                                  href={`/dashboard/classes/${course.id}`}
+                                  className="flex items-center"
+                                >
                                   <Eye className="mr-2 h-4 w-4" />
-                                  Details
+                                  {t('table.details')}
                                 </Link>
                               </DropdownMenuItem>
-                              <DropdownMenuItem onSelect={() => openEdit(course)}>
+                              <DropdownMenuItem
+                                onSelect={() => openEdit(course)}
+                              >
                                 <Pencil className="mr-2 h-4 w-4" />
-                                Modifier
+                                {t('table.edit')}
                               </DropdownMenuItem>
                               <DropdownMenuItem
                                 className="text-destructive"
                                 onSelect={() => {
-                                  if (confirm('Supprimer ce cours ?')) {
+                                  if (window.confirm(t('table.confirmDelete'))) {
                                     deleteClass.mutate(course.id)
                                   }
                                 }}
                               >
                                 <Trash2 className="mr-2 h-4 w-4" />
-                                Supprimer
+                                {t('table.delete')}
                               </DropdownMenuItem>
                             </DropdownMenuContent>
                           </DropdownMenu>
@@ -442,7 +513,9 @@ export default function ClassesPage() {
                 </TableBody>
               </Table>
               {classes.length === 0 ? (
-                <p className="px-4 py-6 text-sm text-muted-foreground">Aucun cours sur cette semaine.</p>
+                <p className="px-4 py-6 text-sm text-muted-foreground">
+                  {t('table.emptyWeek')}
+                </p>
               ) : null}
               <PaginationControls
                 page={classesPagination.page}
@@ -458,7 +531,9 @@ export default function ClassesPage() {
         <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
           <DialogContent className="max-w-2xl w-[95vw]">
             <DialogHeader>
-              <DialogTitle>{editingId ? 'Modifier le cours' : 'Ajouter un cours'}</DialogTitle>
+              <DialogTitle>
+                {editingId ? t('dialog.editTitle') : t('dialog.addTitle')}
+              </DialogTitle>
             </DialogHeader>
             <div className="space-y-4">
               <ClassForm
@@ -470,8 +545,16 @@ export default function ClassesPage() {
                 defaultVariantId={defaultVariantId}
                 disabled={saveClass.isPending}
               />
-              <Button onClick={() => saveClass.mutate()} disabled={saveClass.isPending} className="w-full">
-                {saveClass.isPending ? 'Enregistrement...' : editingId ? 'Mettre a jour' : 'Creer le cours'}
+              <Button
+                onClick={() => saveClass.mutate()}
+                disabled={saveClass.isPending}
+                className="w-full"
+              >
+                {saveClass.isPending
+                  ? t('dialog.submitPending')
+                  : editingId
+                  ? t('dialog.submitUpdate')
+                  : t('dialog.submitCreate')}
               </Button>
             </div>
           </DialogContent>

@@ -1,6 +1,949 @@
 {
   "common": {
     "localeLabel": "العربية",
-    "comingSoon": "سيتم إضافة الترجمات قريبًا."
+    "comingSoon": "ستتم إضافة الترجمات التفصيلية قريبًا."
+  },
+    "marketing": {
+    "home": {
+      "hero": {
+        "eyebrow": "منصة لإدارة النوادي الرياضية",
+        "title": "تشغيل حديث لشبكات الأندية متعددة الفروع",
+        "subtitle": "الاشتراكات، صلاحيات الدخول والفوترة في لوحة واحدة.",
+        "description": "GymWatch تجمع بيانات الفروع والأعضاء والإيرادات في تجربة احترافية مصممة لشبكات الأندية التي تنمو بسرعة.",
+        "primaryCta": "احجز عرضاً توضيحياً",
+        "secondaryCta": "تسجيل الدخول",
+        "dashboard": {
+          "title": "لوحة تحكم GymWatch",
+          "description": "رؤية موحدة متعددة الفروع مع مراقبة الدخول وتدفق الإيرادات.",
+          "imageAlt": "لوحة تحكم GymWatch - برنامج لإدارة النادي الرياضي",
+          "chips": {
+            "access": "التحكم في الدخول",
+            "kpi": "مؤشرات آنية",
+            "payments": "مدفوعات آمنة"
+          }
+        }
+      },
+      "stats": {
+        "clubs": {
+          "value": "+180",
+          "label": "أندية مُدارة",
+          "detail": "منصة SaaS للنوادي الرياضية والشبكات متعددة الفروع"
+        },
+        "members": {
+          "value": "42k",
+          "label": "أعضاء متابعون",
+          "detail": "إدارة الاشتراكات وصلاحيات الدخول"
+        },
+        "satisfaction": {
+          "value": "98%",
+          "label": "نسبة الرضا",
+          "detail": "مرافقة احترافية ودعم مخصص"
+        }
+      },
+      "pillars": {
+        "multiSite": {
+          "title": "متعدد الأندية / متعدد الفروع",
+          "body": "رؤية موحدة لكل الفروع مع تحكم مركزي وصلاحيات دقيقة لكل فريق."
+        },
+        "accessControl": {
+          "title": "التحكم في الدخول لحظياً",
+          "body": "رموز QR، بطاقات دخول وتتبع الحضور لتأمين المداخل."
+        },
+        "billing": {
+          "title": "الاشتراكات والفوترة",
+          "body": "تحصيل المدفوعات، فواتير واضحة وتذكيرات تلقائية بدون جداول إكسل."
+        }
+      },
+      "features": {
+        "directorView": {
+          "title": "رؤية مدير الشبكة",
+          "body": "لوحات تحكم موحدة لمؤشرات الأداء عبر الفروع وحركة الحضور في كل نادٍ."
+        },
+        "access": {
+          "title": "التحكم في الدخول",
+          "body": "سجلات فورية، تنبيهات وتحكم في الصلاحيات لكل فرع أو بطاقة أو رمز QR."
+        },
+        "automation": {
+          "title": "الأتمتة والتذكيرات",
+          "body": "رسائل بريدية و SMS لمواعيد التجديد والمدفوعات المتأخرة لتقليل فقدان العملاء."
+        },
+        "subscriptions": {
+          "title": "إدارة الاشتراكات",
+          "body": "عقود، تجميد، تجديدات واحتساب نسبي لفوترة واضحة."
+        },
+        "teams": {
+          "title": "إدارة الفرق",
+          "body": "أدوار وصلاحيات وتتبع للإجراءات الحساسة في كل نادٍ."
+        },
+        "reporting": {
+          "title": "تقارير قابلة للتصدير",
+          "body": "تصدير CSV/PDF للمالية والمحاسبة وشركاء الامتياز."
+        },
+        "security": {
+          "title": "الاعتمادية والأمان",
+          "body": "تشفير، نسخ احتياطي وتوافر عالٍ لبرنامج موثوق لإدارة الأندية."
+        },
+        "api": {
+          "title": "واجهات برمجة وتكاملات",
+          "body": "ربط مع نظام CRM أو الموقع أو البوابات الدوارة دون فقدان البيانات."
+        }
+      },
+      "testimonials": {
+        "amine": {
+          "quote": "GymWatch نظّم شبكة الأندية لدينا. المؤشرات واضحة والتحكم في الدخول يمنع الاستغلال غير المصرّح به.",
+          "author": "أمين ل.",
+          "role": "مدير شبكة (8 أندية)"
+        },
+        "sarah": {
+          "quote": "الأتمتة والتذكيرات خفّضت المتأخرات وحررت وقتاً للاستقبال. واجهة احترافية وتجربة سلسة.",
+          "author": "سارة م.",
+          "role": "مديرة تشغيل في شبكة لياقة"
+        },
+        "youssef": {
+          "quote": "إطلاق في 48 ساعة، فريق متجاوب وبيانات مؤمّنة. هذا هو نظام إدارة الأندية الذي كنّا نبحث عنه.",
+          "author": "يوسف ك.",
+          "role": "مسؤول العمليات"
+        }
+      },
+      "faq": {
+        "q1": {
+          "question": "هل يدعم البرنامج الشبكات متعددة الأندية / متعددة الفروع؟",
+          "answer": "نعم. يوفر GymWatch رؤية موحدة مع فلاتر لكل فرع للأعضاء والاشتراكات والتحكم في الدخول والتقارير."
+        },
+        "q2": {
+          "question": "كيف يعمل نظام التحكم في الدخول؟",
+          "answer": "رموز QR أو بطاقات، تحقق لحظي وتنبيهات فورية. يتم ضبط الصلاحيات حسب الفرع ونوع الاشتراك والفترة الزمنية."
+        },
+        "q3": {
+          "question": "هل يمكن أتمتة التذكيرات والمدفوعات؟",
+          "answer": "نعم، التذكيرات البريدية و SMS للمستحقات والمدفوعات المتأخرة مدمجة في النظام. يتم إنشاء الفواتير تلقائياً ويمكن تصديرها."
+        },
+        "q4": {
+          "question": "هل هناك مرافقة في مرحلة الإطلاق؟",
+          "answer": "فريقنا يساعدكم في ترحيل البيانات، إعداد الصلاحيات وتدريب الفرق خلال بضعة أيام."
+        },
+        "q5": {
+          "question": "هل الخدمة آمنة؟",
+          "answer": "تشفير ونسخ احتياطي وصلاحيات دقيقة مع تتبع للإجراءات الحساسة لنظام موثوق لإدارة الأندية."
+        }
+      },
+      "plans": {
+        "recommended": "مُوصى به",
+        "cta": "احجز عرضاً توضيحياً",
+        "toggle": {
+          "monthly": "شهري",
+          "annual": "سنوي (-{discount}%)"
+        },
+        "billing": {
+          "perMonth": "/ شهر",
+          "monthlyHint": "فواتير شهرية مع إمكانية الإلغاء في أي وقت",
+          "annualHint": "يُفوتر {amount} / سنة",
+          "annualSave": "وفِّر {discount}% مع الاشتراك السنوي"
+        },
+        "catalog": {
+          "basic": {
+            "name": "Basic",
+            "description": "الوظائف الأساسية لمركزة بيانات الأعضاء.",
+            "badges": ["دعم عبر البريد", "تنبيهات لمواعيد الاستحقاق"],
+            "features": [
+              "إدارة الأعضاء والاشتراكات",
+              "تنبيهات انتهاء الصلاحية والتذكيرات",
+              "تحليلات أساسية",
+              "دعم عبر البريد الإلكتروني"
+            ]
+          },
+          "pro": {
+            "name": "Pro",
+            "description": "أتمتة، رموز QR وتصدير متقدم للتقارير.",
+            "badges": ["رموز QR", "تصدير إلى Excel"],
+            "features": [
+              "كل ما في خطة Basic",
+              "التحكم في الدخول عبر رمز QR",
+              "تتبع الحضور في الوقت الفعلي",
+              "تنبيهات صوتية للنجاح / الفشل",
+              "تصدير Excel للإيرادات والولاء",
+              "تصدير PDF/Excel متعدد الفروع"
+            ]
+          },
+          "enterprise": {
+            "name": "Enterprise",
+            "description": "حزمة للشبكات متعددة الفروع مع أتمتة متقدمة وكاتالوج غير محدود.",
+            "badges": ["فروع غير محدودة", "أتمتة", "الحصص والجدولة"],
+            "features": [
+              "عدد غير محدود من الفروع والمستخدمين",
+              "تحكم متقدم في الدخول (QR، بطاقات، تطبيق للعضو)",
+              "تتبع حضور متعدد الفروع",
+              "إدارة الحصص والجدولة (فرق متعددة)",
+              "تصدير CSV/PDF كامل",
+              "إحصائيات مفصلة متعددة الفروع",
+              "سيناريوهات تسويق (بريد/SMS) قيد الإعداد"
+            ]
+          }
+        }
+      },
+      "sections": {
+        "why": {
+          "eyebrow": "لماذا GymWatch؟",
+          "title": "مصمم لشبكات الأندية متعددة الفروع",
+          "description": "برنامج لإدارة النوادي الرياضية يربط بين المقر الرئيسي والفروع: صلاحيات الدخول، الاشتراكات، التقارير والأتمتة في واجهة واحدة.",
+          "cta": "اكتشف كل الميزات"
+        },
+        "features": {
+          "eyebrow": "الميزات",
+          "title": "منصة متكاملة وقابلة للتوسع",
+          "description": "تحكم متعدد الفروع، إدارة الاشتراكات وصلاحيات الدخول، أتمتة وتقارير قابلة للتصدير.",
+          "cta": "استكشف التفاصيل"
+        },
+        "plans": {
+          "eyebrow": "الباقات",
+          "title": "أسعار مصممة لدعم النمو",
+          "description": "قارن بين الاشتراك الشهري والسنوي (-{discount}%) وفعّل GymWatch في نادٍ واحد أو شبكة كاملة خلال أيام قليلة."
+        },
+        "testimonials": {
+          "eyebrow": "آراء العملاء",
+          "title": "شبكات تعمل بالفعل مع GymWatch",
+          "description": "علامات تجارية مستقلة وسلاسل امتياز تدير أنديتها عبر منصة GymWatch السحابية."
+        },
+        "faq": {
+          "eyebrow": "الأسئلة الشائعة",
+          "title": "أسئلة متكررة",
+          "description": "أهم الإجابات حول التحكم في الدخول، إدارة الاشتراكات، الشبكات متعددة الفروع والأمان.",
+          "cta": "عرض كل الأسئلة"
+        },
+        "contact": {
+          "eyebrow": "تواصل / دعم",
+          "title": "تحتاج إلى نشر النظام على عدة فروع؟",
+          "description": "فريقنا يرافقك في نشر GymWatch عبر الشبكة: تحليل الاحتياجات، ترحيل البيانات، تدريب الفرق والتحسين المستمر.",
+          "primaryCta": "احجز عرضاً توضيحياً",
+          "secondaryCta": "راسلنا",
+          "supportTitle": "دعم مميز",
+          "supportSubtitle": "استجابة خلال أقل من 24 ساعة عمل",
+          "emailLabel": "البريد الإلكتروني:",
+          "availability": "التوفر: من 8:00 إلى 19:00 بتوقيت وسط أوروبا",
+          "deployment": "النشر: أندية متعددة، فروع متعددة، امتيازات."
+        }
+      }
+    }
+  },
+   "auth": {
+    "login": {
+      "toasts": {
+        "demoRequested": "تم إرسال طلب التجربة، ستصلك بيانات الدخول على بريدك الإلكتروني.",
+        "loginSuccess": "تم تسجيل الدخول بنجاح."
+      },
+      "errors": {
+        "planInactive": "اشتراكك غير مفعّل. يرجى تجديده.",
+        "invalidCredentials": "بيانات تسجيل الدخول غير صحيحة.",
+        "unexpected": "حدث خطأ غير متوقع."
+      },
+      "marketing": {
+        "badge": "منصّة إدارة",
+        "headline": "مرحبًا بك في {brand}",
+        "subtitle": "أدِرْ ناديك الرياضي بمنصّة حديثة وسهلة الاستخدام، واطّلع على جميع بياناتك في الوقت الفعلي."
+      },
+      "features": {
+        "security": "أمان متقدّم",
+        "performance": "أداء مُحسَّن",
+        "analytics": "تحليلات في الوقت الفعلي"
+      },
+      "form": {
+        "title": "تسجيل الدخول",
+        "subtitle": "ادخل إلى مساحة GymWatch الخاصة بك",
+        "emailLabel": "البريد الإلكتروني",
+        "emailPlaceholder": "you@gym.ma",
+        "passwordLabel": "كلمة المرور",
+        "passwordPlaceholder": "••••••••",
+        "submitPending": "جارٍ تسجيل الدخول...",
+        "submit": "تسجيل الدخول"
+      },
+      "footer": {
+        "noAccount": "ليس لديك حساب بعد؟",
+        "requestDemo": "اطلب تجربة"
+      }
+    }},
+  "dashboard": {
+    "nav": {
+      "dashboard": "لوحة التحكم",
+      "members": "الأعضاء",
+      "accessLogs": "سجلات الدخول",
+      "presence": "الحضور",
+      "classes": "الدروس",
+      "subscriptions": "الاشتراكات",
+      "plans": "الخطط",
+      "settings": "الإعدادات"
+    },
+    "shell": {
+      "subscriptionExpired": "تم إيقاف أو انتهاء الاشتراك. يرجى التواصل مع الدعم.",
+      "loading": "جارٍ التحميل...",
+      "roles": {
+        "superAdmin": "مشرف عام",
+        "admin": "مشرف",
+        "owner": "المالك",
+        "user": "مستخدم"
+      },
+      "userFallback": "مستخدم",
+      "planLabel": "الخطة",
+      "billing": {
+        "annual": "سنوي",
+        "monthly": "شهري",
+        "generic": "الفوترة"
+      },
+      "console": "وحدة التحكم",
+      "closeMenu": "إغلاق القائمة الجانبية",
+      "openMenu": "فتح القائمة الجانبية",
+      "exit": "خروج",
+      "signOut": "تسجيل الخروج",
+      "demoBadge": "تجريبي"
+    },
+    "classes": {
+      "planLabel": {
+        "basic": "Basic",
+        "pro": "Pro",
+        "enterprise": "Enterprise"
+      },
+      "page": {
+        "unauthenticated": "تم رفض الوصول. يرجى تسجيل الدخول.",
+        "noGym": "لا يوجد نادٍ رياضي مرتبط بحسابك.",
+        "subtitle": "قم بجدولة الحصص ومتابعة الحجوزات."
+      },
+      "locked": {
+        "title": "الحصص والجدولة غير متاحة في هذه الخطة",
+        "description": "إنشاء الحصص، الجدول الأسبوعي وقوائم الانتظار متاحة في خطة Enterprise."
+      },
+      "week": {
+        "prev": "-1w",
+        "next": "+1w"
+      },
+      "actions": {
+        "new": "حصة جديدة"
+      },
+      "errors": {
+        "load": "تعذّر تحميل الحصص.",
+        "save": "تعذّر الحفظ.",
+        "delete": "تعذّر الحذف.",
+        "unauthenticated": "تم رفض الوصول. يرجى تسجيل الدخول.",
+        "noGym": "لا يوجد نادٍ رياضي مرتبط بحسابك."
+      },
+      "validation": {
+        "dateTime": "تاريخ أو وقت غير صالح.",
+        "variantRequired": "يجب اختيار فرع."
+      },
+      "toasts": {
+        "saved": "تم حفظ الحصة.",
+        "deleted": "تم حذف الحصة."
+      },
+      "table": {
+        "columns": {
+          "title": "الحصة",
+          "coach": "المدرب",
+          "room": "القاعـة",
+          "schedule": "الوقت",
+          "variant": "الفرع",
+          "capacity": "المقاعد",
+          "actions": "إجراءات"
+        },
+        "details": "التفاصيل",
+        "edit": "تعديل",
+        "delete": "حذف",
+        "confirmDelete": "حذف هذه الحصة؟",
+        "waitlist": "+{count} في الانتظار",
+        "emptyWeek": "لا توجد حصص خلال هذا الأسبوع."
+      },
+      "dialog": {
+        "editTitle": "تعديل الحصة",
+        "addTitle": "إضافة حصة",
+        "submitPending": "جارٍ الحفظ...",
+        "submitUpdate": "تحديث",
+        "submitCreate": "إنشاء الحصة"
+      }
+    },
+        "classesDetail": {
+      "page": {
+        "unauthenticated": "تم رفض الوصول. يرجى تسجيل الدخول.",
+        "noGym": "لا يوجد نادٍ رياضي مرتبط بحسابك.",
+        "enterpriseOnly": "إدارة الحصص متاحة في خطة Enterprise فقط."
+      },
+      "header": {
+        "back": "رجوع",
+        "coachFallback": "المدرب غير محدد",
+        "roomFallback": "قاعة غير محددة",
+        "edit": "تعديل",
+        "delete": "حذف",
+        "confirmDelete": "هل تريد حذف هذه الحصة؟"
+      },
+      "stats": {
+        "title": "القدرة والأعضاء",
+        "capacityLabel": "مؤكدون / {capacity} مقعدًا",
+        "waitlistLabel": "قائمة الانتظار",
+        "freeLabel": "المقاعد الشاغرة",
+        "listTitle": "قائمة الانتظار",
+        "listEnabled": "مفعّلة",
+        "listDisabled": "غير مفعّلة"
+      },
+      "schedule": {
+        "title": "المواعيد"
+      },
+      "coachRoom": {
+        "title": "المدرب والقاعة",
+        "coachFallback": "المدرب غير محدد",
+        "roomLabel": "القاعة:",
+        "roomFallback": "سيتم التحديد لاحقًا"
+      },
+      "bookingForm": {
+        "title": "إضافة حجز",
+        "subtitle": "{booked} مؤكد، {waitlist} في الانتظار، الحد الأقصى {capacity} مشاركًا",
+        "memberLabel": "العضو",
+        "memberPlaceholder": "اختر عضوًا",
+        "addButton": "إضافة",
+        "membersLoadError": "تعذّر تحميل الأعضاء.",
+        "membersLoading": "جارٍ تحميل الأعضاء...",
+        "membersCount": "{count} عضوًا متاحًا"
+      },
+      "table": {
+        "columns": {
+          "member": "العضو",
+          "contact": "بيانات الاتصال",
+          "status": "الحالة",
+          "createdAt": "أُضيف في",
+          "actions": "إجراءات"
+        },
+        "position": "الترتيب {position}",
+        "cancelled": "أُلغي",
+        "cancel": "إلغاء",
+        "empty": "لا توجد حجوزات لهذه الحصة."
+      },
+      "status": {
+        "confirmed": "مؤكد",
+        "waitlisted": "قائمة انتظار",
+        "cancelled": "أُلغي"
+      },
+      "errors": {
+        "loadClass": "تعذّر تحميل الحصة.",
+        "loadMembers": "تعذّر تحميل الأعضاء.",
+        "chooseMember": "يرجى اختيار عضو.",
+        "reservation": "تعذّر إنشاء الحجز.",
+        "cancel": "تعذّر إلغاء الحجز.",
+        "update": "تعذّرت عملية التحديث.",
+        "delete": "تعذّر الحذف.",
+        "dateTime": "تاريخ أو وقت غير صالح.",
+        "variantRequired": "يجب اختيار فرع."
+      },
+      "toasts": {
+        "reservationSaved": "تم حفظ الحجز.",
+        "reservationCancelled": "تم إلغاء الحجز.",
+        "classUpdated": "تم تحديث الحصة.",
+        "classDeleted": "تم حذف الحصة."
+      },
+      "dialog": {
+        "editTitle": "تعديل الحصة",
+        "submitPending": "جارٍ التحديث...",
+        "submit": "حفظ"
+      }
+    },
+    "accessLogs": {
+      "title": "سجلات الدخول",
+      "subtitle": "آخر عمليات المسح، التسجيل اليدوي والمحاكاة.",
+      "filters": {
+        "searchLabel": "بحث",
+        "searchPlaceholder": "الاسم، البريد...",
+        "statusLabel": "الحالة",
+        "sourceLabel": "المصدر",
+        "allPlaceholder": "الكل",
+        "from": "من",
+        "to": "إلى",
+        "reset": "إعادة ضبط",
+        "statusOptions": {
+          "all": "كل الحالات",
+          "granted": "دخول مسموح",
+          "checkedOut": "تم تسجيل الخروج",
+          "sessionOverstay": "جلسة متجاوزة",
+          "alreadyCheckedIn": "مسجَّل سابقًا",
+          "dailyLimit": "الحد اليومي",
+          "expired": "اشتراك منتهٍ",
+          "inactive": "اشتراك غير نشط",
+          "forbidden": "غير مسموح"
+        },
+        "sourceOptions": {
+          "all": "كل المصادر",
+          "qr": "مسح QR",
+          "simulator": "المحاكي",
+          "manual": "تسجيل يدوي"
+        }
+      },
+      "locked": {
+        "title": "التحكم في الدخول غير مفعّل",
+        "description": "سجل الدخول متاح ابتداءً من الخطة Pro."
+      },
+      "actions": {
+        "refreshing": "جارٍ التحديث...",
+        "refresh": "تحديث"
+      },
+      "multiVariantLocked": {
+        "title": "عرض الفروع مجتمعة غير متاح",
+        "body": "اختر فرعًا لرؤية سجلاته. العرض الموحّد متاح في خطة Enterprise."
+      },
+      "summary": {
+        "total": "المجموع",
+        "granted": "دخول مسموح",
+        "successRate": "{rate}% من محاولات الدخول",
+        "denied": "مرفوض",
+        "already": "مسجَّل سابقًا",
+        "checkouts": "الخروج"
+      },
+      "errors": {
+        "load": "تعذّر تحميل السجلات",
+        "delete": "تعذّر الحذف",
+        "unauthenticated": "الدخول مرفوض. يرجى تسجيل الدخول."
+      },
+      "toasts": {
+        "deleted": "تم حذف الحدث"
+      },
+      "tableCount": "{count} حدث (آخر 200)",
+      "limitAlerts": "تنبيهات الحد: {count}",
+      "sessionLimit": "أقصى مدة: {value} دقيقة",
+      "table": {
+        "columns": {
+          "date": "التاريخ",
+          "member": "العضو",
+          "variant": "الفرع",
+          "status": "الحالة",
+          "source": "المصدر",
+          "actions": "إجراءات"
+        },
+        "status": {
+          "granted": "دخول مسموح",
+          "checkedOut": "تم تسجيل الخروج",
+          "sessionOverstay": "جلسة متجاوزة",
+          "alreadyCheckedIn": "مسجَّل سابقًا",
+          "deniedDailyLimit": "تم بلوغ الحد اليومي",
+          "deniedExpired": "الاشتراك منتهٍ",
+          "deniedInactive": "الاشتراك غير نشط",
+          "deniedForbidden": "غير مسموح"
+        },
+        "source": {
+          "qr": "مسح QR",
+          "simulator": "المحاكي",
+          "manual": "يدوي"
+        },
+        "empty": "لا توجد أحداث دخول بعد.",
+        "deletedMember": "عضو محذوف",
+        "overdue": "مدة متجاوزة",
+        "limitAlert": "تنبيه حد",
+        "badge": "شارة",
+        "delete": "حذف"
+      }
+    },
+    "plans": {
+      "errors": {
+        "loadLimits": "تعذّر تحميل حدود الخطط",
+        "unauthorized": "غير مُصرَّح. هل انتهت الجلسة؟",
+        "server": "خطأ في الخادم.",
+        "save": "تعذّر الحفظ.",
+        "delete": "تعذّر الحذف."
+      },
+      "toasts": {
+        "limitBlocked": "تم بلوغ حد عدد الخطط. عطّل خطة أو قم بالترقية.",
+        "limitWarning": "آخر إنشاء نشط متاح في هذا النطاق.",
+        "updated": "تم تحديث الخطة بنجاح",
+        "created": "تم إنشاء الخطة بنجاح",
+        "deleted": "تم حذف الخطة بنجاح"
+      },
+      "validation": {
+        "variantRequired": "اختر فرعًا لهذه الخطة.",
+        "visitsPerDay": "عدد الزيارات اليومي غير صالح.",
+        "sessionDuration": "مدة الجلسة القصوى غير صالحة.",
+        "confirmDelete": "هل أنت متأكد أنك تريد حذف هذه الخطة؟"
+      },
+      "page": {
+        "loadingUser": "جارٍ تحميل بيانات المستخدم...",
+        "unauthenticated": "الدخول مرفوض. يجب تسجيل الدخول.",
+        "noGym": "لا يوجد نادٍ رياضي مرتبط بحسابك.",
+        "title": "خطط الاشتراك",
+        "description": "تحكّم في العروض المتاحة لأعضائك.",
+        "stats": {
+          "active": "فعّالة",
+          "inactive": "غير فعّالة",
+          "total": "خطط"
+        },
+        "helper": "عدّل المدة، السعر وحالة الخطة لتبقى متوافقًا مع أهدافك.",
+        "ctaAdd": "إضافة خطة",
+        "limits": {
+          "title": "حدود الخطط",
+          "description": "الحدود المفعّلة حسب باقتك. عطّل خطة لتحرير مكان.",
+          "variantLabel": "الفرع",
+          "networkLabel": "الشبكة",
+          "blocked": "تم بلوغ الحد: عطّل خطة فعّالة أو قم بالترقية لتوسيع قائمتك.",
+          "warning": "آخر خطة فعّالة متاحة في هذا النطاق."
+        },
+        "dialog": {
+          "editTitle": "تعديل الخطة",
+          "addTitle": "إضافة خطة",
+          "variant": "الفرع",
+          "assignedVariant": "الفرع المعيَّن",
+          "variantPlaceholder": "اختر فرعًا",
+          "default": "(افتراضي)",
+          "name": "اسم الخطة",
+          "namePlaceholder": "مثال: شهري",
+          "duration": "المدة (أيام)",
+          "price": "السعر (MAD)",
+          "visitsPerDay": "الزيارات في اليوم",
+          "unlimited": "غير محدود",
+          "visitsHelper": "يمكنك تحديد عدد الزيارات اليومية أو تفعيل الوضع غير المحدود.",
+          "sessionLimit": "المدة القصوى للجلسة (بالدقائق)",
+          "sessionLimitVariant": "الفرع: {limit} دقيقة",
+          "sessionLimitFallback": "يتبع الإعداد العام",
+          "sessionLimitPlaceholder": "موروث من الفرع",
+          "sessionLimitHelper": "اتركه فارغًا لاستخدام قيمة الفرع أو النادي الرياضي.",
+          "active": "فعّالة",
+          "saving": "جارٍ الحفظ...",
+          "update": "تحديث",
+          "create": "إنشاء"
+        },
+        "loadError": "تعذّر تحميل الخطط.",
+        "table": {
+          "name": "اسم الخطة",
+          "duration": "المدة (أيام)",
+          "price": "السعر (MAD)",
+          "visits": "الزيارات/اليوم",
+          "session": "المدة القصوى للجلسة (دقائق)",
+          "active": "فعّالة",
+          "variant": "الفرع",
+          "actions": "إجراءات",
+          "unlimited": "غير محدود",
+          "variantGym": "الفرع/النادي",
+          "yes": "نعم",
+          "no": "لا",
+          "edit": "تعديل",
+          "delete": "حذف",
+          "found": "تم العثور على {count} خطة",
+          "page": "الصفحة {page} / {pages}"
+        }
+      }
+    },
+    "presence": {
+      "title": "متابعة الحضور",
+      "subtitle": "اعرض الزيارات حسب الفرع وتابع عدد الحضور يوميًا.",
+      "locked": {
+        "title": "متابعة الحضور غير مفعّلة في هذه الخطة",
+        "description": "المتابعة اللحظية ومنحنيات الحضور متاحة ابتداءً من خطة Pro."
+      },
+      "actions": {
+        "refreshing": "جارٍ التحديث...",
+        "refresh": "تحديث"
+      },
+      "manualCheckout": {
+        "trigger": "تسجيل خروج يدوي",
+        "title": "تسجيل خروج",
+        "description": "سجّل خروجًا يدويًا لزيارة جارية وعدّل وقت الخروج إذا لزم الأمر.",
+        "noOpenVisits": "لا توجد زيارات جارية.",
+        "visitLabel": "زيارة جارية",
+        "visitPlaceholder": "اختر زيارة",
+        "checkoutDate": "تاريخ الخروج",
+        "checkoutTime": "وقت الخروج",
+        "windowFrom": "بداية النطاق (اختياري)",
+        "windowTo": "نهاية النطاق (اختياري)",
+        "arrivalInfo": "تم تسجيل الوصول في {date} عند {time} - {variant}",
+        "cancel": "إلغاء",
+        "submit": "تسجيل الخروج",
+        "submitPending": "جارٍ التسجيل...",
+        "toasts": {
+          "base": "تم تسجيل الخروج",
+          "member": " للعضو {memberName}",
+          "duration": " ({minutes} دقيقة)",
+          "limit": " - تم تجاوز الحد {limit} دقيقة",
+          "overstay": " - جلسة متجاوزة"
+        }
+      },
+      "summary": {
+        "visits": "الزيارات",
+        "unique": "زوار فريدون",
+        "present": "حاضرون",
+        "pendingCheckout": "خروج غير مسجَّل",
+        "averageDuration": "متوسط المدة"
+      },
+      "multiVariantLocked": {
+        "title": "تجميع الفروع مقفول",
+        "body": "الإحصائيات الموحّدة متاحة فقط في خطة Enterprise. اختر فرعًا أو",
+        "upgrade": "قم بالترقية"
+      },
+      "recent": {
+        "title": "أحدث الزيارات"
+      },
+      "errors": {
+        "load": "تعذّر تحميل الزيارات",
+        "checkout": "تعذّر تسجيل الخروج",
+        "noSelection": "يرجى اختيار زيارة جارية",
+        "unauthenticated": "الدخول مرفوض. يرجى تسجيل الدخول."
+      }
+    },
+     "members": {
+       "badge": {
+        "errors": {
+          "loadMember": "تعذّر تحميل بيانات العضو.",
+          "loadAccess": "تعذّر تحميل سجلات دخول هذا العضو.",
+          "simulation": "تعذّر تنفيذ المحاكاة.",
+          "notFoundTitle": "العضو غير موجود",
+          "notFoundBody": "تحقّق من المعرّف أو عد إلى قائمة الأعضاء."
+        },
+        "page": {
+          "backToMembers": "العودة إلى الأعضاء",
+          "backLabel": "الأعضاء",
+          "title": "شارة {firstName} {lastName}",
+          "subtitle": "رمز QR، حالة الاشتراك ومحاكاة الدخول."
+        },
+        "profile": {
+          "title": "الملف الشخصي",
+          "noContact": "لا توجد بيانات تواصل",
+          "lastVisit": "آخر زيارة: {date}",
+          "tokenLabel": "الرمز"
+        },
+        "subscription": {
+          "status": {
+            "active": "فعّال",
+            "expiresToday": "ينتهي اليوم",
+            "expired": "منتهي"
+          }
+        },
+        "qr": {
+          "title": "شارة QR",
+          "lockedTitle": "رموز QR متاحة في خطة Pro فقط",
+          "lockedBody": "قم بالترقية لعرض الشارات وتنزيلها.",
+          "imageAlt": "رمز QR للعضو",
+          "generating": "جارٍ إنشاء رمز QR...",
+          "copyToken": "نسخ الرمز",
+          "download": "تنزيل"
+        },
+        "simulator": {
+          "title": "محاكي المسح",
+          "lockedTitle": "تحتاج إلى خطة Pro أو Enterprise",
+          "lockedBody": "قم بتفعيل نظام التحكم في الدخول لمحاكاة المسح وتسجيل الأحداث.",
+          "panelTitle": "محاكاة مرور",
+          "panelDescription": "يسجّل حدث دخول لهذا الرمز، مع إمكانية تسجيل الزيارة.",
+          "panelMarkVisit": "تسجيل الزيارة",
+          "runPending": "جارٍ المحاكاة...",
+          "runLabel": "بدء المحاكاة",
+          "latestTitle": "آخر حالة",
+          "latestEmpty": "لا توجد أحداث حديثة.",
+          "toasts": {
+            "base": "تم تسجيل المحاكاة"
+          }
+        },
+        "events": {
+          "title": "أحدث الأحداث"
+        },
+        "status": {
+          "GRANTED": {
+            "label": "تم السماح بالدخول",
+            "message": "الشارة صالحة والاشتراك فعّال."
+          },
+          "CHECKED_OUT": {
+            "label": "تم تسجيل الخروج",
+            "message": "تم تسجيل الخروج لهذه الزيارة."
+          },
+          "SESSION_OVERSTAY": {
+            "label": "جلسة متجاوزة",
+            "message": "تم تجاوز المدة القصوى للجلسة لهذه الزيارة."
+          },
+          "DENIED_DAILY_LIMIT": {
+            "label": "تم بلوغ الحد اليومي",
+            "message": "تم تجاوز الحصة اليومية لهذا العضو."
+          },
+          "ALREADY_CHECKED_IN": {
+            "label": "مُسجَّل مسبقًا",
+            "message": "تم احتساب هذا العضو مسبقًا اليوم."
+          },
+          "DENIED_EXPIRED": {
+            "label": "اشتراك منتهٍ",
+            "message": "الاشتراك منتهٍ. جدّد قبل إعادة تفعيل الدخول."
+          },
+          "DENIED_INACTIVE": {
+            "label": "اشتراك غير نشط",
+            "message": "لا يوجد اشتراك فعّال أو بداية مؤجلة."
+          },
+          "DENIED_FORBIDDEN": {
+            "label": "فرع غير مسموح",
+            "message": "هذه الشارة غير مسموح بها لهذا الفرع."
+          }
+        },
+        "toasts": {
+          "tokenCopied": "تم نسخ الرمز",
+          "tokenCopyError": "تعذّر نسخ الرمز"
+        }
+      },
+      "page": {
+        "loadingUser": "جارٍ تحميل بيانات المستخدم...",
+        "unauthenticated": "تم رفض الدخول. يرجى تسجيل الدخول.",
+        "noGym": "لا يوجد نادٍ رياضي مرتبط بحسابك.",
+        "title": "الأعضاء",
+        "description": "قم بإدارة أعضاء ناديك الرياضي.",
+        "totalCount": "{count, plural, one {عضو واحد إجمالاً} other {# أعضاء إجمالاً}}",
+        "pageLabel": "الصفحة {page} / {pages}"
+      },
+      "errors": {
+        "loadMembers": "تعذّر تحميل الأعضاء",
+        "loadPlans": "تعذّر تحميل الخطط",
+        "genericMembers": "تعذّر تحميل الأعضاء.",
+        "saveMember": "تعذّر حفظ بيانات العضو",
+        "deleteMember": "تعذّر حذف العضو",
+        "markVisit": "تعذّر تسجيل الزيارة"
+      },
+      "variantSelector": {
+        "lockedMessage": "عرض الفروع المتعددة والتقارير الموحّدة متاح فقط في خطة Enterprise."
+      },
+      "visitsDialog": {
+        "trigger": "تسجيل زيارة",
+        "title": "تسجيل حضور عضو",
+        "description": "ابحث عن عضو ثم سجّل زيارته لهذا اليوم.",
+        "searchPlaceholder": "ابحث بالاسم أو البريد الإلكتروني",
+        "empty": "لم يتم العثور على أي أعضاء.",
+        "noContact": "لا توجد بيانات تواصل",
+        "variantLabel": "الفرع: {variant}",
+        "actions": {
+          "saving": "جارٍ الحفظ...",
+          "submit": "تأكيد"
+        }
+      },
+      "form": {
+        "addMember": "إضافة عضو",
+        "editTitle": "تعديل عضو",
+        "addTitle": "إضافة عضو",
+        "variantLabel": "الفرع",
+        "assignedVariantFallback": "فرع معيَّن",
+        "variantPlaceholder": "اختر فرعًا",
+        "defaultTag": "(افتراضي)",
+        "firstName": {
+          "label": "الاسم الشخصي"
+        },
+        "lastName": {
+          "label": "الاسم العائلي"
+        },
+        "email": {
+          "label": "البريد الإلكتروني"
+        },
+        "phone": {
+          "label": "رقم الهاتف"
+        },
+        "plan": {
+          "label": "الخطة",
+          "nonePlaceholder": "بدون",
+          "noneOption": "بدون خطة"
+        },
+        "startDate": {
+          "label": "تاريخ البداية",
+          "placeholder": "اختر تاريخًا"
+        },
+        "actions": {
+          "saving": "جارٍ الحفظ...",
+          "update": "تحديث",
+          "create": "إضافة"
+        }
+      },
+      "qr": {
+        "tools": {
+          "title": "رموز QR للأعضاء",
+          "description": "امسح رمز العضو للتحقق فورًا من اشتراكه.",
+          "hideScanner": "إخفاء الماسح",
+          "showScanner": "تفعيل الماسح",
+          "lockedBanner": "أدوات إنشاء ومسح رموز QR متاحة ابتداءً من خطة Pro.",
+          "modeLabel": "الوضع",
+          "modeIn": "دخول",
+          "modeOut": "خروج",
+          "helper": "ضع رمز QR أمام الكاميرا لعرض نتيجة المسح."
+        },
+        "dialog": {
+          "title": "رمز QR للعضو",
+          "descriptionWithName": "رمز QR لـ {firstName} {lastName}",
+          "descriptionFallback": "رمز QR للعضو",
+          "imageAlt": "رمز QR للعضو",
+          "loading": "جارٍ إنشاء رمز QR...",
+          "tokenLabel": "الرمز: {token}",
+          "download": "تحميل رمز QR"
+        }
+      },
+      "scanner": {
+        "checkout": {
+          "overstay": "تم تسجيل الخروج (تم تجاوز حد {limitLabel})",
+          "sessionLimitLabel": "الجلسة",
+          "successWithDuration": "تم تسجيل الخروج ({duration} دقيقة)",
+          "success": "تم تسجيل الخروج"
+        },
+        "success": {
+          "accessGranted": "تم السماح بالدخول"
+        },
+        "warnings": {
+          "lastVisitAvailable": "آخر زيارة متاحة ({remaining} متبقية)"
+        },
+        "errors": {
+          "invalidScan": "مسح غير صالح",
+          "inactive": "الاشتراك غير نشط",
+          "dailyLimit": "تم بلوغ الحد اليومي",
+          "invalidOrNotFound": "رمز QR غير صالح أو العضو غير موجود",
+          "cameraPermissionDenied": "تم رفض إذن الكاميرا",
+          "scanError": "حدث خطأ أثناء المسح"
+        },
+        "generic": {
+          "unknownMember": "عضو غير معروف",
+          "errorTitle": "خطأ",
+          "scannerTitle": "ماسح QR"
+        }
+      },
+      "reports": {
+        "errors": {
+          "exportFailed": "فشل التصدير",
+          "downloadFailed": "تعذّر تنزيل تقرير العضو"
+        }
+      },
+      "validation": {
+        "nameRequired": "الاسم الشخصي والعائلي إجباريان.",
+        "variantRequired": "يرجى اختيار فرع لهذا العضو."
+      },
+      "toasts": {
+        "memberUpdated": "تم تحديث بيانات العضو بنجاح",
+        "memberCreated": "تم إضافة عضو جديد.",
+        "saveError": "حدث خطأ أثناء الحفظ.",
+        "memberDeleted": "تم حذف العضو بنجاح",
+        "deleteError": "تعذّر حذف العضو",
+        "qrPlanOnly": "رمز QR للعضو متاح فقط في خطة Pro",
+        "visitInactive": "الاشتراك غير نشط أو منتهٍ",
+        "visitLimitReached": "لقد بلغ {name} الحد اليومي",
+        "visitLastOfDay": "آخر زيارة لليوم للعضو {name}{remainingLabel}",
+        "visitRecorded": "تم تسجيل حضور {name} ({count} زيارة اليوم){remainingLabel}"
+      },
+      "visits": {
+        "fullNameFallback": "عضو",
+        "remainingLabel": " - {remaining} متبقية"
+      },
+      "table": {
+        "summary": {
+          "totalCount": "{count, plural, one {عضو واحد إجمالاً} other {# أعضاء إجمالاً}}",
+          "pageLabel": "الصفحة {page} / {pages}"
+        },
+        "columns": {
+          "firstName": "الاسم الشخصي",
+          "lastName": "الاسم العائلي",
+          "email": "البريد الإلكتروني",
+          "phone": "رقم الهاتف",
+          "createdAt": "تاريخ التسجيل",
+          "variant": "الفرع",
+          "actions": "إجراءات"
+        },
+        "actions": {
+          "markVisit": "تسجيل زيارة",
+          "edit": "تعديل",
+          "qrCode": "رمز QR للعضو",
+          "statsExcel": "إحصائيات Excel",
+          "exportPending": "جارٍ التصدير...",
+          "delete": "حذف"
+        }
+      },
+      "deleteDialog": {
+        "title": "حذف عضو",
+        "descriptionWithName": "سيتم حذف {firstName} {lastName}. ستبقى الاشتراكات النشطة محفوظة.",
+        "descriptionFallback": "يرجى تأكيد حذف العضو.",
+        "cancel": "إلغاء",
+        "pending": "جارٍ الحذف...",
+        "confirm": "حذف"
+      }
+    }
   }
 }

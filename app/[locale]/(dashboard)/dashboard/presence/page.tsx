@@ -5,6 +5,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { useSession } from 'next-auth/react'
 import { useMutation, useQuery } from '@tanstack/react-query'
 import { Activity, AlertTriangle, Clock3, LogOut, RefreshCw, Users } from 'lucide-react'
+import { useLocale, useTranslations } from 'next-intl'
 
 import { usePlanFeatures } from '@/app/hooks/use-plan-features'
 import { useVariantOptions } from '@/app/hooks/use-variants'
@@ -85,6 +86,8 @@ const defaultSummary = {
 }
 
 export default function PresencePage() {
+  const t = useTranslations('dashboard.presence')
+  const locale = useLocale()
   const { data: session, status } = useSession()
   const { tier, hasAccessControl, hasPresence, hasCourses, hasExcelReports, hasMultiLocations } = usePlanFeatures()
   const {
@@ -163,7 +166,7 @@ export default function PresencePage() {
       const response = await fetch(`/api/visits?${params.toString()}`)
       const body = await response.json().catch(() => ({}))
       if (!response.ok) {
-        throw new Error(body.error || 'Impossible de charger les visites')
+        throw new Error(body.error || t('errors.load'))
       }
       return body as VisitAnalyticsResponse
     },
@@ -187,6 +190,23 @@ export default function PresencePage() {
     () => openVisits.find((visit) => visit.id === checkoutVisitId) ?? null,
     [checkoutVisitId, openVisits],
   )
+  const dateFormatter = useMemo(
+    () =>
+      new Intl.DateTimeFormat(locale === 'en' ? 'en-US' : locale === 'ar' ? 'ar' : 'fr-FR', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+      }),
+    [locale],
+  )
+  const timeFormatter = useMemo(
+    () =>
+      new Intl.DateTimeFormat(locale === 'en' ? 'en-US' : locale === 'ar' ? 'ar' : 'fr-FR', {
+        hour: '2-digit',
+        minute: '2-digit',
+      }),
+    [locale],
+  )
 
   useEffect(() => {
     if (openVisits.length === 0) {
@@ -202,7 +222,7 @@ export default function PresencePage() {
   const checkoutMutation = useMutation({
     mutationFn: async () => {
       if (!checkoutVisitId) {
-        throw new Error('Selectionnez une visite en cours')
+        throw new Error(t('errors.noSelection'))
       }
 
       const payload: Record<string, any> = {
@@ -225,31 +245,37 @@ export default function PresencePage() {
       })
       const body = await response.json().catch(() => ({}))
       if (!response.ok) {
-        throw new Error(body.error || 'Impossible de marquer la sortie')
+        throw new Error(body.error || t('errors.checkout'))
       }
       return body as { memberName?: string; isOverMaxDuration?: boolean; sessionLimitMinutes?: number | null; durationMinutes?: number }
     },
     onSuccess: (data) => {
-      const fullName = data?.memberName ? ` pour ${data.memberName}` : ''
-      const durationLabel =
-        typeof data?.durationMinutes === 'number' ? ` (${data.durationMinutes} min)` : ''
-      const limitLabel =
-        data?.isOverMaxDuration && typeof data.sessionLimitMinutes === 'number'
-          ? ` - limite ${data.sessionLimitMinutes} min depassee`
-          : data?.isOverMaxDuration
-            ? ' - session depassee'
-            : ''
-      const message = `Sortie enregistree${fullName}${durationLabel}${limitLabel}`
+      const segments = [t('manualCheckout.toasts.base')]
+      if (data?.memberName) {
+        segments.push(t('manualCheckout.toasts.member', { memberName: data.memberName }))
+      }
+      if (typeof data?.durationMinutes === 'number') {
+        segments.push(t('manualCheckout.toasts.duration', { minutes: data.durationMinutes }))
+      }
+      if (data?.isOverMaxDuration) {
+        const limitLabel =
+          typeof data.sessionLimitMinutes === 'number'
+            ? t('manualCheckout.toasts.limit', { limit: data.sessionLimitMinutes })
+            : t('manualCheckout.toasts.overstay')
+        segments.push(limitLabel)
+      }
+      const message = segments.join('')
       const notify = data?.isOverMaxDuration ? toast.warning : toast.success
       notify(message)
       setCheckoutDialogOpen(false)
       visitsQuery.refetch()
     },
     onError: (error) => {
-      const message = error instanceof Error ? error.message : 'Impossible de marquer la sortie'
+      const message = error instanceof Error ? error.message : t('errors.checkout')
       toast.error(message)
     },
   })
+
 
   const resetFilters = () => {
     setView('day')
@@ -272,14 +298,14 @@ export default function PresencePage() {
   }
 
   if (status === 'unauthenticated') {
-    return <div className="text-red-500 font-medium">Accès refusé.</div>
+    return <div className="text-red-500 font-medium">{t('errors.unauthenticated')}</div>
   }
 
   if (!hasPresence) {
     return (
       <LockedFeatureState
-        title="Suivi de presence desactive sur ce plan"
-        description="La presence temps reel et les courbes de frequentation sont disponibles a partir du plan Pro."
+        title={t('locked.title')}
+        description={t('locked.description')}
         planLabel={planLabel}
         items={featureItems}
       />
@@ -291,10 +317,8 @@ export default function PresencePage() {
     <div className="space-y-6">
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold">Suivi de présence</h1>
-          <p className="text-muted-foreground">
-            Visualisez les passages par salle et suivez la fréquentation au quotidien.
-          </p>
+          <h1 className="text-3xl font-bold">{t('title')}</h1>
+          <p className="text-muted-foreground">{t('subtitle')}</p>
         </div>
         <div className="flex items-center gap-3">
           <VariantSelector
@@ -315,25 +339,23 @@ export default function PresencePage() {
                 className="border-border/70"
               >
                 <LogOut className="mr-2 h-4 w-4" />
-                Sortie manuelle
+                {t('manualCheckout.trigger')}
               </Button>
             </DialogTrigger>
             <DialogContent className="sm:max-w-lg">
               <DialogHeader>
-                <DialogTitle>Marquer une sortie</DialogTitle>
-                <DialogDescription>
-                  Enregistrez une sortie manuelle pour une visite en cours et ajustez l&apos;heure si besoin.
-                </DialogDescription>
+                <DialogTitle>{t('manualCheckout.title')}</DialogTitle>
+                <DialogDescription>{t('manualCheckout.description')}</DialogDescription>
               </DialogHeader>
               {openVisits.length === 0 ? (
-                <p className="text-sm text-muted-foreground">Aucune visite en cours.</p>
+                <p className="text-sm text-muted-foreground">{t('manualCheckout.noOpenVisits')}</p>
               ) : (
                 <div className="space-y-4 py-2">
                   <div className="space-y-2">
-                    <Label htmlFor="visit-select">Visite en cours</Label>
+                    <Label htmlFor="visit-select">{t('manualCheckout.visitLabel')}</Label>
                     <Select value={checkoutVisitId} onValueChange={setCheckoutVisitId}>
                       <SelectTrigger id="visit-select">
-                        <SelectValue placeholder="Choisir une visite" />
+                        <SelectValue placeholder={t('manualCheckout.visitPlaceholder')} />
                       </SelectTrigger>
                       <SelectContent>
                         {openVisits.map((visit) => (
@@ -349,7 +371,7 @@ export default function PresencePage() {
 
                   <div className="grid grid-cols-2 gap-3">
                     <div className="space-y-2">
-                      <Label htmlFor="checkout-date">Date de sortie</Label>
+                      <Label htmlFor="checkout-date">{t('manualCheckout.checkoutDate')}</Label>
                       <Input
                         id="checkout-date"
                         type="date"
@@ -358,7 +380,7 @@ export default function PresencePage() {
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="checkout-time">Heure de sortie</Label>
+                      <Label htmlFor="checkout-time">{t('manualCheckout.checkoutTime')}</Label>
                       <Input
                         id="checkout-time"
                         type="time"
@@ -370,7 +392,7 @@ export default function PresencePage() {
 
                   <div className="grid grid-cols-2 gap-3">
                     <div className="space-y-2">
-                      <Label htmlFor="window-from">Plage debut (optionnel)</Label>
+                      <Label htmlFor="window-from">{t('manualCheckout.windowFrom')}</Label>
                       <Input
                         id="window-from"
                         type="time"
@@ -380,7 +402,7 @@ export default function PresencePage() {
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="window-to">Plage fin (optionnel)</Label>
+                      <Label htmlFor="window-to">{t('manualCheckout.windowTo')}</Label>
                       <Input
                         id="window-to"
                         type="time"
@@ -393,17 +415,11 @@ export default function PresencePage() {
 
                   {selectedOpenVisit ? (
                     <div className="rounded-lg border border-border/60 bg-muted/40 px-3 py-2 text-xs text-muted-foreground">
-                      Arrivee enregistree le{' '}
-                      {selectedOpenVisit.checkIn.toLocaleDateString('fr-FR', {
-                        day: '2-digit',
-                        month: '2-digit',
-                      })}{' '}
-                      a{' '}
-                      {selectedOpenVisit.checkIn.toLocaleTimeString('fr-FR', {
-                        hour: '2-digit',
-                        minute: '2-digit',
-                      })}{' '}
-                      · {selectedOpenVisit.variantName}
+                      {t('manualCheckout.arrivalInfo', {
+                        date: dateFormatter.format(selectedOpenVisit.checkIn),
+                        time: timeFormatter.format(selectedOpenVisit.checkIn),
+                        variant: selectedOpenVisit.variantName,
+                      })}
                     </div>
                   ) : null}
                 </div>
@@ -414,13 +430,13 @@ export default function PresencePage() {
                   onClick={() => setCheckoutDialogOpen(false)}
                   className="border-border/70"
                 >
-                  Annuler
+                  {t('manualCheckout.cancel')}
                 </Button>
                 <Button
                   onClick={() => checkoutMutation.mutate()}
                   disabled={!openVisits.length || checkoutMutation.isPending}
                 >
-                  {checkoutMutation.isPending ? 'Marquage...' : 'Enregistrer la sortie'}
+                  {checkoutMutation.isPending ? t('manualCheckout.submitPending') : t('manualCheckout.submit')}
                 </Button>
               </DialogFooter>
             </DialogContent>
@@ -431,8 +447,8 @@ export default function PresencePage() {
             disabled={visitsQuery.isFetching}
             className="border-border/70"
           >
-            <RefreshCw className="mr-2 h-4 w-4 animate-spin" hidden={!visitsQuery.isFetching} />
-            {visitsQuery.isFetching ? 'Actualisation...' : 'Actualiser'}
+            <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
+            {visitsQuery.isFetching ? t('actions.refreshing') : t('actions.refresh')}
           </Button>
         </div>
       </div>
@@ -441,11 +457,13 @@ export default function PresencePage() {
         <div className="flex items-start gap-3 rounded-xl border border-amber-200/70 bg-amber-50 px-4 py-3 text-sm text-amber-900">
           <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-600" />
           <div className="space-y-1">
-            <p className="font-semibold">Aggregation multi-salles verrouillee</p>
+            <p className="font-semibold">{t('multiVariantLocked.title')}</p>
             <p>
-              Les statistiques consolidees sont reservees au plan Enterprise. Selectionnez une salle ou{' '}
-              <Link href="/dashboard/settings" className="font-semibold text-amber-900 underline">mettez a niveau</Link>{' '}
-              pour debloquer la vue reseau.
+              {t('multiVariantLocked.body')}{' '}
+              <Link href="/dashboard/settings" className="font-semibold text-amber-900 underline">
+                {t('multiVariantLocked.upgrade')}
+              </Link>
+              .
             </p>
           </div>
         </div>
@@ -478,7 +496,7 @@ export default function PresencePage() {
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm text-muted-foreground">Visites</CardTitle>
+            <CardTitle className="text-sm text-muted-foreground">{t('summary.visits')}</CardTitle>
           </CardHeader>
           <CardContent className="flex items-center gap-2 text-2xl font-semibold">
             <Activity className="h-5 w-5 text-primary" />
@@ -487,7 +505,7 @@ export default function PresencePage() {
         </Card>
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm text-muted-foreground">Visiteurs uniques</CardTitle>
+            <CardTitle className="text-sm text-muted-foreground">{t('summary.unique')}</CardTitle>
           </CardHeader>
           <CardContent className="flex items-center gap-2 text-2xl font-semibold">
             <Users className="h-5 w-5 text-primary" />
@@ -496,18 +514,18 @@ export default function PresencePage() {
         </Card>
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm text-muted-foreground">Présents</CardTitle>
+            <CardTitle className="text-sm text-muted-foreground">{t('summary.present')}</CardTitle>
           </CardHeader>
           <CardContent className="flex items-center gap-2 text-2xl font-semibold">
             <Badge variant="secondary" className="bg-emerald-50 text-emerald-700">
               {summary.currentInside.toLocaleString()}
             </Badge>
-            <span className="text-sm text-muted-foreground">Sortie non scannée</span>
+            <span className="text-sm text-muted-foreground">{t('summary.pendingCheckout')}</span>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm text-muted-foreground">Durée moyenne</CardTitle>
+            <CardTitle className="text-sm text-muted-foreground">{t('summary.averageDuration')}</CardTitle>
           </CardHeader>
           <CardContent className="flex items-center gap-2 text-2xl font-semibold">
             <Clock3 className="h-5 w-5 text-primary" />
@@ -518,7 +536,7 @@ export default function PresencePage() {
 
       {visitsQuery.isError ? (
         <div className="flex items-center gap-2 rounded-lg border border-destructive/40 bg-destructive/10 p-4 text-sm text-destructive">
-          Impossible de charger les visites.
+          {t('errors.load')}
         </div>
       ) : null}
 
@@ -533,7 +551,7 @@ export default function PresencePage() {
       {visitsQuery.isLoading ? (
         <Card>
           <CardHeader className="pb-3">
-            <CardTitle>Dernières visites</CardTitle>
+            <CardTitle>{t('recent.title')}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
             <Skeleton className="h-10 w-full" />

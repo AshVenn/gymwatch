@@ -1,6 +1,8 @@
 'use client'
 
 import Link from 'next/link'
+import { useLocale, useTranslations } from 'next-intl'
+import { useMemo } from 'react'
 import { AccessEventSource, AccessEventStatus } from '@prisma/client'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -13,7 +15,6 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import { cn } from '@/lib/utils'
-import { ACCESS_EVENT_STATUS_LABELS } from '@/lib/access-events'
 import { ExternalLink, Trash2 } from 'lucide-react'
 
 const statusColors: Record<AccessEventStatus, string> = {
@@ -43,12 +44,6 @@ const statusColors: Record<AccessEventStatus, string> = {
     'dark:border-rose-400 dark:bg-rose-500/40 dark:text-rose-50',
 }
 
-const sourceLabels: Record<AccessEventSource, string> = {
-  QR_SCAN: 'Scan QR',
-  SIMULATOR: 'Simulateur',
-  MANUAL: 'Marquage manuel',
-}
-
 const sourceColors: Record<AccessEventSource, string> = {
   QR_SCAN:
     'border border-indigo-500 bg-indigo-50 text-indigo-800 ' +
@@ -60,11 +55,6 @@ const sourceColors: Record<AccessEventSource, string> = {
     'border border-slate-500 bg-slate-50 text-slate-800 ' +
     'dark:border-slate-400 dark:bg-slate-500/40 dark:text-slate-50',
 }
-
-const dateFormatter = new Intl.DateTimeFormat('fr-FR', {
-  dateStyle: 'medium',
-  timeStyle: 'short',
-})
 
 export type AccessLogRow = {
   id: string
@@ -89,10 +79,44 @@ interface AccessLogTableProps {
 }
 
 export function AccessLogTable({ events, onDelete, deletingId }: AccessLogTableProps) {
+  const t = useTranslations('dashboard.accessLogs.table')
+  const locale = useLocale()
+  const dateFormatter = useMemo(
+    () =>
+      new Intl.DateTimeFormat(locale === 'en' ? 'en-US' : locale === 'ar' ? 'ar' : 'fr-FR', {
+        dateStyle: 'medium',
+        timeStyle: 'short',
+      }),
+    [locale],
+  )
+
+  const statusLabels = useMemo(
+    () => ({
+      GRANTED: t('status.granted'),
+      CHECKED_OUT: t('status.checkedOut'),
+      SESSION_OVERSTAY: t('status.sessionOverstay'),
+      ALREADY_CHECKED_IN: t('status.alreadyCheckedIn'),
+      DENIED_DAILY_LIMIT: t('status.deniedDailyLimit'),
+      DENIED_EXPIRED: t('status.deniedExpired'),
+      DENIED_INACTIVE: t('status.deniedInactive'),
+      DENIED_FORBIDDEN: t('status.deniedForbidden'),
+    }),
+    [t],
+  )
+
+  const sourceLabels = useMemo(
+    () => ({
+      QR_SCAN: t('source.qr'),
+      SIMULATOR: t('source.simulator'),
+      MANUAL: t('source.manual'),
+    }),
+    [t],
+  )
+
   if (!events.length) {
     return (
       <div className="rounded-2xl border border-border/70 bg-card/70 p-8 text-center text-muted-foreground">
-        Aucun evenement d'acces pour le moment.
+        {t('empty')}
       </div>
     )
   }
@@ -102,21 +126,21 @@ export function AccessLogTable({ events, onDelete, deletingId }: AccessLogTableP
       <Table>
         <TableHeader>
           <TableRow className="bg-muted/60 text-muted-foreground">
-            <TableHead>Date</TableHead>
-            <TableHead>Membre</TableHead>
-            <TableHead>Variante</TableHead>
-            <TableHead>Statut</TableHead>
-            <TableHead>Source</TableHead>
-            <TableHead className="text-right">Actions</TableHead>
+            <TableHead>{t('columns.date')}</TableHead>
+            <TableHead>{t('columns.member')}</TableHead>
+            <TableHead>{t('columns.variant')}</TableHead>
+            <TableHead>{t('columns.status')}</TableHead>
+            <TableHead>{t('columns.source')}</TableHead>
+            <TableHead className="text-right">{t('columns.actions')}</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {events.map((event) => {
-            const statusLabel = ACCESS_EVENT_STATUS_LABELS[event.status]
+            const statusLabel = statusLabels[event.status]
             const sourceLabel = sourceLabels[event.source]
             const memberName = event.member
               ? `${event.member.firstName} ${event.member.lastName}`.trim()
-              : 'Membre supprime'
+              : t('deletedMember')
             const flagged =
               event.sessionOverdue ||
               event.status === AccessEventStatus.SESSION_OVERSTAY ||
@@ -152,7 +176,7 @@ export function AccessLogTable({ events, onDelete, deletingId }: AccessLogTableP
                         variant="outline"
                         className="border border-destructive bg-destructive/10 px-2 py-0.5 text-xs font-semibold text-destructive"
                       >
-                        Periode depassee
+                        {t('overdue')}
                       </Badge>
                     ) : null}
                     {[AccessEventStatus.DENIED_DAILY_LIMIT, AccessEventStatus.SESSION_OVERSTAY].includes(
@@ -162,7 +186,7 @@ export function AccessLogTable({ events, onDelete, deletingId }: AccessLogTableP
                         variant="outline"
                         className="border border-destructive/60 bg-destructive/5 px-2 py-0.5 text-[11px] font-semibold text-destructive"
                       >
-                        Alerte limite
+                        {t('limitAlert')}
                       </Badge>
                     ) : null}
                   </div>
@@ -181,7 +205,7 @@ export function AccessLogTable({ events, onDelete, deletingId }: AccessLogTableP
                       <Button variant="outline" size="sm" asChild className="border-border/70">
                         <Link href={`/dashboard/members/${event.member.id}/badge`}>
                           <ExternalLink className="mr-2 h-4 w-4" />
-                          Badge
+                          {t('badge')}
                         </Link>
                       </Button>
                     ) : null}
@@ -194,7 +218,7 @@ export function AccessLogTable({ events, onDelete, deletingId }: AccessLogTableP
                         onClick={() => onDelete(event.id)}
                       >
                         <Trash2 className="mr-1 h-4 w-4" />
-                        Supprimer
+                        {t('delete')}
                       </Button>
                     ) : null}
                   </div>

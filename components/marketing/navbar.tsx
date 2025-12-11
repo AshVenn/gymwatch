@@ -1,6 +1,7 @@
 'use client'
 
 import {useEffect, useMemo, useState, useTransition} from 'react'
+import type {ComponentProps} from 'react'
 import Image from 'next/image'
 import {useSession, signOut} from 'next-auth/react'
 import {Check, Globe2, LayoutDashboard, LogOut, Menu, User, X} from 'lucide-react'
@@ -14,13 +15,16 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import {ThemeToggle} from '@/components/theme-toggle'
-import {Link, getPathname, routing, usePathname, useRouter, type AppLocale} from '@/i18n/routing'
+import {Link, routing, usePathname, useRouter, type AppLocale} from '@/i18n/routing'
 import {getMarketingCopy, getMarketingNavLinks} from '@/lib/marketing-content'
 import {cn} from '@/lib/utils'
 
+// Infer the correct href type from next-intl's Link
+type LinkHref = ComponentProps<typeof Link>['href']
+
 type NavLink = {
   label: string
-  href: string
+  href: LinkHref
 }
 
 interface MarketingNavbarProps {
@@ -38,9 +42,13 @@ export function MarketingNavbar({links = [], className}: MarketingNavbarProps) {
   const [isPending, startTransition] = useTransition()
 
   const localeCopy = getMarketingCopy(locale)
-  const computedLinks = links.length
+
+  const computedLinks: NavLink[] = links.length
     ? links
-    : getMarketingNavLinks(locale, {useHomeAnchors: pathname === '/' || pathname === ''})
+    : (getMarketingNavLinks(locale, {
+        // TS2367 fix: no need to compare to ''
+        useHomeAnchors: pathname === '/',
+      }) as NavLink[])
 
   const localeOptions = useMemo(
     () =>
@@ -78,7 +86,7 @@ export function MarketingNavbar({links = [], className}: MarketingNavbarProps) {
     }
   }, [locale, localeCopy.hero.home.primaryCta])
 
-  const dashboardRoute = useMemo(() => {
+  const dashboardRoute: LinkHref = useMemo(() => {
     if (!session?.user?.role) return '/dashboard'
     return session.user.role === 'SUPER_ADMIN' ? '/super-admin' : '/dashboard'
   }, [session?.user?.role])
@@ -93,12 +101,27 @@ export function MarketingNavbar({links = [], className}: MarketingNavbarProps) {
   const isAuthPage =
     pathname === '/login' || pathname === '/register' || (pathname ? pathname.startsWith('/request-demo') : false)
 
+  const stripLocale = (path: string) => {
+    const raw = path || '/'
+    return routing.locales.reduce((current, code) => {
+      const prefix = `/${code}`
+      if (current === prefix) return '/'
+      if (current.startsWith(`${prefix}/`)) return current.slice(prefix.length) || '/'
+      return current
+    }, raw)
+  }
+
   const handleLocaleChange = (targetLocale: AppLocale) => {
     if (targetLocale === locale) return
-    const target = getPathname({locale: targetLocale, href: pathname || '/'})
+
+    const rawPath = pathname || '/'
+    const cleanPath = stripLocale(rawPath) || '/'
+
     setMenuOpen(false)
+
     startTransition(() => {
-      router.replace(target)
+      // Let next-intl router handle locale prefixing – no nested /fr/ar anymore
+      router.replace({pathname: cleanPath as any}, {locale: targetLocale})
       router.refresh()
     })
   }
@@ -108,8 +131,8 @@ export function MarketingNavbar({links = [], className}: MarketingNavbarProps) {
       className={cn(
         'sticky top-0 z-40 border-b border-border/30',
         isScrolled
-          ? 'bg-background/80 shadow-sm supports-[backdrop-filter]:bg-background/70 supports-[backdrop-filter]:backdrop-blur'
-          : 'bg-background/40 supports-[backdrop-filter]:bg-background/70 supports-[backdrop-filter]:backdrop-blur',
+          ? 'bg-background/80 shadow-sm supports-backdrop-filter:bg-background/70 supports-backdrop-filter:backdrop-blur'
+          : 'bg-background/40 supports-backdrop-filter:bg-background/70 supports-backdrop-filter:backdrop-blur',
         className,
       )}
     >
@@ -133,7 +156,7 @@ export function MarketingNavbar({links = [], className}: MarketingNavbarProps) {
 
         <nav className="hidden items-center gap-8 text-sm font-medium text-muted-foreground md:flex">
           {computedLinks.map((link) => (
-            <Link key={link.href} href={link.href} className="relative transition hover:text-foreground group">
+            <Link key={String(link.href)} href={link.href} className="relative transition hover:text-foreground group">
               {link.label}
               <span className="absolute bottom-0 left-0 h-0.5 w-0 bg-primary transition-all duration-300 group-hover:w-full" />
             </Link>
@@ -216,7 +239,7 @@ export function MarketingNavbar({links = [], className}: MarketingNavbarProps) {
           <div className="space-y-2 px-4 pb-4">
             {computedLinks.map((link) => (
               <Link
-                key={link.href}
+                key={String(link.href)}
                 href={link.href}
                 className="block rounded-lg border border-border/60 px-4 py-2 text-sm transition hover:bg-primary/10"
                 onClick={() => setMenuOpen(false)}
@@ -250,7 +273,11 @@ export function MarketingNavbar({links = [], className}: MarketingNavbarProps) {
                 <Button className="w-full transition hover:scale-105" onClick={() => router.push('/request-demo')}>
                   {authCopy.requestDemo}
                 </Button>
-                <Button variant="ghost" className="w-full transition hover:text-primary" onClick={() => router.push('/login')}>
+                <Button
+                  variant="ghost"
+                  className="w-full transition hover:text-primary"
+                  onClick={() => router.push('/login')}
+                >
                   {authCopy.login}
                 </Button>
               </>

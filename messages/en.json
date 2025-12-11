@@ -1,6 +1,950 @@
 {
   "common": {
-    "localeLabel": "English (beta)",
-    "comingSoon": "Translations will be added soon."
+    "localeLabel": "English",
+    "comingSoon": "Detailed translations coming soon."
+  },
+    "marketing": {
+    "home": {
+      "hero": {
+        "eyebrow": "Gym management SaaS",
+        "title": "Modern operations for multi-site gyms",
+        "subtitle": "Memberships, access control and billing in one place.",
+        "description": "GymWatch centralizes clubs, members and revenue in a premium experience designed for growing gym networks.",
+        "primaryCta": "Book a demo",
+        "secondaryCta": "Sign in",
+        "dashboard": {
+          "title": "GymWatch dashboard",
+          "description": "Consolidated multi-site view, access control and revenue flows.",
+          "imageAlt": "GymWatch dashboard – gym management software",
+          "chips": {
+            "access": "Access control",
+            "kpi": "Live KPIs",
+            "payments": "Secure payments"
+          }
+        }
+      },
+      "stats": {
+        "clubs": {
+          "value": "+180",
+          "label": "Clubs managed",
+          "detail": "SaaS for gyms and multi-site fitness networks"
+        },
+        "members": {
+          "value": "42k",
+          "label": "Members tracked",
+          "detail": "Membership and access control management"
+        },
+        "satisfaction": {
+          "value": "98%",
+          "label": "Satisfaction",
+          "detail": "Premium onboarding and dedicated support"
+        }
+      },
+      "pillars": {
+        "multiSite": {
+          "title": "Multi-club / multi-site",
+          "body": "Consolidated view of all clubs, centralized control and granular permissions per team."
+        },
+        "accessControl": {
+          "title": "Real-time access control",
+          "body": "QR codes, badges and presence tracking to secure your entries."
+        },
+        "billing": {
+          "title": "Memberships and billing",
+          "body": "Payments, clean invoices and automatic reminders without spreadsheets."
+        }
+      },
+      "features": {
+        "directorView": {
+          "title": "Network director view",
+          "body": "Consolidated dashboards for your multi-site KPIs and club traffic."
+        },
+        "access": {
+          "title": "Access control",
+          "body": "Instant logs, alerts and permission control by club, badge or QR code."
+        },
+        "automation": {
+          "title": "Automations and reminders",
+          "body": "Email/SMS for renewals, failed payments and expirations to reduce churn."
+        },
+        "subscriptions": {
+          "title": "Membership management",
+          "body": "Contracts, freeze, renewals and proration for clear billing."
+        },
+        "teams": {
+          "title": "Team supervision",
+          "body": "Roles, permissions and audit log of sensitive actions for each club."
+        },
+        "reporting": {
+          "title": "Exportable reporting",
+          "body": "CSV/PDF exports for finance, accounting and franchise partners."
+        },
+        "security": {
+          "title": "Reliability & security",
+          "body": "Encryption, backups and uptime for robust gym management software."
+        },
+        "api": {
+          "title": "API & integrations",
+          "body": "Connect your CRM, marketing site or turnstiles without losing data."
+        }
+      },
+      "testimonials": {
+        "amine": {
+          "quote": "GymWatch brought structure to our multi-club network. Indicators are clear and access control prevents misuse.",
+          "author": "Amine L.",
+          "role": "Network director (8 clubs)"
+        },
+        "sarah": {
+          "quote": "Automated reminders lowered our unpaid invoices and freed time at the front desk. Premium interface, zero friction.",
+          "author": "Sarah M.",
+          "role": "COO fitness franchise"
+        },
+        "youssef": {
+          "quote": "Onboarding in 48 hours, responsive team, secure data. It’s the gym SaaS we were looking for.",
+          "author": "Youssef K.",
+          "role": "Operations manager"
+        }
+      },
+      "faq": {
+        "q1": {
+          "question": "Does the software support multi-club / multi-site networks?",
+          "answer": "Yes. GymWatch provides a consolidated view and per-club filters for members, memberships, access control and reporting."
+        },
+        "q2": {
+          "question": "How does access control work?",
+          "answer": "QR codes or badges, real-time validation and instant alerts. Permissions are driven by location, membership type and time slots."
+        },
+        "q3": {
+          "question": "Can reminders and payments be automated?",
+          "answer": "Yes, email/SMS reminders for due dates and failed payments are built-in. Invoices are generated automatically and can be exported."
+        },
+        "q4": {
+          "question": "Is there help for rollout and onboarding?",
+          "answer": "Our team helps you migrate data, configure access and train staff in just a few days."
+        },
+        "q5": {
+          "question": "Is the service secure?",
+          "answer": "Encryption, backups, granular roles and audit logs of sensitive actions for reliable gym management software."
+        }
+      },
+      "plans": {
+        "recommended": "Recommended",
+        "cta": "Book a demo",
+        "toggle": {
+          "monthly": "Monthly",
+          "annual": "Annual (-{discount}%)"
+        },
+        "billing": {
+          "perMonth": "/ month",
+          "monthlyHint": "Monthly billing, cancel anytime",
+          "annualHint": "Billed {amount} / year",
+          "annualSave": "Save {discount}% with annual billing"
+        },
+        "catalog": {
+          "basic": {
+            "name": "Basic",
+            "description": "Essential features to centralize your members.",
+            "badges": ["Email support", "Due date alerts"],
+            "features": [
+              "Member and membership management",
+              "Expiration alerts and reminders",
+              "Essential analytics",
+              "Priority email support"
+            ]
+          },
+          "pro": {
+            "name": "Pro",
+            "description": "Automations, QR codes and advanced exports.",
+            "badges": ["QR codes", "Excel exports"],
+            "features": [
+              "Everything in Basic",
+              "QR code access control",
+              "Real-time presence tracking",
+              "Success/failure sound alerts",
+              "Excel exports for revenue & loyalty",
+              "Multi-club PDF/Excel exports"
+            ]
+          },
+          "enterprise": {
+            "name": "Enterprise",
+            "description": "Multi-site offer with advanced automations and unlimited catalog.",
+            "badges": ["Unlimited locations", "Automations", "Classes & scheduling"],
+            "features": [
+              "Unlimited clubs and users",
+              "Advanced access control (QR, badge, member app)",
+              "Multi-site presence tracking",
+              "Classes & schedule management (multi-team)",
+              "Full CSV/PDF exports",
+              "Detailed multi-site analytics",
+              "Marketing scenarios (email/SMS) in progress"
+            ]
+          }
+        }
+      },
+      "sections": {
+        "why": {
+          "eyebrow": "Why GymWatch?",
+          "title": "Built for multi-site gym networks",
+          "description": "Gym management software that aligns HQ and club teams: access control, memberships, reporting and automations in one interface.",
+          "cta": "See all features"
+        },
+        "features": {
+          "eyebrow": "Features",
+          "title": "A complete, scalable platform",
+          "description": "Multi-site control, membership and access management, automations and exportable reports.",
+          "cta": "Explore in detail"
+        },
+        "plans": {
+          "eyebrow": "Plans",
+          "title": "Pricing designed for growth",
+          "description": "Compare monthly and annual plans (-{discount}%) and roll out GymWatch to one or many clubs in just a few days."
+        },
+        "testimonials": {
+          "eyebrow": "Testimonials",
+          "title": "Networks already running on GymWatch",
+          "description": "Franchises and independent groups running their clubs with premium gym management SaaS."
+        },
+        "faq": {
+          "eyebrow": "FAQ",
+          "title": "Frequently asked questions",
+          "description": "Key answers about access control, membership management, multi-site networks and security.",
+          "cta": "View all questions"
+        },
+        "contact": {
+          "eyebrow": "Contact / Support",
+          "title": "Need a multi-site rollout?",
+          "description": "Our team helps you deploy GymWatch across your network: scoping, migration, training and continuous optimization.",
+          "primaryCta": "Book a demo",
+          "secondaryCta": "Email us",
+          "supportTitle": "Premium support",
+          "supportSubtitle": "Response in under 24 business hours",
+          "emailLabel": "Email:",
+          "availability": "Availability: 8:00–19:00 CET",
+          "deployment": "Rollout: multi-club, multi-site, franchises."
+        }
+      }
+    }
+  },
+  "auth": {
+    "login": {
+      "toasts": {
+        "demoRequested": "Demo request sent. You will receive access details by email.",
+        "loginSuccess": "Login successful."
+      },
+      "errors": {
+        "planInactive": "Your subscription is inactive. Please renew it.",
+        "invalidCredentials": "Incorrect credentials.",
+        "unexpected": "Unexpected error."
+      },
+      "marketing": {
+        "badge": "Management platform",
+        "headline": "Welcome to {brand}",
+        "subtitle": "Manage your gym with a modern, intuitive and high-performance platform. Access all your data in real time."
+      },
+      "features": {
+        "security": "Advanced security",
+        "performance": "Optimized performance",
+        "analytics": "Real-time analytics"
+      },
+      "form": {
+        "title": "Sign in",
+        "subtitle": "Access your GymWatch space",
+        "emailLabel": "Email",
+        "emailPlaceholder": "you@gym.ma",
+        "passwordLabel": "Password",
+        "passwordPlaceholder": "••••••••",
+        "submitPending": "Signing in...",
+        "submit": "Sign in"
+      },
+      "footer": {
+        "noAccount": "No account yet?",
+        "requestDemo": "Request a demo"
+      }
+    }
+  },
+  "dashboard": {
+    "classes": {
+      "planLabel": {
+        "basic": "Basic",
+        "pro": "Pro",
+        "enterprise": "Enterprise"
+      },
+      "page": {
+        "unauthenticated": "Access denied. Please sign in.",
+        "noGym": "No gym linked to your account.",
+        "subtitle": "Schedule your sessions and monitor reservations."
+      },
+      "locked": {
+        "title": "Classes and schedule not available on this plan",
+        "description": "Class creation, weekly calendar, and waitlists are included in the Enterprise plan."
+      },
+      "week": {
+        "prev": "-1w",
+        "next": "+1w"
+      },
+      "actions": {
+        "new": "New class"
+      },
+      "errors": {
+        "load": "Unable to load classes.",
+        "save": "Unable to save.",
+        "delete": "Unable to delete.",
+        "unauthenticated": "Access denied. Please sign in.",
+        "noGym": "No gym linked to your account."
+      },
+      "validation": {
+        "dateTime": "Invalid date or time.",
+        "variantRequired": "Variant is required."
+      },
+      "toasts": {
+        "saved": "Class saved.",
+        "deleted": "Class deleted."
+      },
+      "table": {
+        "columns": {
+          "title": "Class",
+          "coach": "Coach",
+          "room": "Room",
+          "schedule": "Schedule",
+          "variant": "Location",
+          "capacity": "Spots",
+          "actions": "Actions"
+        },
+        "details": "Details",
+        "edit": "Edit",
+        "delete": "Delete",
+        "confirmDelete": "Delete this class?",
+        "waitlist": "+{count} waitlist",
+        "emptyWeek": "No classes this week."
+      },
+      "dialog": {
+        "editTitle": "Edit class",
+        "addTitle": "Add class",
+        "submitPending": "Saving...",
+        "submitUpdate": "Update",
+        "submitCreate": "Create class"
+      }
+    },
+    "classesDetail": {
+      "page": {
+        "unauthenticated": "Access denied. Please sign in.",
+        "noGym": "No gym linked to your account.",
+        "enterpriseOnly": "Class management is available on the Enterprise plan only."
+      },
+      "header": {
+        "back": "Back",
+        "coachFallback": "Coach not set",
+        "roomFallback": "Room to be defined",
+        "edit": "Edit",
+        "delete": "Delete",
+        "confirmDelete": "Delete this class?"
+      },
+      "stats": {
+        "title": "Capacity & members",
+        "capacityLabel": "confirmed / {capacity} spots",
+        "waitlistLabel": "Waitlist",
+        "freeLabel": "Free",
+        "listTitle": "Waitlist",
+        "listEnabled": "Enabled",
+        "listDisabled": "Disabled"
+      },
+      "schedule": {
+        "title": "Schedule"
+      },
+      "coachRoom": {
+        "title": "Coach & room",
+        "coachFallback": "Coach not set",
+        "roomLabel": "Room:",
+        "roomFallback": "To be defined"
+      },
+      "bookingForm": {
+        "title": "Add a booking",
+        "subtitle": "{booked} confirmed, {waitlist} on waitlist, limit {capacity} participants",
+        "memberLabel": "Member",
+        "memberPlaceholder": "Select a member",
+        "addButton": "Add",
+        "membersLoadError": "Unable to load members.",
+        "membersLoading": "Loading members...",
+        "membersCount": "{count} members available"
+      },
+      "table": {
+        "columns": {
+          "member": "Member",
+          "contact": "Contact",
+          "status": "Status",
+          "createdAt": "Added on",
+          "actions": "Actions"
+        },
+        "position": "Position {position}",
+        "cancelled": "Cancelled",
+        "cancel": "Cancel",
+        "empty": "No bookings for this class."
+      },
+      "status": {
+        "confirmed": "Confirmed",
+        "waitlisted": "Waitlist",
+        "cancelled": "Cancelled"
+      },
+      "errors": {
+        "loadClass": "Unable to load class.",
+        "loadMembers": "Unable to load members.",
+        "chooseMember": "Choose a member.",
+        "reservation": "Unable to create booking.",
+        "cancel": "Unable to cancel booking.",
+        "update": "Unable to update class.",
+        "delete": "Unable to delete class.",
+        "dateTime": "Invalid date or time.",
+        "variantRequired": "Variant is required."
+      },
+      "toasts": {
+        "reservationSaved": "Booking saved.",
+        "reservationCancelled": "Booking cancelled.",
+        "classUpdated": "Class updated.",
+        "classDeleted": "Class deleted."
+      },
+      "dialog": {
+        "editTitle": "Edit class",
+        "submitPending": "Updating...",
+        "submit": "Save"
+      }
+    },
+    "nav": {
+      "dashboard": "Dashboard",
+      "members": "Members",
+      "accessLogs": "Access logs",
+      "presence": "Presence",
+      "classes": "Classes",
+      "subscriptions": "Subscriptions",
+      "plans": "Plans",
+      "settings": "Settings"
+    },
+    "shell": {
+      "subscriptionExpired": "Your subscription is expired or suspended. Please contact support.",
+      "loading": "Loading...",
+      "roles": {
+        "superAdmin": "Super admin",
+        "admin": "Admin",
+        "owner": "Owner",
+        "user": "User"
+      },
+      "userFallback": "User",
+      "planLabel": "Plan",
+      "billing": {
+        "annual": "Annual",
+        "monthly": "Monthly",
+        "generic": "Billing"
+      },
+      "console": "Console",
+      "closeMenu": "Close sidebar",
+      "openMenu": "Open sidebar",
+      "exit": "Sign out",
+      "signOut": "Sign out",
+      "demoBadge": "Demo"
+    },
+    "accessLogs": {
+      "title": "Access logs",
+      "subtitle": "Latest scans, manual entries, and simulator tests.",
+      "filters": {
+        "searchLabel": "Search",
+        "searchPlaceholder": "Name, email...",
+        "statusLabel": "Status",
+        "sourceLabel": "Source",
+        "allPlaceholder": "All",
+        "from": "From",
+        "to": "To",
+        "reset": "Reset",
+        "statusOptions": {
+          "all": "All statuses",
+          "granted": "Access granted",
+          "checkedOut": "Checkout recorded",
+          "sessionOverstay": "Session overstay",
+          "alreadyCheckedIn": "Already checked in",
+          "dailyLimit": "Daily limit",
+          "expired": "Expired",
+          "inactive": "Inactive",
+          "forbidden": "Not allowed"
+        },
+        "sourceOptions": {
+          "all": "All sources",
+          "qr": "QR scan",
+          "simulator": "Simulator",
+          "manual": "Manual mark"
+        }
+      },
+      "locked": {
+        "title": "Access control not included",
+        "description": "Access logs are available from the Pro plan."
+      },
+      "actions": {
+        "refreshing": "Refreshing...",
+        "refresh": "Refresh"
+      },
+      "multiVariantLocked": {
+        "title": "Multi-location view locked",
+        "body": "Select a location to view its logs. Combined view is available on the Enterprise plan."
+      },
+      "summary": {
+        "total": "Total",
+        "granted": "Granted",
+        "successRate": "{rate}% of entries",
+        "denied": "Denied",
+        "already": "Already counted",
+        "checkouts": "Check-outs"
+      },
+      "errors": {
+        "load": "Unable to load access logs",
+        "delete": "Delete failed",
+        "unauthenticated": "Access denied. Please sign in."
+      },
+      "toasts": {
+        "deleted": "Event deleted"
+      },
+      "tableCount": "{count} event(s) (last 200)",
+      "limitAlerts": "Limit alerts: {count}",
+      "sessionLimit": "Max session: {value} min",
+      "table": {
+        "columns": {
+          "date": "Date",
+          "member": "Member",
+          "variant": "Location",
+          "status": "Status",
+          "source": "Source",
+          "actions": "Actions"
+        },
+        "status": {
+          "granted": "Access granted",
+          "checkedOut": "Checkout recorded",
+          "sessionOverstay": "Session overstay",
+          "alreadyCheckedIn": "Already checked in",
+          "deniedDailyLimit": "Daily limit reached",
+          "deniedExpired": "Subscription expired",
+          "deniedInactive": "Subscription inactive",
+          "deniedForbidden": "Not allowed"
+        },
+        "source": {
+          "qr": "QR scan",
+          "simulator": "Simulator",
+          "manual": "Manual"
+        },
+        "empty": "No access events yet.",
+        "deletedMember": "Deleted member",
+        "overdue": "Period exceeded",
+        "limitAlert": "Limit alert",
+        "badge": "Badge",
+        "delete": "Delete"
+      }
+    },
+    "plans": {
+      "errors": {
+        "loadLimits": "Unable to load plan limits",
+        "unauthorized": "Unauthorized. Session expired?",
+        "server": "Server error.",
+        "save": "Unable to save.",
+        "delete": "Unable to delete."
+      },
+      "toasts": {
+        "limitBlocked": "Plan limit reached. Disable a plan or upgrade.",
+        "limitWarning": "Last active plan slot on this scope.",
+        "updated": "Plan updated successfully",
+        "created": "Plan created successfully",
+        "deleted": "Plan deleted successfully"
+      },
+      "validation": {
+        "variantRequired": "Choose a variant for this plan.",
+        "visitsPerDay": "Invalid visits per day.",
+        "sessionDuration": "Invalid max session duration.",
+        "confirmDelete": "Are you sure you want to delete this plan?"
+      },
+      "page": {
+        "loadingUser": "Loading user...",
+        "unauthenticated": "Access denied. Please sign in.",
+        "noGym": "No gym linked to your account.",
+        "title": "Subscription plans",
+        "description": "Control the offers available to your members.",
+        "stats": {
+          "active": "active",
+          "inactive": "inactive",
+          "total": "plans"
+        },
+        "helper": "Adjust duration, price, and status to stay aligned with your goals.",
+        "ctaAdd": "Add plan",
+        "limits": {
+          "title": "Plan limits",
+          "description": "Limits active based on your plan. Disable a plan to free a slot.",
+          "variantLabel": "Variant",
+          "networkLabel": "Network",
+          "blocked": "Limit reached: disable an active plan or upgrade to increase your catalog.",
+          "warning": "Last active plan slot available on this scope."
+        },
+        "dialog": {
+          "editTitle": "Edit plan",
+          "addTitle": "Add plan",
+          "variant": "Variant",
+          "assignedVariant": "Assigned variant",
+          "variantPlaceholder": "Choose a variant",
+          "default": "(default)",
+          "name": "Plan name",
+          "namePlaceholder": "e.g. Monthly",
+          "duration": "Duration (days)",
+          "price": "Price (MAD)",
+          "visitsPerDay": "Visits per day",
+          "unlimited": "Unlimited",
+          "visitsHelper": "Limit daily entries or enable unlimited mode.",
+          "sessionLimit": "Max per session (minutes)",
+          "sessionLimitVariant": "Variant: {limit} min",
+          "sessionLimitFallback": "Follows global limit",
+          "sessionLimitPlaceholder": "Inherit from variant",
+          "sessionLimitHelper": "Leave empty to use the variant or gym value.",
+          "active": "Active",
+          "saving": "Saving...",
+          "update": "Update",
+          "create": "Create"
+        },
+        "loadError": "Unable to load plans.",
+        "table": {
+          "name": "Plan name",
+          "duration": "Duration (days)",
+          "price": "Price (MAD)",
+          "visits": "Visits/day",
+          "session": "Max session (min)",
+          "active": "Active",
+          "variant": "Variant",
+          "actions": "Actions",
+          "unlimited": "Unlimited",
+          "variantGym": "Variant/gym",
+          "yes": "Yes",
+          "no": "No",
+          "edit": "Edit",
+          "delete": "Delete",
+          "found": "{count} plan(s) found",
+          "page": "Page {page} / {pages}"
+        }
+      }
+    },
+    "presence": {
+      "title": "Presence tracking",
+      "subtitle": "View visits by location and monitor daily occupancy.",
+      "locked": {
+        "title": "Presence tracking unavailable on this plan",
+        "description": "Live presence and attendance charts are available from the Pro plan."
+      },
+      "actions": {
+        "refreshing": "Refreshing...",
+        "refresh": "Refresh"
+      },
+      "manualCheckout": {
+        "trigger": "Manual checkout",
+        "title": "Mark a checkout",
+        "description": "Record a manual checkout for an ongoing visit and adjust the time if needed.",
+        "noOpenVisits": "No ongoing visits.",
+        "visitLabel": "Ongoing visit",
+        "visitPlaceholder": "Choose a visit",
+        "checkoutDate": "Checkout date",
+        "checkoutTime": "Checkout time",
+        "windowFrom": "Start window (optional)",
+        "windowTo": "End window (optional)",
+        "arrivalInfo": "Check-in recorded on {date} at {time} - {variant}",
+        "cancel": "Cancel",
+        "submit": "Save checkout",
+        "submitPending": "Saving...",
+        "toasts": {
+          "base": "Checkout recorded",
+          "member": " for {memberName}",
+          "duration": " ({minutes} min)",
+          "limit": " - limit {limit} min exceeded",
+          "overstay": " - session overstay"
+        }
+      },
+      "summary": {
+        "visits": "Visits",
+        "unique": "Unique visitors",
+        "present": "Inside",
+        "pendingCheckout": "Checkout not scanned",
+        "averageDuration": "Average duration"
+      },
+      "multiVariantLocked": {
+        "title": "Multi-location aggregation locked",
+        "body": "Consolidated stats are reserved for the Enterprise plan. Select a location or",
+        "upgrade": "upgrade"
+      },
+      "recent": {
+        "title": "Recent visits"
+      },
+      "errors": {
+        "load": "Unable to load visits",
+        "checkout": "Unable to register checkout",
+        "noSelection": "Select an ongoing visit",
+        "unauthenticated": "Access denied. Please sign in."
+      }
+    },
+      "members": {
+             "badge": {
+        "errors": {
+          "loadMember": "Unable to load member.",
+          "loadAccess": "Unable to load member access events.",
+          "simulation": "Unable to run simulation.",
+          "notFoundTitle": "Member not found",
+          "notFoundBody": "Check the identifier or go back to the members list."
+        },
+        "page": {
+          "backToMembers": "Back to members",
+          "backLabel": "Members",
+          "title": "Badge for {firstName} {lastName}",
+          "subtitle": "QR code, subscription status, and access simulations."
+        },
+        "profile": {
+          "title": "Profile",
+          "noContact": "No contact information",
+          "lastVisit": "Last visit: {date}",
+          "tokenLabel": "Token"
+        },
+        "subscription": {
+          "status": {
+            "active": "Active",
+            "expiresToday": "Expires today",
+            "expired": "Expired"
+          }
+        },
+        "qr": {
+          "title": "QR badge",
+          "lockedTitle": "QR codes reserved for the Pro plan",
+          "lockedBody": "Upgrade your plan to view and download badges.",
+          "imageAlt": "Member QR code",
+          "generating": "Generating QR...",
+          "copyToken": "Copy token",
+          "download": "Download"
+        },
+        "simulator": {
+          "title": "Scan simulator",
+          "lockedTitle": "Pro or Enterprise plan required",
+          "lockedBody": "Enable access control to simulate scans and record events.",
+          "panelTitle": "Simulate a pass",
+          "panelDescription": "Record an access event for this badge. Optionally mark a visit.",
+          "panelMarkVisit": "Mark visit",
+          "runPending": "Simulating...",
+          "runLabel": "Run simulation",
+          "latestTitle": "Latest status",
+          "latestEmpty": "No recent events.",
+          "toasts": {
+            "base": "Simulation recorded"
+          }
+        },
+        "events": {
+          "title": "Recent events"
+        },
+        "status": {
+          "GRANTED": {
+            "label": "Access granted",
+            "message": "Badge is valid and subscription is active."
+          },
+          "CHECKED_OUT": {
+            "label": "Checkout recorded",
+            "message": "Checkout has been recorded for this visit."
+          },
+          "SESSION_OVERSTAY": {
+            "label": "Session overstay",
+            "message": "Maximum session duration exceeded for this visit."
+          },
+          "DENIED_DAILY_LIMIT": {
+            "label": "Daily limit reached",
+            "message": "Daily quota exceeded for this member."
+          },
+          "ALREADY_CHECKED_IN": {
+            "label": "Already counted",
+            "message": "This member has already been counted today."
+          },
+          "DENIED_EXPIRED": {
+            "label": "Subscription expired",
+            "message": "Subscription is expired. Renew before restoring access."
+          },
+          "DENIED_INACTIVE": {
+            "label": "Subscription inactive",
+            "message": "No active subscription or delayed start."
+          },
+          "DENIED_FORBIDDEN": {
+            "label": "Variant not allowed",
+            "message": "This badge is not allowed for this location."
+          }
+        },
+        "toasts": {
+          "tokenCopied": "Token copied",
+          "tokenCopyError": "Unable to copy token"
+        }
+      },
+      "page": {
+        "loadingUser": "Loading user...",
+        "unauthenticated": "Access denied. Please sign in.",
+        "noGym": "No gym linked to your account.",
+        "title": "Members",
+        "description": "Manage the members of your gym.",
+        "totalCount": "{count, plural, one {# member total} other {# members total}}",
+        "pageLabel": "Page {page} / {pages}"
+      },
+      "errors": {
+        "loadMembers": "Unable to load members",
+        "loadPlans": "Unable to load plans",
+        "genericMembers": "Unable to load members.",
+        "saveMember": "Unable to save member",
+        "deleteMember": "Unable to delete member",
+        "markVisit": "Unable to mark visit"
+      },
+      "variantSelector": {
+        "lockedMessage": "Multi-location view and exports are reserved for the Enterprise plan."
+      },
+      "visitsDialog": {
+        "trigger": "Mark a visit",
+        "title": "Mark a member present",
+        "description": "Search for a member and record their visit for today.",
+        "searchPlaceholder": "Search by name or email",
+        "empty": "No members found.",
+        "noContact": "No contact info",
+        "variantLabel": "Location: {variant}",
+        "actions": {
+          "saving": "Saving...",
+          "submit": "Confirm"
+        }
+      },
+      "form": {
+        "addMember": "Add member",
+        "editTitle": "Edit member",
+        "addTitle": "Add member",
+        "variantLabel": "Variant",
+        "assignedVariantFallback": "Assigned variant",
+        "variantPlaceholder": "Choose a variant",
+        "defaultTag": "(default)",
+        "firstName": {
+          "label": "First name"
+        },
+        "lastName": {
+          "label": "Last name"
+        },
+        "email": {
+          "label": "Email"
+        },
+        "phone": {
+          "label": "Phone"
+        },
+        "plan": {
+          "label": "Plan",
+          "nonePlaceholder": "None",
+          "noneOption": "No plan"
+        },
+        "startDate": {
+          "label": "Start date",
+          "placeholder": "Choose a date"
+        },
+        "actions": {
+          "saving": "Saving...",
+          "update": "Update",
+          "create": "Add"
+        }
+      },
+      "qr": {
+        "tools": {
+          "title": "Member QR codes",
+          "description": "Scan a member to instantly check their subscription.",
+          "hideScanner": "Hide scanner",
+          "showScanner": "Enable scanner",
+          "lockedBanner": "QR generation and scan tools are available on the Pro plan.",
+          "modeLabel": "Mode",
+          "modeIn": "Check-in",
+          "modeOut": "Check-out",
+          "helper": "Place a QR code in front of the camera to see the scan result."
+        },
+        "dialog": {
+          "title": "Member QR",
+          "descriptionWithName": "QR code for {firstName} {lastName}",
+          "descriptionFallback": "Member QR code",
+          "imageAlt": "Member QR",
+          "loading": "Generating QR...",
+          "tokenLabel": "Token: {token}",
+          "download": "Download QR"
+        }
+      },
+      "scanner": {
+        "checkout": {
+          "overstay": "Checkout registered (session limit {limitLabel} exceeded)",
+          "sessionLimitLabel": "session",
+          "successWithDuration": "Checkout registered ({duration} min)",
+          "success": "Checkout registered"
+        },
+        "success": {
+          "accessGranted": "Access granted"
+        },
+        "warnings": {
+          "lastVisitAvailable": "Last available visit ({remaining} left)"
+        },
+        "errors": {
+          "invalidScan": "Invalid scan",
+          "inactive": "Subscription inactive",
+          "dailyLimit": "Daily limit reached",
+          "invalidOrNotFound": "Invalid QR or member not found",
+          "cameraPermissionDenied": "Camera permission denied",
+          "scanError": "Error during scan"
+        },
+        "generic": {
+          "unknownMember": "Unknown member",
+          "errorTitle": "Error",
+          "scannerTitle": "QR scanner"
+        }
+      },
+      "reports": {
+        "errors": {
+          "exportFailed": "Export failed",
+          "downloadFailed": "Unable to download member report"
+        }
+      },
+      "validation": {
+        "nameRequired": "First name and last name are required.",
+        "variantRequired": "Choose a variant for this member."
+      },
+      "toasts": {
+        "memberUpdated": "Member updated successfully",
+        "memberCreated": "New member added.",
+        "saveError": "Error while saving.",
+        "memberDeleted": "Member deleted successfully",
+        "deleteError": "Unable to delete member",
+        "qrPlanOnly": "Member QR code is reserved for the Pro plan",
+        "visitInactive": "Subscription inactive or expired",
+        "visitLimitReached": "{name} has reached the daily limit",
+        "visitLastOfDay": "Last visit of the day for {name}{remainingLabel}",
+        "visitRecorded": "{name} checked in ({count} visit(s) today){remainingLabel}"
+      },
+      "visits": {
+        "fullNameFallback": "Member",
+        "remainingLabel": " - {remaining} remaining"
+      },
+      "table": {
+        "summary": {
+          "totalCount": "{count, plural, one {# member total} other {# members total}}",
+          "pageLabel": "Page {page} / {pages}"
+        },
+        "columns": {
+          "firstName": "First name",
+          "lastName": "Last name",
+          "email": "Email",
+          "phone": "Phone",
+          "createdAt": "Signup date",
+          "variant": "Variant",
+          "actions": "Actions"
+        },
+        "actions": {
+          "markVisit": "Mark visit",
+          "edit": "Edit",
+          "qrCode": "Member QR code",
+          "statsExcel": "Excel stats",
+          "exportPending": "Export...",
+          "delete": "Delete"
+        }
+      },
+      "deleteDialog": {
+        "title": "Delete member",
+        "descriptionWithName": "This action will delete {firstName} {lastName}. Active subscriptions will remain.",
+        "descriptionFallback": "Confirm member deletion.",
+        "cancel": "Cancel",
+        "pending": "Deleting...",
+        "confirm": "Delete"
+      }
+    }
   }
 }

@@ -2,6 +2,7 @@
 
 import { useSession } from 'next-auth/react'
 import { useEffect, useMemo, useState } from 'react'
+import { useLocale, useTranslations } from 'next-intl'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import {
@@ -59,6 +60,8 @@ interface GymPlanLimits {
 }
 
 export default function PlansPage() {
+  const t = useTranslations('dashboard.plans')
+  const locale = useLocale()
   const { data: session, status } = useSession()
   const queryClient = useQueryClient()
   const gymId = session?.user?.gymId ?? null
@@ -71,6 +74,7 @@ export default function PlansPage() {
     defaultVariantId,
     isLoading: variantsLoading,
   } = useVariantOptions()
+  const numberLocale = locale === 'en' ? 'en-US' : locale === 'ar' ? 'ar' : 'fr-FR'
 
   const { data: gymInfo } = useQuery<GymPlanLimits>({
     queryKey: ['gym', 'plan-limits', gymId],
@@ -79,7 +83,7 @@ export default function PlansPage() {
       const response = await fetch('/api/gym')
       const body = await response.json().catch(() => ({}))
       if (!response.ok) {
-        throw new Error(body.error || 'Impossible de charger les limites des plans')
+        throw new Error(body.error || t('errors.loadLimits'))
       }
       return body as GymPlanLimits
     },
@@ -140,10 +144,10 @@ export default function PlansPage() {
 
       if (!response.ok) {
         if (response.status === 401) {
-          throw new Error('Non autorise. Session expiree ?')
+          throw new Error(t('errors.unauthorized'))
         }
 
-        throw new Error('Erreur serveur.')
+        throw new Error(t('errors.server'))
       }
 
       const data = await response.json()
@@ -179,7 +183,7 @@ export default function PlansPage() {
   const capBlocked = variantCapState === 'BLOCKED' || networkCapState === 'BLOCKED'
   const capWarning = !capBlocked && (variantCapState === 'WARNING' || networkCapState === 'WARNING')
   const formatLimitLabel = (limit: number | null, unlimited?: boolean) =>
-    unlimited || limit === null || limit < 0 ? 'Illimite' : String(limit)
+    unlimited || limit === null || limit < 0 ? t('page.table.unlimited') : String(limit)
 
   const selectedVariantLimit = useMemo(() => {
     const variant = variants.find((entry) => entry.id === effectivePlanVariantId)
@@ -188,11 +192,11 @@ export default function PlansPage() {
 
   const handleAddPlan = () => {
     if (capBlocked) {
-      toast.error('Limite de plans atteinte pour votre configuration. Desactivez un plan ou upgradez.')
+      toast.error(t('toasts.limitBlocked'))
       return
     }
     if (capWarning) {
-      toast.warning('Derniere creation active disponible sur ce perimetre.')
+      toast.warning(t('toasts.limitWarning'))
     }
     setEditingId(null)
     setFormData({
@@ -272,10 +276,10 @@ export default function PlansPage() {
       })
       setEditingId(null)
       queryClient.invalidateQueries({ queryKey: planQueryKey })
-      toast.success(editingId ? 'Plan mis a jour avec succes' : 'Plan cree avec succes')
+      toast.success(editingId ? t('toasts.updated') : t('toasts.created'))
     },
     onError: (err) => {
-      const message = err instanceof Error ? err.message : 'Erreur lors de la sauvegarde.'
+      const message = err instanceof Error ? err.message : t('errors.save')
       setError(message)
       toast.error(message)
     },
@@ -294,10 +298,10 @@ export default function PlansPage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: planQueryKey })
-      toast.success('Plan supprime avec succes')
+      toast.success(t('toasts.deleted'))
     },
     onError: (err) => {
-      const message = err instanceof Error ? err.message : 'Erreur lors de la suppression.'
+      const message = err instanceof Error ? err.message : t('errors.delete')
       setError(message)
       toast.error(message)
     },
@@ -305,12 +309,12 @@ export default function PlansPage() {
 
   const handleSubmit = () => {
     if (!effectivePlanVariantId) {
-      toast.error('Choisissez une variante pour ce plan.')
+      toast.error(t('validation.variantRequired'))
       return
     }
     const parsedVisits = formData.unlimitedVisits ? -1 : parseInt(formData.visitsPerDay, 10)
     if (!formData.unlimitedVisits && (!Number.isFinite(parsedVisits) || parsedVisits < 1)) {
-      toast.error('Nombre de visites par jour invalide.')
+      toast.error(t('validation.visitsPerDay'))
       return
     }
     const trimmedLimit = formData.maxSessionMinutes.trim()
@@ -318,7 +322,7 @@ export default function PlansPage() {
     if (trimmedLimit) {
       const numericLimit = Number(trimmedLimit)
       if (!Number.isFinite(numericLimit) || numericLimit <= 0) {
-        toast.error('Durée max de session invalide.')
+        toast.error(t('validation.sessionDuration'))
         return
       }
       parsedSessionLimit = Math.trunc(numericLimit)
@@ -326,23 +330,24 @@ export default function PlansPage() {
     savePlanMutation.mutate({ visitsPerDay: parsedVisits, maxSessionMinutes: parsedSessionLimit })
   }
 
+
   const handleDeletePlan = (planId: string) => {
-    if (confirm('Etes-vous sur de vouloir supprimer ce plan ?')) {
+    if (confirm(t('validation.confirmDelete'))) {
       deletePlanMutation.mutate(planId)
     }
   }
 
   const renderContent = () => {
     if (status === 'loading') {
-      return <div>Chargement de l utilisateur...</div>
+      return <div>{t('page.loadingUser')}</div>
     }
 
     if (status === 'unauthenticated') {
-      return <div className="text-red-500 font-medium">Acces refuse. Vous devez etre connecte.</div>
+      return <div className="text-red-500 font-medium">{t('page.unauthenticated')}</div>
     }
 
     if (!gymId) {
-      return <div className="text-red-500 font-medium">Aucun gymnase associe a votre compte.</div>
+      return <div className="text-red-500 font-medium">{t('page.noGym')}</div>
     }
 
     if (plansLoading || variantsLoading) {
@@ -374,28 +379,26 @@ export default function PlansPage() {
         <Card className="border border-border/70 bg-card">
           <CardHeader className="flex flex-wrap items-center justify-between gap-4">
             <div>
-              <CardTitle>Plans d abonnement</CardTitle>
-              <CardDescription>Controlez les offres proposees a vos membres.</CardDescription>
+              <CardTitle>{t('page.title')}</CardTitle>
+              <CardDescription>{t('page.description')}</CardDescription>
             </div>
             <div className="inline-flex gap-4 text-sm text-muted-foreground">
               <span>
-                <span className="font-semibold text-foreground">{planStats.active}</span> actifs
+                <span className="font-semibold text-foreground">{planStats.active}</span> {t('page.stats.active')}
               </span>
               <span>
-                <span className="font-semibold text-foreground">{planStats.inactive}</span> inactifs
+                <span className="font-semibold text-foreground">{planStats.inactive}</span> {t('page.stats.inactive')}
               </span>
               <span>
-                <span className="font-semibold text-foreground">{planStats.total}</span> plans
+                <span className="font-semibold text-foreground">{planStats.total}</span> {t('page.stats.total')}
               </span>
             </div>
           </CardHeader>
           <CardContent className="flex flex-wrap items-center justify-between gap-4">
-            <p className="text-sm text-muted-foreground">
-              Ajustez la duree, le prix et le statut de vos plans pour rester aligne avec vos objectifs.
-            </p>
+            <p className="text-sm text-muted-foreground">{t('page.helper')}</p>
             <Button onClick={handleAddPlan}>
               <Plus className="mr-2 h-4 w-4" />
-              Ajouter un plan
+              {t('page.ctaAdd')}
             </Button>
           </CardContent>
         </Card>
@@ -412,26 +415,26 @@ export default function PlansPage() {
           >
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div className="space-y-1">
-                <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-muted-foreground">Limites plans</p>
-                <p className="text-xs text-muted-foreground">
-                  Limites actives selon votre formule. Desactivez un plan pour liberer un slot.
-                </p>
+                <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-muted-foreground">{t('page.limits.title')}</p>
+                <p className="text-xs text-muted-foreground">{t('page.limits.description')}</p>
               </div>
               <div className="flex flex-wrap items-center gap-2 text-xs">
                 <Badge variant="outline" className="border-border/70 bg-background/60">
-                  Variante: {activeVariantCount}/{formatLimitLabel(variantLimit, planLimits.unlimitedPerVariant)}
+                  {t('page.limits.variantLabel')}: {activeVariantCount}/
+                  {formatLimitLabel(variantLimit, planLimits.unlimitedPerVariant)}
                 </Badge>
                 <Badge variant="outline" className="border-border/70 bg-background/60">
-                  Reseau: {activePlans.length}/{formatLimitLabel(networkLimit, planLimits.unlimitedPerNetwork)}
+                  {t('page.limits.networkLabel')}: {activePlans.length}/
+                  {formatLimitLabel(networkLimit, planLimits.unlimitedPerNetwork)}
                 </Badge>
               </div>
             </div>
             {capBlocked ? (
               <p className="mt-2 text-xs font-semibold text-destructive">
-                Limite atteinte: desactivez un plan actif ou passez au plan superieur pour augmenter le catalogue.
+                {t('page.limits.blocked')}
               </p>
             ) : capWarning ? (
-              <p className="mt-2 text-xs font-medium text-amber-800">Dernier plan actif disponible sur ce perimetre.</p>
+              <p className="mt-2 text-xs font-medium text-amber-800">{t('page.limits.warning')}</p>
             ) : null}
           </div>
         ) : null}
@@ -439,27 +442,27 @@ export default function PlansPage() {
         <Dialog open={isOpen} onOpenChange={setIsOpen}>
           <DialogContent className="max-w-md sm:max-w-lg w-[95vw]">
             <DialogHeader>
-              <DialogTitle>{editingId ? 'Modifier le plan' : 'Ajouter un plan'}</DialogTitle>
+              <DialogTitle>{editingId ? t('page.dialog.editTitle') : t('page.dialog.addTitle')}</DialogTitle>
             </DialogHeader>
 
             {error && <p className="text-sm text-destructive">{error}</p>}
 
             <div className="space-y-4">
               <div>
-                <Label htmlFor="plan-variant">Variante</Label>
+                <Label htmlFor="plan-variant">{t('page.dialog.variant')}</Label>
                 {isGymAdmin ? (
                   <p className="text-sm text-muted-foreground">
-                    {variants.find((variant) => variant.id === lockedVariantId)?.name ?? 'Variante assignee'}
+                    {variants.find((variant) => variant.id === lockedVariantId)?.name ?? t('page.dialog.assignedVariant')}
                   </p>
                 ) : (
                   <Select value={effectivePlanVariantId} onValueChange={(value) => setPlanVariantId(value)}>
                     <SelectTrigger id="plan-variant">
-                      <SelectValue placeholder="Choisir une variante" />
+                      <SelectValue placeholder={t('page.dialog.variantPlaceholder')} />
                     </SelectTrigger>
                     <SelectContent>
                       {(variants ?? []).map((variant) => (
                         <SelectItem key={variant.id} value={variant.id}>
-                          {variant.name} {variant.isDefault ? '(par defaut)' : ''}
+                          {variant.name} {variant.isDefault ? t('page.dialog.default') : ''}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -467,17 +470,17 @@ export default function PlansPage() {
                 )}
               </div>
               <div>
-                <Label htmlFor="plan-name">Nom du plan</Label>
+                <Label htmlFor="plan-name">{t('page.dialog.name')}</Label>
                 <Input
                   id="plan-name"
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  placeholder="Ex: Mensuel"
+                  placeholder={t('page.dialog.namePlaceholder')}
                 />
               </div>
 
               <div>
-                <Label htmlFor="plan-duration">Duree en jours</Label>
+                <Label htmlFor="plan-duration">{t('page.dialog.duration')}</Label>
                 <Input
                   id="plan-duration"
                   type="number"
@@ -488,7 +491,7 @@ export default function PlansPage() {
               </div>
 
               <div>
-                <Label htmlFor="plan-price">Prix (MAD)</Label>
+                <Label htmlFor="plan-price">{t('page.dialog.price')}</Label>
                 <Input
                   id="plan-price"
                   type="number"
@@ -501,7 +504,7 @@ export default function PlansPage() {
 
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
-                  <Label htmlFor="plan-visits">Visites par jour</Label>
+                  <Label htmlFor="plan-visits">{t('page.dialog.visitsPerDay')}</Label>
                   <div className="flex items-center gap-2">
                     <Switch
                       id="plan-visits-unlimited"
@@ -515,7 +518,7 @@ export default function PlansPage() {
                       }
                     />
                     <Label htmlFor="plan-visits-unlimited" className="text-sm text-muted-foreground">
-                      Illimite
+                      {t('page.dialog.unlimited')}
                     </Label>
                   </div>
                 </div>
@@ -529,15 +532,17 @@ export default function PlansPage() {
                   placeholder="1"
                 />
                 <p className="text-xs text-muted-foreground">
-                  Limitez les passages quotidiens ou activez le mode illimite.
+                  {t('page.dialog.visitsHelper')}
                 </p>
               </div>
 
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
-                  <Label htmlFor="plan-session-limit">Duree max par session (minutes)</Label>
+                  <Label htmlFor="plan-session-limit">{t('page.dialog.sessionLimit')}</Label>
                   <span className="text-xs text-muted-foreground">
-                    {selectedVariantLimit ? `Variante: ${selectedVariantLimit} min` : 'Suit la limite globale'}
+                    {selectedVariantLimit
+                      ? t('page.dialog.sessionLimitVariant', { limit: selectedVariantLimit })
+                      : t('page.dialog.sessionLimitFallback')}
                   </span>
                 </div>
                 <Input
@@ -546,16 +551,20 @@ export default function PlansPage() {
                   min={1}
                   value={formData.maxSessionMinutes}
                   onChange={(e) => setFormData({ ...formData, maxSessionMinutes: e.target.value })}
-                  placeholder={selectedVariantLimit ? String(selectedVariantLimit) : 'Herite du variant'}
+                  placeholder={
+                    selectedVariantLimit
+                      ? String(selectedVariantLimit)
+                      : t('page.dialog.sessionLimitPlaceholder')
+                  }
                 />
                 <p className="text-xs text-muted-foreground">
-                  Laissez vide pour utiliser la valeur de la variante ou du gymnase.
+                  {t('page.dialog.sessionLimitHelper')}
                 </p>
               </div>
 
               <div className="flex items-center justify-between">
                 <Label htmlFor="plan-active" className="text-sm font-medium">
-                  Actif
+                  {t('page.dialog.active')}
                 </Label>
                 <Switch
                   id="plan-active"
@@ -566,10 +575,10 @@ export default function PlansPage() {
 
               <Button onClick={handleSubmit} className="w-full" disabled={savePlanMutation.isPending}>
                 {savePlanMutation.isPending
-                  ? 'Enregistrement...'
+                  ? t('page.dialog.saving')
                   : editingId
-                    ? 'Mettre a jour'
-                    : 'Creer'}
+                    ? t('page.dialog.update')
+                    : t('page.dialog.create')}
               </Button>
             </div>
           </DialogContent>
@@ -577,50 +586,48 @@ export default function PlansPage() {
 
         {isError ? (
           <div className="rounded-3xl border border-destructive/40 bg-destructive/5 p-6 text-destructive">
-            Impossible de charger les plans.
+            {t('page.loadError')}
           </div>
         ) : (
           <div className="rounded-3xl border border-border/70 bg-card">
             {planPagination.data.length > 0 && (
               <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border/60 px-6 py-4 text-sm text-muted-foreground">
-                <span>
-                  {plans.length} plan{plans.length > 1 ? 's' : ''} trouve{plans.length > 1 ? 's' : ''}
-                </span>
+                <span>{t('page.table.found', { count: plans.length })}</span>
                 <span className="text-xs uppercase tracking-[0.3em] text-muted-foreground">
-                  Page {planPagination.page} / {planPagination.pageCount}
+                  {t('page.table.page', { page: planPagination.page, pages: planPagination.pageCount })}
                 </span>
               </div>
             )}
             <Table>
               <TableHeader>
                 <TableRow className="bg-muted/50 text-muted-foreground">
-                  <TableHead>Nom du plan</TableHead>
-                  <TableHead>Duree (jours)</TableHead>
-                  <TableHead>Prix (MAD)</TableHead>
-                  <TableHead>Visites/jour</TableHead>
-                  <TableHead>Session max (min)</TableHead>
-                  <TableHead>Actif</TableHead>
-                  <TableHead>Variante</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
+                  <TableHead>{t('page.table.name')}</TableHead>
+                  <TableHead>{t('page.table.duration')}</TableHead>
+                  <TableHead>{t('page.table.price')}</TableHead>
+                  <TableHead>{t('page.table.visits')}</TableHead>
+                  <TableHead>{t('page.table.session')}</TableHead>
+                  <TableHead>{t('page.table.active')}</TableHead>
+                  <TableHead>{t('page.table.variant')}</TableHead>
+                  <TableHead className="text-right">{t('page.table.actions')}</TableHead>
                 </TableRow>
               </TableHeader>
 
               <TableBody>
                 {planPagination.data.map((plan) => (
                   <TableRow key={plan.id} className="border-border/60">
-                    <TableCell className="font-medium">{plan.name}</TableCell>
-                    <TableCell>{plan.durationDays}</TableCell>
-                    <TableCell>{plan.price.toLocaleString('fr-FR')}</TableCell>
-                    <TableCell>{plan.visitsPerDay < 0 ? 'Illimite' : plan.visitsPerDay}</TableCell>
-                    <TableCell>
-                      {plan.maxSessionMinutes ? `${plan.maxSessionMinutes} min` : (
-                        <span className="text-xs text-muted-foreground">Variante/gym</span>
+                  <TableCell className="font-medium">{plan.name}</TableCell>
+                  <TableCell>{plan.durationDays}</TableCell>
+                  <TableCell>{plan.price.toLocaleString(numberLocale)}</TableCell>
+                  <TableCell>{plan.visitsPerDay < 0 ? t('page.table.unlimited') : plan.visitsPerDay}</TableCell>
+                  <TableCell>
+                    {plan.maxSessionMinutes ? `${plan.maxSessionMinutes} min` : (
+                        <span className="text-xs text-muted-foreground">{t('page.table.variantGym')}</span>
                       )}
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant={plan.isActive ? 'default' : 'secondary'}>
-                        {plan.isActive ? 'Oui' : 'Non'}
-                      </Badge>
+                  </TableCell>
+                  <TableCell>
+                    <Badge variant={plan.isActive ? 'default' : 'secondary'}>
+                      {plan.isActive ? t('page.table.yes') : t('page.table.no')}
+                    </Badge>
                     </TableCell>
                     <TableCell>{plan.gymVariant?.name ?? '-'}</TableCell>
 
@@ -632,21 +639,21 @@ export default function PlansPage() {
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
-                          <DropdownMenuItem onSelect={() => handleEditPlan(plan)}>
-                            <Edit2 className="mr-2" size={16} />
-                            Modifier
-                          </DropdownMenuItem>
+                        <DropdownMenuItem onSelect={() => handleEditPlan(plan)}>
+                          <Edit2 className="mr-2" size={16} />
+                          {t('page.table.edit')}
+                        </DropdownMenuItem>
 
-                          <DropdownMenuItem
-                            onSelect={() => handleDeletePlan(plan.id)}
-                            className="text-destructive"
-                          >
-                            <Trash2 className="mr-2" size={16} />
-                            Supprimer
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </TableCell>
+                        <DropdownMenuItem
+                          onSelect={() => handleDeletePlan(plan.id)}
+                          className="text-destructive"
+                        >
+                          <Trash2 className="mr-2" size={16} />
+                          {t('page.table.delete')}
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </TableCell>
                   </TableRow>
                 ))}
               </TableBody>

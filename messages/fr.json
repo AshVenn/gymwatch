@@ -2,5 +2,949 @@
   "common": {
     "localeLabel": "Français",
     "comingSoon": "Les traductions détaillées arrivent bientôt."
+  },
+   "marketing": {
+    "home": {
+      "hero": {
+        "eyebrow": "SaaS de gestion de salles de sport",
+        "title": "Le logiciel de gestion pour réseaux de salles de sport exigeants",
+        "subtitle": "Abonnements, contrôle d’accès et paiements en temps réel.",
+        "description": "GymWatch centralise vos clubs, vos membres et vos finances dans une expérience premium pensée pour les réseaux multi-salles.",
+        "primaryCta": "Demander une démo",
+        "secondaryCta": "Se connecter",
+        "dashboard": {
+          "title": "Dashboard GymWatch",
+          "description": "Vue consolidée multi-salles, contrôles d’accès et flux financiers.",
+          "imageAlt": "Dashboard GymWatch – logiciel de gestion de salle de sport",
+          "chips": {
+            "access": "Contrôle d’accès",
+            "kpi": "KPI en direct",
+            "payments": "Paiements sécurisés"
+          }
+        }
+      },
+      "stats": {
+        "clubs": {
+          "value": "+180",
+          "label": "Clubs gérés",
+          "detail": "SaaS pour salles de sport et réseaux multi-sites"
+        },
+        "members": {
+          "value": "42k",
+          "label": "Membres suivis",
+          "detail": "Gestion des abonnements et du contrôle d’accès"
+        },
+        "satisfaction": {
+          "value": "98%",
+          "label": "Satisfaction",
+          "detail": "Accompagnement premium et support dédié"
+        }
+      },
+      "pillars": {
+        "multiSite": {
+          "title": "Multi-salles / multi-sites",
+          "body": "Vue consolidée des clubs, pilotage centralisé et droits granulaires par équipe."
+        },
+        "accessControl": {
+          "title": "Contrôle d’accès en temps réel",
+          "body": "QR codes, badges et suivi de présence pour sécuriser vos entrées."
+        },
+        "billing": {
+          "title": "Abonnements et paiements",
+          "body": "Encaissement, factures propres et relances automatiques sans tableur."
+        }
+      },
+      "features": {
+        "directorView": {
+          "title": "Vue directeur réseau",
+          "body": "Tableaux de bord consolidés pour vos KPI multi-sites et la fréquentation par club."
+        },
+        "access": {
+          "title": "Contrôle d’accès",
+          "body": "Logs instantanés, alertes et contrôle des droits par salle, badge ou QR code."
+        },
+        "automation": {
+          "title": "Automatisations et relances",
+          "body": "Emails/SMS sur échéances, impayés et renouvellements pour réduire le churn."
+        },
+        "subscriptions": {
+          "title": "Gestion des abonnements",
+          "body": "Contrats, freeze, reconductions et prorata pour une facturation claire."
+        },
+        "teams": {
+          "title": "Supervision des équipes",
+          "body": "Rôles, permissions et audit des actions sensibles pour chaque club."
+        },
+        "reporting": {
+          "title": "Reporting exportable",
+          "body": "Exports CSV/PDF pour finances, comptabilité et franchiseurs."
+        },
+        "security": {
+          "title": "Fiabilité et sécurité",
+          "body": "Chiffrement, sauvegardes et disponibilité pour un logiciel de gestion de salle de sport robuste."
+        },
+        "api": {
+          "title": "API et intégrations",
+          "body": "Connexion à votre CRM, site vitrine ou tourniquets sans perdre de données."
+        }
+      },
+      "testimonials": {
+        "amine": {
+          "quote": "GymWatch a structuré notre réseau multi-salles. Les indicateurs sont clairs et le contrôle d’accès évite les abus.",
+          "author": "Amine L.",
+          "role": "Directeur réseau (8 salles)"
+        },
+        "sarah": {
+          "quote": "Les relances automatisées ont fait baisser nos impayés et libéré du temps à l’accueil. Interface premium, zéro friction.",
+          "author": "Sarah M.",
+          "role": "COO franchise fitness"
+        },
+        "youssef": {
+          "quote": "Onboarding en 48h, équipe réactive, données sécurisées. C’est le SaaS pour salles de sport que l’on cherchait.",
+          "author": "Youssef K.",
+          "role": "Responsable opérations"
+        }
+      },
+      "faq": {
+        "q1": {
+          "question": "Le logiciel gère-t-il les réseaux multi-salles / multi-sites ?",
+          "answer": "Oui. GymWatch offre une vue consolidée et des filtres par club pour vos membres, abonnements, contrôle d’accès et reporting."
+        },
+        "q2": {
+          "question": "Comment fonctionne le contrôle d’accès ?",
+          "answer": "QR codes ou badges, validation en temps réel et alertes immédiates. Les droits sont pilotés par site, type d’abonnement et plage horaire."
+        },
+        "q3": {
+          "question": "Peut-on automatiser les relances et paiements ?",
+          "answer": "Oui, les relances email/SMS sur échéances et impayés sont natives. Les factures sont générées automatiquement et exportables."
+        },
+        "q4": {
+          "question": "Y a-t-il un accompagnement au déploiement ?",
+          "answer": "Notre équipe vous accompagne dans la migration des données, la mise en place des accès et la formation des équipes en quelques jours."
+        },
+        "q5": {
+          "question": "Le service est-il sécurisé ?",
+          "answer": "Chiffrement, sauvegardes, rôles granulaires et audit des actions sensibles pour un logiciel de gestion de salle de sport fiable."
+        }
+      },
+      "plans": {
+        "recommended": "Recommandé",
+        "cta": "Demander une démo",
+        "toggle": {
+          "monthly": "Mensuel",
+          "annual": "Annuel (-{discount}%)"
+        },
+        "billing": {
+          "perMonth": "/ mois",
+          "monthlyHint": "Facturation mensuelle, sans engagement",
+          "annualHint": "Facturé {amount} / an",
+          "annualSave": "Économisez {discount}% avec l’annuel"
+        },
+        "catalog": {
+          "basic": {
+            "name": "Basic",
+            "description": "Fonctionnalités essentielles pour centraliser vos membres.",
+            "badges": ["Support email", "Alertes d’échéance"],
+            "features": [
+              "Gestion des membres et abonnements",
+              "Alertes d’expiration et relances",
+              "Analyses essentielles",
+              "Support email prioritaire"
+            ]
+          },
+          "pro": {
+            "name": "Pro",
+            "description": "Automatisations, QR codes et exports avancés.",
+            "badges": ["QR codes", "Exports Excel"],
+            "features": [
+              "Tout le plan Basic",
+              "Contrôle d’accès par QR code",
+              "Suivi de présence en temps réel",
+              "Alertes audio succès/échec",
+              "Exports Excel revenus & fidélité",
+              "Exports PDF/Excel multi-salles"
+            ]
+          },
+          "enterprise": {
+            "name": "Enterprise",
+            "description": "Offre multi-sites avec automatisations avancées et catalogue illimité.",
+            "badges": ["Multi-salles illimitées", "Automatisations", "Cours & planning"],
+            "features": [
+              "Salles et utilisateurs illimités",
+              "Contrôle d’accès avancé (QR, badge, app membre)",
+              "Suivi de présence multi-sites",
+              "Gestion des cours et planning (multi-équipes)",
+              "Exports CSV/PDF complets",
+              "Statistiques détaillées multi-sites",
+              "Scénarios marketing (emails/SMS) en préparation"
+            ]
+          }
+        }
+      },
+      "sections": {
+        "why": {
+          "eyebrow": "Pourquoi GymWatch ?",
+          "title": "Pensé pour les réseaux multi-salles",
+          "description": "Un logiciel de gestion de salle de sport qui aligne vos équipes siège et clubs : contrôle d’accès, abonnements, reporting et automatisations dans une seule interface.",
+          "cta": "Voir toutes les fonctionnalités"
+        },
+        "features": {
+          "eyebrow": "Fonctionnalités",
+          "title": "Une plateforme complète et évolutive",
+          "description": "Pilotage multi-sites, gestion des abonnements et du contrôle d’accès, automatisations et reporting exportable.",
+          "cta": "Explorer en détail"
+        },
+        "plans": {
+          "eyebrow": "Plans",
+          "title": "Plans et tarifs conçus pour la croissance",
+          "description": "Comparez les offres mensuelles ou annuelles (-{discount} %) et déployez GymWatch sur une ou plusieurs salles en quelques jours."
+        },
+        "testimonials": {
+          "eyebrow": "Témoignages",
+          "title": "Des réseaux qui exploitent déjà GymWatch",
+          "description": "Des franchises et groupes indépendants qui pilotent leurs clubs avec un SaaS de gestion de salle de sport premium."
+        },
+        "faq": {
+          "eyebrow": "FAQ",
+          "title": "Questions fréquentes",
+          "description": "Les réponses clés sur le contrôle d’accès, la gestion des abonnements, les réseaux multi-salles et la sécurité.",
+          "cta": "Voir toutes les questions"
+        },
+        "contact": {
+          "eyebrow": "Contact / Support",
+          "title": "Besoin d’un déploiement multi-salles ?",
+          "description": "Notre équipe vous accompagne pour la mise en place de GymWatch dans votre réseau : cadrage, migration, formation et optimisation continue.",
+          "primaryCta": "Demander une démo",
+          "secondaryCta": "Nous écrire",
+          "supportTitle": "Support premium",
+          "supportSubtitle": "Réponse en moins de 24h ouvrées",
+          "emailLabel": "Email :",
+          "availability": "Disponibilité : 8h00 - 19h00 CET",
+          "deployment": "Déploiement : multi-salles, multi-sites, franchises."
+        }
+      }
+    }
+  },
+  "auth": {
+    "login": {
+      "toasts": {
+        "demoRequested": "Demande de démo envoyée, vous recevrez vos accès dans votre boîte mail.",
+        "loginSuccess": "Connexion réussie."
+      },
+      "errors": {
+        "planInactive": "Votre abonnement est inactif. Merci de le renouveler.",
+        "invalidCredentials": "Identifiants incorrects.",
+        "unexpected": "Erreur inattendue."
+      },
+      "marketing": {
+        "badge": "Plateforme de gestion",
+        "headline": "Bienvenue sur {brand}",
+        "subtitle": "Gérez votre salle de sport avec une plateforme moderne, intuitive et performante. Accédez à toutes vos données en temps réel."
+      },
+      "features": {
+        "security": "Sécurité avancée",
+        "performance": "Performance optimale",
+        "analytics": "Analyses en temps réel"
+      },
+      "form": {
+        "title": "Connexion",
+        "subtitle": "Accédez à votre espace GymWatch",
+        "emailLabel": "Email",
+        "emailPlaceholder": "vous@salle.ma",
+        "passwordLabel": "Mot de passe",
+        "passwordPlaceholder": "••••••••",
+        "submitPending": "Connexion en cours...",
+        "submit": "Se connecter"
+      },
+      "footer": {
+        "noAccount": "Pas encore de compte ?",
+        "requestDemo": "Demander une démo"
+      }
+    }
+  },
+  "dashboard": {
+    "nav": {
+      "dashboard": "Tableau de bord",
+      "members": "Membres",
+      "accessLogs": "Journaux d'accès",
+      "presence": "Présence",
+      "classes": "Cours",
+      "subscriptions": "Abonnements",
+      "plans": "Plans",
+      "settings": "Paramètres"
+    },
+    "shell": {
+      "subscriptionExpired": "Votre abonnement est suspendu ou expiré. Merci de contacter le support.",
+      "loading": "Chargement...",
+      "roles": {
+        "superAdmin": "Super admin",
+        "admin": "Admin",
+        "owner": "Propriétaire",
+        "user": "Utilisateur"
+      },
+      "userFallback": "Utilisateur",
+      "planLabel": "Plan",
+      "billing": {
+        "annual": "Annuel",
+        "monthly": "Mensuel",
+        "generic": "Facturation"
+      },
+      "console": "Console",
+      "closeMenu": "Fermer le menu latéral",
+      "openMenu": "Ouvrir le menu latéral",
+      "exit": "Quitter",
+      "signOut": "Se déconnecter",
+      "demoBadge": "Démo"
+    },
+       "classes": {
+      "planLabel": {
+        "basic": "Basic",
+        "pro": "Pro",
+        "enterprise": "Enterprise"
+      },
+      "page": {
+        "unauthenticated": "Accès refusé. Connectez-vous.",
+        "noGym": "Aucun gymnase associé à votre compte.",
+        "subtitle": "Planifiez vos sessions et suivez les réservations."
+      },
+      "locked": {
+        "title": "Cours et planning indisponibles sur ce plan",
+        "description": "La création de cours, l'agenda hebdomadaire et les listes d'attente sont inclus dans le plan Enterprise."
+      },
+      "week": {
+        "prev": "-1w",
+        "next": "+1w"
+      },
+      "actions": {
+        "new": "Nouveau cours"
+      },
+      "errors": {
+        "load": "Impossible de charger les cours.",
+        "save": "Erreur lors de la sauvegarde.",
+        "delete": "Suppression impossible.",
+        "unauthenticated": "Accès refusé. Connectez-vous.",
+        "noGym": "Aucun gymnase associé à votre compte."
+      },
+      "validation": {
+        "dateTime": "Date ou heure invalide.",
+        "variantRequired": "Variante obligatoire."
+      },
+      "toasts": {
+        "saved": "Cours enregistré.",
+        "deleted": "Cours supprimé."
+      },
+      "table": {
+        "columns": {
+          "title": "Cours",
+          "coach": "Coach",
+          "room": "Salle",
+          "schedule": "Horaire",
+          "variant": "Variante",
+          "capacity": "Places",
+          "actions": "Actions"
+        },
+        "details": "Détails",
+        "edit": "Modifier",
+        "delete": "Supprimer",
+        "confirmDelete": "Supprimer ce cours ?",
+        "waitlist": "+{count} attente",
+        "emptyWeek": "Aucun cours sur cette semaine."
+      },
+      "dialog": {
+        "editTitle": "Modifier le cours",
+        "addTitle": "Ajouter un cours",
+        "submitPending": "Enregistrement...",
+        "submitUpdate": "Mettre à jour",
+        "submitCreate": "Créer le cours"
+      },
+          "classesDetail": {
+      "page": {
+        "unauthenticated": "Accès refusé. Connectez-vous.",
+        "noGym": "Aucun gymnase associé à votre compte.",
+        "enterpriseOnly": "La gestion des cours est réservée au plan Enterprise."
+      },
+      "header": {
+        "back": "Retour",
+        "coachFallback": "Coach non renseigné",
+        "roomFallback": "Salle à définir",
+        "edit": "Modifier",
+        "delete": "Supprimer",
+        "confirmDelete": "Supprimer ce cours ?"
+      },
+      "stats": {
+        "title": "Capacité et membres",
+        "capacityLabel": "confirmés / {capacity} places",
+        "waitlistLabel": "En attente",
+        "freeLabel": "Libres",
+        "listTitle": "Liste d’attente",
+        "listEnabled": "Activée",
+        "listDisabled": "Désactivée"
+      },
+      "schedule": {
+        "title": "Horaires"
+      },
+      "coachRoom": {
+        "title": "Coach et salle",
+        "coachFallback": "Coach non renseigné",
+        "roomLabel": "Salle :",
+        "roomFallback": "À définir"
+      },
+      "bookingForm": {
+        "title": "Ajouter une réservation",
+        "subtitle": "{booked} confirmés, {waitlist} en attente, limite de {capacity} participants",
+        "memberLabel": "Membre",
+        "memberPlaceholder": "Choisir un membre",
+        "addButton": "Ajouter",
+        "membersLoadError": "Impossible de charger les membres.",
+        "membersLoading": "Chargement des membres...",
+        "membersCount": "{count} membres disponibles"
+      },
+      "table": {
+        "columns": {
+          "member": "Membre",
+          "contact": "Contact",
+          "status": "Statut",
+          "createdAt": "Ajouté le",
+          "actions": "Actions"
+        },
+        "position": "Position {position}",
+        "cancelled": "Annulé",
+        "cancel": "Annuler",
+        "empty": "Aucune réservation pour ce cours."
+      },
+      "status": {
+        "confirmed": "Confirmé",
+        "waitlisted": "Attente",
+        "cancelled": "Annulé"
+      },
+      "errors": {
+        "loadClass": "Impossible de charger le cours.",
+        "loadMembers": "Impossible de charger les membres.",
+        "chooseMember": "Choisissez un membre.",
+        "reservation": "Réservation impossible.",
+        "cancel": "Annulation impossible.",
+        "update": "Mise à jour impossible.",
+        "delete": "Suppression impossible.",
+        "dateTime": "Date ou heure invalide.",
+        "variantRequired": "Variante obligatoire."
+      },
+      "toasts": {
+        "reservationSaved": "Réservation enregistrée.",
+        "reservationCancelled": "Réservation annulée.",
+        "classUpdated": "Cours mis à jour.",
+        "classDeleted": "Cours supprimé."
+      },
+      "dialog": {
+        "editTitle": "Modifier le cours",
+        "submitPending": "Mise à jour...",
+        "submit": "Enregistrer"
+      }
+    }
+    },
+    "accessLogs": {
+      "title": "Journaux d'accès",
+      "subtitle": "Derniers passages, scans et marquages.",
+      "filters": {
+        "searchLabel": "Recherche",
+        "searchPlaceholder": "Nom, email...",
+        "statusLabel": "Statut",
+        "sourceLabel": "Source",
+        "allPlaceholder": "Tous",
+        "from": "Du",
+        "to": "Au",
+        "reset": "Réinitialiser",
+        "statusOptions": {
+          "all": "Tous les statuts",
+          "granted": "Accès autorisé",
+          "checkedOut": "Sortie enregistrée",
+          "sessionOverstay": "Session dépassée",
+          "alreadyCheckedIn": "Déjà comptabilisé",
+          "dailyLimit": "Limite journalière",
+          "expired": "Abonnement expiré",
+          "inactive": "Abonnement inactif",
+          "forbidden": "Non autorisé"
+        },
+        "sourceOptions": {
+          "all": "Toutes les sources",
+          "qr": "Scan QR",
+          "simulator": "Simulateur",
+          "manual": "Marquage manuel"
+        }
+      },
+      "locked": {
+        "title": "Contrôle d'accès non inclus",
+        "description": "Le journal des accès est disponible à partir du plan Pro."
+      },
+      "actions": {
+        "refreshing": "Actualisation...",
+        "refresh": "Actualiser"
+      },
+      "multiVariantLocked": {
+        "title": "Vue multi-salles indisponible",
+        "body": "Sélectionnez une salle pour voir ses journaux. La vue combinée est incluse dans le plan Enterprise."
+      },
+      "summary": {
+        "total": "Total",
+        "granted": "Accès autorisés",
+        "successRate": "{rate}% des entrées",
+        "denied": "Refus",
+        "already": "Déjà comptés",
+        "checkouts": "Sorties"
+      },
+      "errors": {
+        "load": "Impossible de charger les accès",
+        "delete": "Suppression impossible",
+        "unauthenticated": "Accès refusé. Merci de vous connecter."
+      },
+      "toasts": {
+        "deleted": "Événement supprimé"
+      },
+      "tableCount": "{count} événement(s) (200 derniers)",
+      "limitAlerts": "Alertes limites : {count}",
+      "sessionLimit": "Durée max : {value} min",
+      "table": {
+        "columns": {
+          "date": "Date",
+          "member": "Membre",
+          "variant": "Variante",
+          "status": "Statut",
+          "source": "Source",
+          "actions": "Actions"
+        },
+        "status": {
+          "granted": "Accès autorisé",
+          "checkedOut": "Sortie enregistrée",
+          "sessionOverstay": "Session dépassée",
+          "alreadyCheckedIn": "Déjà comptabilisé",
+          "deniedDailyLimit": "Limite journalière atteinte",
+          "deniedExpired": "Abonnement expiré",
+          "deniedInactive": "Abonnement inactif",
+          "deniedForbidden": "Non autorisé"
+        },
+        "source": {
+          "qr": "Scan QR",
+          "simulator": "Simulateur",
+          "manual": "Manuel"
+        },
+        "empty": "Aucun événement d'accès pour le moment.",
+        "deletedMember": "Membre supprimé",
+        "overdue": "Période dépassée",
+        "limitAlert": "Alerte limite",
+        "badge": "Badge",
+        "delete": "Supprimer"
+      }
+    },
+    "plans": {
+      "errors": {
+        "loadLimits": "Impossible de charger les limites des plans",
+        "unauthorized": "Non autorisé. Session expirée ?",
+        "server": "Erreur serveur.",
+        "save": "Erreur lors de la sauvegarde.",
+        "delete": "Erreur lors de la suppression."
+      },
+      "toasts": {
+        "limitBlocked": "Limite de plans atteinte. Désactivez un plan ou mettez à niveau.",
+        "limitWarning": "Dernière création active disponible sur ce périmètre.",
+        "updated": "Plan mis à jour avec succès",
+        "created": "Plan créé avec succès",
+        "deleted": "Plan supprimé avec succès"
+      },
+      "validation": {
+        "variantRequired": "Choisissez une variante pour ce plan.",
+        "visitsPerDay": "Nombre de visites par jour invalide.",
+        "sessionDuration": "Durée max de session invalide.",
+        "confirmDelete": "Êtes-vous sûr de vouloir supprimer ce plan ?"
+      },
+      "page": {
+        "loadingUser": "Chargement de l'utilisateur...",
+        "unauthenticated": "Accès refusé. Vous devez être connecté.",
+        "noGym": "Aucun gymnase associé à votre compte.",
+        "title": "Plans d’abonnement",
+        "description": "Contrôlez les offres proposées à vos membres.",
+        "stats": {
+          "active": "actifs",
+          "inactive": "inactifs",
+          "total": "plans"
+        },
+        "helper": "Ajustez la durée, le prix et le statut de vos plans pour rester aligné avec vos objectifs.",
+        "ctaAdd": "Ajouter un plan",
+        "limits": {
+          "title": "Limites des plans",
+          "description": "Limites actives selon votre formule. Désactivez un plan pour libérer un slot.",
+          "variantLabel": "Variante",
+          "networkLabel": "Réseau",
+          "blocked": "Limite atteinte : désactivez un plan actif ou mettez à niveau pour élargir le catalogue.",
+          "warning": "Dernier plan actif disponible sur ce périmètre."
+        },
+        "dialog": {
+          "editTitle": "Modifier le plan",
+          "addTitle": "Ajouter un plan",
+          "variant": "Variante",
+          "assignedVariant": "Variante assignée",
+          "variantPlaceholder": "Choisir une variante",
+          "default": "(par défaut)",
+          "name": "Nom du plan",
+          "namePlaceholder": "Ex : Mensuel",
+          "duration": "Durée (jours)",
+          "price": "Prix (MAD)",
+          "visitsPerDay": "Visites par jour",
+          "unlimited": "Illimité",
+          "visitsHelper": "Limitez les passages quotidiens ou activez le mode illimité.",
+          "sessionLimit": "Durée max par session (minutes)",
+          "sessionLimitVariant": "Variante : {limit} min",
+          "sessionLimitFallback": "Suit la limite globale",
+          "sessionLimitPlaceholder": "Hérité de la variante",
+          "sessionLimitHelper": "Laissez vide pour utiliser la valeur de la variante ou du gymnase.",
+          "active": "Actif",
+          "saving": "Enregistrement...",
+          "update": "Mettre à jour",
+          "create": "Créer"
+        },
+        "loadError": "Impossible de charger les plans.",
+        "table": {
+          "name": "Nom du plan",
+          "duration": "Durée (jours)",
+          "price": "Prix (MAD)",
+          "visits": "Visites/jour",
+          "session": "Session max (min)",
+          "active": "Actif",
+          "variant": "Variante",
+          "actions": "Actions",
+          "unlimited": "Illimité",
+          "variantGym": "Variante/gym",
+          "yes": "Oui",
+          "no": "Non",
+          "edit": "Modifier",
+          "delete": "Supprimer",
+          "found": "{count} plan(s) trouvé(s)",
+          "page": "Page {page} / {pages}"
+        }
+      }
+    },
+    "presence": {
+      "title": "Suivi de présence",
+      "subtitle": "Visualisez les passages par salle et suivez la fréquentation au quotidien.",
+      "locked": {
+        "title": "Suivi de présence désactivé sur ce plan",
+        "description": "La présence en temps réel et les courbes de fréquentation sont disponibles à partir du plan Pro."
+      },
+      "actions": {
+        "refreshing": "Actualisation...",
+        "refresh": "Actualiser"
+      },
+      "manualCheckout": {
+        "trigger": "Sortie manuelle",
+        "title": "Marquer une sortie",
+        "description": "Enregistrez une sortie manuelle pour une visite en cours et ajustez l'heure si besoin.",
+        "noOpenVisits": "Aucune visite en cours.",
+        "visitLabel": "Visite en cours",
+        "visitPlaceholder": "Choisir une visite",
+        "checkoutDate": "Date de sortie",
+        "checkoutTime": "Heure de sortie",
+        "windowFrom": "Plage début (optionnel)",
+        "windowTo": "Plage fin (optionnel)",
+        "arrivalInfo": "Arrivée enregistrée le {date} à {time} - {variant}",
+        "cancel": "Annuler",
+        "submit": "Enregistrer la sortie",
+        "submitPending": "Marquage...",
+        "toasts": {
+          "base": "Sortie enregistrée",
+          "member": " pour {memberName}",
+          "duration": " ({minutes} min)",
+          "limit": " - limite {limit} min dépassée",
+          "overstay": " - session dépassée"
+        }
+      },
+      "summary": {
+        "visits": "Visites",
+        "unique": "Visiteurs uniques",
+        "present": "Présents",
+        "pendingCheckout": "Sortie non scannée",
+        "averageDuration": "Durée moyenne"
+      },
+      "multiVariantLocked": {
+        "title": "Agrégation multi-salles verrouillée",
+        "body": "Les statistiques consolidées sont réservées au plan Enterprise. Sélectionnez une salle ou",
+        "upgrade": "mettez à niveau"
+      },
+      "recent": {
+        "title": "Dernières visites"
+      },
+      "errors": {
+        "load": "Impossible de charger les visites",
+        "checkout": "Impossible de marquer la sortie",
+        "noSelection": "Sélectionnez une visite en cours",
+        "unauthenticated": "Accès refusé. Merci de vous connecter."
+      }
+    },
+    "members": {
+      "badge": {
+        "errors": {
+          "loadMember": "Impossible de charger le membre.",
+          "loadAccess": "Impossible de charger les accès du membre.",
+          "simulation": "Simulation impossible.",
+          "notFoundTitle": "Membre introuvable",
+          "notFoundBody": "Vérifiez l'identifiant ou retournez à la liste des membres."
+        },
+        "page": {
+          "backToMembers": "Retour aux membres",
+          "backLabel": "Membres",
+          "title": "Badge de {firstName} {lastName}",
+          "subtitle": "QR, statut d'abonnement et simulations d'accès."
+        },
+        "profile": {
+          "title": "Profil",
+          "noContact": "Aucun contact",
+          "lastVisit": "Dernière visite : {date}",
+          "tokenLabel": "Token"
+        },
+        "subscription": {
+          "status": {
+            "active": "Actif",
+            "expiresToday": "Expire aujourd'hui",
+            "expired": "Expiré"
+          }
+        },
+        "qr": {
+          "title": "Badge QR",
+          "lockedTitle": "QR codes réservés au plan Pro",
+          "lockedBody": "Mettez à niveau votre formule pour afficher et télécharger les badges.",
+          "imageAlt": "QR code membre",
+          "generating": "Génération du QR…",
+          "copyToken": "Copier le token",
+          "download": "Télécharger"
+        },
+        "simulator": {
+          "title": "Simulateur de scan",
+          "lockedTitle": "Plan Pro ou Enterprise requis",
+          "lockedBody": "Activez le contrôle d'accès pour simuler les scans et enregistrer les événements.",
+          "panelTitle": "Simuler un passage",
+          "panelDescription": "Enregistre un événement d'accès avec ce badge. Optionnellement, marque la visite.",
+          "panelMarkVisit": "Marquer la visite",
+          "runPending": "Simulation...",
+          "runLabel": "Lancer la simulation",
+          "latestTitle": "Dernier statut",
+          "latestEmpty": "Aucun événement récent.",
+          "toasts": {
+            "base": "Simulation enregistrée"
+          }
+        },
+        "events": {
+          "title": "Derniers événements"
+        },
+        "status": {
+          "GRANTED": {
+            "label": "Accès autorisé",
+            "message": "Le badge est valide, abonnement actif."
+          },
+          "CHECKED_OUT": {
+            "label": "Sortie enregistrée",
+            "message": "La sortie est marquée pour cette visite."
+          },
+          "SESSION_OVERSTAY": {
+            "label": "Session dépassée",
+            "message": "Durée maximale de session dépassée pour cette visite."
+          },
+          "DENIED_DAILY_LIMIT": {
+            "label": "Limite journalière atteinte",
+            "message": "Quota quotidien dépassé pour ce membre."
+          },
+          "ALREADY_CHECKED_IN": {
+            "label": "Déjà compté",
+            "message": "Ce membre a déjà été comptabilisé aujourd'hui."
+          },
+          "DENIED_EXPIRED": {
+            "label": "Abonnement expiré",
+            "message": "L'abonnement est expiré. Renouvelez avant de débloquer l'accès."
+          },
+          "DENIED_INACTIVE": {
+            "label": "Abonnement inactif",
+            "message": "Aucun abonnement actif ou démarrage différé."
+          },
+          "DENIED_FORBIDDEN": {
+            "label": "Variante non autorisée",
+            "message": "Ce badge n'est pas autorisé pour cette variante."
+          }
+        },
+        "toasts": {
+          "tokenCopied": "Token copié",
+          "tokenCopyError": "Impossible de copier le token"
+        }
+      },
+      "page": {
+        "loadingUser": "Chargement de l'utilisateur...",
+        "unauthenticated": "Accès refusé. Merci de vous connecter.",
+        "noGym": "Aucun gymnase associé à votre compte.",
+        "title": "Membres",
+        "description": "Gérez les membres de votre salle.",
+        "totalCount": "{count, plural, one {# membre au total} other {# membres au total}}",
+        "pageLabel": "Page {page} / {pages}"
+      },
+      "errors": {
+        "loadMembers": "Impossible de charger les membres",
+        "loadPlans": "Impossible de charger les plans",
+        "genericMembers": "Impossible de charger les membres.",
+        "saveMember": "Impossible de sauvegarder le membre",
+        "deleteMember": "Impossible de supprimer le membre",
+        "markVisit": "Impossible de marquer la visite"
+      },
+      "variantSelector": {
+        "lockedMessage": "La vue multi-salles et les exports sont réservés au plan Enterprise."
+      },
+      "visitsDialog": {
+        "trigger": "Marquer une visite",
+        "title": "Marquer un membre présent",
+        "description": "Recherchez un membre puis enregistrez sa visite du jour.",
+        "searchPlaceholder": "Rechercher par nom ou email",
+        "empty": "Aucun membre trouvé.",
+        "noContact": "Pas de contact",
+        "variantLabel": "Variante : {variant}",
+        "actions": {
+          "saving": "Enregistrement...",
+          "submit": "Valider"
+        }
+      },
+      "form": {
+        "addMember": "Ajouter un membre",
+        "editTitle": "Modifier le membre",
+        "addTitle": "Ajouter un membre",
+        "variantLabel": "Variante",
+        "assignedVariantFallback": "Variante assignée",
+        "variantPlaceholder": "Choisir une variante",
+        "defaultTag": "(par défaut)",
+        "firstName": {
+          "label": "Prénom"
+        },
+        "lastName": {
+          "label": "Nom"
+        },
+        "email": {
+          "label": "Email"
+        },
+        "phone": {
+          "label": "Téléphone"
+        },
+        "plan": {
+          "label": "Plan",
+          "nonePlaceholder": "Aucun",
+          "noneOption": "Aucun plan"
+        },
+        "startDate": {
+          "label": "Date de début",
+          "placeholder": "Choisir une date"
+        },
+        "actions": {
+          "saving": "Enregistrement...",
+          "update": "Mettre à jour",
+          "create": "Ajouter"
+        }
+      },
+      "qr": {
+        "tools": {
+          "title": "QR codes membres",
+          "description": "Scannez un membre pour vérifier instantanément son abonnement.",
+          "hideScanner": "Masquer le scanner",
+          "showScanner": "Activer le scanner",
+          "lockedBanner": "L'outil de génération et de scan de QR codes est réservé au plan Pro.",
+          "modeLabel": "Mode",
+          "modeIn": "Entrée",
+          "modeOut": "Sortie",
+          "helper": "Positionnez un QR code devant la caméra pour voir le résultat du scan."
+        },
+        "dialog": {
+          "title": "QR membre",
+          "descriptionWithName": "QR code de {firstName} {lastName}",
+          "descriptionFallback": "QR code membre",
+          "imageAlt": "QR membre",
+          "loading": "Génération du QR en cours...",
+          "tokenLabel": "Token : {token}",
+          "download": "Télécharger le QR"
+        }
+      },
+      "scanner": {
+        "checkout": {
+          "overstay": "Sortie enregistrée (limite {limitLabel} dépassée)",
+          "sessionLimitLabel": "de session",
+          "successWithDuration": "Sortie enregistrée ({duration} min)",
+          "success": "Sortie enregistrée"
+        },
+        "success": {
+          "accessGranted": "Accès validé"
+        },
+        "warnings": {
+          "lastVisitAvailable": "Dernière visite disponible ({remaining} restante(s))"
+        },
+        "errors": {
+          "invalidScan": "Scan invalide",
+          "inactive": "Abonnement inactif",
+          "dailyLimit": "Limite journalière atteinte",
+          "invalidOrNotFound": "QR invalide ou membre introuvable",
+          "cameraPermissionDenied": "Permission caméra refusée",
+          "scanError": "Erreur lors du scan"
+        },
+        "generic": {
+          "unknownMember": "Membre inconnu",
+          "errorTitle": "Erreur",
+          "scannerTitle": "Scanner QR"
+        }
+      },
+      "reports": {
+        "errors": {
+          "exportFailed": "Export impossible",
+          "downloadFailed": "Impossible de télécharger le rapport membre"
+        }
+      },
+      "validation": {
+        "nameRequired": "Prénom et nom obligatoires.",
+        "variantRequired": "Choisissez une variante pour ce membre."
+      },
+      "toasts": {
+        "memberUpdated": "Membre mis à jour avec succès",
+        "memberCreated": "Nouveau membre ajouté !",
+        "saveError": "Erreur lors de la sauvegarde.",
+        "memberDeleted": "Membre supprimé avec succès",
+        "deleteError": "Impossible de supprimer le membre",
+        "qrPlanOnly": "Le QR code membre est réservé au plan Pro",
+        "visitInactive": "Abonnement inactif ou expiré",
+        "visitLimitReached": "{name} a atteint la limite journalière",
+        "visitLastOfDay": "Dernière visite du jour pour {name}{remainingLabel}",
+        "visitRecorded": "{name} marque présent ({count} visite(s) aujourd'hui){remainingLabel}"
+      },
+      "visits": {
+        "fullNameFallback": "Membre",
+        "remainingLabel": " - {remaining} restante(s)"
+      },
+      "table": {
+        "summary": {
+          "totalCount": "{count, plural, one {# membre au total} other {# membres au total}}",
+          "pageLabel": "Page {page} / {pages}"
+        },
+        "columns": {
+          "firstName": "Prénom",
+          "lastName": "Nom",
+          "email": "Email",
+          "phone": "Téléphone",
+          "createdAt": "Date d'inscription",
+          "variant": "Variante",
+          "actions": "Actions"
+        },
+        "actions": {
+          "markVisit": "Marquer visite",
+          "edit": "Modifier",
+          "qrCode": "QR code membre",
+          "statsExcel": "Stats Excel",
+          "exportPending": "Export...",
+          "delete": "Supprimer"
+        }
+      },
+      "deleteDialog": {
+        "title": "Supprimer le membre",
+        "descriptionWithName": "Cette action supprimera {firstName} {lastName}. Les abonnements actifs seront conservés.",
+        "descriptionFallback": "Confirmez la suppression du membre.",
+        "cancel": "Annuler",
+        "pending": "Suppression...",
+        "confirm": "Supprimer"
+      }
+    }
   }
 }

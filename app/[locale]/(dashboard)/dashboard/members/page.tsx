@@ -1,9 +1,10 @@
 'use client'
 
-import { useSession } from 'next-auth/react'
-import { useEffect, useMemo, useRef, useState } from 'react'
+import {useSession} from 'next-auth/react'
+import {useEffect, useMemo, useRef, useState} from 'react'
 import dynamic from 'next/dynamic'
-import { Button } from '@/components/ui/button'
+import {useTranslations, useLocale} from 'next-intl'
+import {Button} from '@/components/ui/button'
 import {
   Table,
   TableBody,
@@ -36,8 +37,8 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
+import {Input} from '@/components/ui/input'
+import {Label} from '@/components/ui/label'
 import {
   Select,
   SelectContent,
@@ -45,21 +46,34 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { MoreVertical, Plus, Edit2, Trash2, QrCode, FileDown, CheckCircle2, LogIn, LogOut } from 'lucide-react'
+import {
+  MoreVertical,
+  Plus,
+  Edit2,
+  Trash2,
+  QrCode,
+  FileDown,
+  CheckCircle2,
+  LogIn,
+  LogOut,
+} from 'lucide-react'
 import QRCode from 'qrcode'
-import type { IScannerProps } from '@yudiel/react-qr-scanner/dist/components/Scanner'
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { toast } from 'sonner'
-import { PaginationControls, usePagination } from '@/components/dashboard/pagination-controls'
-import { usePlanFeatures } from '@/app/hooks/use-plan-features'
-import { QrSuccessErrorAnimation } from '@/components/dashboard/qr-success-error-animation'
-import { useVariantOptions } from '@/app/hooks/use-variants'
-import { VariantSelector } from '@/components/dashboard/variant-selector'
-import { Skeleton } from '@/components/ui/skeleton'
+import type {IScannerProps} from '@yudiel/react-qr-scanner/dist/components/Scanner'
+import {useMutation, useQuery, useQueryClient} from '@tanstack/react-query'
+import {toast} from 'sonner'
+import {
+  PaginationControls,
+  usePagination,
+} from '@/components/dashboard/pagination-controls'
+import {usePlanFeatures} from '@/app/hooks/use-plan-features'
+import {QrSuccessErrorAnimation} from '@/components/dashboard/qr-success-error-animation'
+import {useVariantOptions} from '@/app/hooks/use-variants'
+import {VariantSelector} from '@/components/dashboard/variant-selector'
+import {Skeleton} from '@/components/ui/skeleton'
 
 const Scanner = dynamic<IScannerProps>(
   () => import('@yudiel/react-qr-scanner').then((mod) => mod.Scanner),
-  { ssr: false },
+  {ssr: false},
 )
 
 interface Member {
@@ -72,7 +86,7 @@ interface Member {
   qrToken: string
   lastVisitedAt?: string | null
   gymVariantId?: string
-  gymVariant?: { id: string; name: string; slug: string }
+  gymVariant?: {id: string; name: string; slug: string}
 }
 
 interface Plan {
@@ -83,13 +97,16 @@ interface Plan {
   isActive: boolean
   visitsPerDay: number
   gymVariantId?: string
-  gymVariant?: { id: string; name: string; slug: string; isDefault?: boolean }
+  gymVariant?: {id: string; name: string; slug: string; isDefault?: boolean}
 }
 
 export default function MembersPage() {
-  const { data: session, status } = useSession()
+  const {data: session, status} = useSession()
   const queryClient = useQueryClient()
   const [editingId, setEditingId] = useState<string | null>(null)
+
+  const t = useTranslations('dashboard.members')
+  const locale = useLocale()
 
   const [formData, setFormData] = useState({
     firstName: '',
@@ -102,7 +119,8 @@ export default function MembersPage() {
 
   const [isOpen, setIsOpen] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const { hasQrTools, hasQrDownloads, hasExcelReports, hasMultiLocations } = usePlanFeatures()
+  const {hasQrTools, hasQrDownloads, hasExcelReports, hasMultiLocations} =
+    usePlanFeatures()
   const [qrMember, setQrMember] = useState<Member | null>(null)
   const [qrImage, setQrImage] = useState<string>('')
   const [scannerEnabled, setScannerEnabled] = useState(false)
@@ -115,7 +133,9 @@ export default function MembersPage() {
   } | null>(null)
   const lastTokenRef = useRef<string | null>(null)
   const audioRef = useRef<AudioContext | null>(null)
-  const [memberReportLoading, setMemberReportLoading] = useState<string | null>(null)
+  const [memberReportLoading, setMemberReportLoading] = useState<string | null>(
+    null,
+  )
   const [memberToDelete, setMemberToDelete] = useState<Member | null>(null)
   const [visitDialogOpen, setVisitDialogOpen] = useState(false)
   const [visitSearch, setVisitSearch] = useState('')
@@ -128,7 +148,7 @@ export default function MembersPage() {
     lockedVariantId,
     defaultVariantId,
     isLoading: variantsLoading,
-  } = useVariantOptions({ allowAll: hasMultiLocations })
+  } = useVariantOptions({allowAll: hasMultiLocations})
   const [memberVariantId, setMemberVariantId] = useState<string>('')
   const effectiveMemberVariantId = useMemo(
     () => memberVariantId || defaultVariantId || variants[0]?.id || '',
@@ -139,11 +159,13 @@ export default function MembersPage() {
     if (!qrMember) return
     let active = true
     setQrImage('')
-    QRCode.toDataURL(qrMember.qrToken, { width: 320, margin: 2 }).then((url: string) => {
-      if (active) {
-        setQrImage(url)
-      }
-    })
+    QRCode.toDataURL(qrMember.qrToken, {width: 320, margin: 2}).then(
+      (url: string) => {
+        if (active) {
+          setQrImage(url)
+        }
+      },
+    )
     return () => {
       active = false
     }
@@ -181,8 +203,7 @@ export default function MembersPage() {
     oscillator.stop(ctx.currentTime + 0.2)
   }
 
-  
-const handleScan = async (token: string | null) => {
+  const handleScan = async (token: string | null) => {
     if (!token || token.length < 10) return
     const tokenKey = `${token}-${scanDirection}`
     if (lastTokenRef.current === tokenKey) return
@@ -190,76 +211,113 @@ const handleScan = async (token: string | null) => {
     try {
       const response = await fetch('/api/qr/verify', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ token, markVisit: scanDirection === 'IN', direction: scanDirection }),
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({
+          token,
+          markVisit: scanDirection === 'IN',
+          direction: scanDirection,
+        }),
       })
       const payload = await response.json().catch(() => ({}))
       if (!response.ok) {
-        const message = (payload as any)?.error || 'Scan invalide'
+        const message = (payload as any)?.error || t('scanner.errors.invalidScan')
         throw new Error(message)
       }
 
       if (payload.mode === 'CHECK_OUT') {
-        const fullName = `${payload.member?.firstName ?? ''} ${payload.member?.lastName ?? ''}`.trim()
-        const duration = typeof payload.visit?.durationMinutes === 'number' ? payload.visit.durationMinutes : null
+        const fullName = `${payload.member?.firstName ?? ''} ${
+          payload.member?.lastName ?? ''
+        }`.trim()
+        const duration =
+          typeof payload.visit?.durationMinutes === 'number'
+            ? payload.visit.durationMinutes
+            : null
         const overstay = Boolean(payload.visit?.isOverMaxDuration)
         const limitLabel =
-          typeof payload.visit?.sessionLimitMinutes === 'number' && payload.visit.sessionLimitMinutes > 0
+          typeof payload.visit?.sessionLimitMinutes === 'number' &&
+          payload.visit.sessionLimitMinutes > 0
             ? `${payload.visit.sessionLimitMinutes} min`
             : null
         const message = overstay
-          ? `Sortie enregistree (limite ${limitLabel ?? 'de session'} depassee)`
+          ? t('scanner.checkout.overstay', {
+              limitLabel:
+                limitLabel ?? t('scanner.checkout.sessionLimitLabel'),
+            })
           : duration
-            ? `Sortie enregistree (${duration} min)`
-            : 'Sortie enregistree'
+          ? t('scanner.checkout.successWithDuration', {duration})
+          : t('scanner.checkout.success')
         setScanStatus({
           status: overstay ? 'error' : 'success',
           message,
-          memberName: fullName || 'Membre inconnu',
+          memberName: fullName || t('scanner.generic.unknownMember'),
         })
         playTone(overstay ? 360 : 780)
         return
       }
 
-      const fullName = `${payload.member?.firstName ?? ''} ${payload.member?.lastName ?? ''}`.trim()
+      const fullName = `${payload.member?.firstName ?? ''} ${
+        payload.member?.lastName ?? ''
+      }`.trim()
       const active = Boolean(payload.active)
-      const visitLimit = typeof payload.visitLimit === 'number' ? payload.visitLimit : null
-      const visitsToday = typeof payload.visitsToday === 'number' ? payload.visitsToday : null
+      const visitLimit =
+        typeof payload.visitLimit === 'number' ? payload.visitLimit : null
+      const visitsToday =
+        typeof payload.visitsToday === 'number' ? payload.visitsToday : null
       const overDailyLimit =
         typeof payload.overDailyLimit === 'boolean'
           ? payload.overDailyLimit
-          : visitLimit !== null && visitLimit > 0 && visitsToday !== null
-            ? visitsToday >= visitLimit
-            : false
+          : visitLimit !== null &&
+            visitLimit > 0 &&
+            visitsToday !== null &&
+            visitsToday >= visitLimit
       const visitsRemaining =
-        typeof payload.visitsRemaining === 'number' ? Math.max(payload.visitsRemaining, 0) : null
+        typeof payload.visitsRemaining === 'number'
+          ? Math.max(payload.visitsRemaining, 0)
+          : null
       const limitState = (payload.limitState as string) ?? 'OK'
       const limitWarning = limitState === 'WARNING'
       const blocked = limitState === 'BLOCKED' || overDailyLimit
       const alreadyVisited = Boolean(payload.alreadyVisited)
       const success = active && !blocked
-      const daysRemaining = typeof payload.daysRemaining === 'number' ? payload.daysRemaining : null
+      const daysRemaining =
+        typeof payload.daysRemaining === 'number'
+          ? payload.daysRemaining
+          : null
       const message = !active
-        ? 'Abonnement inactif'
+        ? t('scanner.errors.inactive')
         : blocked
-          ? 'Limite journaliere atteinte'
-          : limitWarning && visitsRemaining !== null
-            ? `Derniere visite disponible (${visitsRemaining} restant${visitsRemaining > 1 ? 's' : ''})`
-            : 'Acces valide'
+        ? t('scanner.errors.dailyLimit')
+        : limitWarning && visitsRemaining !== null
+        ? t('scanner.warnings.lastVisitAvailable', {
+            remaining: visitsRemaining,
+          })
+        : t('scanner.success.accessGranted')
+
       setScanStatus({
         status: success ? 'success' : 'error',
         message,
-        memberName: fullName || 'Membre inconnu',
+        memberName: fullName || t('scanner.generic.unknownMember'),
         daysRemaining: daysRemaining ?? undefined,
       })
-      const tone = blocked ? 240 : limitWarning ? 520 : success ? 880 : alreadyVisited ? 520 : 240
+      const tone = blocked
+        ? 240
+        : limitWarning
+        ? 520
+        : success
+        ? 880
+        : alreadyVisited
+        ? 520
+        : 240
       playTone(tone)
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'QR invalide ou membre introuvable'
+      const message =
+        error instanceof Error
+          ? error.message
+          : t('scanner.errors.invalidOrNotFound')
       setScanStatus({
         status: 'error',
         message,
-        memberName: 'Erreur',
+        memberName: t('scanner.generic.errorTitle'),
       })
       playTone(180)
     } finally {
@@ -271,11 +329,14 @@ const handleScan = async (token: string | null) => {
 
   const handleScannerError = (error: unknown) => {
     console.error(error)
-    const permissionDenied = error instanceof Error && error.name === 'NotAllowedError'
+    const permissionDenied =
+      error instanceof Error && error.name === 'NotAllowedError'
     setScanStatus({
       status: 'error',
-      memberName: 'Scanner QR',
-      message: permissionDenied ? 'Permission caméra refusée' : 'Erreur lors du scan',
+      memberName: t('scanner.generic.scannerTitle'),
+      message: permissionDenied
+        ? t('scanner.errors.cameraPermissionDenied')
+        : t('scanner.errors.scanError'),
     })
     setScannerEnabled(false)
     playTone(160)
@@ -286,14 +347,18 @@ const handleScan = async (token: string | null) => {
   const downloadMemberReport = async (memberId: string) => {
     try {
       setMemberReportLoading(memberId)
-      const params = new URLSearchParams({ type: 'member', memberId })
+      const params = new URLSearchParams({type: 'member', memberId})
       if (variantFilter) {
         params.set('variantId', variantFilter)
       }
-      const response = await fetch(`/api/reports/excel?${params.toString()}`)
+      const response = await fetch(
+        `/api/reports/excel?${params.toString()}`,
+      )
       if (!response.ok) {
         const payload = await response.json().catch(() => null)
-        const message = (payload as any)?.error ?? 'Export impossible'
+        const message =
+          (payload as any)?.error ||
+          t('reports.errors.exportFailed')
         throw new Error(message)
       }
       const blob = await response.blob()
@@ -305,7 +370,9 @@ const handleScan = async (token: string | null) => {
       URL.revokeObjectURL(url)
     } catch (error) {
       const message =
-        error instanceof Error ? error.message : "Impossible de telecharger le rapport membre"
+        error instanceof Error
+          ? error.message
+          : t('reports.errors.downloadFailed')
       toast.error(message)
     } finally {
       setMemberReportLoading(null)
@@ -321,15 +388,20 @@ const handleScan = async (token: string | null) => {
   }
 
   // Authentication checks
-  if (status === 'loading') return <div>Chargement de l&apos;utilisateur...</div>
+  if (status === 'loading')
+    return <div>{t('page.loadingUser')}</div>
 
   if (status === 'unauthenticated')
-    return <div className="text-red-500 font-medium">Accès refusé.</div>
+    return (
+      <div className="text-red-500 font-medium">
+        {t('page.unauthenticated')}
+      </div>
+    )
 
   if (!session?.user?.gymId)
     return (
       <div className="text-red-500 font-medium">
-        Aucun gymnase associé à votre compte.
+        {t('page.noGym')}
       </div>
     )
 
@@ -341,16 +413,32 @@ const handleScan = async (token: string | null) => {
         ? null
         : defaultVariantId ?? variants[0]?.id ?? null
       : selectedVariant
+
   useEffect(() => {
     if (!allowAllVariants && selectedVariant === 'all') {
-      const fallback = lockedVariantId ?? defaultVariantId ?? variants[0]?.id ?? 'all'
+      const fallback =
+        lockedVariantId ?? defaultVariantId ?? variants[0]?.id ?? 'all'
       if (fallback && fallback !== 'all') {
         setSelectedVariant(fallback)
       }
     }
-  }, [allowAllVariants, defaultVariantId, lockedVariantId, selectedVariant, setSelectedVariant, variants])
-  const membersQueryKey = useMemo(() => ['members', gymId, variantFilter] as const, [gymId, variantFilter])
-  const plansQueryKey = useMemo(() => ['plans', gymId, variantFilter] as const, [gymId, variantFilter])
+  }, [
+    allowAllVariants,
+    defaultVariantId,
+    lockedVariantId,
+    selectedVariant,
+    setSelectedVariant,
+    variants,
+  ])
+
+  const membersQueryKey = useMemo(
+    () => ['members', gymId, variantFilter] as const,
+    [gymId, variantFilter],
+  )
+  const plansQueryKey = useMemo(
+    () => ['plans', gymId, variantFilter] as const,
+    [gymId, variantFilter],
+  )
 
   const {
     data: members = [],
@@ -364,10 +452,14 @@ const handleScan = async (token: string | null) => {
       if (variantFilter) {
         params.set('variantId', variantFilter)
       }
-      const response = await fetch(`/api/members${params.toString() ? `?${params.toString()}` : ''}`)
+      const response = await fetch(
+        `/api/members${
+          params.toString() ? `?${params.toString()}` : ''
+        }`,
+      )
 
       if (!response.ok) {
-        throw new Error('Impossible de charger les membres')
+        throw new Error(t('errors.loadMembers'))
       }
 
       const data = await response.json()
@@ -380,7 +472,8 @@ const handleScan = async (token: string | null) => {
     const term = visitSearch.trim().toLowerCase()
     return members
       .filter((member) => {
-        const matchesVariant = !variantFilter || member.gymVariantId === variantFilter
+        const matchesVariant =
+          !variantFilter || member.gymVariantId === variantFilter
         if (!matchesVariant) return false
         if (!term) return true
         const fullName = `${member.firstName} ${member.lastName}`.toLowerCase()
@@ -392,7 +485,7 @@ const handleScan = async (token: string | null) => {
       .sort((a, b) => a.firstName.localeCompare(b.firstName))
   }, [members, variantFilter, visitSearch])
 
-  const { data: plans = [] } = useQuery<Plan[]>({
+  const {data: plans = []} = useQuery<Plan[]>({
     queryKey: plansQueryKey,
     enabled: status === 'authenticated' && !variantsLoading,
     queryFn: async () => {
@@ -400,15 +493,20 @@ const handleScan = async (token: string | null) => {
       if (variantFilter) {
         params.set('variantId', variantFilter)
       }
-      const response = await fetch(`/api/plans${params.toString() ? `?${params.toString()}` : ''}`)
+      const response = await fetch(
+        `/api/plans${
+          params.toString() ? `?${params.toString()}` : ''
+        }`,
+      )
       if (!response.ok) {
-        throw new Error('Impossible de charger les plans')
+        throw new Error(t('errors.loadPlans'))
       }
 
       const data = await response.json()
       return Array.isArray(data) ? data : []
     },
   })
+
   const availablePlans = useMemo(() => {
     const targetVariant = effectiveMemberVariantId
     return (plans ?? []).filter((plan) =>
@@ -429,20 +527,22 @@ const handleScan = async (token: string | null) => {
 
       const response = await fetch(url, {
         method,
-        headers: { 'Content-Type': 'application/json' },
+        headers: {'Content-Type': 'application/json'},
         body: JSON.stringify(payload),
       })
 
       const data = await response.json().catch(() => ({}))
 
       if (!response.ok) {
-        throw new Error(data.error || 'Impossible de sauvegarder le membre')
+        throw new Error(
+          data.error || t('errors.saveMember'),
+        )
       }
 
       return data
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: membersQueryKey })
+      queryClient.invalidateQueries({queryKey: membersQueryKey})
       setIsOpen(false)
       setFormData({
         firstName: '',
@@ -456,13 +556,13 @@ const handleScan = async (token: string | null) => {
       setError(null)
       toast.success(
         editingId
-          ? 'Membre mis à jour avec succès'
-          : 'Nouveau membre ajouté !',
+          ? t('toasts.memberUpdated')
+          : t('toasts.memberCreated'),
       )
     },
     onError: (err) => {
       const message =
-        err instanceof Error ? err.message : 'Erreur lors de la sauvegarde.'
+        err instanceof Error ? err.message : t('toasts.saveError')
       setError(message)
       toast.error(message)
     },
@@ -476,17 +576,19 @@ const handleScan = async (token: string | null) => {
 
       if (!response.ok) {
         const data = await response.json().catch(() => ({}))
-        throw new Error(data.error || 'Impossible de supprimer le membre')
+        throw new Error(
+          data.error || t('errors.deleteMember'),
+        )
       }
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: membersQueryKey })
-      toast.success('Membre supprimé avec succès')
+      queryClient.invalidateQueries({queryKey: membersQueryKey})
+      toast.success(t('toasts.memberDeleted'))
       setMemberToDelete(null)
     },
     onError: (err) => {
       const message =
-        err instanceof Error ? err.message : 'Impossible de supprimer le membre'
+        err instanceof Error ? err.message : t('toasts.deleteError')
       toast.error(message)
     },
   })
@@ -504,8 +606,8 @@ const handleScan = async (token: string | null) => {
     const fallbackVariant = isGymAdmin
       ? lockedVariantId ?? ''
       : selectedVariant !== 'all'
-        ? selectedVariant
-        : defaultVariantId ?? ''
+      ? selectedVariant
+      : defaultVariantId ?? ''
     setMemberVariantId(fallbackVariant ?? '')
     setIsOpen(true)
   }
@@ -520,17 +622,22 @@ const handleScan = async (token: string | null) => {
       planId: 'none',
       startDate: '',
     })
-    setMemberVariantId(member.gymVariantId ?? member.gymVariant?.id ?? lockedVariantId ?? '')
+    setMemberVariantId(
+      member.gymVariantId ??
+        member.gymVariant?.id ??
+        lockedVariantId ??
+        '',
+    )
     setIsOpen(true)
   }
 
   const handleSubmit = () => {
     if (!formData.firstName || !formData.lastName) {
-      toast.error('Prénom et Nom obligatoires.')
+      toast.error(t('validation.nameRequired'))
       return
     }
     if (!effectiveMemberVariantId) {
-      toast.error('Choisissez une variante pour ce membre.')
+      toast.error(t('validation.variantRequired'))
       return
     }
 
@@ -553,47 +660,69 @@ const handleScan = async (token: string | null) => {
       setVisitLoading(memberId)
       const response = await fetch('/api/visits', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ memberId, markVisit: true }),
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({memberId, markVisit: true}),
       })
       const data = await response.json().catch(() => ({}))
       if (!response.ok) {
-        throw new Error(data.error || 'Impossible de marquer la visite')
+        throw new Error(
+          data.error || t('errors.markVisit'),
+        )
       }
-      const fullName = data.memberName || 'Membre'
-      const visitLimit = typeof data.visitLimit === 'number' ? data.visitLimit : null
-      const visitsToday = typeof data.visitsToday === 'number' ? data.visitsToday : null
+      const fullName = data.memberName || t('visits.fullNameFallback')
+      const visitLimit =
+        typeof data.visitLimit === 'number' ? data.visitLimit : null
+      const visitsToday =
+        typeof data.visitsToday === 'number' ? data.visitsToday : null
       const overDailyLimit =
         typeof (data as any).overDailyLimit === 'boolean'
           ? (data as any).overDailyLimit
-          : visitLimit !== null && visitLimit > 0 && visitsToday !== null
-            ? visitsToday >= visitLimit
-            : false
+          : visitLimit !== null &&
+            visitLimit > 0 &&
+            visitsToday !== null &&
+            visitsToday >= visitLimit
       const visitsRemaining =
-        typeof (data as any).visitsRemaining === 'number' ? Math.max((data as any).visitsRemaining, 0) : null
+        typeof (data as any).visitsRemaining === 'number'
+          ? Math.max((data as any).visitsRemaining, 0)
+          : null
       const limitState = ((data as any).limitState as string) ?? 'OK'
       const limitWarning = limitState === 'WARNING'
       const blocked = limitState === 'BLOCKED' || overDailyLimit
 
       if (!data.active) {
-        toast.error('Abonnement inactif ou expire')
+        toast.error(t('toasts.visitInactive'))
       } else if (blocked) {
-        toast.error(`${fullName} a atteint la limite journaliere`)
+        toast.error(
+          t('toasts.visitLimitReached', {name: fullName}),
+        )
       } else if (limitWarning) {
         const remainingLabel =
-          visitsRemaining !== null ? ` (${visitsRemaining} restante${visitsRemaining > 1 ? 's' : ''})` : ''
-        toast.warning(`Derniere visite du jour pour ${fullName}${remainingLabel}`)
+          visitsRemaining !== null
+            ? t('visits.remainingLabel', {remaining: visitsRemaining})
+            : ''
+        toast.warning(
+          t('toasts.visitLastOfDay', {
+            name: fullName,
+            remainingLabel,
+          }),
+        )
       } else {
         const remainingLabel =
-          visitsRemaining !== null ? ` - ${visitsRemaining} reste${visitsRemaining > 1 ? 's' : ''}` : ''
+          visitsRemaining !== null
+            ? t('visits.remainingLabel', {remaining: visitsRemaining})
+            : ''
         toast.success(
-          `${fullName} marque present (${data.todayVisitorCount ?? 0} visites aujourd'hui)${remainingLabel}`,
+          t('toasts.visitRecorded', {
+            name: fullName,
+            count: data.todayVisitorCount ?? 0,
+            remainingLabel,
+          }),
         )
       }
       setVisitDialogOpen(false)
     } catch (error) {
       const message =
-        error instanceof Error ? error.message : 'Impossible de marquer la visite'
+        error instanceof Error ? error.message : t('errors.markVisit')
       toast.error(message)
     } finally {
       setVisitLoading(null)
@@ -625,15 +754,17 @@ const handleScan = async (token: string | null) => {
 
       {(error || membersError) && (
         <div className="text-red-500 font-medium">
-          {error || 'Impossible de charger les membres.'}
+          {error || t('errors.genericMembers')}
         </div>
       )}
 
       <div className="flex justify-between items-center gap-4 flex-wrap">
         <div>
-          <h1 className="text-3xl font-bold">Membres</h1>
+          <h1 className="text-3xl font-bold">
+            {t('page.title')}
+          </h1>
           <p className="text-muted-foreground mt-2">
-            Gérez les membres de votre salle
+            {t('page.description')}
           </p>
         </div>
 
@@ -646,32 +777,38 @@ const handleScan = async (token: string | null) => {
             lockedVariantId={lockedVariantId}
             loading={variantsLoading}
             allowAll={allowAllVariants}
-            lockedMessage="Vue multi-salles et exports reserves au plan Enterprise"
+            lockedMessage={t('variantSelector.lockedMessage')}
           />
+
           <Dialog open={visitDialogOpen} onOpenChange={setVisitDialogOpen}>
             <DialogTrigger asChild>
-              <Button variant="outline" onClick={() => setVisitDialogOpen(true)}>
+              <Button
+                variant="outline"
+                onClick={() => setVisitDialogOpen(true)}
+              >
                 <CheckCircle2 className="mr-2" size={18} />
-                Marquer une visite
+                {t('visitsDialog.trigger')}
               </Button>
             </DialogTrigger>
             <DialogContent className="max-w-md sm:max-w-lg w-[95vw]">
               <DialogHeader>
-                <DialogTitle>Marquer un membre présent</DialogTitle>
+                <DialogTitle>
+                  {t('visitsDialog.title')}
+                </DialogTitle>
                 <DialogDescription>
-                  Recherchez un membre puis enregistrez sa visite du jour.
+                  {t('visitsDialog.description')}
                 </DialogDescription>
               </DialogHeader>
               <div className="space-y-3">
                 <Input
-                  placeholder="Rechercher par nom ou email"
+                  placeholder={t('visitsDialog.searchPlaceholder')}
                   value={visitSearch}
                   onChange={(e) => setVisitSearch(e.target.value)}
                 />
                 <div className="max-h-72 overflow-y-auto space-y-2">
                   {visitableMembers.length === 0 ? (
                     <p className="text-sm text-muted-foreground">
-                      Aucun membre trouvé.
+                      {t('visitsDialog.empty')}
                     </p>
                   ) : (
                     visitableMembers.map((member) => (
@@ -679,17 +816,23 @@ const handleScan = async (token: string | null) => {
                         key={member.id}
                         className="flex items-center justify-between rounded-lg border border-border/60 px-3 py-2"
                       >
-                      <div>
-                        <p className="font-semibold">
-                          {member.firstName} {member.lastName}
-                        </p>
-                        <p className="text-xs text-muted-foreground">
-                          {member.email || member.phone || 'Pas de contact'}
-                        </p>
-                        {member.gymVariant?.name ? (
-                          <p className="text-xs text-muted-foreground">Variante : {member.gymVariant.name}</p>
-                        ) : null}
-                      </div>
+                        <div>
+                          <p className="font-semibold">
+                            {member.firstName} {member.lastName}
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            {member.email ||
+                              member.phone ||
+                              t('visitsDialog.noContact')}
+                          </p>
+                          {member.gymVariant?.name ? (
+                            <p className="text-xs text-muted-foreground">
+                              {t('visitsDialog.variantLabel', {
+                                variant: member.gymVariant.name,
+                              })}
+                            </p>
+                          ) : null}
+                        </div>
                         <Button
                           size="sm"
                           variant="secondary"
@@ -697,8 +840,8 @@ const handleScan = async (token: string | null) => {
                           onClick={() => markVisit(member.id)}
                         >
                           {visitLoading === member.id
-                            ? 'Enregistrement...'
-                            : 'Valider'}
+                            ? t('visitsDialog.actions.saving')
+                            : t('visitsDialog.actions.submit')}
                         </Button>
                       </div>
                     ))
@@ -712,36 +855,57 @@ const handleScan = async (token: string | null) => {
             <DialogTrigger asChild>
               <Button onClick={handleAddMember}>
                 <Plus className="mr-2" size={20} />
-                Ajouter un membre
+                {t('form.addMember')}
               </Button>
             </DialogTrigger>
 
             <DialogContent className="max-w-md sm:max-w-lg md:max-w-2xl w-[95vw] max-h-[90vh] overflow-y-auto">
               <DialogHeader>
                 <DialogTitle>
-                  {editingId ? 'Modifier le membre' : 'Ajouter un membre'}
+                  {editingId
+                    ? t('form.editTitle')
+                    : t('form.addTitle')}
                 </DialogTitle>
               </DialogHeader>
 
               <div className="space-y-4">
                 <div>
-                  <Label htmlFor="member-variant">Variante</Label>
+                  <Label htmlFor="member-variant">
+                    {t('form.variantLabel')}
+                  </Label>
                   {isGymAdmin ? (
                     <p className="text-sm text-muted-foreground">
-                      {variants.find((variant) => variant.id === lockedVariantId)?.name ?? 'Variante assignée'}
+                      {variants.find(
+                        (variant) => variant.id === lockedVariantId,
+                      )?.name ??
+                        t(
+                          'form.assignedVariantFallback',
+                        )}
                     </p>
                   ) : (
                     <Select
                       value={effectiveMemberVariantId}
-                      onValueChange={(value) => setMemberVariantId(value)}
+                      onValueChange={(value) =>
+                        setMemberVariantId(value)
+                      }
                     >
                       <SelectTrigger id="member-variant">
-                        <SelectValue placeholder="Choisir une variante" />
+                        <SelectValue
+                          placeholder={t(
+                            'form.variantPlaceholder',
+                          )}
+                        />
                       </SelectTrigger>
                       <SelectContent>
                         {(variants ?? []).map((variant) => (
-                          <SelectItem key={variant.id} value={variant.id}>
-                            {variant.name} {variant.isDefault ? '(par défaut)' : ''}
+                          <SelectItem
+                            key={variant.id}
+                            value={variant.id}
+                          >
+                            {variant.name}
+                            {variant.isDefault
+                              ? ` ${t('form.defaultTag')}`
+                              : ''}
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -750,64 +914,91 @@ const handleScan = async (token: string | null) => {
                 </div>
 
                 <div>
-                  <Label htmlFor="member-first-name">Prénom</Label>
+                  <Label htmlFor="member-first-name">
+                    {t('form.firstName.label')}
+                  </Label>
                   <Input
                     id="member-first-name"
                     value={formData.firstName}
                     onChange={(e) =>
-                      setFormData({ ...formData, firstName: e.target.value })
+                      setFormData({
+                        ...formData,
+                        firstName: e.target.value,
+                      })
                     }
                   />
                 </div>
 
                 <div>
-                  <Label htmlFor="member-last-name">Nom</Label>
+                  <Label htmlFor="member-last-name">
+                    {t('form.lastName.label')}
+                  </Label>
                   <Input
                     id="member-last-name"
                     value={formData.lastName}
                     onChange={(e) =>
-                      setFormData({ ...formData, lastName: e.target.value })
+                      setFormData({
+                        ...formData,
+                        lastName: e.target.value,
+                      })
                     }
                   />
                 </div>
 
                 <div>
-                  <Label htmlFor="member-email">Email</Label>
+                  <Label htmlFor="member-email">
+                    {t('form.email.label')}
+                  </Label>
                   <Input
                     id="member-email"
                     type="email"
                     value={formData.email}
                     onChange={(e) =>
-                      setFormData({ ...formData, email: e.target.value })
+                      setFormData({
+                        ...formData,
+                        email: e.target.value,
+                      })
                     }
                   />
                 </div>
 
                 <div>
-                  <Label htmlFor="member-phone">Téléphone</Label>
+                  <Label htmlFor="member-phone">
+                    {t('form.phone.label')}
+                  </Label>
                   <Input
                     id="member-phone"
                     value={formData.phone}
                     onChange={(e) =>
-                      setFormData({ ...formData, phone: e.target.value })
+                      setFormData({
+                        ...formData,
+                        phone: e.target.value,
+                      })
                     }
                   />
                 </div>
 
-                {/* PLAN */}
                 <div>
-                  <Label htmlFor="member-plan">Plan</Label>
+                  <Label htmlFor="member-plan">
+                    {t('form.plan.label')}
+                  </Label>
                   <Select
                     value={formData.planId}
                     onValueChange={(value) =>
-                      setFormData({ ...formData, planId: value })
+                      setFormData({...formData, planId: value})
                     }
                   >
                     <SelectTrigger id="member-plan">
-                      <SelectValue placeholder="Aucun" />
+                      <SelectValue
+                        placeholder={t(
+                          'form.plan.nonePlaceholder',
+                        )}
+                      />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="none">Aucun</SelectItem>
+                      <SelectItem value="none">
+                        {t('form.plan.noneOption')}
+                      </SelectItem>
                       {availablePlans.map((plan) => (
                         <SelectItem key={plan.id} value={plan.id}>
                           {plan.name}
@@ -817,17 +1008,23 @@ const handleScan = async (token: string | null) => {
                   </Select>
                 </div>
 
-                {/* START DATE */}
                 <div>
-                  <Label htmlFor="member-start-date">Date de début</Label>
+                  <Label htmlFor="member-start-date">
+                    {t('form.startDate.label')}
+                  </Label>
                   <Input
                     id="member-start-date"
                     type="date"
                     value={formData.startDate}
                     onChange={(e) =>
-                      setFormData({ ...formData, startDate: e.target.value })
+                      setFormData({
+                        ...formData,
+                        startDate: e.target.value,
+                      })
                     }
-                    placeholder="Choisir une date"
+                    placeholder={t(
+                      'form.startDate.placeholder',
+                    )}
                   />
                 </div>
 
@@ -837,10 +1034,10 @@ const handleScan = async (token: string | null) => {
                   disabled={saveMemberMutation.isPending}
                 >
                   {saveMemberMutation.isPending
-                    ? 'Enregistrement...'
+                    ? t('form.actions.saving')
                     : editingId
-                      ? 'Mettre à jour'
-                      : 'Ajouter'}
+                    ? t('form.actions.update')
+                    : t('form.actions.create')}
                 </Button>
               </div>
             </DialogContent>
@@ -852,20 +1049,26 @@ const handleScan = async (token: string | null) => {
         <div className="rounded-2xl border border-border/70 bg-card/70 p-5 shadow-sm">
           <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
             <div>
-              <p className="text-lg font-semibold">QR codes membres</p>
+              <p className="text-lg font-semibold">
+                {t('qr.tools.title')}
+              </p>
               <p className="text-sm text-muted-foreground">
-                Scannez un membre pour vérifier instantanément son abonnement.
+                {t('qr.tools.description')}
               </p>
             </div>
             <Button variant="outline" onClick={toggleScanner}>
-              {scannerEnabled ? 'Masquer le scanner' : 'Activer le scanner'}
+              {scannerEnabled
+                ? t('qr.tools.hideScanner')
+                : t('qr.tools.showScanner')}
             </Button>
           </div>
           {scannerEnabled && (
             <div className="mt-4 grid gap-4 lg:grid-cols-[320px,1fr]">
               <div className="rounded-xl border bg-black/80 p-2">
                 <Scanner
-                  onScan={(results) => handleScan(results[0]?.rawValue ?? null)}
+                  onScan={(results) =>
+                    handleScan(results[0]?.rawValue ?? null)
+                  }
                   onError={handleScannerError}
                   styles={{
                     container: {
@@ -876,29 +1079,34 @@ const handleScan = async (token: string | null) => {
               </div>
               <div className="rounded-xl border bg-background/80 p-4 space-y-3">
                 <div className="flex flex-wrap items-center gap-2">
-                  <span className="text-xs uppercase tracking-[0.15em] text-muted-foreground">Mode</span>
+                  <span className="text-xs uppercase tracking-[0.15em] text-muted-foreground">
+                    {t('qr.tools.modeLabel')}
+                  </span>
                   <Button
                     size="sm"
-                    variant={scanDirection === 'IN' ? 'default' : 'outline'}
+                    variant={
+                      scanDirection === 'IN' ? 'default' : 'outline'
+                    }
                     className="gap-1"
                     onClick={() => setScanDirection('IN')}
                   >
                     <LogIn className="h-4 w-4" />
-                    Entree
+                    {t('qr.tools.modeIn')}
                   </Button>
                   <Button
                     size="sm"
-                    variant={scanDirection === 'OUT' ? 'default' : 'outline'}
+                    variant={
+                      scanDirection === 'OUT' ? 'default' : 'outline'
+                    }
                     className="gap-1"
                     onClick={() => setScanDirection('OUT')}
                   >
                     <LogOut className="h-4 w-4" />
-                    Sortie
+                    {t('qr.tools.modeOut')}
                   </Button>
                 </div>
                 <p className="text-sm text-muted-foreground">
-                  Positionnez un QR code devant la camera pour voir le resultat du
-                  scan.
+                  {t('qr.tools.helper')}
                 </p>
               </div>
             </div>
@@ -906,7 +1114,7 @@ const handleScan = async (token: string | null) => {
         </div>
       ) : (
         <div className="rounded-2xl border border-dashed border-amber-300/60 bg-amber-500/10 p-4 text-sm text-amber-900">
-          L&apos;outil de génération et de scan de QR codes est réservé au plan Pro.
+          {t('qr.tools.lockedBanner')}
         </div>
       )}
 
@@ -915,23 +1123,42 @@ const handleScan = async (token: string | null) => {
           {memberPagination.data.length > 0 && (
             <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border/60 px-6 py-4 text-sm text-muted-foreground">
               <span>
-                {members.length} membre{members.length > 1 ? 's' : ''} total
+                {t('table.summary.totalCount', {
+                  count: members.length,
+                })}
               </span>
               <span className="text-xs uppercase tracking-[0.3em] text-muted-foreground">
-                Page {memberPagination.page} / {memberPagination.pageCount}
+                {t('table.summary.pageLabel', {
+                  page: memberPagination.page,
+                  pages: memberPagination.pageCount,
+                })}
               </span>
             </div>
           )}
           <Table>
             <TableHeader>
               <TableRow className="bg-muted/60 text-muted-foreground">
-                <TableHead>Prenom</TableHead>
-                <TableHead>Nom</TableHead>
-                <TableHead>Email</TableHead>
-                <TableHead>Telephone</TableHead>
-                <TableHead>Date d'inscription</TableHead>
-                <TableHead>Variante</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
+                <TableHead>
+                  {t('table.columns.firstName')}
+                </TableHead>
+                <TableHead>
+                  {t('table.columns.lastName')}
+                </TableHead>
+                <TableHead>
+                  {t('table.columns.email')}
+                </TableHead>
+                <TableHead>
+                  {t('table.columns.phone')}
+                </TableHead>
+                <TableHead>
+                  {t('table.columns.createdAt')}
+                </TableHead>
+                <TableHead>
+                  {t('table.columns.variant')}
+                </TableHead>
+                <TableHead className="text-right">
+                  {t('table.columns.actions')}
+                </TableHead>
               </TableRow>
             </TableHeader>
 
@@ -945,9 +1172,13 @@ const handleScan = async (token: string | null) => {
                   <TableCell>{member.email || '-'}</TableCell>
                   <TableCell>{member.phone || '-'}</TableCell>
                   <TableCell>
-                    {new Date(member.createdAt).toLocaleDateString('fr-FR')}
+                    {new Date(
+                      member.createdAt,
+                    ).toLocaleDateString(locale)}
                   </TableCell>
-                  <TableCell>{member.gymVariant?.name ?? '-'}</TableCell>
+                  <TableCell>
+                    {member.gymVariant?.name ?? '-'}
+                  </TableCell>
                   <TableCell className="text-right">
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
@@ -963,37 +1194,39 @@ const handleScan = async (token: string | null) => {
                           }}
                         >
                           <CheckCircle2 className="mr-2" size={16} />
-                          Marquer visite
+                          {t('table.actions.markVisit')}
                         </DropdownMenuItem>
                         <DropdownMenuItem
                           onSelect={() => handleEditMember(member)}
                         >
                           <Edit2 className="mr-2" size={16} />
-                          Modifier
+                          {t('table.actions.edit')}
                         </DropdownMenuItem>
                         <DropdownMenuItem
                           disabled={!hasQrTools}
                           onSelect={(event) => {
                             event.preventDefault()
                             if (!hasQrTools) {
-                              toast.error('QR code réservé au plan Pro')
+                              toast.error(t('toasts.qrPlanOnly'))
                               return
                             }
                             setQrMember(member)
                           }}
                         >
                           <QrCode className="mr-2" size={16} />
-                          QR code membre
+                          {t('table.actions.qrCode')}
                         </DropdownMenuItem>
                         {hasExcelReports && (
                           <DropdownMenuItem
                             disabled={memberReportLoading === member.id}
-                            onSelect={() => downloadMemberReport(member.id)}
+                            onSelect={() =>
+                              downloadMemberReport(member.id)
+                            }
                           >
                             <FileDown className="mr-2" size={16} />
                             {memberReportLoading === member.id
-                              ? 'Export...'
-                              : 'Stats Excel'}
+                              ? t('table.actions.exportPending')
+                              : t('table.actions.statsExcel')}
                           </DropdownMenuItem>
                         )}
                         <DropdownMenuItem
@@ -1001,10 +1234,10 @@ const handleScan = async (token: string | null) => {
                           onSelect={() => handleDeleteMember(member)}
                         >
                           <Trash2 className="mr-2" size={16} />
-                          Supprimer
+                          {t('table.actions.delete')}
                         </DropdownMenuItem>
                       </DropdownMenuContent>
-                      </DropdownMenu>
+                    </DropdownMenu>
                   </TableCell>
                 </TableRow>
               ))}
@@ -1028,33 +1261,40 @@ const handleScan = async (token: string | null) => {
       >
         <DialogContent className="max-w-md sm:max-w-lg w-[95vw]">
           <DialogHeader>
-            <DialogTitle>QR membre</DialogTitle>
+            <DialogTitle>
+              {t('qr.dialog.title')}
+            </DialogTitle>
             <DialogDescription>
               {qrMember
-                ? `${qrMember.firstName} ${qrMember.lastName}`
-                : 'QR code membre'}
+                ? t('qr.dialog.descriptionWithName', {
+                    firstName: qrMember.firstName,
+                    lastName: qrMember.lastName,
+                  })
+                : t('qr.dialog.descriptionFallback')}
             </DialogDescription>
           </DialogHeader>
           <div className="flex flex-col items-center gap-4">
             {qrImage ? (
               <img
                 src={qrImage || '/placeholder.svg'}
-                alt="QR membre"
+                alt={t('qr.dialog.imageAlt')}
                 className="rounded-xl border bg-white p-3"
               />
             ) : (
               <p className="text-sm text-muted-foreground">
-                Génération du QR en cours...
+                {t('qr.dialog.loading')}
               </p>
             )}
             {qrMember && (
               <p className="text-xs text-muted-foreground break-all">
-                Token: {qrMember.qrToken}
+                {t('qr.dialog.tokenLabel', {
+                  token: qrMember.qrToken,
+                })}
               </p>
             )}
             {hasQrDownloads && (
               <Button onClick={downloadQrImage} disabled={!qrImage}>
-                Télécharger le QR
+                {t('qr.dialog.download')}
               </Button>
             )}
           </div>
@@ -1071,22 +1311,31 @@ const handleScan = async (token: string | null) => {
       >
         <AlertDialogContent className="max-w-md sm:max-w-lg w-[95vw]">
           <AlertDialogHeader>
-            <AlertDialogTitle>Supprimer le membre</AlertDialogTitle>
+            <AlertDialogTitle>
+              {t('deleteDialog.title')}
+            </AlertDialogTitle>
             <AlertDialogDescription>
               {memberToDelete
-                ? `Cette action supprimera ${memberToDelete.firstName} ${memberToDelete.lastName}. Les abonnements actifs resteront conservés.`
-                : 'Confirmez la suppression du membre.'}
+                ? t('deleteDialog.descriptionWithName', {
+                    firstName: memberToDelete.firstName,
+                    lastName: memberToDelete.lastName,
+                  })
+                : t('deleteDialog.descriptionFallback')}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={deleteMemberMutation.isPending}>
-              Annuler
+            <AlertDialogCancel
+              disabled={deleteMemberMutation.isPending}
+            >
+              {t('deleteDialog.cancel')}
             </AlertDialogCancel>
             <AlertDialogAction
               onClick={confirmDeleteMember}
               disabled={deleteMemberMutation.isPending}
             >
-              {deleteMemberMutation.isPending ? 'Suppression...' : 'Supprimer'}
+              {deleteMemberMutation.isPending
+                ? t('deleteDialog.pending')
+                : t('deleteDialog.confirm')}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

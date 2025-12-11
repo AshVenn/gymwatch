@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
 import { cn } from "@/lib/utils"
+import { DEFAULT_PLAN_LIMITS, resolvePlanLimitsForTier, type PlanLimitsTable } from "@/lib/subscription-plans"
 
 interface GymData {
   id: string
@@ -19,6 +20,15 @@ interface GymData {
   city?: string | null
   country?: string | null
   maxSessionMinutes?: number | null
+  planLimitPerVariant?: number | null
+  planLimitPerNetwork?: number | null
+  planLimits?: {
+    perVariant: number | null
+    perNetwork: number | null
+    unlimitedPerVariant: boolean
+    unlimitedPerNetwork: boolean
+    sources: { perVariant: "PLAN_DEFAULT" | "GYM_OVERRIDE"; perNetwork: "PLAN_DEFAULT" | "GYM_OVERRIDE" }
+  }
 }
 
 function ReadonlyField({
@@ -63,6 +73,17 @@ export default function SettingsPage() {
     },
   })
 
+  const { data: planSettings } = useQuery<{ limits?: PlanLimitsTable }>({
+    queryKey: ['plan-settings-public'],
+    queryFn: async () => {
+      const response = await fetch('/api/plan-settings')
+      if (!response.ok) {
+        throw new Error('Impossible de charger les limites des plans')
+      }
+      return response.json()
+    },
+  })
+
   const roleLabels: Record<string, string> = {
     GYM_OWNER: "Proprietaire",
     GYM_ADMIN: "Admin",
@@ -78,7 +99,7 @@ export default function SettingsPage() {
     if (!plan) return "Non renseigne"
     if (plan === "BASIC") return "Basic"
     if (plan === "PRO") return "Pro"
-    if (plan === "COMPLEX") return "Complex"
+    if (plan === "ENTERPRISE") return "Enterprise"
     return plan
   }
 
@@ -86,6 +107,15 @@ export default function SettingsPage() {
     if (!interval) return "Non renseigne"
     return interval === "ANNUAL" ? "Annuel" : "Mensuel"
   }
+
+  const currentTier = (session?.user?.subscriptionPlan ?? "BASIC") as string
+  const limitsTable: PlanLimitsTable = planSettings?.limits ?? DEFAULT_PLAN_LIMITS
+  const effectiveLimits = useMemo(
+    () => (gym?.planLimits ? gym.planLimits : resolvePlanLimitsForTier(currentTier as any, limitsTable)),
+    [gym?.planLimits, currentTier, limitsTable],
+  )
+  const hasOverrides =
+    (gym?.planLimitPerVariant ?? null) !== null || (gym?.planLimitPerNetwork ?? null) !== null
 
   if (isLoading) {
     return (
@@ -196,6 +226,62 @@ export default function SettingsPage() {
           </CardContent>
         </Card>
       </div>
+
+      <Card className="border-border/70 shadow-sm">
+        <CardHeader className="pb-2">
+          <CardTitle>Limites de plans</CardTitle>
+          <CardDescription>Plafonds appliques a vos offres d'abonnement.</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <div className="rounded-xl border border-border/60 bg-muted/30 p-4">
+            <p className="text-sm font-semibold">Votre plafond actuel</p>
+            <p className="text-sm text-muted-foreground">
+              {effectiveLimits?.unlimitedPerVariant
+                ? 'Illimite par variante'
+                : `${effectiveLimits?.perVariant ?? 0} plan(s) actifs par variante`}
+              {' '}
+              ·
+              {' '}
+              {effectiveLimits?.unlimitedPerNetwork
+                ? 'Illimite sur le reseau'
+                : `${effectiveLimits?.perNetwork ?? 0} plan(s) actifs sur le reseau`}
+            </p>
+            <p className="text-xs text-muted-foreground">
+              {hasOverrides
+                ? 'Exception appliquee par le support. Les owners/admin ne peuvent pas modifier ces valeurs.'
+                : 'Valeurs calculees automatiquement selon votre plan.'}
+            </p>
+          </div>
+
+          <div className="grid gap-3 md:grid-cols-3">
+            {(['BASIC', 'PRO', 'ENTERPRISE'] as const).map((tier) => {
+              const limits = (planSettings?.limits ?? DEFAULT_PLAN_LIMITS)[tier]
+              return (
+                <div
+                  key={tier}
+                  className="rounded-lg border border-border/60 bg-background/70 p-3 text-sm"
+                >
+                  <p className="font-semibold">{tier === 'ENTERPRISE' ? 'Enterprise' : tier === 'PRO' ? 'Pro' : 'Basic'}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {limits?.perVariant && limits.perVariant >= 0
+                      ? `${limits.perVariant} plan(s) par variante`
+                      : 'Illimite par variante'}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    {limits?.perNetwork && limits.perNetwork >= 0
+                      ? `${limits.perNetwork} plan(s) reseau`
+                      : 'Illimite reseau'}
+                  </p>
+                </div>
+              )
+            })}
+          </div>
+
+          <p className="text-xs text-muted-foreground">
+            Les plafonds sont appliques sur les plans actifs. Contactez le support pour toute derogation.
+          </p>
+        </CardContent>
+      </Card>
     </div>
   )
 }

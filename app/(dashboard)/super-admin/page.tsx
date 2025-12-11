@@ -428,7 +428,7 @@ const revenueChartData = (stats.revenueTrend ?? []).map((point, index) => {
             endAngle={-270}
           >
             <ChartTooltip cursor={false} content={<ChartTooltipContent />} />
-            <RadialBar dataKey="value" nameKey="name" background cornerRadius={10} />
+            <RadialBar dataKey="value" background cornerRadius={10} />
           </RadialBarChart>
         </ResponsiveContainer>
         <div className="absolute inset-0 flex flex-col items-center justify-center text-center">

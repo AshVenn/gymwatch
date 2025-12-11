@@ -303,8 +303,14 @@ async function runSeed() {
       id: 1,
       basicMonthlyPrice: 200,
       proMonthlyPrice: 350,
-      complexMonthlyPrice: 520,
+      enterpriseMonthlyPrice: 520,
       annualDiscountPercent: 15,
+      basicPlanLimitPerVariant: 3,
+      basicPlanLimitPerNetwork: 3,
+      proPlanLimitPerVariant: 6,
+      proPlanLimitPerNetwork: 10,
+      enterprisePlanLimitPerVariant: -1,
+      enterprisePlanLimitPerNetwork: -1,
     },
   })
   console.log('Plan settings initialized')
@@ -412,10 +418,10 @@ async function runSeed() {
   const gym2Variants = await createVariantsForGym(gym2.id, ['Femmes', 'Hommes'])
   const gym2DefaultVariant = gym2Variants[0]
 
-  const complexGym = await prisma.gym.upsert({
-    where: { id: 'gym-complex' },
+  const enterpriseGym = await prisma.gym.upsert({
+    where: { id: 'gym-enterprise' },
     update: {
-      subscriptionPlan: 'COMPLEX',
+      subscriptionPlan: 'ENTERPRISE',
       billingInterval: 'MONTHLY',
       subscriptionPrice: 520,
       subscriptionStatus: 'ACTIVE',
@@ -430,12 +436,12 @@ async function runSeed() {
       analyticsSnapshot: buildAnalyticsSnapshot(18500),
     },
     create: {
-      id: 'gym-complex',
-      name: 'Complex Network',
-      email: 'contact@complex.ma',
+      id: 'gym-enterprise',
+      name: 'Enterprise Network',
+      email: 'contact@enterprise.ma',
       city: 'Tanger',
       country: 'Maroc',
-      subscriptionPlan: 'COMPLEX',
+      subscriptionPlan: 'ENTERPRISE',
       billingInterval: 'MONTHLY',
       subscriptionPrice: 520,
       subscriptionStatus: 'ACTIVE',
@@ -450,9 +456,9 @@ async function runSeed() {
       analyticsSnapshot: buildAnalyticsSnapshot(18500),
     },
   })
-  console.log('Created Complex gym:', complexGym.name)
-  const complexVariants = await createVariantsForGym(complexGym.id, ['Centre', 'Nord', 'Sud'])
-  const complexDefaultVariant = complexVariants[0]
+  console.log('Created Enterprise gym:', enterpriseGym.name)
+  const enterpriseVariants = await createVariantsForGym(enterpriseGym.id, ['Centre', 'Nord', 'Sud'])
+  const enterpriseDefaultVariant = enterpriseVariants[0]
 
   const demoGym = await prisma.gym.upsert({
     where: { id: 'gym-demo' },
@@ -568,35 +574,35 @@ async function runSeed() {
   ])
   console.log('Created gym2 admins:', powerGymAdmins.map((a) => a.email).join(', '))
 
-  const complexOwner = await upsertOwner({
-    email: 'owner@complex.ma',
+  const enterpriseOwner = await upsertOwner({
+    email: 'owner@enterprise.ma',
     password: 'Owner123!',
     firstName: 'Kenza',
     lastName: 'El Idrissi',
-    gymId: complexGym.id,
-    gymVariantId: complexDefaultVariant.id,
+    gymId: enterpriseGym.id,
+    gymVariantId: enterpriseDefaultVariant.id,
   })
-  await prisma.gym.update({ where: { id: complexGym.id }, data: { ownerId: complexOwner.id } })
+  await prisma.gym.update({ where: { id: enterpriseGym.id }, data: { ownerId: enterpriseOwner.id } })
 
-  const complexAdmins = await Promise.all([
+  const enterpriseAdmins = await Promise.all([
     upsertAdmin({
-      email: 'admin@complex.ma',
+      email: 'admin@enterprise.ma',
       password: 'Password123!',
       firstName: 'Youssef',
       lastName: 'Nord',
-      gymId: complexGym.id,
-      gymVariantId: complexVariants[1].id,
+      gymId: enterpriseGym.id,
+      gymVariantId: enterpriseVariants[1].id,
     }),
     upsertAdmin({
-      email: 'coach@complex.ma',
+      email: 'coach@enterprise.ma',
       password: 'Password123!',
       firstName: 'Imane',
       lastName: 'Sud',
-      gymId: complexGym.id,
-      gymVariantId: complexVariants[2].id,
+      gymId: enterpriseGym.id,
+      gymVariantId: enterpriseVariants[2].id,
     }),
   ])
-  console.log('Created complex gym admins:', complexAdmins.map((a) => a.email).join(', '))
+  console.log('Created Enterprise gym admins:', enterpriseAdmins.map((a) => a.email).join(', '))
 
   const plans1 = await Promise.all([
     prisma.membershipPlan.upsert({
@@ -701,14 +707,14 @@ async function runSeed() {
   ])
   console.log('Created membership plan for Demo gym')
 
-  const plansComplex = await Promise.all([
+  const enterprisePlans = await Promise.all([
     prisma.membershipPlan.upsert({
-      where: { id: `plan-${complexGym.id}-centre` },
+      where: { id: `plan-${enterpriseGym.id}-centre` },
       update: {},
       create: {
-        id: `plan-${complexGym.id}-centre`,
-        gymId: complexGym.id,
-        gymVariantId: complexVariants[0].id,
+        id: `plan-${enterpriseGym.id}-centre`,
+        gymId: enterpriseGym.id,
+        gymVariantId: enterpriseVariants[0].id,
         name: 'Centre Premium',
         durationDays: 30,
         price: 450,
@@ -716,12 +722,12 @@ async function runSeed() {
       },
     }),
     prisma.membershipPlan.upsert({
-      where: { id: `plan-${complexGym.id}-nord` },
+      where: { id: `plan-${enterpriseGym.id}-nord` },
       update: {},
       create: {
-        id: `plan-${complexGym.id}-nord`,
-        gymId: complexGym.id,
-        gymVariantId: complexVariants[1].id,
+        id: `plan-${enterpriseGym.id}-nord`,
+        gymId: enterpriseGym.id,
+        gymVariantId: enterpriseVariants[1].id,
         name: 'Nord Annual',
         durationDays: 365,
         price: 4800,
@@ -729,12 +735,12 @@ async function runSeed() {
       },
     }),
     prisma.membershipPlan.upsert({
-      where: { id: `plan-${complexGym.id}-sud` },
+      where: { id: `plan-${enterpriseGym.id}-sud` },
       update: {},
       create: {
-        id: `plan-${complexGym.id}-sud`,
-        gymId: complexGym.id,
-        gymVariantId: complexVariants[2].id,
+        id: `plan-${enterpriseGym.id}-sud`,
+        gymId: enterpriseGym.id,
+        gymVariantId: enterpriseVariants[2].id,
         name: 'Sud Family',
         durationDays: 90,
         price: 1100,
@@ -742,7 +748,7 @@ async function runSeed() {
       },
     }),
   ])
-  console.log('Created membership plans for Complex gym')
+  console.log('Created membership plans for Enterprise gym')
 
   const members1 = await Promise.all([
     prisma.member.create({
@@ -852,11 +858,11 @@ async function runSeed() {
   ])
   console.log('Created members for Gym 2')
 
-  const membersComplex = await Promise.all([
+  const enterpriseMembers = await Promise.all([
     prisma.member.create({
       data: {
-        gymId: complexGym.id,
-        gymVariantId: complexVariants[0].id,
+        gymId: enterpriseGym.id,
+        gymVariantId: enterpriseVariants[0].id,
         firstName: 'Amine',
         lastName: 'Centre',
         email: 'amine.centre@example.com',
@@ -865,8 +871,8 @@ async function runSeed() {
     }),
     prisma.member.create({
       data: {
-        gymId: complexGym.id,
-        gymVariantId: complexVariants[0].id,
+        gymId: enterpriseGym.id,
+        gymVariantId: enterpriseVariants[0].id,
         firstName: 'Ikram',
         lastName: 'Premium',
         email: 'ikram.premium@example.com',
@@ -875,8 +881,8 @@ async function runSeed() {
     }),
     prisma.member.create({
       data: {
-        gymId: complexGym.id,
-        gymVariantId: complexVariants[1].id,
+        gymId: enterpriseGym.id,
+        gymVariantId: enterpriseVariants[1].id,
         firstName: 'Rachid',
         lastName: 'Nord',
         email: 'rachid.nord@example.com',
@@ -885,8 +891,8 @@ async function runSeed() {
     }),
     prisma.member.create({
       data: {
-        gymId: complexGym.id,
-        gymVariantId: complexVariants[1].id,
+        gymId: enterpriseGym.id,
+        gymVariantId: enterpriseVariants[1].id,
         firstName: 'Soumia',
         lastName: 'Nord',
         email: 'soumia.nord@example.com',
@@ -895,8 +901,8 @@ async function runSeed() {
     }),
     prisma.member.create({
       data: {
-        gymId: complexGym.id,
-        gymVariantId: complexVariants[2].id,
+        gymId: enterpriseGym.id,
+        gymVariantId: enterpriseVariants[2].id,
         firstName: 'Nizar',
         lastName: 'Sud',
         email: 'nizar.sud@example.com',
@@ -905,8 +911,8 @@ async function runSeed() {
     }),
     prisma.member.create({
       data: {
-        gymId: complexGym.id,
-        gymVariantId: complexVariants[2].id,
+        gymId: enterpriseGym.id,
+        gymVariantId: enterpriseVariants[2].id,
         firstName: 'Dounia',
         lastName: 'Family',
         email: 'dounia.family@example.com',
@@ -914,7 +920,7 @@ async function runSeed() {
       },
     }),
   ])
-  console.log('Created members for Complex gym')
+  console.log('Created members for Enterprise gym')
 
   const membersDemo = await Promise.all([
     prisma.member.create({
@@ -965,12 +971,12 @@ async function runSeed() {
   const members2VariantB = members2.slice(3)
   await createSubscriptions(members2VariantA, gym2, [plans2[0]], 5)
   await createSubscriptions(members2VariantB, gym2, [plans2[1]], 8)
-  const membersComplexA = membersComplex.filter((m) => m.gymVariantId === complexVariants[0].id)
-  const membersComplexB = membersComplex.filter((m) => m.gymVariantId === complexVariants[1].id)
-  const membersComplexC = membersComplex.filter((m) => m.gymVariantId === complexVariants[2].id)
-  await createSubscriptions(membersComplexA, complexGym, [plansComplex[0]])
-  await createSubscriptions(membersComplexB, complexGym, [plansComplex[1]], 3)
-  await createSubscriptions(membersComplexC, complexGym, [plansComplex[2]], 6)
+  const enterpriseMembersA = enterpriseMembers.filter((m) => m.gymVariantId === enterpriseVariants[0].id)
+  const enterpriseMembersB = enterpriseMembers.filter((m) => m.gymVariantId === enterpriseVariants[1].id)
+  const enterpriseMembersC = enterpriseMembers.filter((m) => m.gymVariantId === enterpriseVariants[2].id)
+  await createSubscriptions(enterpriseMembersA, enterpriseGym, [enterprisePlans[0]])
+  await createSubscriptions(enterpriseMembersB, enterpriseGym, [enterprisePlans[1]], 3)
+  await createSubscriptions(enterpriseMembersC, enterpriseGym, [enterprisePlans[2]], 6)
   const demoVariantMembersA = membersDemo.filter((m) => m.gymVariantId === demoVariants[0].id)
   const demoVariantMembersB = membersDemo.filter((m) => m.gymVariantId === demoVariants[1].id)
   const demoVariantMembersC = membersDemo.filter((m) => m.gymVariantId === demoVariants[2].id)
@@ -996,12 +1002,12 @@ async function runSeed() {
     { member: members2[3], dayOffset: 0, hour: 18, durationMinutes: 45 },
   ])
 
-  await seedVisitsForGym(complexGym, [
-    { member: membersComplex[0], dayOffset: 0, hour: 7, durationMinutes: 60 },
-    { member: membersComplex[1], dayOffset: -1, hour: 18, durationMinutes: 80 },
-    { member: membersComplex[2], dayOffset: -2, hour: 12, durationMinutes: 90, checkout: false },
-    { member: membersComplex[3], dayOffset: -3, hour: 17, durationMinutes: 55 },
-    { member: membersComplex[4], dayOffset: 0, hour: 9, durationMinutes: 70 },
+  await seedVisitsForGym(enterpriseGym, [
+    { member: enterpriseMembers[0], dayOffset: 0, hour: 7, durationMinutes: 60 },
+    { member: enterpriseMembers[1], dayOffset: -1, hour: 18, durationMinutes: 80 },
+    { member: enterpriseMembers[2], dayOffset: -2, hour: 12, durationMinutes: 90, checkout: false },
+    { member: enterpriseMembers[3], dayOffset: -3, hour: 17, durationMinutes: 55 },
+    { member: enterpriseMembers[4], dayOffset: 0, hour: 9, durationMinutes: 70 },
   ])
 
   await seedVisitsForGym(demoGym, [
@@ -1039,13 +1045,13 @@ async function runSeed() {
         createdAt: addDays(today, -1),
       },
       {
-        memberId: membersComplex[0].id,
+        memberId: enterpriseMembers[0].id,
         status: AccessEventStatus.GRANTED,
         source: AccessEventSource.QR_SCAN,
         createdAt: addDays(today, -2),
       },
       {
-        memberId: membersComplex[2].id,
+        memberId: enterpriseMembers[2].id,
         status: AccessEventStatus.ALREADY_CHECKED_IN,
         source: AccessEventSource.SIMULATOR,
         createdAt: addDays(today, -4),
@@ -1103,7 +1109,7 @@ async function runSeed() {
 
   return {
     gymsSeeded: 4,
-    membersSeeded: members1.length + members2.length + membersComplex.length + membersDemo.length,
+    membersSeeded: members1.length + members2.length + enterpriseMembers.length + membersDemo.length,
   }
 }
 

@@ -122,11 +122,11 @@ export const db = {
     }),
 
   // Plans
-  getPlans: async (gymId: string, gymVariantId?: string) =>
+  getPlans: async (gymId: string, gymVariantId?: string, includeInactive = false) =>
     prisma.membershipPlan.findMany({
       where: {
         gymId,
-        isActive: true,
+        ...(includeInactive ? {} : { isActive: true }),
         ...(gymVariantId ? { gymVariantId } : {}),
       },
       include: { gymVariant: { select: { id: true, name: true, slug: true, isDefault: true } } },
@@ -139,6 +139,7 @@ export const db = {
     name: string
     durationDays: number
     price: number
+    isActive?: boolean
   }) =>
     prisma.membershipPlan.create({
       data: {
@@ -147,7 +148,7 @@ export const db = {
         name: data.name,
         durationDays: data.durationDays,
         price: data.price,
-        isActive: true,
+        isActive: data.isActive ?? true,
       },
     }),
 
@@ -157,6 +158,7 @@ export const db = {
       name: string
       durationDays: number
       price: number
+      isActive?: boolean
     },
   ) =>
     prisma.membershipPlan.update({
@@ -165,6 +167,7 @@ export const db = {
         name: data.name,
         durationDays: data.durationDays,
         price: data.price,
+        isActive: typeof data.isActive === "boolean" ? data.isActive : undefined,
       },
     }),
 

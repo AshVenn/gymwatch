@@ -18,7 +18,7 @@ type Props = {
 
 const schema = z.object({
   status: z.enum(['ACTIVE', 'SUSPENDED', 'EXPIRED']),
-  plan: z.enum(['BASIC', 'PRO', 'COMPLEX']),
+  plan: z.enum(['BASIC', 'PRO', 'ENTERPRISE']),
   interval: z.enum(['MONTHLY', 'ANNUAL']),
   expiresAt: z.string().optional(),
   grace: z.coerce.number().min(0).max(30),
@@ -154,7 +154,7 @@ export function GymSubscriptionSettings({ gym }: Props) {
                       <SelectContent>
                         <SelectItem value="BASIC">Basic</SelectItem>
                         <SelectItem value="PRO">Pro</SelectItem>
-                        <SelectItem value="COMPLEX">Complex</SelectItem>
+                        <SelectItem value="ENTERPRISE">Enterprise</SelectItem>
                       </SelectContent>
                     </Select>
                   </FormItem>

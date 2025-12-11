@@ -4,6 +4,7 @@ import { hashPassword } from "./auth"
 import { getPlanFeatures } from "./subscription-plans"
 import { resolvePlanPrice } from "./plan-settings"
 import { GymPlanTier, GymBillingInterval } from "@prisma/client"
+import { resolveGymPlanLimits } from "./plan-settings"
 
 function getMonthBoundaries(offset: number) {
   const reference = new Date()
@@ -171,6 +172,8 @@ export async function listGymsForSuperAdmin() {
       analyticsSnapshot: true,
       updatedAt: true,
       maxAdminAccounts: true,
+      planLimitPerVariant: true,
+      planLimitPerNetwork: true,
       owner: {
         select: { id: true, email: true, firstName: true, lastName: true },
       },
@@ -188,49 +191,58 @@ export async function listGymsForSuperAdmin() {
     },
   })
 
-  return gyms.map((gym) => {
-    const daysRemaining = gym.subscriptionExpiresAt
-      ? Math.ceil((gym.subscriptionExpiresAt.getTime() - Date.now()) / (1000 * 60 * 60 * 24))
-      : null
-    const variantMode = resolveVariantMode(gym._count.variants, gym.variants)
+  return Promise.all(
+    gyms.map(async (gym) => {
+      const daysRemaining = gym.subscriptionExpiresAt
+        ? Math.ceil((gym.subscriptionExpiresAt.getTime() - Date.now()) / (1000 * 60 * 60 * 24))
+        : null
+      const variantMode = resolveVariantMode(gym._count.variants, gym.variants)
+      const planLimits = await resolveGymPlanLimits(gym.subscriptionPlan, {
+        perVariant: gym.planLimitPerVariant,
+        perNetwork: gym.planLimitPerNetwork,
+      })
 
-    return {
-      id: gym.id,
-      name: gym.name,
-      email: gym.email,
-      phone: gym.phone,
-      address: gym.address,
-      city: gym.city,
-      country: gym.country,
-      subscriptionPlan: gym.subscriptionPlan,
-      billingInterval: gym.billingInterval,
-      subscriptionPrice: gym.subscriptionPrice,
-      subscriptionStatus: gym.subscriptionStatus,
-      subscriptionExpiresAt: gym.subscriptionExpiresAt,
-      isDemo: gym.isDemo,
-      demoEndsAt: gym.demoEndsAt,
-      subscriptionGracePeriodDays: gym.subscriptionGracePeriodDays,
-      analyticsSnapshot: gym.analyticsSnapshot ?? undefined,
-      daysRemaining,
-      memberCount: gym._count.members,
-      activeSubscriptions: gym._count.subscriptions,
-      updatedAt: gym.updatedAt,
-      owner: gym.owner
-        ? {
-            id: gym.owner.id,
-            email: gym.owner.email,
-            firstName: gym.owner.firstName,
-            lastName: gym.owner.lastName,
-          }
-        : null,
-      adminCount: gym.users.length,
-      maxAdminAccounts: gym.maxAdminAccounts,
-      variants: gym.variants,
-      variantCount: gym._count.variants,
-      planFeatures: getPlanFeatures(gym.subscriptionPlan),
-      variantMode,
-    }
-  })
+      return {
+        id: gym.id,
+        name: gym.name,
+        email: gym.email,
+        phone: gym.phone,
+        address: gym.address,
+        city: gym.city,
+        country: gym.country,
+        subscriptionPlan: gym.subscriptionPlan,
+        billingInterval: gym.billingInterval,
+        subscriptionPrice: gym.subscriptionPrice,
+        subscriptionStatus: gym.subscriptionStatus,
+        subscriptionExpiresAt: gym.subscriptionExpiresAt,
+        isDemo: gym.isDemo,
+        demoEndsAt: gym.demoEndsAt,
+        subscriptionGracePeriodDays: gym.subscriptionGracePeriodDays,
+        analyticsSnapshot: gym.analyticsSnapshot ?? undefined,
+        daysRemaining,
+        memberCount: gym._count.members,
+        activeSubscriptions: gym._count.subscriptions,
+        updatedAt: gym.updatedAt,
+        owner: gym.owner
+          ? {
+              id: gym.owner.id,
+              email: gym.owner.email,
+              firstName: gym.owner.firstName,
+              lastName: gym.owner.lastName,
+            }
+          : null,
+        adminCount: gym.users.length,
+        maxAdminAccounts: gym.maxAdminAccounts,
+        planLimitPerVariant: gym.planLimitPerVariant ?? undefined,
+        planLimitPerNetwork: gym.planLimitPerNetwork ?? undefined,
+        planLimits,
+        variants: gym.variants,
+        variantCount: gym._count.variants,
+        planFeatures: getPlanFeatures(gym.subscriptionPlan),
+        variantMode,
+      }
+    }),
+  )
 }
 
 export async function getSuperAdminGymDetail(gymId: string) {
@@ -256,6 +268,8 @@ export async function getSuperAdminGymDetail(gymId: string) {
       createdAt: true,
       updatedAt: true,
       maxAdminAccounts: true,
+      planLimitPerVariant: true,
+      planLimitPerNetwork: true,
       owner: {
         select: { id: true, email: true, firstName: true, lastName: true },
       },
@@ -309,6 +323,10 @@ export async function getSuperAdminGymDetail(gymId: string) {
     },
     _sum: { amount: true },
   })
+  const planLimits = await resolveGymPlanLimits(gym.subscriptionPlan, {
+    perVariant: gym.planLimitPerVariant,
+    perNetwork: gym.planLimitPerNetwork,
+  })
 
   const admins = gym.users
     .filter((user) => user.role === UserRole.GYM_ADMIN)
@@ -354,6 +372,9 @@ export async function getSuperAdminGymDetail(gymId: string) {
     planFeatures: getPlanFeatures(gym.subscriptionPlan),
       variantMode,
     adminCount: admins.length,
+    planLimitPerVariant: gym.planLimitPerVariant ?? undefined,
+    planLimitPerNetwork: gym.planLimitPerNetwork ?? undefined,
+    planLimits,
   }
 }
 
@@ -375,6 +396,8 @@ export async function updateGymFromSuperAdmin(
     maxAdminAccounts?: number
     isDemo?: boolean
     demoEndsAt?: Date | null
+    planLimitPerVariant?: number | null
+    planLimitPerNetwork?: number | null
   },
 ) {
   let subscriptionPrice: number | undefined
@@ -409,6 +432,8 @@ export async function updateGymFromSuperAdmin(
       maxAdminAccounts: data.maxAdminAccounts ?? undefined,
       isDemo: typeof data.isDemo === "boolean" ? data.isDemo : undefined,
       demoEndsAt: data.demoEndsAt ?? undefined,
+      planLimitPerVariant: data.planLimitPerVariant ?? undefined,
+      planLimitPerNetwork: data.planLimitPerNetwork ?? undefined,
     },
   })
 
@@ -437,6 +462,8 @@ export async function createGymForSuperAdmin(data: {
   maxAdminAccounts?: number
   isDemo?: boolean
   demoEndsAt?: Date | null
+  planLimitPerVariant?: number | null
+  planLimitPerNetwork?: number | null
   admins?: {
     email: string
     password: string
@@ -477,6 +504,8 @@ export async function createGymForSuperAdmin(data: {
         maxAdminAccounts: adminLimit,
         isDemo: data.isDemo ?? false,
         demoEndsAt: data.demoEndsAt ?? null,
+        planLimitPerVariant: data.planLimitPerVariant ?? null,
+        planLimitPerNetwork: data.planLimitPerNetwork ?? null,
       },
     })
 

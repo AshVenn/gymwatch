@@ -311,7 +311,7 @@ export default function MemberBadgePage() {
             <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-amber-900">
               <div className="flex items-center gap-2 font-semibold">
                 <ShieldCheck className="h-4 w-4" />
-                Plan Pro ou Complex requis
+                Plan Pro ou Enterprise requis
               </div>
               <p className="text-sm">
                 Activez le contrôle d&apos;accès pour simuler les scans et enregistrer les évènements.

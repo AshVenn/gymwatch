@@ -289,7 +289,7 @@ export default function ClassDetailPage({ params }: { params: { id: string } }) 
     if (!hasCourses) {
       return (
         <div className="rounded-2xl border border-dashed border-amber-300/60 bg-amber-500/10 p-4 text-sm text-amber-900">
-          La gestion des cours est reservee au plan Complex.
+          La gestion des cours est reservee au plan Enterprise.
         </div>
       )
     }

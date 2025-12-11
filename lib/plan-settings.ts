@@ -5,14 +5,25 @@ import {
   PlanPricingTable,
   computePricingFromSettings,
   DEFAULT_ANNUAL_DISCOUNT,
+  PlanLimitsTable,
+  DEFAULT_PLAN_LIMITS,
+  computeLimitsFromSettings,
+  normalizeLimitValue,
+  isUnlimitedLimit,
 } from "./subscription-plans"
 
 type PlanSettingsRecord = {
   id: number
   basicMonthlyPrice: number
   proMonthlyPrice: number
-  complexMonthlyPrice: number
+  enterpriseMonthlyPrice: number
   annualDiscountPercent: number
+  basicPlanLimitPerVariant: number
+  basicPlanLimitPerNetwork: number
+  proPlanLimitPerVariant: number
+  proPlanLimitPerNetwork: number
+  enterprisePlanLimitPerVariant: number
+  enterprisePlanLimitPerNetwork: number
   createdAt?: Date
   updatedAt?: Date
 }
@@ -20,6 +31,7 @@ type PlanSettingsRecord = {
 type CachedPlanSettings = {
   settings: PlanSettingsRecord
   pricing: PlanPricingTable
+  limits: PlanLimitsTable
   fetchedAt: number
 }
 
@@ -28,8 +40,14 @@ const DEFAULT_PLAN_SETTINGS: PlanSettingsRecord = {
   id: 1,
   basicMonthlyPrice: PLAN_PRICING.BASIC.MONTHLY,
   proMonthlyPrice: PLAN_PRICING.PRO.MONTHLY,
-  complexMonthlyPrice: PLAN_PRICING.COMPLEX.MONTHLY,
+  enterpriseMonthlyPrice: PLAN_PRICING.ENTERPRISE.MONTHLY,
   annualDiscountPercent: DEFAULT_ANNUAL_DISCOUNT,
+  basicPlanLimitPerVariant: DEFAULT_PLAN_LIMITS.BASIC.perVariant,
+  basicPlanLimitPerNetwork: DEFAULT_PLAN_LIMITS.BASIC.perNetwork,
+  proPlanLimitPerVariant: DEFAULT_PLAN_LIMITS.PRO.perVariant,
+  proPlanLimitPerNetwork: DEFAULT_PLAN_LIMITS.PRO.perNetwork,
+  enterprisePlanLimitPerVariant: DEFAULT_PLAN_LIMITS.ENTERPRISE.perVariant,
+  enterprisePlanLimitPerNetwork: DEFAULT_PLAN_LIMITS.ENTERPRISE.perNetwork,
 }
 
 let cache: CachedPlanSettings | null = null
@@ -40,14 +58,39 @@ function clampNumber(value: number | null | undefined, fallback: number, min = 0
   return typeof max === "number" ? Math.min(aboveMin, max) : aboveMin
 }
 
+function clampLimit(value: number | null | undefined, fallback: number) {
+  return normalizeLimitValue(value ?? fallback)
+}
+
 function normalizeSettings(input: PlanSettingsRecord): PlanSettingsRecord {
   return {
     ...input,
     id: input.id || 1,
     basicMonthlyPrice: clampNumber(input.basicMonthlyPrice, DEFAULT_PLAN_SETTINGS.basicMonthlyPrice),
     proMonthlyPrice: clampNumber(input.proMonthlyPrice, DEFAULT_PLAN_SETTINGS.proMonthlyPrice),
-    complexMonthlyPrice: clampNumber(input.complexMonthlyPrice, DEFAULT_PLAN_SETTINGS.complexMonthlyPrice),
+    enterpriseMonthlyPrice: clampNumber(
+      input.enterpriseMonthlyPrice,
+      DEFAULT_PLAN_SETTINGS.enterpriseMonthlyPrice,
+    ),
     annualDiscountPercent: clampNumber(input.annualDiscountPercent, DEFAULT_PLAN_SETTINGS.annualDiscountPercent, 0, 90),
+    basicPlanLimitPerVariant: clampLimit(
+      input.basicPlanLimitPerVariant,
+      DEFAULT_PLAN_SETTINGS.basicPlanLimitPerVariant,
+    ),
+    basicPlanLimitPerNetwork: clampLimit(
+      input.basicPlanLimitPerNetwork,
+      DEFAULT_PLAN_SETTINGS.basicPlanLimitPerNetwork,
+    ),
+    proPlanLimitPerVariant: clampLimit(input.proPlanLimitPerVariant, DEFAULT_PLAN_SETTINGS.proPlanLimitPerVariant),
+    proPlanLimitPerNetwork: clampLimit(input.proPlanLimitPerNetwork, DEFAULT_PLAN_SETTINGS.proPlanLimitPerNetwork),
+    enterprisePlanLimitPerVariant: clampLimit(
+      input.enterprisePlanLimitPerVariant,
+      DEFAULT_PLAN_SETTINGS.enterprisePlanLimitPerVariant,
+    ),
+    enterprisePlanLimitPerNetwork: clampLimit(
+      input.enterprisePlanLimitPerNetwork,
+      DEFAULT_PLAN_SETTINGS.enterprisePlanLimitPerNetwork,
+    ),
   }
 }
 
@@ -58,8 +101,16 @@ function buildCache(settings: PlanSettingsRecord): CachedPlanSettings {
     pricing: computePricingFromSettings({
       basicMonthlyPrice: normalized.basicMonthlyPrice,
       proMonthlyPrice: normalized.proMonthlyPrice,
-      complexMonthlyPrice: normalized.complexMonthlyPrice,
+      enterpriseMonthlyPrice: normalized.enterpriseMonthlyPrice,
       annualDiscountPercent: normalized.annualDiscountPercent,
+    }),
+    limits: computeLimitsFromSettings({
+      basicPlanLimitPerVariant: normalized.basicPlanLimitPerVariant,
+      basicPlanLimitPerNetwork: normalized.basicPlanLimitPerNetwork,
+      proPlanLimitPerVariant: normalized.proPlanLimitPerVariant,
+      proPlanLimitPerNetwork: normalized.proPlanLimitPerNetwork,
+      enterprisePlanLimitPerVariant: normalized.enterprisePlanLimitPerVariant,
+      enterprisePlanLimitPerNetwork: normalized.enterprisePlanLimitPerNetwork,
     }),
     fetchedAt: Date.now(),
   }
@@ -91,8 +142,14 @@ export async function updatePlanSettings(
     update: {
       basicMonthlyPrice: normalized.basicMonthlyPrice,
       proMonthlyPrice: normalized.proMonthlyPrice,
-      complexMonthlyPrice: normalized.complexMonthlyPrice,
+      enterpriseMonthlyPrice: normalized.enterpriseMonthlyPrice,
       annualDiscountPercent: normalized.annualDiscountPercent,
+      basicPlanLimitPerVariant: normalized.basicPlanLimitPerVariant,
+      basicPlanLimitPerNetwork: normalized.basicPlanLimitPerNetwork,
+      proPlanLimitPerVariant: normalized.proPlanLimitPerVariant,
+      proPlanLimitPerNetwork: normalized.proPlanLimitPerNetwork,
+      enterprisePlanLimitPerVariant: normalized.enterprisePlanLimitPerVariant,
+      enterprisePlanLimitPerNetwork: normalized.enterprisePlanLimitPerNetwork,
     },
     create: normalized,
   })
@@ -109,6 +166,32 @@ export async function resolvePlanPrice(tier: GymPlanTier, interval: GymBillingIn
 export async function getPlanPricing(forceRefresh = false) {
   const { pricing } = await getPlanSettings(forceRefresh)
   return pricing
+}
+
+export async function getPlanLimits(forceRefresh = false) {
+  const { limits } = await getPlanSettings(forceRefresh)
+  return limits
+}
+
+export async function resolveGymPlanLimits(
+  tier: GymPlanTier,
+  overrides?: { perVariant?: number | null; perNetwork?: number | null },
+) {
+  const { limits } = await getPlanSettings()
+  const base = limits[tier] ?? limits.BASIC
+  const perVariant = clampLimit(overrides?.perVariant, base.perVariant ?? DEFAULT_PLAN_LIMITS.BASIC.perVariant)
+  const perNetwork = clampLimit(overrides?.perNetwork, base.perNetwork ?? DEFAULT_PLAN_LIMITS.BASIC.perNetwork)
+
+  return {
+    perVariant,
+    perNetwork,
+    unlimitedPerVariant: isUnlimitedLimit(perVariant),
+    unlimitedPerNetwork: isUnlimitedLimit(perNetwork),
+    sources: {
+      perVariant: overrides?.perVariant === null || overrides?.perVariant === undefined ? "PLAN_DEFAULT" : "GYM_OVERRIDE",
+      perNetwork: overrides?.perNetwork === null || overrides?.perNetwork === undefined ? "PLAN_DEFAULT" : "GYM_OVERRIDE",
+    } as const,
+  }
 }
 
 export function clearPlanSettingsCache() {

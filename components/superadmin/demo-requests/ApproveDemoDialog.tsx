@@ -32,7 +32,7 @@ const schema = z.object({
   address: z.string().optional(),
   city: z.string().optional(),
   country: z.string().optional(),
-  plan: z.enum(['BASIC', 'PRO', 'COMPLEX']),
+  plan: z.enum(['BASIC', 'PRO', 'ENTERPRISE']),
   billingInterval: z.enum(['MONTHLY', 'ANNUAL']),
   expiresAt: z.string().optional(),
   grace: z.coerce.number().min(0).max(30),
@@ -366,7 +366,7 @@ export function ApproveDemoDialog({ request, open, onOpenChange, onApproved }: P
                         <SelectContent>
                           <SelectItem value="BASIC">Basic</SelectItem>
                           <SelectItem value="PRO">Pro</SelectItem>
-                          <SelectItem value="COMPLEX">Complex</SelectItem>
+                          <SelectItem value="ENTERPRISE">Enterprise</SelectItem>
                         </SelectContent>
                       </Select>
                     </FormItem>

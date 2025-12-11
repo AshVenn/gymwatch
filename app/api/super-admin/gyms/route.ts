@@ -22,6 +22,8 @@ const createGymSchema = z.object({
   subscriptionGracePeriodDays: z.number().int().min(0).max(365).optional(),
   analyticsSnapshot: z.any().optional(),
   maxAdminAccounts: z.number().int().min(1).max(20).optional(),
+  planLimitPerVariant: z.number().int().min(-1).optional(),
+  planLimitPerNetwork: z.number().int().min(-1).optional(),
   isDemo: z.boolean().optional(),
   demoEndsAt: z.string().optional(),
   admins: z
@@ -99,6 +101,8 @@ export async function POST(req: Request) {
       subscriptionGracePeriodDays: payload.subscriptionGracePeriodDays,
       analyticsSnapshot: payload.analyticsSnapshot,
       maxAdminAccounts: payload.maxAdminAccounts,
+      planLimitPerVariant: payload.planLimitPerVariant,
+      planLimitPerNetwork: payload.planLimitPerNetwork,
       isDemo: payload.isDemo,
       demoEndsAt: payload.demoEndsAt ? new Date(payload.demoEndsAt) : undefined,
       variants: payload.variants,

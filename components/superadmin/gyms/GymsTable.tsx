@@ -48,7 +48,7 @@ const STATUS_LABEL: Record<string, string> = {
 const PLAN_LABEL: Record<string, string> = {
   BASIC: 'Basic',
   PRO: 'Pro',
-  COMPLEX: 'Complex',
+  ENTERPRISE: 'Enterprise',
 }
 
 const INTERVAL_LABEL: Record<string, string> = {

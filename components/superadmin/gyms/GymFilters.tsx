@@ -54,7 +54,7 @@ export function GymFilters({
             <SelectItem value="ALL">Tous les plans</SelectItem>
             <SelectItem value="BASIC">Basic</SelectItem>
             <SelectItem value="PRO">Pro</SelectItem>
-            <SelectItem value="COMPLEX">Complex</SelectItem>
+            <SelectItem value="ENTERPRISE">Enterprise</SelectItem>
           </SelectContent>
         </Select>
       </div>

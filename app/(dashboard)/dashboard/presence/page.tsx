@@ -113,7 +113,7 @@ export default function PresencePage() {
   const [checkoutTime, setCheckoutTime] = useState<string>(formatTimeInput(new Date()))
   const [checkoutWindowStart, setCheckoutWindowStart] = useState<string>('')
   const [checkoutWindowEnd, setCheckoutWindowEnd] = useState<string>('')
-  const planLabel = tier === 'COMPLEX' ? 'Complex' : tier === 'PRO' ? 'Pro' : 'Basic'
+  const planLabel = tier === 'ENTERPRISE' ? 'Enterprise' : tier === 'PRO' ? 'Pro' : 'Basic'
   const featureItems = useMemo(
     () =>
       buildFeatureAccessItems({
@@ -431,7 +431,7 @@ export default function PresencePage() {
           <div className="space-y-1">
             <p className="font-semibold">Aggregation multi-salles verrouillee</p>
             <p>
-              Les statistiques consolidees sont reservees au plan Complex. Selectionnez une salle ou{' '}
+              Les statistiques consolidees sont reservees au plan Enterprise. Selectionnez une salle ou{' '}
               <Link href="/dashboard/settings" className="font-semibold text-amber-900 underline">mettez a niveau</Link>{' '}
               pour debloquer la vue reseau.
             </p>

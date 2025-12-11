@@ -4,6 +4,7 @@ import { authOptions } from "@/lib/auth-middleware"
 import { NextRequest, NextResponse } from "next/server"
 import { db } from "@/lib/db"
 import { prisma } from "@/lib/prisma"
+import { resolveGymPlanLimits } from "@/lib/plan-settings"
 
 export async function GET(request: NextRequest) {
   try {
@@ -49,7 +50,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const { name, durationDays, price, gymVariantId: payloadVariantId } = await request.json()
+    const { name, durationDays, price, gymVariantId: payloadVariantId, isActive } = await request.json()
 
     const role = (session.user as any).role as string | undefined
     const sessionVariantId = (session.user as any).gymVariantId as string | undefined
@@ -71,12 +72,58 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Variant introuvable" }, { status: 400 })
     }
 
+    const gym = await prisma.gym.findUnique({
+      where: { id: session.user.gymId as string },
+      select: { subscriptionPlan: true, planLimitPerVariant: true, planLimitPerNetwork: true },
+    })
+    if (!gym) {
+      return NextResponse.json({ error: "Gym not found" }, { status: 404 })
+    }
+
+    const targetActive = isActive ?? true
+    if (targetActive) {
+      const limits = await resolveGymPlanLimits(gym.subscriptionPlan, {
+        perVariant: gym.planLimitPerVariant,
+        perNetwork: gym.planLimitPerNetwork,
+      })
+
+      const [variantActivePlans, networkActivePlans] = await Promise.all([
+        prisma.membershipPlan.count({
+          where: { gymId: session.user.gymId as string, gymVariantId, isActive: true },
+        }),
+        prisma.membershipPlan.count({
+          where: { gymId: session.user.gymId as string, isActive: true },
+        }),
+      ])
+
+      if (!limits.unlimitedPerVariant && variantActivePlans >= limits.perVariant!) {
+        return NextResponse.json(
+          {
+            error: "PLAN_LIMIT_REACHED",
+            message: `Limite atteinte: ${limits.perVariant} plan(s) actif(s) pour cette variante.`,
+          },
+          { status: 409 },
+        )
+      }
+
+      if (!limits.unlimitedPerNetwork && networkActivePlans >= limits.perNetwork!) {
+        return NextResponse.json(
+          {
+            error: "PLAN_LIMIT_REACHED",
+            message: `Limite reseau atteinte: ${limits.perNetwork} plan(s) actif(s) pour ce reseau.`,
+          },
+          { status: 409 },
+        )
+      }
+    }
+
     const plan = await db.createPlan({
       gymId: session.user.gymId as string,
       gymVariantId,
       name,
       durationDays,
       price,
+      isActive: isActive ?? true,
     })
 
     return NextResponse.json(plan, { status: 201 })

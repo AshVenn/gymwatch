@@ -63,7 +63,7 @@ export async function GET(_request: NextRequest, { params }: { params: { classId
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
   }
   if (!hasPlanFeature(tier, "courses")) {
-    return NextResponse.json({ error: "Plan Complex requis" }, { status: 403 })
+    return NextResponse.json({ error: "Plan Enterprise requis" }, { status: 403 })
   }
 
   const baseSession = await prisma.classSession.findFirst({
@@ -98,7 +98,7 @@ export async function PUT(request: NextRequest, { params }: { params: { classId:
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
   }
   if (!hasPlanFeature(tier, "courses")) {
-    return NextResponse.json({ error: "Plan Complex requis" }, { status: 403 })
+    return NextResponse.json({ error: "Plan Enterprise requis" }, { status: 403 })
   }
 
   let payload: z.infer<typeof classSessionSchema>
@@ -183,7 +183,7 @@ export async function DELETE(_request: NextRequest, { params }: { params: { clas
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
   }
   if (!hasPlanFeature(tier, "courses")) {
-    return NextResponse.json({ error: "Plan Complex requis" }, { status: 403 })
+    return NextResponse.json({ error: "Plan Enterprise requis" }, { status: 403 })
   }
 
   const existing = await prisma.classSession.findFirst({

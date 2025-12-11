@@ -57,9 +57,9 @@ const faqs = [
       "Non. GymWatch est 100 % web : un navigateur suffit. Les QR codes et le scan fonctionnent via une tablette ou un smartphone connecté.",
   },
   {
-    question: "Comment se passe le passage de l’offre Basic à Pro / Complex ?",
+    question: "Comment se passe le passage de l’offre Basic à Pro / Enterprise ?",
     answer:
-      "Vous pouvez changer d’offre à tout moment. Le passage à Pro ou Complex débloque les QR codes, les exports CSV/PDF, les statistiques détaillées ainsi que les scénarios d’automatisation avancés.",
+      "Vous pouvez changer d’offre à tout moment. Le passage à Pro ou Enterprise débloque les QR codes, les exports CSV/PDF, les statistiques détaillées ainsi que les scénarios d’automatisation avancés.",
   },
   {
     question: 'Puis-je commencer avec une salle et en ajouter d’autres plus tard ?',

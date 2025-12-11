@@ -17,7 +17,7 @@ export async function DELETE(_request: NextRequest, { params }: { params: { clas
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
   }
   if (!hasPlanFeature(tier, "courses")) {
-    return NextResponse.json({ error: "Plan Complex requis" }, { status: 403 })
+    return NextResponse.json({ error: "Plan Enterprise requis" }, { status: 403 })
   }
 
   const booking = await prisma.classBooking.findFirst({

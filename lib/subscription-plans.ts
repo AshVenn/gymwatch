@@ -10,6 +10,8 @@ export type PlanFeatureKey =
   | "excelReports"
 export type PlanFeatures = Record<PlanFeatureKey, boolean>
 export type PlanPricingTable = Record<PlanTier, Record<GymBillingInterval, number>>
+export type PlanLimits = { perVariant: number | null; perNetwork: number | null }
+export type PlanLimitsTable = Record<PlanTier, PlanLimits>
 
 export interface PlanCatalogEntry {
   tier: PlanTier
@@ -28,7 +30,13 @@ export const DEFAULT_ANNUAL_DISCOUNT = 15
 const DEFAULT_MONTHLY_PRICING: Record<PlanTier, number> = {
   BASIC: 200,
   PRO: 350,
-  COMPLEX: 520,
+  ENTERPRISE: 520,
+}
+
+export const DEFAULT_PLAN_LIMITS: PlanLimitsTable = {
+  BASIC: { perVariant: 3, perNetwork: 3 },
+  PRO: { perVariant: 6, perNetwork: 10 },
+  ENTERPRISE: { perVariant: -1, perNetwork: -1 },
 }
 
 export function calculateAnnualPrice(monthly: number, discountPercent: number) {
@@ -40,7 +48,7 @@ export function calculateAnnualPrice(monthly: number, discountPercent: number) {
 export function computePricingFromSettings(settings: {
   basicMonthlyPrice: number
   proMonthlyPrice: number
-  complexMonthlyPrice: number
+  enterpriseMonthlyPrice: number
   annualDiscountPercent: number
 }): PlanPricingTable {
   return {
@@ -52,9 +60,9 @@ export function computePricingFromSettings(settings: {
       MONTHLY: settings.proMonthlyPrice,
       ANNUAL: calculateAnnualPrice(settings.proMonthlyPrice, settings.annualDiscountPercent),
     },
-    COMPLEX: {
-      MONTHLY: settings.complexMonthlyPrice,
-      ANNUAL: calculateAnnualPrice(settings.complexMonthlyPrice, settings.annualDiscountPercent),
+    ENTERPRISE: {
+      MONTHLY: settings.enterpriseMonthlyPrice,
+      ANNUAL: calculateAnnualPrice(settings.enterpriseMonthlyPrice, settings.annualDiscountPercent),
     },
   }
 }
@@ -62,9 +70,44 @@ export function computePricingFromSettings(settings: {
 export const PLAN_PRICING: PlanPricingTable = computePricingFromSettings({
   basicMonthlyPrice: DEFAULT_MONTHLY_PRICING.BASIC,
   proMonthlyPrice: DEFAULT_MONTHLY_PRICING.PRO,
-  complexMonthlyPrice: DEFAULT_MONTHLY_PRICING.COMPLEX,
+  enterpriseMonthlyPrice: DEFAULT_MONTHLY_PRICING.ENTERPRISE,
   annualDiscountPercent: DEFAULT_ANNUAL_DISCOUNT,
 })
+
+export function normalizeLimitValue(value: number | null | undefined) {
+  if (value === null || value === undefined) return -1
+  const safe = Math.floor(Number(value))
+  if (!Number.isFinite(safe)) return -1
+  return safe < -1 ? -1 : safe
+}
+
+export function computeLimitsFromSettings(settings: {
+  basicPlanLimitPerVariant: number
+  basicPlanLimitPerNetwork: number
+  proPlanLimitPerVariant: number
+  proPlanLimitPerNetwork: number
+  enterprisePlanLimitPerVariant: number
+  enterprisePlanLimitPerNetwork: number
+}): PlanLimitsTable {
+  return {
+    BASIC: {
+      perVariant: normalizeLimitValue(settings.basicPlanLimitPerVariant),
+      perNetwork: normalizeLimitValue(settings.basicPlanLimitPerNetwork),
+    },
+    PRO: {
+      perVariant: normalizeLimitValue(settings.proPlanLimitPerVariant),
+      perNetwork: normalizeLimitValue(settings.proPlanLimitPerNetwork),
+    },
+    ENTERPRISE: {
+      perVariant: normalizeLimitValue(settings.enterprisePlanLimitPerVariant),
+      perNetwork: normalizeLimitValue(settings.enterprisePlanLimitPerNetwork),
+    },
+  }
+}
+
+export function isUnlimitedLimit(value: number | null | undefined) {
+  return value === null || value < 0
+}
 
 const EMPTY_FEATURES: PlanFeatures = {
   accessControl: false,
@@ -87,7 +130,7 @@ const FEATURE_MATRIX: Record<PlanTier, PlanFeatures> = {
     qrDownloads: true,
     excelReports: true,
   },
-  COMPLEX: {
+  ENTERPRISE: {
     accessControl: true,
     presenceTracking: true,
     courses: true,
@@ -124,12 +167,12 @@ const PLAN_METADATA: Record<PlanTier, Omit<PlanCatalogEntry, "monthlyPrice" | "a
       "Exports PDF/Excel multi-salles",
     ],
   },
-  COMPLEX: {
-    tier: "COMPLEX",
-    name: "Complex",
-    description: "Offre multi-sites avec automations avancees et equipe illimitee",
+  ENTERPRISE: {
+    tier: "ENTERPRISE",
+    name: "Enterprise",
+    description: "Offre multi-sites avec automations avancees et catalogue illimite",
     highlight: true,
-    highlightLabel: "Complex",
+    highlightLabel: "Enterprise",
     badges: ["Multi-salles illimitees", "Automatisations", "Cours & planning"],
     features: [
       "Salles et utilisateurs illimites",
@@ -147,10 +190,10 @@ export function getPlanCatalog(pricing: PlanPricingTable = PLAN_PRICING): Record
   return {
     BASIC: { ...PLAN_METADATA.BASIC, monthlyPrice: pricing.BASIC.MONTHLY, annualPrice: pricing.BASIC.ANNUAL },
     PRO: { ...PLAN_METADATA.PRO, monthlyPrice: pricing.PRO.MONTHLY, annualPrice: pricing.PRO.ANNUAL },
-    COMPLEX: {
-      ...PLAN_METADATA.COMPLEX,
-      monthlyPrice: pricing.COMPLEX.MONTHLY,
-      annualPrice: pricing.COMPLEX.ANNUAL,
+    ENTERPRISE: {
+      ...PLAN_METADATA.ENTERPRISE,
+      monthlyPrice: pricing.ENTERPRISE.MONTHLY,
+      annualPrice: pricing.ENTERPRISE.ANNUAL,
     },
   }
 }
@@ -172,5 +215,19 @@ export function getPlanCatalogAsList(pricing?: PlanPricingTable): PlanCatalogEnt
 }
 
 export function isMultiLocationPlan(tier: GymPlanTier | null | undefined) {
-  return tier === "COMPLEX"
+  return tier === "ENTERPRISE"
+}
+
+export function resolvePlanLimitsForTier(
+  tier: GymPlanTier | null | undefined,
+  limits: PlanLimitsTable = DEFAULT_PLAN_LIMITS,
+) {
+  const effectiveTier = tier ?? "BASIC"
+  const entry = limits[effectiveTier] ?? limits.BASIC
+  return {
+    perVariant: entry.perVariant,
+    perNetwork: entry.perNetwork,
+    unlimitedPerVariant: isUnlimitedLimit(entry.perVariant),
+    unlimitedPerNetwork: isUnlimitedLimit(entry.perNetwork),
+  }
 }

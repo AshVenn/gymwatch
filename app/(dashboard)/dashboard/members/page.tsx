@@ -603,7 +603,7 @@ const handleScan = async (token: string | null) => {
             lockedVariantId={lockedVariantId}
             loading={variantsLoading}
             allowAll={allowAllVariants}
-            lockedMessage="Vue multi-salles et exports reserves au plan Complex"
+            lockedMessage="Vue multi-salles et exports reserves au plan Enterprise"
           />
           <Dialog open={visitDialogOpen} onOpenChange={setVisitDialogOpen}>
             <DialogTrigger asChild>

@@ -51,7 +51,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
   }
   if (!hasPlanFeature(tier, "accessControl")) {
-    return NextResponse.json({ error: "Plan Pro ou Complex requis" }, { status: 403 })
+    return NextResponse.json({ error: "Plan Pro ou Enterprise requis" }, { status: 403 })
   }
   if (role === "GYM_ADMIN" && !gymVariantId) {
     return NextResponse.json({ error: "Variant manquant" }, { status: 403 })
@@ -203,7 +203,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
   }
   if (!hasPlanFeature(tier, "accessControl")) {
-    return NextResponse.json({ error: "Plan Pro ou Complex requis" }, { status: 403 })
+    return NextResponse.json({ error: "Plan Pro ou Enterprise requis" }, { status: 403 })
   }
   if (role === "GYM_ADMIN" && !gymVariantId) {
     return NextResponse.json({ error: "Variant manquant" }, { status: 403 })

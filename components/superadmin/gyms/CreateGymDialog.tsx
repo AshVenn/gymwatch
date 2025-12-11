@@ -23,7 +23,7 @@ const schema = z.object({
   address: z.string().optional(),
   city: z.string().optional(),
   country: z.string().optional(),
-  tier: z.enum(['BASIC', 'PRO', 'COMPLEX']),
+  tier: z.enum(['BASIC', 'PRO', 'ENTERPRISE']),
   interval: z.enum(['MONTHLY', 'ANNUAL']),
   status: z.enum(['ACTIVE', 'SUSPENDED', 'EXPIRED']),
   expiresAt: z.string().optional(),
@@ -334,7 +334,7 @@ export function CreateGymDialog() {
                         <SelectContent>
                           <SelectItem value="BASIC">Basic</SelectItem>
                           <SelectItem value="PRO">Pro</SelectItem>
-                          <SelectItem value="COMPLEX">Complex</SelectItem>
+                          <SelectItem value="ENTERPRISE">Enterprise</SelectItem>
                         </SelectContent>
                       </Select>
                     </FormItem>

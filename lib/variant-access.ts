@@ -102,7 +102,7 @@ export async function resolveVariantAccess(options: {
     return {
       ok: false,
       status: 403,
-      message: "Vue multi-salles reservee au plan Complex",
+      message: "Vue multi-salles reservee au plan Enterprise",
       code: "MULTI_VARIANT_FORBIDDEN",
       variantMode,
       defaultVariantId,

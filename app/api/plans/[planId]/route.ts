@@ -4,6 +4,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 import { authOptions } from '@/lib/auth-middleware'
 import { prisma } from '@/lib/prisma'
+import { resolveGymPlanLimits } from '@/lib/plan-settings'
 
 export async function PUT(request: NextRequest, { params }: any) {
   try {
@@ -18,7 +19,7 @@ export async function PUT(request: NextRequest, { params }: any) {
       return NextResponse.json({ error: 'Variant manquant' }, { status: 403 })
     }
 
-    const { name, durationDays, price } = await request.json()
+    const { name, durationDays, price, isActive } = await request.json()
 
     const planRecord = await prisma.membershipPlan.findUnique({ where: { id: params.planId } })
 
@@ -29,10 +30,44 @@ export async function PUT(request: NextRequest, { params }: any) {
       return NextResponse.json({ error: 'FORBIDDEN_VARIANT' }, { status: 403 })
     }
 
+    if (isActive === true && planRecord.isActive === false) {
+      const gym = await prisma.gym.findUnique({
+        where: { id: session.user.gymId as string },
+        select: { subscriptionPlan: true, planLimitPerVariant: true, planLimitPerNetwork: true },
+      })
+      if (!gym) {
+        return NextResponse.json({ error: 'Gym not found' }, { status: 404 })
+      }
+      const limits = await resolveGymPlanLimits(gym.subscriptionPlan, {
+        perVariant: gym.planLimitPerVariant,
+        perNetwork: gym.planLimitPerNetwork,
+      })
+      const [variantActivePlans, networkActivePlans] = await Promise.all([
+        prisma.membershipPlan.count({
+          where: { gymId: session.user.gymId as string, gymVariantId: planRecord.gymVariantId, isActive: true },
+        }),
+        prisma.membershipPlan.count({ where: { gymId: session.user.gymId as string, isActive: true } }),
+      ])
+
+      if (!limits.unlimitedPerVariant && variantActivePlans >= limits.perVariant!) {
+        return NextResponse.json(
+          { error: 'PLAN_LIMIT_REACHED', message: 'Limite atteinte pour cette variante.' },
+          { status: 409 },
+        )
+      }
+      if (!limits.unlimitedPerNetwork && networkActivePlans >= limits.perNetwork!) {
+        return NextResponse.json(
+          { error: 'PLAN_LIMIT_REACHED', message: 'Limite reseau atteinte.' },
+          { status: 409 },
+        )
+      }
+    }
+
     const plan = await db.updatePlan(params.planId, {
       name,
       durationDays,
       price,
+      isActive,
     })
 
     return NextResponse.json(plan)

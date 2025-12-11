@@ -2,6 +2,7 @@ import { getServerSession } from "next-auth/next"
 import { NextRequest, NextResponse } from "next/server"
 import { authOptions } from "@/lib/auth-middleware"
 import { prisma } from "@/lib/prisma"
+import { resolveGymPlanLimits } from "@/lib/plan-settings"
 
 export async function GET() {
   try {
@@ -19,7 +20,12 @@ export async function GET() {
       return NextResponse.json({ error: "Gym not found" }, { status: 404 })
     }
 
-    return NextResponse.json(gym)
+    const planLimits = await resolveGymPlanLimits(gym.subscriptionPlan, {
+      perVariant: (gym as any).planLimitPerVariant,
+      perNetwork: (gym as any).planLimitPerNetwork,
+    })
+
+    return NextResponse.json({ ...gym, planLimits })
   } catch (error) {
     console.error("Gym fetch failed", error)
     return NextResponse.json({ error: "Failed to fetch gym" }, { status: 500 })

@@ -28,7 +28,7 @@ const navigationItems: NavigationItem[] = [
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const { tier, hasAccessControl, hasPresence, hasCourses, hasExcelReports } = usePlanFeatures()
-  const planLabel = tier === 'COMPLEX' ? 'Complex' : tier === 'PRO' ? 'Pro' : 'Basic'
+  const planLabel = tier === 'ENTERPRISE' ? 'Enterprise' : tier === 'PRO' ? 'Pro' : 'Basic'
   const featureCards = buildFeatureAccessItems({
     hasAccessControl,
     hasPresence,

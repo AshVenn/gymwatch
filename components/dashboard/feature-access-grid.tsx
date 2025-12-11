@@ -13,7 +13,7 @@ export type FeatureAccessItem = {
   title: string
   description: string
   href: string
-  requiredPlan?: 'PRO' | 'COMPLEX'
+  requiredPlan?: 'PRO' | 'ENTERPRISE'
   available: boolean
   icon: LucideIcon
 }
@@ -218,7 +218,7 @@ export function buildFeatureAccessItems(options: {
       title: 'Cours & planning',
       description: 'Agenda, capacités et listes.',
       href: '/dashboard/classes',
-      requiredPlan: 'COMPLEX' as const,
+      requiredPlan: 'ENTERPRISE' as const,
       available: hasCourses,
       icon: CalendarClock,
     },

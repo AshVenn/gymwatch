@@ -31,7 +31,7 @@ export async function GET(request: NextRequest) {
   }
 
   if (!hasPlanFeature(tier, "excelReports")) {
-    return NextResponse.json({ error: "Plan Pro ou Complex requis" }, { status: 403 })
+    return NextResponse.json({ error: "Plan Pro ou Enterprise requis" }, { status: 403 })
   }
 
   const parsed = querySchema.safeParse({

@@ -67,7 +67,7 @@ export default function AccessLogsPage() {
   const [to, setTo] = useState<string>('')
   const [deletingId, setDeletingId] = useState<string | null>(null)
 
-  const planLabel = tier === 'COMPLEX' ? 'Complex' : tier === 'PRO' ? 'Pro' : 'Basic'
+  const planLabel = tier === 'ENTERPRISE' ? 'Enterprise' : tier === 'PRO' ? 'Pro' : 'Basic'
   const featureItems = useMemo(
     () =>
       buildFeatureAccessItems({
@@ -258,7 +258,7 @@ export default function AccessLogsPage() {
           <div className="space-y-0.5">
             <p className="font-medium text-foreground">Vue multi-salles indisponible</p>
             <p>
-              Selectionnez une salle pour voir ses journaux. La vue combinee est incluse dans le plan Complex.
+              Selectionnez une salle pour voir ses journaux. La vue combinee est incluse dans le plan Enterprise.
             </p>
           </div>
         </div>

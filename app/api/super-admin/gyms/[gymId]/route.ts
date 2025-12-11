@@ -23,6 +23,8 @@ const updateGymSchema = z.object({
   subscriptionGracePeriodDays: z.number().int().min(0).max(365).optional(),
   analyticsSnapshot: z.any().optional(),
   maxAdminAccounts: z.number().int().min(1).max(20).optional(),
+  planLimitPerVariant: z.number().int().min(-1).optional(),
+  planLimitPerNetwork: z.number().int().min(-1).optional(),
 })
 
 async function ensureSuperAdmin() {
@@ -77,6 +79,8 @@ export async function PATCH(
       subscriptionGracePeriodDays: payload.subscriptionGracePeriodDays,
       analyticsSnapshot: payload.analyticsSnapshot,
       maxAdminAccounts: payload.maxAdminAccounts,
+      planLimitPerVariant: payload.planLimitPerVariant,
+      planLimitPerNetwork: payload.planLimitPerNetwork,
     })
 
     return NextResponse.json(updated)

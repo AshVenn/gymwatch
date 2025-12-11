@@ -95,7 +95,7 @@ export default function ClassesPage() {
 
   const gymId = session?.user?.gymId ?? null
   const variantFilter = selectedVariant === 'all' ? null : selectedVariant
-  const planLabel = tier === 'COMPLEX' ? 'Complex' : tier === 'PRO' ? 'Pro' : 'Basic'
+  const planLabel = tier === 'ENTERPRISE' ? 'Enterprise' : tier === 'PRO' ? 'Pro' : 'Basic'
   const featureItems = useMemo(
     () =>
       buildFeatureAccessItems({
@@ -307,7 +307,7 @@ export default function ClassesPage() {
       return (
         <LockedFeatureState
           title="Cours et planning indisponibles sur ce plan"
-          description="La creation de cours, l'agenda hebdomadaire et les listes dattente sont inclus dans le plan Complex."
+          description="La creation de cours, l'agenda hebdomadaire et les listes dattente sont inclus dans le plan Enterprise."
           planLabel={planLabel}
           items={featureItems}
         />

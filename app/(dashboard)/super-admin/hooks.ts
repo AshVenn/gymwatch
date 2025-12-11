@@ -1,9 +1,8 @@
 ﻿import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
-import type { PlanFeatures } from '@/lib/subscription-plans'
-import type { PlanPricingTable } from '@/lib/subscription-plans'
+import type { PlanFeatures, PlanLimitsTable, PlanPricingTable } from '@/lib/subscription-plans'
 
-export type GymPlanTier = 'BASIC' | 'PRO' | 'COMPLEX'
+export type GymPlanTier = 'BASIC' | 'PRO' | 'ENTERPRISE'
 export type GymSubscriptionStatus = 'ACTIVE' | 'SUSPENDED' | 'EXPIRED'
 export type GymBillingInterval = 'MONTHLY' | 'ANNUAL'
 export type DemoRequestStatus = 'PENDING' | 'RESOLVED' | 'REFUSED'
@@ -11,11 +10,18 @@ export interface PlanSettingsResponse {
   settings: {
     basicMonthlyPrice: number
     proMonthlyPrice: number
-    complexMonthlyPrice: number
+    enterpriseMonthlyPrice: number
     annualDiscountPercent: number
+    basicPlanLimitPerVariant: number
+    basicPlanLimitPerNetwork: number
+    proPlanLimitPerVariant: number
+    proPlanLimitPerNetwork: number
+    enterprisePlanLimitPerVariant: number
+    enterprisePlanLimitPerNetwork: number
     updatedAt?: string
   }
   pricing: PlanPricingTable
+  limits?: PlanLimitsTable
 }
 export type PlanSettingsInput = Omit<PlanSettingsResponse['settings'], 'updatedAt'>
 
@@ -60,6 +66,15 @@ export interface SuperAdminGym {
   memberCount: number
   activeSubscriptions: number
   updatedAt: string
+  planLimitPerVariant?: number | null
+  planLimitPerNetwork?: number | null
+  planLimits?: {
+    perVariant: number | null
+    perNetwork: number | null
+    unlimitedPerVariant: boolean
+    unlimitedPerNetwork: boolean
+    sources: { perVariant: "PLAN_DEFAULT" | "GYM_OVERRIDE"; perNetwork: "PLAN_DEFAULT" | "GYM_OVERRIDE" }
+  }
   owner: {
     id: string
     email: string
@@ -82,6 +97,9 @@ export interface SuperAdminGym {
 export interface SuperAdminGymDetail extends SuperAdminGym {
   paymentsLast30Days: number
   variantCount?: number
+  planLimitPerVariant?: number | null
+  planLimitPerNetwork?: number | null
+  planLimits?: SuperAdminGym['planLimits']
   admins: {
     id: string
     email: string

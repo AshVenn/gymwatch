@@ -11,7 +11,7 @@ function formatInterval(interval?: string | null) {
 
 function formatPlan(plan?: string | null) {
   if (plan === 'PRO') return 'Pro'
-  if (plan === 'COMPLEX') return 'Complex'
+  if (plan === 'ENTERPRISE') return 'Enterprise'
   return 'Basic'
 }
 

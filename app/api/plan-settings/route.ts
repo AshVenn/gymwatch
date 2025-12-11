@@ -8,22 +8,35 @@ import { getPlanSettings, updatePlanSettings } from "@/lib/plan-settings"
 const planSettingsSchema = z.object({
   basicMonthlyPrice: z.coerce.number().min(0),
   proMonthlyPrice: z.coerce.number().min(0),
-  complexMonthlyPrice: z.coerce.number().min(0),
+  enterpriseMonthlyPrice: z.coerce.number().min(0),
   annualDiscountPercent: z.coerce.number().min(0).max(90),
+  basicPlanLimitPerVariant: z.coerce.number().int().min(-1),
+  basicPlanLimitPerNetwork: z.coerce.number().int().min(-1),
+  proPlanLimitPerVariant: z.coerce.number().int().min(-1),
+  proPlanLimitPerNetwork: z.coerce.number().int().min(-1),
+  enterprisePlanLimitPerVariant: z.coerce.number().int().min(-1),
+  enterprisePlanLimitPerNetwork: z.coerce.number().int().min(-1),
 })
 
 export async function GET() {
-  const { settings, pricing } = await getPlanSettings()
+  const { settings, pricing, limits } = await getPlanSettings()
 
   return NextResponse.json({
     settings: {
       basicMonthlyPrice: settings.basicMonthlyPrice,
       proMonthlyPrice: settings.proMonthlyPrice,
-      complexMonthlyPrice: settings.complexMonthlyPrice,
+      enterpriseMonthlyPrice: settings.enterpriseMonthlyPrice,
       annualDiscountPercent: settings.annualDiscountPercent,
+      basicPlanLimitPerVariant: settings.basicPlanLimitPerVariant,
+      basicPlanLimitPerNetwork: settings.basicPlanLimitPerNetwork,
+      proPlanLimitPerVariant: settings.proPlanLimitPerVariant,
+      proPlanLimitPerNetwork: settings.proPlanLimitPerNetwork,
+      enterprisePlanLimitPerVariant: settings.enterprisePlanLimitPerVariant,
+      enterprisePlanLimitPerNetwork: settings.enterprisePlanLimitPerNetwork,
       updatedAt: settings.updatedAt,
     },
     pricing,
+    limits,
   })
 }
 
@@ -35,17 +48,24 @@ export async function PUT(request: Request) {
 
   try {
     const payload = planSettingsSchema.parse(await request.json())
-    const { settings, pricing } = await updatePlanSettings(payload)
+    const { settings, pricing, limits } = await updatePlanSettings(payload)
 
     return NextResponse.json({
       settings: {
         basicMonthlyPrice: settings.basicMonthlyPrice,
         proMonthlyPrice: settings.proMonthlyPrice,
-        complexMonthlyPrice: settings.complexMonthlyPrice,
+        enterpriseMonthlyPrice: settings.enterpriseMonthlyPrice,
         annualDiscountPercent: settings.annualDiscountPercent,
+        basicPlanLimitPerVariant: settings.basicPlanLimitPerVariant,
+        basicPlanLimitPerNetwork: settings.basicPlanLimitPerNetwork,
+        proPlanLimitPerVariant: settings.proPlanLimitPerVariant,
+        proPlanLimitPerNetwork: settings.proPlanLimitPerNetwork,
+        enterprisePlanLimitPerVariant: settings.enterprisePlanLimitPerVariant,
+        enterprisePlanLimitPerNetwork: settings.enterprisePlanLimitPerNetwork,
         updatedAt: settings.updatedAt,
       },
       pricing,
+      limits,
     })
   } catch (error) {
     if (error instanceof z.ZodError) {

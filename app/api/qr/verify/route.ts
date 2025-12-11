@@ -19,7 +19,7 @@ export async function POST(request: NextRequest) {
   }
 
   if (!hasPlanFeature(tier, "accessControl")) {
-    return NextResponse.json({ error: "Plan Pro ou Complex requis" }, { status: 403 })
+    return NextResponse.json({ error: "Plan Pro ou Enterprise requis" }, { status: 403 })
   }
 
   const { token, markVisit = true, direction = "IN", checkoutAt, rangeFrom, rangeTo } =

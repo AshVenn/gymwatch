@@ -274,5 +274,18 @@
   .hover-lift {
     transition: transform 0.7s cubic-bezier(0.23, 1, 0.320, 1);
   }
-}
 
+  @media (prefers-reduced-motion: reduce) {
+    .animate-fade-in,
+    .animate-slide-up,
+    .animate-bounce-subtle,
+    .animate-float-left,
+    .animate-float-right,
+    .animate-float-up,
+    .animate-shine {
+      animation: none !important;
+      opacity: 1 !important;
+      transform: none !important;
+    }
+  }
+}

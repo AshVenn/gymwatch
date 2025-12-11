@@ -4,6 +4,7 @@ import { useEffect, useMemo } from 'react'
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
 import { zodResolver } from '@hookform/resolvers/zod'
+
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -17,18 +18,34 @@ import {
 } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
 import { Skeleton } from '@/components/ui/skeleton'
-import { DEFAULT_ANNUAL_DISCOUNT, PLAN_PRICING, computePricingFromSettings } from '@/lib/subscription-plans'
+import {
+  DEFAULT_ANNUAL_DISCOUNT,
+  DEFAULT_PLAN_LIMITS,
+  PLAN_PRICING,
+  computePricingFromSettings,
+  isUnlimitedLimit,
+} from '@/lib/subscription-plans'
 import { usePlanSettings, useUpdatePlanSettings, type PlanSettingsInput } from '@/app/(dashboard)/super-admin/hooks'
 
 const schema = z.object({
   basicMonthlyPrice: z.coerce.number().min(0),
   proMonthlyPrice: z.coerce.number().min(0),
-  complexMonthlyPrice: z.coerce.number().min(0),
+  enterpriseMonthlyPrice: z.coerce.number().min(0),
   annualDiscountPercent: z.coerce.number().min(0).max(90),
+  basicPlanLimitPerVariant: z.coerce.number().int().min(-1),
+  basicPlanLimitPerNetwork: z.coerce.number().int().min(-1),
+  proPlanLimitPerVariant: z.coerce.number().int().min(-1),
+  proPlanLimitPerNetwork: z.coerce.number().int().min(-1),
+  enterprisePlanLimitPerVariant: z.coerce.number().int().min(-1),
+  enterprisePlanLimitPerNetwork: z.coerce.number().int().min(-1),
 })
 
 function formatCurrency(value: number) {
   return value.toLocaleString('fr-MA', { style: 'currency', currency: 'MAD' })
+}
+
+function formatLimit(value?: number | null) {
+  return isUnlimitedLimit(value) ? 'Illimite' : `${value ?? 0} actifs`
 }
 
 export function PlanSettingsForm() {
@@ -40,8 +57,14 @@ export function PlanSettingsForm() {
     defaultValues: {
       basicMonthlyPrice: PLAN_PRICING.BASIC.MONTHLY,
       proMonthlyPrice: PLAN_PRICING.PRO.MONTHLY,
-      complexMonthlyPrice: PLAN_PRICING.COMPLEX.MONTHLY,
+      enterpriseMonthlyPrice: PLAN_PRICING.ENTERPRISE.MONTHLY,
       annualDiscountPercent: DEFAULT_ANNUAL_DISCOUNT,
+      basicPlanLimitPerVariant: DEFAULT_PLAN_LIMITS.BASIC.perVariant,
+      basicPlanLimitPerNetwork: DEFAULT_PLAN_LIMITS.BASIC.perNetwork,
+      proPlanLimitPerVariant: DEFAULT_PLAN_LIMITS.PRO.perVariant,
+      proPlanLimitPerNetwork: DEFAULT_PLAN_LIMITS.PRO.perNetwork,
+      enterprisePlanLimitPerVariant: DEFAULT_PLAN_LIMITS.ENTERPRISE.perVariant,
+      enterprisePlanLimitPerNetwork: DEFAULT_PLAN_LIMITS.ENTERPRISE.perNetwork,
     },
   })
 
@@ -50,15 +73,21 @@ export function PlanSettingsForm() {
       form.reset({
         basicMonthlyPrice: data.settings.basicMonthlyPrice,
         proMonthlyPrice: data.settings.proMonthlyPrice,
-        complexMonthlyPrice: data.settings.complexMonthlyPrice,
+        enterpriseMonthlyPrice: data.settings.enterpriseMonthlyPrice,
         annualDiscountPercent: data.settings.annualDiscountPercent,
+        basicPlanLimitPerVariant: data.settings.basicPlanLimitPerVariant,
+        basicPlanLimitPerNetwork: data.settings.basicPlanLimitPerNetwork,
+        proPlanLimitPerVariant: data.settings.proPlanLimitPerVariant,
+        proPlanLimitPerNetwork: data.settings.proPlanLimitPerNetwork,
+        enterprisePlanLimitPerVariant: data.settings.enterprisePlanLimitPerVariant,
+        enterprisePlanLimitPerNetwork: data.settings.enterprisePlanLimitPerNetwork,
       })
     }
   }, [data, form])
 
   const watchedBasic = form.watch('basicMonthlyPrice')
   const watchedPro = form.watch('proMonthlyPrice')
-  const watchedComplex = form.watch('complexMonthlyPrice')
+  const watchedEnterprise = form.watch('enterpriseMonthlyPrice')
   const watchedDiscount = form.watch('annualDiscountPercent')
 
   const previewPricing = useMemo(
@@ -66,10 +95,10 @@ export function PlanSettingsForm() {
       computePricingFromSettings({
         basicMonthlyPrice: Number(watchedBasic) || 0,
         proMonthlyPrice: Number(watchedPro) || 0,
-        complexMonthlyPrice: Number(watchedComplex) || 0,
+        enterpriseMonthlyPrice: Number(watchedEnterprise) || 0,
         annualDiscountPercent: Number(watchedDiscount) || 0,
       }),
-    [watchedBasic, watchedPro, watchedComplex, watchedDiscount],
+    [watchedBasic, watchedPro, watchedEnterprise, watchedDiscount],
   )
 
   const onSubmit = (values: PlanSettingsInput) => {
@@ -87,11 +116,13 @@ export function PlanSettingsForm() {
     <Card>
       <CardHeader className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <CardTitle>Plans et tarifs</CardTitle>
-          <CardDescription>Définissez les prix mensuels et la remise appliquée aux paiements annuels.</CardDescription>
+          <CardTitle>Plans, tarifs et limites</CardTitle>
+          <CardDescription>
+            Definissez les prix mensuels, la remise annuelle et les plafonds de plans par formule.
+          </CardDescription>
         </div>
         <Badge variant="outline" className="w-fit">
-          Dernière mise à jour : {lastUpdatedLabel}
+          Derniere mise a jour : {lastUpdatedLabel}
         </Badge>
       </CardHeader>
       <CardContent>
@@ -109,12 +140,12 @@ export function PlanSettingsForm() {
           <Form {...form}>
             <form className="space-y-6" onSubmit={form.handleSubmit(onSubmit)}>
               <div className="rounded-xl border border-border/70 bg-muted/40 p-3 text-sm">
-                <p className="font-medium">Aperçu automatique</p>
+                <p className="font-medium">Apercu automatique</p>
                 <p className="text-muted-foreground">
-                  Les prix annuels se mettent à jour selon la remise appliquée ({watchedDiscount}%).
+                  Les prix annuels se mettent a jour selon la remise appliquee ({watchedDiscount}%).
                 </p>
                 <div className="mt-3 grid gap-2 md:grid-cols-3">
-                  {(['BASIC', 'PRO', 'COMPLEX'] as const).map((tier) => (
+                  {(['BASIC', 'PRO', 'ENTERPRISE'] as const).map((tier) => (
                     <div
                       key={tier}
                       className="flex items-center justify-between rounded-lg border border-border/60 bg-background/60 px-3 py-2 text-sm"
@@ -160,10 +191,10 @@ export function PlanSettingsForm() {
                 />
                 <FormField
                   control={form.control}
-                  name="complexMonthlyPrice"
+                  name="enterpriseMonthlyPrice"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Complex (mensuel)</FormLabel>
+                      <FormLabel>Enterprise (mensuel)</FormLabel>
                       <FormControl>
                         <Input type="number" min={0} step="10" {...field} />
                       </FormControl>
@@ -187,9 +218,127 @@ export function PlanSettingsForm() {
               </div>
 
               <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-                <Badge variant="secondary">Les montants sont enregistrés en MAD</Badge>
-                <Badge variant="outline">Réduction appliquée sur 12 mois</Badge>
-                {updateSettings.isPending && <span>Mise à jour des plans...</span>}
+                <Badge variant="secondary">Montants en MAD</Badge>
+                <Badge variant="outline">Reduction appliquee sur 12 mois</Badge>
+                {updateSettings.isPending && <span>Mise a jour des plans...</span>}
+              </div>
+
+              <div className="space-y-3 rounded-xl border border-border/70 bg-muted/30 p-3">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <div>
+                    <p className="font-semibold">Plafonds de plans</p>
+                    <p className="text-xs text-muted-foreground">
+                      Nombre maximum de plans actifs par variante et sur le reseau. Utilisez -1 pour un palier illimite.
+                    </p>
+                  </div>
+                  <Badge variant="outline" className="border-dashed border-border/60 text-[11px]">
+                    Illimite = -1
+                  </Badge>
+                </div>
+
+                <div className="grid gap-4 lg:grid-cols-3">
+                  <div className="space-y-2 rounded-lg border border-border/60 bg-background/70 p-3">
+                    <p className="text-sm font-semibold">Basic</p>
+                    <FormField
+                      control={form.control}
+                      name="basicPlanLimitPerVariant"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Par variante</FormLabel>
+                          <FormControl>
+                            <Input type="number" step="1" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="basicPlanLimitPerNetwork"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Par reseau</FormLabel>
+                          <FormControl>
+                            <Input type="number" step="1" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <p className="text-[11px] text-muted-foreground">
+                      Effectif: {formatLimit(form.watch('basicPlanLimitPerVariant'))} par site,{' '}
+                      {formatLimit(form.watch('basicPlanLimitPerNetwork'))} reseau.
+                    </p>
+                  </div>
+
+                  <div className="space-y-2 rounded-lg border border-border/60 bg-background/70 p-3">
+                    <p className="text-sm font-semibold">Pro</p>
+                    <FormField
+                      control={form.control}
+                      name="proPlanLimitPerVariant"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Par variante</FormLabel>
+                          <FormControl>
+                            <Input type="number" step="1" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="proPlanLimitPerNetwork"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Par reseau</FormLabel>
+                          <FormControl>
+                            <Input type="number" step="1" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <p className="text-[11px] text-muted-foreground">
+                      Effectif: {formatLimit(form.watch('proPlanLimitPerVariant'))} par site,{' '}
+                      {formatLimit(form.watch('proPlanLimitPerNetwork'))} reseau.
+                    </p>
+                  </div>
+
+                  <div className="space-y-2 rounded-lg border border-border/60 bg-background/70 p-3">
+                    <p className="text-sm font-semibold">Enterprise</p>
+                    <FormField
+                      control={form.control}
+                      name="enterprisePlanLimitPerVariant"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Par variante</FormLabel>
+                          <FormControl>
+                            <Input type="number" step="1" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="enterprisePlanLimitPerNetwork"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Par reseau</FormLabel>
+                          <FormControl>
+                            <Input type="number" step="1" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <p className="text-[11px] text-muted-foreground">
+                      Effectif: {formatLimit(form.watch('enterprisePlanLimitPerVariant'))} par site,{' '}
+                      {formatLimit(form.watch('enterprisePlanLimitPerNetwork'))} reseau.
+                    </p>
+                  </div>
+                </div>
               </div>
 
               <Button type="submit" disabled={updateSettings.isPending}>

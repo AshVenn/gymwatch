@@ -71,7 +71,7 @@ export default function SuperAdminSettingsPage() {
       <div>
         <h1 className="text-3xl font-semibold">Paramétrage des plans</h1>
         <p className="text-muted-foreground">
-          Ajustez les prix des offres et la remise annuelle appliquée aux salles.
+          Ajustez les prix, la remise annuelle et les plafonds de plans par palier.
         </p>
       </div>
 

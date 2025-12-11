@@ -28,7 +28,7 @@ export function VariantSelector({
   className,
   loading = false,
   allowAll = true,
-  lockedMessage = 'Vue multi-salles reservee au plan Complex',
+  lockedMessage = 'Vue multi-salles reservee au plan Enterprise',
   helperText,
 }: Props) {
   const lockedVariant = variants.find((variant) => variant.id === lockedVariantId)

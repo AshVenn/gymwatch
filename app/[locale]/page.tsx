@@ -1,5 +1,7 @@
+import type { Metadata } from 'next'
 import Image from 'next/image'
 import Link from 'next/link'
+import { getLocale } from 'next-intl/server'
 import {
   ArrowRight,
   BarChart3,
@@ -21,14 +23,13 @@ import { MarketingNavbar } from '@/components/marketing/navbar'
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { routing, type AppLocale } from '@/i18n/routing'
+import { buildMarketingMetadata, getMarketingCopy } from '@/lib/marketing-content'
 import { DEFAULT_ANNUAL_DISCOUNT, getPlanCatalogAsList } from '@/lib/subscription-plans'
 
-const navigationLinks = [
-  { label: 'Fonctionnalités', href: '/#features' },
-  { label: 'Plans', href: '/#plans' },
-  { label: 'FAQ', href: '/faqs' },
-  { label: 'Contact', href: '/contact' },
-]
+type HomePageProps = {
+  params: { locale: string }
+}
 
 const stats = [
   { label: 'Clubs gérés', value: '+180', detail: 'SaaS pour salles de sport et réseaux multi-sites' },
@@ -146,7 +147,18 @@ const faqItems = [
   },
 ]
 
-export default function Home() {
+export async function generateMetadata({ params }: HomePageProps): Promise<Metadata> {
+  const locale = routing.locales.includes(params.locale as AppLocale)
+    ? (params.locale as AppLocale)
+    : routing.defaultLocale
+
+  return buildMarketingMetadata('home', locale)
+}
+
+export default async function Home() {
+  const locale = (await getLocale()) as AppLocale
+  const heroCopy = getMarketingCopy(locale).hero.home
+
   const planCatalog = getPlanCatalogAsList()
   const priceFormatter = new Intl.NumberFormat('fr-MA', { style: 'currency', currency: 'MAD' })
   const renderPlanCards = (mode: 'monthly' | 'annual') =>
@@ -213,7 +225,7 @@ export default function Home() {
     <div className="relative min-h-screen overflow-hidden bg-background text-foreground">
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_20%_10%,rgba(59,130,246,0.12),transparent_30%),radial-gradient(circle_at_80%_0%,rgba(37,99,235,0.12),transparent_32%),radial-gradient(circle_at_70%_60%,rgba(14,165,233,0.1),transparent_30%)]" />
 
-      <MarketingNavbar links={navigationLinks} />
+      <MarketingNavbar />
 
       <main className="relative mx-auto flex max-w-6xl flex-col gap-20 px-4 pb-16 pt-10 md:pt-16">
         <header
@@ -229,26 +241,20 @@ export default function Home() {
             <div className="space-y-6 animate-fade-in">
               <p className="inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-4 py-2 text-xs font-semibold uppercase tracking-[0.3em] text-primary">
                 <Sparkles className="h-4 w-4" aria-hidden />
-                SaaS de gestion de salles de sport
+                {heroCopy.eyebrow}
               </p>
-              <h1 className="text-balance text-5xl font-bold leading-tight md:text-6xl">
-                Le logiciel de gestion pour réseaux de salles de sport exigeants
-              </h1>
-              <h2 className="text-lg font-semibold text-primary">
-                SaaS pour salles de sport, gestion des abonnements et du contrôle d’accès en temps réel.
-              </h2>
-              <p className="max-w-xl text-lg leading-relaxed text-muted-foreground">
-                GymWatch centralise vos clubs, vos membres et vos finances dans une expérience premium. Pensé pour les réseaux multi-salles / multi-sites qui veulent une exploitation fluide et sécurisée.
-              </p>
+              <h1 className="text-balance text-5xl font-bold leading-tight md:text-6xl">{heroCopy.title}</h1>
+              <h2 className="text-lg font-semibold text-primary">{heroCopy.subtitle}</h2>
+              <p className="max-w-xl text-lg leading-relaxed text-muted-foreground">{heroCopy.description}</p>
               <div className="flex flex-wrap gap-3 pt-2">
                 <Button asChild size="lg" className="group transition-transform hover:scale-[1.02] hover:shadow-lg">
                   <Link href="/request-demo">
-                    Demander une démo
+                    {heroCopy.primaryCta}
                     <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" aria-hidden />
                   </Link>
                 </Button>
                 <Button asChild size="lg" variant="outline" className="transition hover:bg-primary/10">
-                  <Link href="/login">Se connecter</Link>
+                  <Link href="/login">{heroCopy.secondaryCta}</Link>
                 </Button>
               </div>
 

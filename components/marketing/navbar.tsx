@@ -1,21 +1,22 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
-import Link from 'next/link'
+import {useEffect, useMemo, useState, useTransition} from 'react'
 import Image from 'next/image'
-import { usePathname, useRouter } from 'next/navigation'
-import { useSession, signOut } from 'next-auth/react'
-import { Menu, X, LayoutDashboard, LogOut, User } from 'lucide-react'
+import {useSession, signOut} from 'next-auth/react'
+import {Check, Globe2, LayoutDashboard, LogOut, Menu, User, X} from 'lucide-react'
+import {useLocale} from 'next-intl'
 
-import { Button } from '@/components/ui/button'
+import {Button} from '@/components/ui/button'
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import { ThemeToggle } from '@/components/theme-toggle'
-import { cn } from '@/lib/utils'
+import {ThemeToggle} from '@/components/theme-toggle'
+import {Link, getPathname, routing, usePathname, useRouter, type AppLocale} from '@/i18n/routing'
+import {getMarketingCopy, getMarketingNavLinks} from '@/lib/marketing-content'
+import {cn} from '@/lib/utils'
 
 type NavLink = {
   label: string
@@ -27,12 +28,55 @@ interface MarketingNavbarProps {
   className?: string
 }
 
-export function MarketingNavbar({ links = [], className }: MarketingNavbarProps) {
+export function MarketingNavbar({links = [], className}: MarketingNavbarProps) {
   const router = useRouter()
   const pathname = usePathname()
-  const { data: session } = useSession()
+  const locale = useLocale() as AppLocale
+  const {data: session} = useSession()
   const [menuOpen, setMenuOpen] = useState(false)
   const [isScrolled, setIsScrolled] = useState(false)
+  const [isPending, startTransition] = useTransition()
+
+  const localeCopy = getMarketingCopy(locale)
+  const computedLinks = links.length
+    ? links
+    : getMarketingNavLinks(locale, {useHomeAnchors: pathname === '/' || pathname === ''})
+
+  const localeOptions = useMemo(
+    () =>
+      routing.locales.map((code) => ({
+        code,
+        label: getMarketingCopy(code).localeLabel,
+      })),
+    [],
+  )
+
+  const authCopy = useMemo(() => {
+    if (locale === 'en') {
+      return {
+        login: 'Sign in',
+        requestDemo: localeCopy.hero.home.primaryCta,
+        dashboard: 'Go to dashboard',
+        signOut: 'Sign out',
+      }
+    }
+
+    if (locale === 'ar') {
+      return {
+        login: 'تسجيل الدخول',
+        requestDemo: localeCopy.hero.home.primaryCta,
+        dashboard: 'الانتقال إلى اللوحة',
+        signOut: 'تسجيل الخروج',
+      }
+    }
+
+    return {
+      login: 'Se connecter',
+      requestDemo: localeCopy.hero.home.primaryCta,
+      dashboard: 'Aller au dashboard',
+      signOut: 'Se déconnecter',
+    }
+  }, [locale, localeCopy.hero.home.primaryCta])
 
   const dashboardRoute = useMemo(() => {
     if (!session?.user?.role) return '/dashboard'
@@ -49,14 +93,15 @@ export function MarketingNavbar({ links = [], className }: MarketingNavbarProps)
   const isAuthPage =
     pathname === '/login' || pathname === '/register' || (pathname ? pathname.startsWith('/request-demo') : false)
 
-  const baseLinks: NavLink[] = links.length
-    ? links
-    : [
-        { label: 'Fonctionnalités', href: '#features' },
-        { label: "Plans", href: '#plans' },
-        { label: 'FAQs', href: '/faqs' },
-        { label: 'Contact', href: '#contact' },
-      ]
+  const handleLocaleChange = (targetLocale: AppLocale) => {
+    if (targetLocale === locale) return
+    const target = getPathname({locale: targetLocale, href: pathname || '/'})
+    setMenuOpen(false)
+    startTransition(() => {
+      router.replace(target)
+      router.refresh()
+    })
+  }
 
   return (
     <header
@@ -82,12 +127,12 @@ export function MarketingNavbar({ links = [], className }: MarketingNavbarProps)
           </div>
           <div>
             <p className="text-[11px] uppercase tracking-[0.3em] text-muted-foreground">GymWatch</p>
-            <p className="text-sm font-semibold">Gestion moderne des salles</p>
+            <p className="text-sm font-semibold">{localeCopy.brandTagline}</p>
           </div>
         </Link>
 
         <nav className="hidden items-center gap-8 text-sm font-medium text-muted-foreground md:flex">
-          {baseLinks.map((link) => (
+          {computedLinks.map((link) => (
             <Link key={link.href} href={link.href} className="relative transition hover:text-foreground group">
               {link.label}
               <span className="absolute bottom-0 left-0 h-0.5 w-0 bg-primary transition-all duration-300 group-hover:w-full" />
@@ -97,6 +142,27 @@ export function MarketingNavbar({ links = [], className }: MarketingNavbarProps)
 
         <div className="hidden items-center gap-2 md:flex">
           <ThemeToggle />
+
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" className="gap-2 rounded-full border border-border/60 px-3">
+                <Globe2 className="h-4 w-4" aria-hidden />
+                <span className="text-sm font-semibold">{localeCopy.localeLabel}</span>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-48">
+              {localeOptions.map((option) => (
+                <DropdownMenuItem
+                  key={option.code}
+                  onClick={() => handleLocaleChange(option.code)}
+                  className="flex items-center justify-between"
+                >
+                  <span>{option.label}</span>
+                  {option.code === locale && <Check className="h-4 w-4 text-primary" aria-hidden />}
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
 
           {session?.user ? (
             <DropdownMenu>
@@ -109,22 +175,22 @@ export function MarketingNavbar({ links = [], className }: MarketingNavbarProps)
               <DropdownMenuContent align="end" className="w-56">
                 <DropdownMenuItem onClick={() => router.push(dashboardRoute)}>
                   <LayoutDashboard className="mr-2 h-4 w-4" />
-                  Tableau de bord
+                  {authCopy.dashboard}
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => signOut({ callbackUrl: '/' })}>
+                <DropdownMenuItem onClick={() => signOut({callbackUrl: '/'})}>
                   <LogOut className="mr-2 h-4 w-4" />
-                  Se déconnecter
+                  {authCopy.signOut}
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
           ) : (
             <>
               <Button variant="ghost" onClick={() => router.push('/login')} className="transition hover:text-primary">
-                Se connecter
+                {authCopy.login}
               </Button>
               {!isAuthPage && (
                 <Button onClick={() => router.push('/request-demo')} className="transition hover:scale-105 hover:shadow-lg">
-                  Demander une démo
+                  {authCopy.requestDemo}
                 </Button>
               )}
             </>
@@ -148,7 +214,7 @@ export function MarketingNavbar({ links = [], className }: MarketingNavbarProps)
             </Button>
           </div>
           <div className="space-y-2 px-4 pb-4">
-            {baseLinks.map((link) => (
+            {computedLinks.map((link) => (
               <Link
                 key={link.href}
                 href={link.href}
@@ -159,13 +225,33 @@ export function MarketingNavbar({ links = [], className }: MarketingNavbarProps)
               </Link>
             ))}
 
+            <div className="flex items-center justify-between rounded-lg border border-border/60 px-4 py-2">
+              <div className="flex items-center gap-2 text-sm font-medium">
+                <Globe2 className="h-4 w-4" aria-hidden />
+                <span>{localeCopy.localeLabel}</span>
+              </div>
+              <div className="flex items-center gap-1">
+                {localeOptions.map((option) => (
+                  <Button
+                    key={option.code}
+                    size="sm"
+                    variant={option.code === locale ? 'secondary' : 'ghost'}
+                    onClick={() => handleLocaleChange(option.code)}
+                    disabled={isPending}
+                  >
+                    {option.code.toUpperCase()}
+                  </Button>
+                ))}
+              </div>
+            </div>
+
             {!session?.user ? (
               <>
                 <Button className="w-full transition hover:scale-105" onClick={() => router.push('/request-demo')}>
-                  Demander une démo
+                  {authCopy.requestDemo}
                 </Button>
                 <Button variant="ghost" className="w-full transition hover:text-primary" onClick={() => router.push('/login')}>
-                  Se connecter
+                  {authCopy.login}
                 </Button>
               </>
             ) : (
@@ -177,17 +263,17 @@ export function MarketingNavbar({ links = [], className }: MarketingNavbarProps)
                     setMenuOpen(false)
                   }}
                 >
-                  Aller au dashboard
+                  {authCopy.dashboard}
                 </Button>
                 <Button
                   variant="outline"
                   className="w-full transition"
                   onClick={() => {
                     setMenuOpen(false)
-                    signOut({ callbackUrl: '/' })
+                    signOut({callbackUrl: '/'})
                   }}
                 >
-                  Se déconnecter
+                  {authCopy.signOut}
                 </Button>
               </>
             )}

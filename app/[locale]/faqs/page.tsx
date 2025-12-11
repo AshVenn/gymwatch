@@ -1,44 +1,17 @@
-import Link from 'next/link'
 import type { Metadata } from 'next'
+import Link from 'next/link'
+import { getLocale } from 'next-intl/server'
 
 import { MarketingNavbar } from '@/components/marketing/navbar'
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { routing, type AppLocale } from '@/i18n/routing'
+import { buildMarketingMetadata, getMarketingCopy } from '@/lib/marketing-content'
 
-export const metadata: Metadata = {
-  title: "FAQs GymWatch | Gestion d’abonnements salle de sport multi-sites",
-  description:
-    "Questions fréquentes sur GymWatch : logiciel multi-salles, contrôle d’accès par QR code, gestion des membres, statistiques et options marketing pour réseaux de salles.",
-  keywords: [
-    "gestion d’abonnements salle de sport",
-    "logiciel multi-salles",
-    "contrôle d’accès",
-    "gestion des membres",
-    "GymWatch",
-  ],
-  openGraph: {
-    title: "FAQs GymWatch | Logiciel multi-salles et contrôle d’accès",
-    description:
-      "Tout savoir sur GymWatch : abonnement en ligne, contrôle d’accès, analytics et roadmap marketing pour réseaux de salles.",
-    url: "/faqs",
-    siteName: "GymWatch",
-  },
-  twitter: {
-    card: 'summary',
-    title: "FAQs GymWatch | Logiciel multi-salles",
-    description:
-      "GymWatch centralise vos salles, vos membres et le contrôle d’accès. Retrouvez ici les questions fréquentes et la roadmap.",
-  },
+type FaqPageProps = {
+  params: { locale: string }
 }
-
-const faqLinks = [
-  { label: 'Accueil', href: '/' },
-  { label: 'Fonctionnalités', href: '/#features' },
-  { label: 'Plans', href: '/#plans' },
-  { label: 'FAQs', href: '/faqs' },
-  { label: 'Contact', href: '/#contact' },
-]
 
 const faqs = [
   {
@@ -73,24 +46,31 @@ const faqs = [
   },
 ]
 
-export default function FaqPage() {
+export async function generateMetadata({ params }: FaqPageProps): Promise<Metadata> {
+  const locale = routing.locales.includes(params.locale as AppLocale)
+    ? (params.locale as AppLocale)
+    : routing.defaultLocale
+
+  return buildMarketingMetadata('faqs', locale)
+}
+
+export default async function FaqPage() {
+  const locale = (await getLocale()) as AppLocale
+  const heroCopy = getMarketingCopy(locale).hero.faqs
+
   return (
     <div className="min-h-screen bg-background text-foreground">
-      <MarketingNavbar links={faqLinks} />
+      <MarketingNavbar />
 
       <main className="mx-auto flex max-w-5xl flex-col gap-10 px-4 py-12">
         {/* Hero */}
         <section className="space-y-4 text-center animate-fade-in">
           <div className="inline-flex items-center justify-center rounded-full border border-primary/30 bg-primary/5 px-4 py-1 text-[0.7rem] font-semibold uppercase tracking-[0.3em] text-primary">
-            FAQs GymWatch
+            {heroCopy.eyebrow}
           </div>
-          <h1 className="text-balance text-4xl font-bold md:text-5xl">
-            Tout savoir sur <span className="bg-linear-to-r from-primary to-primary/70 bg-clip-text text-transparent">GymWatch</span>
-          </h1>
-          <p className="mx-auto max-w-2xl text-balance text-muted-foreground">
-            Votre référence pour la gestion d’abonnements de salles de sport, le contrôle d’accès
-            et la supervision multi-sites.
-          </p>
+          <h1 className="text-balance text-4xl font-bold md:text-5xl">{heroCopy.title}</h1>
+          <p className="mx-auto max-w-2xl text-balance text-primary font-semibold">{heroCopy.subtitle}</p>
+          <p className="mx-auto max-w-2xl text-balance text-muted-foreground">{heroCopy.description}</p>
         </section>
 
         {/* Accordion */}
@@ -123,29 +103,29 @@ export default function FaqPage() {
         </Card>
 
         {/* CTA */}
-        <Card className="rounded-3xl border border-primary/20 bg-linear-to-br from-card to-card/60 shadow-lg animate-slide-up">
-          <CardContent className="flex flex-col items-start gap-6 px-6 py-8 md:flex-row md:items-center md:justify-between">
-            <div className="space-y-2">
-              <p className="text-xs font-semibold uppercase tracking-[0.3em] text-primary">Support</p>
-              <h2 className="text-balance text-2xl font-bold md:text-3xl">Vous avez encore des questions&nbsp;?</h2>
-              <p className="max-w-md text-muted-foreground">
-                Notre équipe vous répond en moins de 24&nbsp;heures pour vous aider à choisir le bon plan ou cadrer vos besoins.
-              </p>
-            </div>
-            <div className="flex flex-wrap gap-3">
-              <Button asChild className="transition-transform hover:scale-105 hover:shadow-lg">
-                <Link href="/request-demo">Demander une démo</Link>
-              </Button>
-              <Button
-                asChild
-                variant="secondary"
-                className="transition-transform hover:scale-105 hover:shadow-lg"
-              >
-                <Link href="mailto:hello@gymwatch.ma">Nous écrire</Link>
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
+          <Card className="rounded-3xl border border-primary/20 bg-linear-to-br from-card to-card/60 shadow-lg animate-slide-up">
+            <CardContent className="flex flex-col items-start gap-6 px-6 py-8 md:flex-row md:items-center md:justify-between">
+              <div className="space-y-2">
+                <p className="text-xs font-semibold uppercase tracking-[0.3em] text-primary">Support</p>
+                <h2 className="text-balance text-2xl font-bold md:text-3xl">{heroCopy.subtitle}</h2>
+                <p className="max-w-md text-muted-foreground">
+                  {heroCopy.description}
+                </p>
+              </div>
+              <div className="flex flex-wrap gap-3">
+                <Button asChild className="transition-transform hover:scale-105 hover:shadow-lg">
+                  <Link href="/request-demo">{heroCopy.primaryCta}</Link>
+                </Button>
+                <Button
+                  asChild
+                  variant="secondary"
+                  className="transition-transform hover:scale-105 hover:shadow-lg"
+                >
+                  <Link href="mailto:hello@gymwatch.ma">{heroCopy.secondaryCta}</Link>
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
       </main>
     </div>
   )

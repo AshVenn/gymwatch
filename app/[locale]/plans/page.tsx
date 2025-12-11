@@ -1,24 +1,18 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
+import { getLocale } from 'next-intl/server'
 
 import { MarketingNavbar } from '@/components/marketing/navbar'
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { routing, type AppLocale } from '@/i18n/routing'
+import { buildMarketingMetadata, getMarketingCopy } from '@/lib/marketing-content'
 import { DEFAULT_ANNUAL_DISCOUNT, getPlanCatalogAsList } from '@/lib/subscription-plans'
 
-export const metadata: Metadata = {
-  title: 'Plans et tarifs GymWatch',
-  description:
-    'Comparez les plans GymWatch pour réseaux multi-salles : contrôle d’accès, abonnements, automatisations et reporting.',
+type PlansPageProps = {
+  params: { locale: string }
 }
-
-const navLinks = [
-  { label: 'Fonctionnalités', href: '/features' },
-  { label: 'Plans', href: '/plans' },
-  { label: 'FAQ', href: '/faqs' },
-  { label: 'Contact', href: '/contact' },
-]
 
 const pricingFaqs = [
   {
@@ -42,7 +36,18 @@ const pricingFaqs = [
   },
 ]
 
-export default function PlansPage() {
+export async function generateMetadata({ params }: PlansPageProps): Promise<Metadata> {
+  const locale = routing.locales.includes(params.locale as AppLocale)
+    ? (params.locale as AppLocale)
+    : routing.defaultLocale
+
+  return buildMarketingMetadata('plans', locale)
+}
+
+export default async function PlansPage() {
+  const locale = (await getLocale()) as AppLocale
+  const heroCopy = getMarketingCopy(locale).hero.plans
+
   const planCatalog = getPlanCatalogAsList()
   const priceFormatter = new Intl.NumberFormat('fr-MA', { style: 'currency', currency: 'MAD' })
   const renderPlanCards = (mode: 'monthly' | 'annual') =>
@@ -107,23 +112,22 @@ export default function PlansPage() {
 
   return (
     <div className="min-h-screen bg-background text-foreground">
-      <MarketingNavbar links={navLinks} />
+      <MarketingNavbar />
 
       <main className="mx-auto flex max-w-6xl flex-col gap-12 px-4 pb-16 pt-12">
         <section className="space-y-4 animate-fade-in">
           <p className="inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-4 py-1 text-[0.7rem] font-semibold uppercase tracking-[0.3em] text-primary">
-            Plans et tarifs
+            {heroCopy.eyebrow}
           </p>
-          <h1 className="text-balance text-4xl font-bold md:text-5xl">Plans et tarifs GymWatch</h1>
-          <p className="max-w-3xl text-lg text-muted-foreground">
-            Des plans pensés pour les réseaux multi-salles : gestion des abonnements, contrôle d’accès, automatisations et reporting.
-          </p>
+          <h1 className="text-balance text-4xl font-bold md:text-5xl">{heroCopy.title}</h1>
+          <p className="max-w-3xl text-lg font-semibold text-primary">{heroCopy.subtitle}</p>
+          <p className="max-w-3xl text-lg text-muted-foreground">{heroCopy.description}</p>
           <div className="flex flex-wrap gap-3">
             <Button asChild className="hover:shadow-lg">
-              <Link href="/request-demo">Demander une démo</Link>
+              <Link href="/request-demo">{heroCopy.primaryCta}</Link>
             </Button>
             <Button asChild variant="outline">
-              <Link href="/contact">Parler au support</Link>
+              <Link href="/contact">{heroCopy.secondaryCta}</Link>
             </Button>
           </div>
         </section>

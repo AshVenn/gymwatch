@@ -3,7 +3,7 @@
     "localeLabel": "العربية",
     "comingSoon": "ستتم إضافة الترجمات التفصيلية قريبًا."
   },
-    "metadata": {
+  "metadata": {
     "titleDefault": "GymWatch - إدارة حديثة للصالات الرياضية",
     "titleTemplate": "%s | GymWatch",
     "description": "يساعد GymWatch الصالات الرياضية على إدارة الاشتراكات والأعضاء والإيرادات عبر لوحة تحكم ذكية.",
@@ -15,7 +15,7 @@
     "twitterTitle": "GymWatch - حل إدارة الصالات الرياضية",
     "twitterDescription": "أتمتة الاشتراكات، تبسيط العمليات، وتمكين الأعضاء باستخدام GymWatch."
   },
-    "dashOwAdSubscriptions": {
+  "dashOwAdSubscriptions": {
     "errors": {
       "loadSubscriptions": "تعذّر تحميل الاشتراكات",
       "loadPlans": "تعذّر تحميل الخطط",
@@ -23,7 +23,8 @@
       "deleteFailed": "تعذّر حذف هذا الاشتراك",
       "renewFailed": "تعذّر تجديد الاشتراك",
       "noSubscriptionSelected": "لم يتم تحديد اشتراك",
-      "markVisitFailed": "تعذّر تسجيل الزيارة"
+      "markVisitFailed": "تعذّر تسجيل الزيارة",
+      "invoiceFailed": "تعذر توليد الفاتورة"
     },
     "quickFilters": {
       "all": "الكل",
@@ -55,7 +56,11 @@
       "actions": "الإجراءات",
       "late": "متأخر {count} يوم",
       "left": "متبقّي {count} يوم",
-      "idPrefix": "#{id}"
+      "idPrefix": "#{id}",
+      "unlimitedVisits": "زيارات غير محدودة",
+      "visitsPerDay": "{count} زيارة/يوم",
+      "sessionLimit": "{count} دقيقة كحد أقصى",
+      "visitsFallback": "لا توجد حدود"
     },
     "status": {
       "active": "نشط",
@@ -65,7 +70,10 @@
     "actions": {
       "markVisit": "تسجيل زيارة",
       "editRenew": "تعديل / تجديد",
-      "delete": "حذف"
+      "delete": "حذف",
+      "downloadInvoice": "تحميل الفاتورة",
+      "printInvoice": "طباعة الفاتورة",
+      "loadingInvoice": "يتم تحضير الفاتورة..."
     },
     "renew": {
       "title": "تحديث الاشتراك",
@@ -104,7 +112,7 @@
       "remainingShortMany": " - متبقي {count}"
     }
   },
-    "dashOwAdDashboard": {
+  "dashOwAdDashboard": {
     "errors": {
       "statsFetch": "تعذّر تحميل الإحصائيات",
       "statsGeneric": "تعذّر تحميل الإحصائيات في الوقت الحالي.",
@@ -199,7 +207,7 @@
       "excelRestricted": "تصدير Excel (الإيرادات، أفضل الأعضاء، الولاء) متاح في خطة Pro فقط."
     }
   },
-    "dashOwAdGymSettings": {
+  "dashOwAdGymSettings": {
     "errors": {
       "gymFetch": "تعذّر تحميل إعدادات النادي",
       "planLimitsFetch": "تعذّر تحميل حدود الخطط",
@@ -274,7 +282,7 @@
       "footer": "يتم تطبيق الحدود على الخطط النشطة فقط. تواصل مع الدعم لأي استثناء."
     }
   },
-    "subscriptionBanner": {
+  "subscriptionBanner": {
     "brandLine": "خطة GymWatch {plan}{demoSuffix}",
     "demoSuffix": " (تجريبي)",
     "planInterval": "{plan} · {interval}",
@@ -328,29 +336,28 @@
       "sortRecentStart": "الأحدث بدءاً",
       "sortPriceDesc": "السعر من الأعلى"
     },
-      "summary": {
-        "eyebrow": "تدفق الاشتراكات",
-        "title": "الاشتراكات",
-        "description": "عرض فوري للأعضاء والإيرادات وتواريخ الانتهاء.",
-        "liveBadge": "محدَّث مباشرة",
-        "totalRevenue": {
-          "label": "إجمالي الإيرادات",
-          "helper": "متوسط التذكرة {avgTicket}"
-        },
-        "active": {
-          "label": "اشتراكات نشطة",
-          "helper": "نسبة الاحتفاظ {retentionRate}٪"
-        },
-        "expiringSoon": {
-          "label": "تنتهي خلال أقل من 5 أيام",
-          "helper": "خطط للتذكير والمتابعة"
-        },
-        "expired": {
-          "label": "اشتراكات منتهية",
-          "helper": "تتطلب المعالجة بشكل عاجل"
-        }
+    "summary": {
+      "eyebrow": "تدفق الاشتراكات",
+      "title": "الاشتراكات",
+      "description": "عرض فوري للأعضاء والإيرادات وتواريخ الانتهاء.",
+      "liveBadge": "محدَّث مباشرة",
+      "totalRevenue": {
+        "label": "إجمالي الإيرادات",
+        "helper": "متوسط التذكرة {avgTicket}"
+      },
+      "active": {
+        "label": "اشتراكات نشطة",
+        "helper": "نسبة الاحتفاظ {retentionRate}٪"
+      },
+      "expiringSoon": {
+        "label": "تنتهي خلال أقل من 5 أيام",
+        "helper": "خطط للتذكير والمتابعة"
+      },
+      "expired": {
+        "label": "اشتراكات منتهية",
+        "helper": "تتطلب المعالجة بشكل عاجل"
       }
-
+    }
   },
   "visits": {
     "charts": {
@@ -732,8 +739,7 @@
           "description": "تصدير بيانات الأعضاء والزيارات بصيغة XLSX"
         }
       }
-    }
-,
+    },
     "classes": {
       "planLabel": {
         "basic": "Basic",

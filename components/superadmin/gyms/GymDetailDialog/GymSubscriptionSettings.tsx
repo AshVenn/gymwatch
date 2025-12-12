@@ -1,6 +1,9 @@
+'use client'
+
 import { useEffect, useState } from 'react'
 import type { SuperAdminGymDetail } from '@/app/[locale]/(dashboard)/super-admin/hooks'
-import { useUpdateGym } from '@/app/[locale]/(dashboard)/super-admin/hooks'
+import { useLocale } from 'next-intl'
+import { useQueryClient } from '@tanstack/react-query'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Input } from '@/components/ui/input'
@@ -11,6 +14,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form'
 import { PlanModuleBadges } from '../PlanModules'
 import { getPlanFeatures } from '@/lib/subscription-plans'
+import { toast } from 'sonner'
 
 type Props = {
   gym: SuperAdminGymDetail
@@ -28,7 +32,8 @@ const schema = z.object({
 type SubscriptionValues = z.infer<typeof schema>
 
 export function GymSubscriptionSettings({ gym }: Props) {
-  const updateGym = useUpdateGym()
+  const locale = useLocale()
+  const queryClient = useQueryClient()
 
   const form = useForm<SubscriptionValues>({
     resolver: zodResolver(schema),
@@ -45,6 +50,7 @@ export function GymSubscriptionSettings({ gym }: Props) {
   const variantTotal = gym.variantCount ?? gym.variants?.length ?? 0
 
   const [downloading, setDownloading] = useState<string | null>(null)
+  const [processingInvoice, setProcessingInvoice] = useState<'download' | 'print' | null>(null)
 
   useEffect(() => {
     form.reset({
@@ -57,27 +63,65 @@ export function GymSubscriptionSettings({ gym }: Props) {
     })
   }, [gym, form])
 
-  const onSubmit = (values: SubscriptionValues) => {
-    updateGym.mutate({
-      gymId: gym.id,
-      data: {
-        subscriptionStatus: values.status,
-        subscriptionPlan: values.plan,
-        billingInterval: values.interval,
-        subscriptionExpiresAt: values.expiresAt || null,
-        subscriptionGracePeriodDays: values.grace,
-        maxAdminAccounts: values.maxAdmins,
-      },
-    })
+  const handleInvoice = async (mode: 'download' | 'print', values?: SubscriptionValues) => {
+    const payload = values ?? form.getValues()
+    try {
+      setProcessingInvoice(mode)
+      const response = await fetch(`/api/super-admin/gyms/${gym.id}/invoice`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          subscriptionStatus: payload.status,
+          subscriptionPlan: payload.plan,
+          billingInterval: payload.interval,
+          subscriptionExpiresAt: payload.expiresAt || null,
+          subscriptionGracePeriodDays: payload.grace,
+          maxAdminAccounts: payload.maxAdmins,
+          locale,
+        }),
+      })
+
+      if (!response.ok) {
+        const message = await response.text().catch(() => 'Impossible de générer la facture')
+        throw new Error(message || 'Impossible de générer la facture')
+      }
+
+      const blob = await response.blob()
+      const url = URL.createObjectURL(blob)
+      if (mode === 'print') {
+        const win = window.open(url)
+        if (win) {
+          win.onload = () => {
+            win.focus()
+            win.print()
+          }
+        }
+      } else {
+        const anchor = document.createElement('a')
+        anchor.href = url
+        anchor.download = `gym-renewal-${Date.now()}.pdf`
+        anchor.click()
+      }
+      setTimeout(() => URL.revokeObjectURL(url), 1000)
+      queryClient.invalidateQueries({ queryKey: ['super-admin', 'gym', gym.id] })
+      queryClient.invalidateQueries({ queryKey: ['super-admin', 'gyms'] })
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Erreur de facture'
+      toast.error(message)
+    } finally {
+      setProcessingInvoice(null)
+    }
   }
+
+  const onSubmit = (values: SubscriptionValues) => handleInvoice('download', values)
 
   const downloadReport = async (format: 'excel' | 'pdf') => {
     try {
       setDownloading(format)
       const endpoint =
         format === 'excel'
-          ? `/api/super-admin/reports/excel?scope=gym&gymId=${gym.id}`
-          : `/api/super-admin/reports/pdf?scope=gym&gymId=${gym.id}`
+          ? `/api/super-admin/reports/excel?scope=gym&gymId=${gym.id}&locale=${locale}`
+          : `/api/super-admin/reports/pdf?scope=gym&gymId=${gym.id}&locale=${locale}`
 
       const response = await fetch(endpoint)
       if (!response.ok) throw new Error('Export impossible')
@@ -259,9 +303,20 @@ export function GymSubscriptionSettings({ gym }: Props) {
               </div>
             </div>
 
-            <Button type="submit" className="w-full" disabled={updateGym.isPending}>
-              {updateGym.isPending ? 'Sauvegarde…' : 'Mettre à jour'}
-            </Button>
+            <div className="flex flex-col gap-3 sm:flex-row sm:justify-end">
+              <Button type="submit" className="w-full sm:w-auto" disabled={processingInvoice !== null}>
+                {processingInvoice === 'download' ? 'Génération...' : 'Télécharger la facture'}
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                className="w-full sm:w-auto"
+                onClick={form.handleSubmit((values) => handleInvoice('print', values))}
+                disabled={processingInvoice !== null}
+              >
+                {processingInvoice === 'print' ? 'Préparation...' : 'Imprimer'}
+              </Button>
+            </div>
           </form>
         </Form>
       </CardContent>

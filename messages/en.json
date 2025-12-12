@@ -55,7 +55,11 @@
       "actions": "Actions",
       "late": "{count} days late",
       "left": "{count} days left",
-      "idPrefix": "#{id}"
+      "idPrefix": "#{id}",
+      "unlimitedVisits": "Unlimited visits",
+      "visitsPerDay": "{count} visit(s)/day",
+      "sessionLimit": "{count} min max",
+      "visitsFallback": "No limits set"
     },
     "status": {
       "active": "Active",
@@ -65,7 +69,10 @@
     "actions": {
       "markVisit": "Mark visit",
       "editRenew": "Edit / renew",
-      "delete": "Delete"
+      "delete": "Delete",
+      "downloadInvoice": "Download invoice",
+      "printInvoice": "Print invoice",
+      "loadingInvoice": "Preparing invoice..."
     },
     "renew": {
       "title": "Update subscription",
@@ -77,6 +84,16 @@
       "createPaymentDesc": "Disable if you’re fixing a date mistake.",
       "saving": "Updating...",
       "save": "Save"
+    },
+    "errors": {
+      "invoiceFailed": "Unable to generate the invoice",
+      "loadSubscriptions": "Unable to load subscriptions",
+      "loadPlans": "Unable to load plans",
+      "loadSubscriptionsInline": "Unable to load subscriptions.",
+      "deleteFailed": "Unable to delete this subscription",
+      "renewFailed": "Unable to renew the subscription",
+      "noSubscriptionSelected": "No subscription selected",
+      "markVisitFailed": "Unable to mark the visit"
     },
     "empty": {
       "title": "No subscriptions match your filters.",

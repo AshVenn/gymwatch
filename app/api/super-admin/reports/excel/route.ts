@@ -4,11 +4,51 @@ import { z } from "zod"
 import { utils, write } from "xlsx"
 import { authOptions } from "@/lib/auth-middleware"
 import { prisma } from "@/lib/prisma"
+import { formatExportCurrency, resolveExportLocale } from "@/lib/export-locale"
 
 const querySchema = z.object({
   scope: z.enum(["global", "gym"]).default("global"),
   gymId: z.string().optional(),
 })
+
+const labels = {
+  fr: {
+    gym: "Salle",
+    plan: "Plan",
+    billing: "Facturation",
+    status: "Statut",
+    members: "Membres",
+    activeSubscriptions: "Abonnements actifs",
+    revenue: "Revenus",
+    owner: "Propriétaire",
+    field: "Champ",
+    value: "Valeur",
+  },
+  en: {
+    gym: "Gym",
+    plan: "Plan",
+    billing: "Billing",
+    status: "Status",
+    members: "Members",
+    activeSubscriptions: "Active subscriptions",
+    revenue: "Revenue",
+    owner: "Owner",
+    field: "Field",
+    value: "Value",
+  },
+  ar: {
+    gym: "النادي",
+    plan: "الخطة",
+    billing: "الفوترة",
+    status: "الحالة",
+    members: "الأعضاء",
+    activeSubscriptions: "الاشتراكات النشطة",
+    revenue: "الإيرادات",
+    owner: "المالك",
+    field: "الحقل",
+    value: "القيمة",
+  },
+}
 
 function rowsToWorkbook(rows: Array<Array<string | number>>) {
   const worksheet = utils.aoa_to_sheet(rows)
@@ -29,11 +69,13 @@ export async function GET(request: NextRequest) {
   })
 
   if (!parsed.success) {
-    return NextResponse.json({ error: "Paramètres invalides" }, { status: 400 })
+    return NextResponse.json({ error: "Parametres invalides" }, { status: 400 })
   }
 
   const { scope, gymId } = parsed.data
-  const formatter = new Intl.NumberFormat("fr-MA", { style: "currency", currency: "MAD" })
+  const locale = resolveExportLocale(request.nextUrl.searchParams.get("locale"))
+  const wording = labels[locale]
+  const currency = (value: number | null | undefined) => formatExportCurrency(value ?? 0, locale, "MAD")
   const filenameParts = ["super-admin", scope]
   let rows: Array<Array<string | number>> = []
 
@@ -50,7 +92,7 @@ export async function GET(request: NextRequest) {
     })
     const revenueLookup = new Map(revenueByGym.map((entry) => [entry.gymId, entry._sum.amount ?? 0]))
     rows = [
-      ["Salle", "Plan", "Facturation", "Statut", "Membres", "Abonnements actifs", "Revenus"],
+      [wording.gym, wording.plan, wording.billing, wording.status, wording.members, wording.activeSubscriptions, wording.revenue],
     ]
     gyms.forEach((gym) => {
       rows.push([
@@ -60,7 +102,7 @@ export async function GET(request: NextRequest) {
         gym.subscriptionStatus,
         gym._count.members,
         gym._count.subscriptions,
-        formatter.format(revenueLookup.get(gym.id) ?? 0),
+        currency(revenueLookup.get(gym.id) ?? 0),
       ])
     })
   } else if (scope === "gym" && gymId) {
@@ -83,18 +125,18 @@ export async function GET(request: NextRequest) {
     })
 
     rows = [
-      ["Champ", "Valeur"],
-      ["Salle", gym.name],
-      ["Plan", gym.subscriptionPlan],
-      ["Facturation", gym.billingInterval],
-      ["Statut", gym.subscriptionStatus],
-      ["Propriétaire", gym.owner?.email ?? "--"],
-      ["Membres", gym._count.members],
-      ["Abonnements actifs", gym._count.subscriptions],
-      ["Revenus cumulés", formatter.format(payments._sum.amount ?? 0)],
+      [wording.field, wording.value],
+      [wording.gym, gym.name],
+      [wording.plan, gym.subscriptionPlan],
+      [wording.billing, gym.billingInterval],
+      [wording.status, gym.subscriptionStatus],
+      [wording.owner, gym.owner?.email ?? "--"],
+      [wording.members, gym._count.members],
+      [wording.activeSubscriptions, gym._count.subscriptions],
+      [wording.revenue, currency(payments._sum.amount ?? 0)],
     ]
   } else {
-    return NextResponse.json({ error: "Paramètres manquants" }, { status: 400 })
+    return NextResponse.json({ error: "Parametres manquants" }, { status: 400 })
   }
 
   const filename = `${filenameParts.join("-")}-${Date.now()}.xlsx`

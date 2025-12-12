@@ -3,7 +3,7 @@
     "localeLabel": "Français",
     "comingSoon": "Les traductions détaillées arrivent bientôt."
   },
-    "metadata": {
+  "metadata": {
     "titleDefault": "GymWatch - Gestion moderne des salles de sport",
     "titleTemplate": "%s | GymWatch",
     "description": "GymWatch aide les salles de sport à piloter leurs abonnements, leurs membres et leurs revenus grâce à un tableau de bord intelligent.",
@@ -15,7 +15,7 @@
     "twitterTitle": "GymWatch - La solution de gestion des salles de sport",
     "twitterDescription": "Automatisez vos abonnements, simplifiez vos opérations et inspirez vos membres avec GymWatch."
   },
-    "dashOwAdSubscriptions": {
+  "dashOwAdSubscriptions": {
     "errors": {
       "loadSubscriptions": "Impossible de charger les abonnements",
       "loadPlans": "Impossible de charger les plans",
@@ -23,7 +23,8 @@
       "deleteFailed": "Impossible de supprimer cet abonnement",
       "renewFailed": "Impossible de renouveler l'abonnement",
       "noSubscriptionSelected": "Aucun abonnement sélectionné",
-      "markVisitFailed": "Impossible de marquer la visite"
+      "markVisitFailed": "Impossible de marquer la visite",
+      "invoiceFailed": "Impossible de générer la facture"
     },
     "quickFilters": {
       "all": "Tous",
@@ -55,7 +56,11 @@
       "actions": "Actions",
       "late": "{count} j de retard",
       "left": "{count} j restants",
-      "idPrefix": "#{id}"
+      "idPrefix": "#{id}",
+      "unlimitedVisits": "Visites illimitées",
+      "visitsPerDay": "{count} visite(s)/jour",
+      "sessionLimit": "{count} min max",
+      "visitsFallback": "Aucune limite définie"
     },
     "status": {
       "active": "Actif",
@@ -65,7 +70,10 @@
     "actions": {
       "markVisit": "Marquer visite",
       "editRenew": "Modifier / renouveler",
-      "delete": "Supprimer"
+      "delete": "Supprimer",
+      "downloadInvoice": "Télécharger la facture",
+      "printInvoice": "Imprimer la facture",
+      "loadingInvoice": "Préparation de la facture..."
     },
     "renew": {
       "title": "Mettre à jour l'abonnement",
@@ -104,7 +112,7 @@
       "remainingShortMany": " - {count} restes"
     }
   },
-    "dashOwAdDashboard": {
+  "dashOwAdDashboard": {
     "errors": {
       "statsFetch": "Impossible de charger les statistiques",
       "statsGeneric": "Impossible de charger les statistiques pour le moment.",
@@ -199,7 +207,7 @@
       "excelRestricted": "Les exports Excel (revenus, top membres, fidélité) sont réservés au plan Pro."
     }
   },
-   "dashOwAdGymSettings": {
+  "dashOwAdGymSettings": {
     "errors": {
       "gymFetch": "Impossible de charger les paramètres du gymnase",
       "planLimitsFetch": "Impossible de charger les limites des plans",
@@ -274,7 +282,7 @@
       "footer": "Les plafonds sont appliqués uniquement sur les plans actifs. Contactez le support pour toute dérogation."
     }
   },
-    "subscriptionBanner": {
+  "subscriptionBanner": {
     "brandLine": "GymWatch Plan {plan}{demoSuffix}",
     "demoSuffix": " (Démo)",
     "planInterval": "{plan} · {interval}",
@@ -700,39 +708,38 @@
       "signOut": "Se déconnecter",
       "demoBadge": "Démo"
     },
-      "featureAccess": {
-        "modulesTitle": "Modules",
-        "modulesCount": "{active}/{total} actifs",
-        "planLabel": "Plan {plan}",
-        "badges": {
-          "included": "Inclus",
-          "notIncluded": "Non inclus"
+    "featureAccess": {
+      "modulesTitle": "Modules",
+      "modulesCount": "{active}/{total} actifs",
+      "planLabel": "Plan {plan}",
+      "badges": {
+        "included": "Inclus",
+        "notIncluded": "Non inclus"
+      },
+      "actions": {
+        "upgrade": "Mettre à niveau",
+        "open": "Ouvrir",
+        "seePlans": "Voir les plans"
+      },
+      "items": {
+        "access": {
+          "title": "Contrôle d’accès",
+          "description": "QR, simulateur et journaux"
         },
-        "actions": {
-          "upgrade": "Mettre à niveau",
-          "open": "Ouvrir",
-          "seePlans": "Voir les plans"
+        "presence": {
+          "title": "Présence",
+          "description": "Vue en temps réel des visites"
         },
-        "items": {
-          "access": {
-            "title": "Contrôle d’accès",
-            "description": "QR, simulateur et journaux"
-          },
-          "presence": {
-            "title": "Présence",
-            "description": "Vue en temps réel des visites"
-          },
-          "classes": {
-            "title": "Cours & planning",
-            "description": "Agenda, capacités et listes"
-          },
-          "reports": {
-            "title": "Exports Excel",
-            "description": "Visites et membres en XLSX"
-          }
+        "classes": {
+          "title": "Cours & planning",
+          "description": "Agenda, capacités et listes"
+        },
+        "reports": {
+          "title": "Exports Excel",
+          "description": "Visites et membres en XLSX"
         }
       }
-,
+    },
     "classes": {
       "planLabel": {
         "basic": "Basic",

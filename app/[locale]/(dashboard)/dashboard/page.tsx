@@ -4,7 +4,7 @@ import Link from 'next/link'
 import { useSession } from 'next-auth/react'
 import { useEffect, useMemo, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { useTranslations } from 'next-intl'
+import { useLocale, useTranslations } from 'next-intl'
 import type { LucideIcon } from 'lucide-react'
 import {
   AlertTriangle,
@@ -57,6 +57,7 @@ interface DashboardStats {
 
 export default function DashboardPage() {
   const t = useTranslations('dashOwAdDashboard')
+  const locale = useLocale()
   const { data: session } = useSession()
   const { hasExcelReports, hasMultiLocations } = usePlanFeatures()
   const [downloading, setDownloading] = useState<string | null>(null)
@@ -256,6 +257,7 @@ export default function DashboardPage() {
       setDownloading(type)
       const params = new URLSearchParams({ type })
       if (variantFilter) params.set('variantId', variantFilter)
+      params.set('locale', locale)
 
       const response = await fetch(`/api/gym-team/reports/excel?${params.toString()}`)
       if (!response.ok) {

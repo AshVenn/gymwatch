@@ -3,8 +3,8 @@
 import { useSession } from 'next-auth/react'
 import { useMemo, useState, useEffect } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { useTranslations } from 'next-intl'
-import { AlertTriangle, MoreVertical, RotateCcw, Trash2, CheckCircle2 } from 'lucide-react'
+import { useLocale, useTranslations } from 'next-intl'
+import { AlertTriangle, MoreVertical, RotateCcw, Trash2, CheckCircle2, FileText, Printer } from 'lucide-react'
 import { toast } from 'sonner'
 
 import { cn } from '@/lib/utils'
@@ -25,6 +25,7 @@ import { VariantSelector } from '@/components/dashboard/variant-selector'
 
 interface Subscription {
   id: string
+  planId?: string
   memberId: string
   memberName: string
   planName: string
@@ -34,6 +35,9 @@ interface Subscription {
   status: 'ACTIVE' | 'EXPIRES_TODAY' | 'EXPIRED'
   pricePaid: number
   gymVariantId?: string
+  planVisitsPerDay?: number | null
+  planMaxSessionMinutes?: number | null
+  planDurationDays?: number | null
 }
 
 interface Plan {
@@ -54,6 +58,7 @@ const currencyFormatter = new Intl.NumberFormat('fr-MA', { style: 'currency', cu
 
 export default function SubscriptionsPage() {
   const t = useTranslations('dashOwAdSubscriptions')
+  const locale = useLocale()
 
   const { data: session } = useSession()
   const queryClient = useQueryClient()
@@ -71,6 +76,7 @@ export default function SubscriptionsPage() {
   const [visitDialogOpen, setVisitDialogOpen] = useState(false)
   const [visitSearch, setVisitSearch] = useState('')
   const [visitLoading, setVisitLoading] = useState<string | null>(null)
+  const [invoiceLoadingId, setInvoiceLoadingId] = useState<string | null>(null)
 
   const { variants, selectedVariant, setSelectedVariant, isGymAdmin, lockedVariantId, isLoading: variantsLoading } =
     useVariantOptions()
@@ -278,10 +284,57 @@ export default function SubscriptionsPage() {
 
   const subscriptionPagination = usePagination(filteredSubscriptions, 10)
 
+  const describePlan = (visits?: number | null, session?: number | null) => {
+    const parts: string[] = []
+    if (typeof visits === 'number') {
+      parts.push(visits < 0 ? t('table.unlimitedVisits') : t('table.visitsPerDay', { count: visits }))
+    }
+    if (typeof session === 'number' && session > 0) {
+      parts.push(t('table.sessionLimit', { count: session }))
+    }
+    return parts.join(' · ')
+  }
+
   const handleDeleteSubscription = (subscriptionId: string) => {
     if (!subscriptionId) return
     if (confirm(t('confirm.delete'))) {
       deleteSubscriptionMutation.mutate(subscriptionId)
+    }
+  }
+
+  const downloadInvoice = async (subscriptionId: string, mode: 'download' | 'print' = 'download') => {
+    if (!subscriptionId) return
+    try {
+      setInvoiceLoadingId(subscriptionId)
+      const response = await fetch(
+        `/api/gym-team/subscriptions/${subscriptionId}/invoice?locale=${locale}`,
+      )
+      if (!response.ok) {
+        const detail = await response.text().catch(() => '')
+        throw new Error(detail || t('errors.invoiceFailed'))
+      }
+      const blob = await response.blob()
+      const url = URL.createObjectURL(blob)
+      if (mode === 'print') {
+        const printWindow = window.open(url)
+        if (printWindow) {
+          printWindow.onload = () => {
+            printWindow.focus()
+            printWindow.print()
+          }
+        }
+      } else {
+        const anchor = document.createElement('a')
+        anchor.href = url
+        anchor.download = `subscription-${subscriptionId}.pdf`
+        anchor.click()
+      }
+      setTimeout(() => URL.revokeObjectURL(url), 1000)
+    } catch (error) {
+      const message = error instanceof Error ? error.message : t('errors.invoiceFailed')
+      toast.error(message)
+    } finally {
+      setInvoiceLoadingId(null)
     }
   }
 
@@ -544,7 +597,13 @@ export default function SubscriptionsPage() {
                       <div className="text-xs text-muted-foreground">{t('table.idPrefix', { id: sub.id.slice(0, 8) })}</div>
                     </TableCell>
 
-                    <TableCell>{sub.planName ?? '-'}</TableCell>
+                    <TableCell>
+                      <div className="font-medium">{sub.planName ?? '-'}</div>
+                      <div className="text-xs text-muted-foreground">
+                        {describePlan(sub.planVisitsPerDay ?? null, sub.planMaxSessionMinutes ?? null) ||
+                          t('table.visitsFallback')}
+                      </div>
+                    </TableCell>
                     <TableCell>{safeDate(sub.startDate)}</TableCell>
                     <TableCell>{safeDate(sub.endDate)}</TableCell>
 
@@ -594,23 +653,46 @@ export default function SubscriptionsPage() {
                             {t('actions.markVisit')}
                           </DropdownMenuItem>
 
-                          <Dialog open={renewingId === sub.id} onOpenChange={(open) => !open && setRenewingId(null)}>
-                            <DialogTrigger asChild>
-                              <DropdownMenuItem
-                                onSelect={(event) => {
-                                  event.preventDefault()
-                                  setRenewingId(sub.id)
-                                  setRenewalForm({
-                                    planId: '',
-                                    startDate: new Date().toISOString().split('T')[0],
-                                    createPayment: true,
-                                  })
-                                }}
-                              >
-                                <RotateCcw className="mr-2" size={16} />
-                                {t('actions.editRenew')}
-                              </DropdownMenuItem>
-                            </DialogTrigger>
+                          <DropdownMenuItem
+                            disabled={invoiceLoadingId === sub.id}
+                            onSelect={(event) => {
+                              event.preventDefault()
+                              downloadInvoice(sub.id, 'download')
+                            }}
+                          >
+                            <FileText className="mr-2" size={16} />
+                            {invoiceLoadingId === sub.id
+                              ? t('actions.loadingInvoice')
+                              : t('actions.downloadInvoice')}
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            disabled={invoiceLoadingId === sub.id}
+                            onSelect={(event) => {
+                              event.preventDefault()
+                              downloadInvoice(sub.id, 'print')
+                            }}
+                          >
+                            <Printer className="mr-2" size={16} />
+                            {t('actions.printInvoice')}
+                          </DropdownMenuItem>
+
+                            <Dialog open={renewingId === sub.id} onOpenChange={(open) => !open && setRenewingId(null)}>
+                              <DialogTrigger asChild>
+                                <DropdownMenuItem
+                                  onSelect={(event) => {
+                                    event.preventDefault()
+                                    setRenewingId(sub.id)
+                                    setRenewalForm({
+                                      planId: '',
+                                      startDate: new Date().toISOString().split('T')[0],
+                                      createPayment: true,
+                                    })
+                                  }}
+                                >
+                                  <RotateCcw className="mr-2" size={16} />
+                                  {t('actions.editRenew')}
+                                </DropdownMenuItem>
+                              </DialogTrigger>
 
                             <DialogContent className="border-border/60 bg-card text-foreground">
                               <DialogHeader>
@@ -629,7 +711,13 @@ export default function SubscriptionsPage() {
                                     <SelectContent>
                                       {availablePlans.map((plan) => (
                                         <SelectItem key={plan.id} value={plan.id}>
-                                          {plan.name}
+                                          <div className="flex flex-col">
+                                            <span className="font-medium">{plan.name}</span>
+                                            <span className="text-xs text-muted-foreground">
+                                              {describePlan(plan.visitsPerDay ?? null, plan.maxSessionMinutes ?? null) ||
+                                                t('table.visitsFallback')}
+                                            </span>
+                                          </div>
                                         </SelectItem>
                                       ))}
                                     </SelectContent>

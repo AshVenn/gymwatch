@@ -6,11 +6,60 @@ import { authOptions } from "@/lib/auth-middleware"
 import { prisma } from "@/lib/prisma"
 import { hasPlanFeature } from "@/lib/subscription-plans"
 import { resolveVariantAccess } from "@/lib/variant-access"
+import { formatExportCurrency, formatExportDate, resolveExportLocale } from "@/lib/export-locale"
 
 const querySchema = z.object({
   type: z.enum(["earnings", "top-members", "loyal-members", "member"]),
   memberId: z.string().optional(),
 })
+
+const labels = {
+  fr: {
+    month: "Mois",
+    total: "Total",
+    member: "Membre",
+    email: "Email",
+    totalPaid: "Total payé",
+    subscriptionCount: "Nombre d'abonnements",
+    field: "Champ",
+    value: "Valeur",
+    name: "Nom",
+    phone: "Téléphone",
+    totalSubscriptions: "Total abonnements",
+    cumulativeAmount: "Montant cumulé",
+    planPrefix: "Plan",
+  },
+  en: {
+    month: "Month",
+    total: "Total",
+    member: "Member",
+    email: "Email",
+    totalPaid: "Total paid",
+    subscriptionCount: "Subscriptions",
+    field: "Field",
+    value: "Value",
+    name: "Name",
+    phone: "Phone",
+    totalSubscriptions: "Total subscriptions",
+    cumulativeAmount: "Cumulative amount",
+    planPrefix: "Plan",
+  },
+  ar: {
+    month: "الشهر",
+    total: "الإجمالي",
+    member: "العضو",
+    email: "البريد الإلكتروني",
+    totalPaid: "المبلغ المدفوع",
+    subscriptionCount: "عدد الاشتراكات",
+    field: "الحقل",
+    value: "القيمة",
+    name: "الاسم",
+    phone: "الهاتف",
+    totalSubscriptions: "إجمالي الاشتراكات",
+    cumulativeAmount: "المجموع التراكمي",
+    planPrefix: "الخطة",
+  },
+}
 
 function rowsToWorkbook(rows: Array<Array<string | number>>) {
   const worksheet = utils.aoa_to_sheet(rows)
@@ -39,6 +88,9 @@ export async function GET(request: NextRequest) {
     memberId: request.nextUrl.searchParams.get("memberId") ?? undefined,
   })
   const requestedVariantId = request.nextUrl.searchParams.get("variantId")
+  const locale = resolveExportLocale(request.nextUrl.searchParams.get("locale"))
+  const wording = labels[locale]
+
   const variantAccess = await resolveVariantAccess({
     gymId,
     tier,
@@ -67,6 +119,7 @@ export async function GET(request: NextRequest) {
   }
 
   const { type, memberId } = parsed.data
+  const currency = (value: number | null | undefined) => formatExportCurrency(value ?? 0, locale, "MAD")
 
   if (type === "earnings" && role === "GYM_ADMIN") {
     return NextResponse.json({ error: "Acces revenu reserve au proprietaire" }, { status: 403 })
@@ -78,47 +131,23 @@ export async function GET(request: NextRequest) {
 
   let rows: Array<Array<string | number>> = []
   const now = new Date()
-  const formatter = new Intl.NumberFormat("fr-MA", {
-    style: "currency",
-    currency: "MAD",
-  })
 
-  // ===== Earnings =====
   if (type === "earnings") {
-    rows = [["Mois", "Total"]]
-
+    rows = [[wording.month, wording.total]]
     for (let i = 11; i >= 0; i--) {
       const start = new Date(now.getFullYear(), now.getMonth() - i, 1)
-      const end = new Date(
-        now.getFullYear(),
-        now.getMonth() - i + 1,
-        0,
-        23,
-        59,
-        59,
-        999,
-      )
-
+      const end = new Date(now.getFullYear(), now.getMonth() - i + 1, 0, 23, 59, 59, 999)
       const agg = await prisma.payment.aggregate({
         where: {
           gymId,
           paymentDate: { gte: start, lte: end },
-          ...(gymVariantId
-            ? { subscriptions: { some: { gymVariantId } } }
-            : {}),
+          ...(gymVariantId ? { subscriptions: { some: { gymVariantId } } } : {}),
         },
         _sum: { amount: true },
       })
-
-      rows.push([
-        start.toLocaleDateString("fr-FR", { month: "long", year: "numeric" }),
-        formatter.format(agg._sum.amount ?? 0),
-      ])
+      rows.push([formatExportDate(start, locale, { month: "long", year: "numeric" }), currency(agg._sum.amount ?? 0)])
     }
-  }
-
-  // ===== Top / loyal members =====
-  else if (type === "top-members" || type === "loyal-members") {
+  } else if (type === "top-members" || type === "loyal-members") {
     const aggregated = await prisma.subscription.groupBy({
       by: ["memberId"],
       where: {
@@ -126,7 +155,7 @@ export async function GET(request: NextRequest) {
         ...(gymVariantId ? { gymVariantId } : {}),
       },
       _sum: { pricePaid: true },
-      _count: { memberId: true }, // count how many rows per member
+      _count: { memberId: true },
       orderBy:
         type === "top-members"
           ? { _sum: { pricePaid: "desc" } }
@@ -135,35 +164,19 @@ export async function GET(request: NextRequest) {
     })
 
     const memberIds = aggregated.map((a: any) => a.memberId)
-
     const memberMap = await prisma.member.findMany({
       where: { id: { in: memberIds } },
       select: { id: true, firstName: true, lastName: true, email: true },
     })
+    const memberLookup = new Map(memberMap.map((m: any) => [m.id, m] as const))
 
-    const memberLookup = new Map(
-      memberMap.map((m: any) => [m.id, m] as const),
-    )
-
-    rows = [["Membre", "Email", "Total payé", "Nombre d’abonnements"]]
-
+    rows = [[wording.member, wording.email, wording.totalPaid, wording.subscriptionCount]]
     aggregated.forEach((entry: any) => {
       const member = memberLookup.get(entry.memberId)
-      const fullName = member
-        ? `${member.firstName ?? ""} ${member.lastName ?? ""}`.trim()
-        : entry.memberId
-
-      rows.push([
-        fullName,
-        member?.email ?? "--",
-        formatter.format(entry._sum?.pricePaid ?? 0),
-        entry._count?.memberId ?? 0,
-      ])
+      const fullName = member ? `${member.firstName ?? ""} ${member.lastName ?? ""}`.trim() : entry.memberId
+      rows.push([fullName, member?.email ?? "--", currency(entry._sum?.pricePaid ?? 0), entry._count?.memberId ?? 0])
     })
-  }
-
-  // ===== Single member report =====
-  else if (type === "member" && memberId) {
+  } else if (type === "member" && memberId) {
     const member = await prisma.member.findFirst({
       where: {
         id: memberId,
@@ -184,28 +197,23 @@ export async function GET(request: NextRequest) {
     }
 
     rows = [
-      ["Champ", "Valeur"],
-      ["Nom", `${member.firstName} ${member.lastName}`.trim()],
-      ["Email", member.email ?? "--"],
-      ["Téléphone", member.phone ?? "--"],
-      ["Total abonnements", member.subscriptions.length],
+      [wording.field, wording.value],
+      [wording.name, `${member.firstName} ${member.lastName}`.trim()],
+      [wording.email, member.email ?? "--"],
+      [wording.phone, member.phone ?? "--"],
+      [wording.totalSubscriptions, member.subscriptions.length],
     ]
 
-    const totalPaid = member.subscriptions.reduce(
-      (sum: number, sub: any) => sum + (sub.pricePaid ?? 0),
-      0,
-    )
-
-    rows.push(["Montant cumulé", formatter.format(totalPaid)])
+    const totalPaid = member.subscriptions.reduce((sum: number, sub: any) => sum + (sub.pricePaid ?? 0), 0)
+    rows.push([wording.cumulativeAmount, currency(totalPaid)])
 
     member.subscriptions.forEach((sub: any) => {
       rows.push([
-        `Plan ${sub.plan?.name ?? ""}`,
-        `${new Date(sub.startDate).toLocaleDateString(
-          "fr-FR",
-        )} -> ${new Date(sub.endDate).toLocaleDateString("fr-FR")} (${formatter.format(
-          sub.pricePaid ?? 0,
-        )})`,
+        `${wording.planPrefix} ${sub.plan?.name ?? ""}`,
+        `${formatExportDate(new Date(sub.startDate), locale)} -> ${formatExportDate(
+          new Date(sub.endDate),
+          locale,
+        )} (${currency(sub.pricePaid ?? 0)})`,
       ])
     })
   }
@@ -215,8 +223,7 @@ export async function GET(request: NextRequest) {
 
   return new NextResponse(payload as any, {
     headers: {
-      "Content-Type":
-        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      "Content-Type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
       "Content-Disposition": `attachment; filename=${filename}`,
     },
   })

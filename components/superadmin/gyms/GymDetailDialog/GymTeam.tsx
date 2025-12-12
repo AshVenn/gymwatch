@@ -28,6 +28,8 @@ export function GymTeam({ gym }: Props) {
   const createAdmin = useCreateGymAdmin()
   const form = useForm<CreateAdminValues>({
     resolver: zodResolver(schema),
+    mode: 'onChange',
+    reValidateMode: 'onChange',
     defaultValues: { email: '', firstName: '', lastName: '', password: '', variantId: '' },
   })
 
@@ -41,6 +43,7 @@ export function GymTeam({ gym }: Props) {
   const safeMaxAdmins = Math.max(gym.maxAdminAccounts ?? 0, 0)
   const adminUsage =
     safeMaxAdmins > 0 ? Math.min(100, Math.round((adminCount / safeMaxAdmins) * 100)) : 0
+  const capacityReached = safeMaxAdmins > 0 && adminCount >= safeMaxAdmins
 
   const onSubmit = (values: CreateAdminValues) => {
     const targetVariant =
@@ -61,9 +64,9 @@ export function GymTeam({ gym }: Props) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Équipe ({adminCount}/{safeMaxAdmins || '∞'})</CardTitle>
+        <CardTitle>Equipe ({adminCount}/{safeMaxAdmins || '∞'})</CardTitle>
         <CardDescription>
-          Capacité utilisée : <span className="font-semibold text-primary">{adminUsage}%</span>
+          Capacite utilisee : <span className="font-semibold text-primary">{adminUsage}%</span>
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -148,13 +151,13 @@ export function GymTeam({ gym }: Props) {
                   <Select onValueChange={field.onChange} value={field.value}>
                     <FormControl>
                       <SelectTrigger>
-                        <SelectValue placeholder="Par défaut" />
+                        <SelectValue placeholder="Par defaut" />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
                       {(gym.variants ?? []).map((variant) => (
                         <SelectItem key={variant.id} value={variant.id}>
-                          {variant.name} {variant.isDefault ? '(défaut)' : ''}
+                          {variant.name} {variant.isDefault ? '(defaut)' : ''}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -180,7 +183,7 @@ export function GymTeam({ gym }: Props) {
 
             <Button
               type="submit"
-              disabled={createAdmin.isPending || (safeMaxAdmins > 0 && adminCount >= safeMaxAdmins)}
+              disabled={createAdmin.isPending || capacityReached || !form.formState.isValid}
             >
               {createAdmin.isPending ? 'Création...' : 'Ajouter'}
             </Button>

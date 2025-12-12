@@ -73,6 +73,7 @@ export async function GET(request: NextRequest) {
 
           return {
             id: sub.id,
+            planId: sub.planId,
             memberId: sub.member.id,
             memberName: `${sub.member.firstName} ${sub.member.lastName}`,
             planName: sub.plan.name,
@@ -83,6 +84,9 @@ export async function GET(request: NextRequest) {
             pricePaid: sub.pricePaid,
             gymVariantId: sub.gymVariantId,
             gymVariant: sub.gymVariant,
+            planVisitsPerDay: sub.plan?.visitsPerDay ?? null,
+            planMaxSessionMinutes: sub.plan?.maxSessionMinutes ?? null,
+            planDurationDays: sub.plan?.durationDays ?? null,
           }
         }),
     )

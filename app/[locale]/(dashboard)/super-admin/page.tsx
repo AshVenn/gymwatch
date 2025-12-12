@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { useSuperAdminStats } from './hooks'
+import { useLocale } from 'next-intl'
 import {
   Card,
   CardContent,
@@ -67,6 +68,7 @@ const radialStatusConfig: ChartConfig = {
 
 export default function SuperAdminOverviewPage() {
   const { data: stats, isLoading, isError } = useSuperAdminStats()
+  const locale = useLocale()
   const [downloading, setDownloading] = useState<string | null>(null)
 
   const downloadReport = async (format: 'excel' | 'pdf') => {
@@ -74,8 +76,8 @@ export default function SuperAdminOverviewPage() {
       setDownloading(format)
       const endpoint =
         format === 'excel'
-          ? '/api/super-admin/reports/excel?scope=global'
-          : '/api/super-admin/reports/pdf?scope=global'
+          ? `/api/super-admin/reports/excel?scope=global&locale=${locale}`
+          : `/api/super-admin/reports/pdf?scope=global&locale=${locale}`
       
       const response = await fetch(endpoint)
       

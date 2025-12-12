@@ -351,6 +351,7 @@ export default function MembersPage() {
       if (variantFilter) {
         params.set('variantId', variantFilter)
       }
+      params.set('locale', locale)
       const response = await fetch(
         `/api/gym-team/reports/excel?${params.toString()}`,
       )

@@ -3,6 +3,145 @@
     "localeLabel": "English",
     "comingSoon": "Detailed translations coming soon."
   },
+  "pagination": {
+      "prev": "Previous",
+      "next": "Next",
+      "pageXofY": "Page {x} of {y}",
+      "rangeOfTotal": "{start}-{end} of {total} items"
+    },
+    "variantSelector": {
+      "label": "Variant",
+      "placeholderAll": "All variants",
+      "placeholderSingle": "Select a variant",
+      "adminLockedNote": "Locked for this admin account",
+      "assignedVariantFallback": "Assigned variant",
+      "allOption": "All variants",
+      "defaultSuffix": "(default)",
+      "lockedMessage": "Multi-location overview is available on the Enterprise plan."
+    },
+    "subscriptions": {
+  "filters": {
+    "searchLabel": "Search",
+    "searchPlaceholder": "Member name or plan...",
+    "statusLabel": "Status",
+    "statusPlaceholder": "Filter by status",
+    "statusAll": "All",
+    "statusActive": "Active",
+    "statusExpiresToday": "Expiring today",
+    "statusExpired": "Expired",
+    "sortLabel": "Sort",
+    "sortPlaceholder": "Choose sort",
+    "sortNextExpiry": "Nearest expiry",
+    "sortRecentStart": "Most recent start",
+    "sortPriceDesc": "Price (high to low)"
+  },  "summary": {
+    "eyebrow": "Subscription flow",
+    "title": "Subscriptions",
+    "description": "Real-time view of members, revenue and upcoming renewals.",
+    "liveBadge": "Live updated",
+    "totalRevenue": {
+      "label": "Total revenue",
+      "helper": "Average ticket {{avgTicket}}"
+    },
+    "active": {
+      "label": "Active subscriptions",
+      "helper": "{{retentionRate}}% retention"
+    },
+    "expiringSoon": {
+      "label": "Expiring in < 5 days",
+      "helper": "Plan your follow-ups"
+    },
+    "expired": {
+      "label": "Expired subscriptions",
+      "helper": "Handle these first"
+    }
+  }
+},
+"visits": {
+  "charts": {
+    "hourlyTitle": "Visits by hour",
+    "periodTitle": "Visits over the period",
+    "byVariantTitle": "Visits by room",
+    "emptyDay": "No visits for this day.",
+    "emptyPeriod": "No visits in this period.",
+    "emptyVariant": "No visits recorded yet.",
+    "valueLabel": "Visits"
+  },
+  "filters": {
+    "dayView": "Day view",
+    "periodView": "Period",
+    "reset": "Reset",
+    "searchLabel": "Member search",
+    "searchPlaceholder": "Name, email...",
+    "dateLabel": "Date",
+    "fromLabel": "From",
+    "toLabel": "To"
+  }
+}
+
+,
+    "classForm": {
+        "titleLabel": "Class title",
+        "titlePlaceholder": "Cross-training, Yoga...",
+        "coachLabel": "Coach",
+        "coachPlaceholder": "Coach name",
+        "roomLabel": "Room / Studio",
+        "roomPlaceholder": "Room A, Studio 2...",
+        "dateLabel": "Date",
+        "capacityLabel": "Capacity",
+        "startTimeLabel": "Start time",
+        "endTimeLabel": "End time",
+        "variantLabel": "Variant",
+        "variantPlaceholder": "Select a variant",
+        "lockedVariantFallback": "Locked variant",
+        "defaultSuffix": "(default)",
+        "waitlistLabel": "Waitlist",
+        "waitlistDescription": "Allow a waitlist when the class is full"
+      },
+    "weekCalendar": {
+        "classesCount": "{count, plural, one {{count} class} other {{count} classes}}",
+        "noSessions": "No classes this day",
+        "spotsAvailable": "{count, plural, one {{count} spot} other {{count} spots}}",
+        "full": "Full",
+        "waitlistCount": "{count, plural, one {{count} on waitlist} other {{count} on waitlist}}"
+      },
+  "auth": {
+    "login": {
+      "toasts": {
+        "demoRequested": "Demo request sent. You will receive access details by email.",
+        "loginSuccess": "Login successful."
+      },
+      "errors": {
+        "planInactive": "Your subscription is inactive. Please renew it.",
+        "invalidCredentials": "Incorrect credentials.",
+        "unexpected": "Unexpected error."
+      },
+      "marketing": {
+        "badge": "Management platform",
+        "headline": "Welcome to {brand}",
+        "subtitle": "Manage your gym with a modern, intuitive and high-performance platform. Access all your data in real time."
+      },
+      "features": {
+        "security": "Advanced security",
+        "performance": "Optimized performance",
+        "analytics": "Real-time analytics"
+      },
+      "form": {
+        "title": "Sign in",
+        "subtitle": "Access your GymWatch space",
+        "emailLabel": "Email",
+        "emailPlaceholder": "you@gym.ma",
+        "passwordLabel": "Password",
+        "passwordPlaceholder": "••••••••",
+        "submitPending": "Signing in...",
+        "submit": "Sign in"
+      },
+      "footer": {
+        "noAccount": "No account yet?",
+        "requestDemo": "Request a demo"
+      }
+    }
+  },
     "marketing": {
     "home": {
       "hero": {
@@ -19,7 +158,7 @@
           "chips": {
             "access": "Access control",
             "kpi": "Live KPIs",
-            "payments": "Secure payments"
+            "analytics": "Advanced Analytics"
           }
         }
       },
@@ -225,44 +364,23 @@
       }
     }
   },
-  "auth": {
-    "login": {
-      "toasts": {
-        "demoRequested": "Demo request sent. You will receive access details by email.",
-        "loginSuccess": "Login successful."
-      },
-      "errors": {
-        "planInactive": "Your subscription is inactive. Please renew it.",
-        "invalidCredentials": "Incorrect credentials.",
-        "unexpected": "Unexpected error."
-      },
-      "marketing": {
-        "badge": "Management platform",
-        "headline": "Welcome to {brand}",
-        "subtitle": "Manage your gym with a modern, intuitive and high-performance platform. Access all your data in real time."
-      },
-      "features": {
-        "security": "Advanced security",
-        "performance": "Optimized performance",
-        "analytics": "Real-time analytics"
-      },
-      "form": {
-        "title": "Sign in",
-        "subtitle": "Access your GymWatch space",
-        "emailLabel": "Email",
-        "emailPlaceholder": "you@gym.ma",
-        "passwordLabel": "Password",
-        "passwordPlaceholder": "••••••••",
-        "submitPending": "Signing in...",
-        "submit": "Sign in"
-      },
-      "footer": {
-        "noAccount": "No account yet?",
-        "requestDemo": "Request a demo"
-      }
-    }
-  },
   "dashboard": {
+      "featureAccess": {
+          "modulesTitle": "Modules",
+          "modulesCount": "{active}/{total} active",
+          "planLabel": "Plan {plan}",
+
+          "badges": {
+            "included": "Included",
+            "notIncluded": "Not included"
+          },
+
+          "actions": {
+            "upgrade": "Upgrade",
+            "open": "Open",
+            "seePlans": "View plans"
+          }
+        },
     "classes": {
       "planLabel": {
         "basic": "Basic",

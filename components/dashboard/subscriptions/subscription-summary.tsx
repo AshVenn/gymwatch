@@ -1,3 +1,6 @@
+'use client'
+
+import { useLocale, useTranslations } from 'next-intl'
 import { Sparkles, TrendingUp, Users, AlertTriangle, Shield } from 'lucide-react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 
@@ -11,57 +14,81 @@ export type SubscriptionSummaryMetrics = {
 }
 
 export function SubscriptionSummary({ metrics }: { metrics: SubscriptionSummaryMetrics }) {
-  const revenueFormatter = new Intl.NumberFormat('fr-MA', {
-    style: 'currency',
-    currency: 'MAD',
-    maximumFractionDigits: 0,
-  })
+  const locale = useLocale()
+  const t = useTranslations('subscriptions.summary')
+  const isRTL = locale === 'ar'
+
+  const revenueFormatter = new Intl.NumberFormat(
+    locale === 'fr' ? 'fr-MA' : locale,
+    {
+      style: 'currency',
+      currency: 'MAD',
+      maximumFractionDigits: 0,
+    },
+  )
 
   const cards = [
     {
-      label: 'Revenus cumulés',
+      key: 'totalRevenue',
+      label: t('totalRevenue.label'),
       value: revenueFormatter.format(metrics.totalRevenue),
-      helper: `Ticket moyen ${revenueFormatter.format(metrics.avgTicket || 0)}`,
+      helper: t('totalRevenue.helper', {
+        avgTicket: revenueFormatter.format(metrics.avgTicket || 0),
+      }),
       Icon: TrendingUp,
     },
     {
-      label: 'Abonnements actifs',
+      key: 'active',
+      label: t('active.label'),
       value: metrics.active,
-      helper: `${metrics.retentionRate}% de rétention`,
+      helper: t('active.helper', {
+        retentionRate: metrics.retentionRate ?? 0,
+      }),
       Icon: Users,
     },
     {
-      label: 'Expire < 5 jours',
+      key: 'expiringSoon',
+      label: t('expiringSoon.label'),
       value: metrics.expiringSoon,
-      helper: 'Planifiez vos relances',
+      helper: t('expiringSoon.helper'),
       Icon: AlertTriangle,
     },
     {
-      label: 'Abonnements expirés',
+      key: 'expired',
+      label: t('expired.label'),
       value: metrics.expired,
-      helper: 'À traiter en priorité',
+      helper: t('expired.helper'),
       Icon: Shield,
     },
   ]
 
   return (
-    <section className="space-y-6 rounded-3xl border border-border/70 bg-card p-6 shadow-sm">
+    <section
+      className="space-y-6 rounded-3xl border border-border/70 bg-card p-6 shadow-sm"
+      dir={isRTL ? 'rtl' : 'ltr'}
+    >
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <p className="text-xs uppercase tracking-[0.3em] text-muted-foreground">Flux d'abonnements</p>
-          <h1 className="mt-2 text-3xl font-semibold">Abonnements</h1>
+          <p className="text-xs uppercase tracking-[0.3em] text-muted-foreground">
+            {t('eyebrow')}
+          </p>
+          <h1 className="mt-2 text-3xl font-semibold">{t('title')}</h1>
           <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
-            Vision temps réel des membres, revenus et échéances afin d'agir avant les expirations.
+            {t('description')}
           </p>
         </div>
         <span className="inline-flex items-center gap-2 rounded-full border border-border/60 px-4 py-2 text-xs uppercase tracking-[0.3em] text-muted-foreground">
           <Sparkles className="h-4 w-4 text-primary" />
-          Actualisé en direct
+          {t('liveBadge')}
         </span>
       </div>
+
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         {cards.map((card) => (
-          <Card key={card.label} className="border-border/60 bg-secondary/40 text-secondary-foreground">
+          <Card
+            key={card.key}
+            className="border-border/60 bg-secondary/40 text-secondary-foreground"
+          >
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardDescription>{card.label}</CardDescription>
               <card.Icon className="h-5 w-5 text-primary" />

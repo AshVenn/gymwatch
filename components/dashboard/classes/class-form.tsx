@@ -1,4 +1,8 @@
+'use client'
+
 import { ChangeEvent } from "react"
+import { useLocale, useTranslations } from "next-intl"
+
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Switch } from "@/components/ui/switch"
@@ -36,7 +40,12 @@ export function ClassForm({
   defaultVariantId,
   disabled = false,
 }: Props) {
+  const t = useTranslations("classForm")
+  const locale = useLocale()
+  const isRTL = locale === "ar"
+
   const hasVariants = variants.length > 0
+
   const handleInput = (event: ChangeEvent<HTMLInputElement>) => {
     const { name, value, type, checked } = event.target
     onChange({
@@ -49,42 +58,47 @@ export function ClassForm({
     onChange({ ...values, gymVariantId: value })
   }
 
-  const variantLabel = variants.find((variant) => variant.id === lockedVariantId || variant.id === values.gymVariantId)
+  const variantLabel = variants.find(
+    (variant) => variant.id === lockedVariantId || variant.id === values.gymVariantId,
+  )
 
   return (
-    <div className="grid gap-4">
+    <div
+      className="grid gap-4"
+      dir={isRTL ? "rtl" : "ltr"}
+    >
       <div className="grid gap-2">
-        <Label htmlFor="title">Titre du cours</Label>
+        <Label htmlFor="title">{t("titleLabel")}</Label>
         <Input
           id="title"
           name="title"
           value={values.title}
           onChange={handleInput}
-          placeholder="Cross-training, Yoga..."
+          placeholder={t("titlePlaceholder")}
           disabled={disabled}
         />
       </div>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div className="grid gap-2">
-          <Label htmlFor="coach">Coach</Label>
+          <Label htmlFor="coach">{t("coachLabel")}</Label>
           <Input
             id="coach"
             name="coach"
             value={values.coach}
             onChange={handleInput}
-            placeholder="Nom du coach"
+            placeholder={t("coachPlaceholder")}
             disabled={disabled}
           />
         </div>
         <div className="grid gap-2">
-          <Label htmlFor="room">Salle / Studio</Label>
+          <Label htmlFor="room">{t("roomLabel")}</Label>
           <Input
             id="room"
             name="room"
             value={values.room}
             onChange={handleInput}
-            placeholder="Salle A, Studio 2..."
+            placeholder={t("roomPlaceholder")}
             disabled={disabled}
           />
         </div>
@@ -92,11 +106,18 @@ export function ClassForm({
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div className="grid gap-2">
-          <Label htmlFor="date">Date</Label>
-          <Input id="date" name="date" type="date" value={values.date} onChange={handleInput} disabled={disabled} />
+          <Label htmlFor="date">{t("dateLabel")}</Label>
+          <Input
+            id="date"
+            name="date"
+            type="date"
+            value={values.date}
+            onChange={handleInput}
+            disabled={disabled}
+          />
         </div>
         <div className="grid gap-2">
-          <Label htmlFor="capacity">Capacite</Label>
+          <Label htmlFor="capacity">{t("capacityLabel")}</Label>
           <Input
             id="capacity"
             name="capacity"
@@ -111,7 +132,7 @@ export function ClassForm({
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div className="grid gap-2">
-          <Label htmlFor="startTime">Heure de debut</Label>
+          <Label htmlFor="startTime">{t("startTimeLabel")}</Label>
           <Input
             id="startTime"
             name="startTime"
@@ -122,7 +143,7 @@ export function ClassForm({
           />
         </div>
         <div className="grid gap-2">
-          <Label htmlFor="endTime">Heure de fin</Label>
+          <Label htmlFor="endTime">{t("endTimeLabel")}</Label>
           <Input
             id="endTime"
             name="endTime"
@@ -136,10 +157,10 @@ export function ClassForm({
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div className="grid gap-2">
-          <Label>Variante</Label>
+          <Label>{t("variantLabel")}</Label>
           {isGymAdmin ? (
             <p className="rounded-lg border border-border/70 bg-muted/40 px-3 py-2 text-sm text-muted-foreground">
-              {variantLabel?.name ?? "Variante verrouillee"}
+              {variantLabel?.name ?? t("lockedVariantFallback")}
             </p>
           ) : (
             <Select
@@ -148,12 +169,12 @@ export function ClassForm({
               disabled={disabled || !hasVariants}
             >
               <SelectTrigger>
-                <SelectValue placeholder="Choisir une variante" />
+                <SelectValue placeholder={t("variantPlaceholder")} />
               </SelectTrigger>
               <SelectContent>
                 {variants.map((variant) => (
                   <SelectItem key={variant.id} value={variant.id}>
-                    {variant.name} {variant.isDefault ? "(defaut)" : ""}
+                    {variant.name} {variant.isDefault ? t("defaultSuffix") : ""}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -163,13 +184,17 @@ export function ClassForm({
 
         <div className="flex items-center justify-between rounded-xl border border-border/70 bg-muted/20 px-4 py-3">
           <div>
-            <p className="text-sm font-medium">Liste d attente</p>
-            <p className="text-xs text-muted-foreground">Autoriser les places en attente si complet</p>
+            <p className="text-sm font-medium">{t("waitlistLabel")}</p>
+            <p className="text-xs text-muted-foreground">
+              {t("waitlistDescription")}
+            </p>
           </div>
           <Switch
             name="waitlist"
             checked={values.waitlist}
-            onCheckedChange={(checked) => onChange({ ...values, waitlist: checked })}
+            onCheckedChange={(checked) =>
+              onChange({ ...values, waitlist: checked })
+            }
             disabled={disabled}
           />
         </div>

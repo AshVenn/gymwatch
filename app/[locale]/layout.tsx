@@ -1,3 +1,4 @@
+// app/[locale]/layout.tsx
 import type { Metadata } from 'next'
 import type { ReactNode } from 'react'
 import { Analytics } from '@vercel/analytics/next'
@@ -13,7 +14,7 @@ import { routing, type AppLocale } from '@/i18n/routing'
 
 type LocaleLayoutProps = {
   children: ReactNode
-  params: { locale: string }
+  params: Promise<{ locale: string }>
 }
 
 const siteUrl = 'https://www.gymwatch.ma'
@@ -76,7 +77,8 @@ export function generateStaticParams() {
 }
 
 export async function generateMetadata({ params }: LocaleLayoutProps): Promise<Metadata> {
-  const locale = normalizeLocale(params.locale)
+  const { locale: rawLocale } = await params
+  const locale = normalizeLocale(rawLocale)
 
   const languageAlternates = routing.locales.reduce(
     (acc, current) => ({ ...acc, [current]: `/${current}` }),
@@ -101,13 +103,14 @@ export async function generateMetadata({ params }: LocaleLayoutProps): Promise<M
 }
 
 export default async function LocaleLayout({ children, params }: LocaleLayoutProps) {
-  const locale = normalizeLocale(params.locale)
+  const { locale: rawLocale } = await params
+  const locale = normalizeLocale(rawLocale)
 
   setRequestLocale(locale)
   const messages = await getMessages()
 
   return (
-    <NextIntlClientProvider locale={locale} messages={messages}>
+    <NextIntlClientProvider key={locale} locale={locale} messages={messages}>
       <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
         <AuthProvider>
           <ReactQueryProvider>

@@ -3,6 +3,148 @@
     "localeLabel": "Français",
     "comingSoon": "Les traductions détaillées arrivent bientôt."
   },
+  "pagination": {
+        "prev": "Précédent",
+        "next": "Suivant",
+        "pageXofY": "Page {x} / {y}",
+        "rangeOfTotal": "{start}-{end} sur {total} éléments"
+      }
+      ,
+    "variantSelector": {
+          "label": "Variante",
+          "placeholderAll": "Toutes les variantes",
+          "placeholderSingle": "Choisir une variante",
+          "adminLockedNote": "Verrouillée pour ce compte admin",
+          "assignedVariantFallback": "Variante assignée",
+          "allOption": "Toutes les variantes",
+          "defaultSuffix": "(par défaut)",
+          "lockedMessage": "Vue multi-salles réservée au plan Enterprise"
+        },
+        "subscriptions": {
+            "filters": {
+              "searchLabel": "Rechercher",
+              "searchPlaceholder": "Nom du membre ou plan...",
+              "statusLabel": "Statut",
+              "statusPlaceholder": "Filtrer par statut",
+              "statusAll": "Tous",
+              "statusActive": "Actifs",
+              "statusExpiresToday": "Expire aujourd’hui",
+              "statusExpired": "Expirés",
+              "sortLabel": "Tri",
+              "sortPlaceholder": "Choisir un tri",
+              "sortNextExpiry": "Échéance la plus proche",
+              "sortRecentStart": "Début le plus récent",
+              "sortPriceDesc": "Tarif décroissant"
+            },  
+            "summary": {
+                "eyebrow": "Flux d'abonnements",
+                "title": "Abonnements",
+                "description": "Vue en temps réel des membres, revenus et dates d'échéance.",
+                "liveBadge": "Actualisé en direct",
+                "totalRevenue": {
+                  "label": "Revenus cumulés",
+                  "helper": "Ticket moyen {{avgTicket}}"
+                },
+                "active": {
+                  "label": "Abonnements actifs",
+                  "helper": "{{retentionRate}} % de rétention"
+                },
+                "expiringSoon": {
+                  "label": "Expire < 5 jours",
+                  "helper": "Planifiez vos relances"
+                },
+                "expired": {
+                  "label": "Abonnements expirés",
+                  "helper": "À traiter en priorité"
+                }
+              }
+},
+"visits": {
+  "charts": {
+    "hourlyTitle": "Fréquentation horaire",
+    "periodTitle": "Fréquentation sur la période",
+    "byVariantTitle": "Répartition par salle",
+    "emptyDay": "Aucune visite pour cette journée.",
+    "emptyPeriod": "Aucune visite sur cette période.",
+    "emptyVariant": "Pas encore de visites enregistrées.",
+    "valueLabel": "Visites"
+  },
+  "filters": {
+    "dayView": "Vue jour",
+    "periodView": "Période",
+    "reset": "Réinitialiser",
+    "searchLabel": "Recherche membre",
+    "searchPlaceholder": "Nom, email...",
+    "dateLabel": "Date",
+    "fromLabel": "Du",
+    "toLabel": "Au"
+  }
+}
+
+,
+    "classForm": {
+            "titleLabel": "Titre du cours",
+            "titlePlaceholder": "Cross-training, Yoga...",
+            "coachLabel": "Coach",
+            "coachPlaceholder": "Nom du coach",
+            "roomLabel": "Salle / Studio",
+            "roomPlaceholder": "Salle A, Studio 2...",
+            "dateLabel": "Date",
+            "capacityLabel": "Capacité",
+            "startTimeLabel": "Heure de début",
+            "endTimeLabel": "Heure de fin",
+            "variantLabel": "Variante",
+            "variantPlaceholder": "Choisir une variante",
+            "lockedVariantFallback": "Variante verrouillée",
+            "defaultSuffix": "(par défaut)",
+            "waitlistLabel": "Liste d’attente",
+            "waitlistDescription": "Autoriser les places en attente si le cours est complet"
+          }
+        ,
+  "weekCalendar": {
+          "classesCount": "{count} cours",
+          "noSessions": "Pas de cours ce jour",
+          "spotsAvailable": "{count, plural, one {{count} place} other {{count} places}}",
+          "full": "Complet",
+          "waitlistCount": "{count} attente"
+        },
+  "auth": {
+    "login": {
+      "toasts": {
+        "demoRequested": "Demande de démo envoyée, vous recevrez vos accès dans votre boîte mail.",
+        "loginSuccess": "Connexion réussie."
+      },
+      "errors": {
+        "planInactive": "Votre abonnement est inactif. Merci de le renouveler.",
+        "invalidCredentials": "Identifiants incorrects.",
+        "unexpected": "Erreur inattendue."
+      },
+      "marketing": {
+        "badge": "Plateforme de gestion",
+        "headline": "Bienvenue sur {brand}",
+        "subtitle": "Gérez votre salle de sport avec une plateforme moderne, intuitive et performante. Accédez à toutes vos données en temps réel."
+      },
+      "features": {
+        "security": "Sécurité avancée",
+        "performance": "Performance optimale",
+        "analytics": "Analyses en temps réel"
+      },
+      "form": {
+        "title": "Connexion",
+        "subtitle": "Accédez à votre espace GymWatch",
+        "emailLabel": "Email",
+        "emailPlaceholder": "vous@salle.ma",
+        "passwordLabel": "Mot de passe",
+        "passwordPlaceholder": "••••••••",
+        "submitPending": "Connexion en cours...",
+        "submit": "Se connecter"
+      },
+      "footer": {
+        "noAccount": "Pas encore de compte ?",
+        "requestDemo": "Demander une démo"
+      }
+    }
+  },
    "marketing": {
     "home": {
       "hero": {
@@ -19,7 +161,7 @@
           "chips": {
             "access": "Contrôle d’accès",
             "kpi": "KPI en direct",
-            "payments": "Paiements sécurisés"
+            "analytics": "Analytiques avancées"
           }
         }
       },
@@ -225,43 +367,6 @@
       }
     }
   },
-  "auth": {
-    "login": {
-      "toasts": {
-        "demoRequested": "Demande de démo envoyée, vous recevrez vos accès dans votre boîte mail.",
-        "loginSuccess": "Connexion réussie."
-      },
-      "errors": {
-        "planInactive": "Votre abonnement est inactif. Merci de le renouveler.",
-        "invalidCredentials": "Identifiants incorrects.",
-        "unexpected": "Erreur inattendue."
-      },
-      "marketing": {
-        "badge": "Plateforme de gestion",
-        "headline": "Bienvenue sur {brand}",
-        "subtitle": "Gérez votre salle de sport avec une plateforme moderne, intuitive et performante. Accédez à toutes vos données en temps réel."
-      },
-      "features": {
-        "security": "Sécurité avancée",
-        "performance": "Performance optimale",
-        "analytics": "Analyses en temps réel"
-      },
-      "form": {
-        "title": "Connexion",
-        "subtitle": "Accédez à votre espace GymWatch",
-        "emailLabel": "Email",
-        "emailPlaceholder": "vous@salle.ma",
-        "passwordLabel": "Mot de passe",
-        "passwordPlaceholder": "••••••••",
-        "submitPending": "Connexion en cours...",
-        "submit": "Se connecter"
-      },
-      "footer": {
-        "noAccount": "Pas encore de compte ?",
-        "requestDemo": "Demander une démo"
-      }
-    }
-  },
   "dashboard": {
     "nav": {
       "dashboard": "Tableau de bord",
@@ -296,6 +401,20 @@
       "signOut": "Se déconnecter",
       "demoBadge": "Démo"
     },
+    "featureAccess": {
+        "modulesTitle": "Modules",
+        "modulesCount": "{active}/{total} actifs",
+        "planLabel": "Plan {plan}",
+        "badges": {
+          "included": "Inclus",
+          "notIncluded": "Non inclus"
+        },
+        "actions": {
+          "upgrade": "Mettre à niveau",
+          "open": "Ouvrir",
+          "seePlans": "Voir les plans"
+        }
+      },
        "classes": {
       "planLabel": {
         "basic": "Basic",

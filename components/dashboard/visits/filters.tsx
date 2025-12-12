@@ -1,5 +1,6 @@
 'use client'
 
+import { useLocale, useTranslations } from 'next-intl'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -31,39 +32,58 @@ export function VisitFilters({
   onSearchChange,
   onReset,
 }: VisitFiltersProps) {
+  const locale = useLocale()
+  const t = useTranslations('visits.filters')
+  const isRTL = locale === 'ar'
+
   return (
-    <div className="rounded-2xl border border-border/70 bg-card/70 p-5 shadow-sm">
+    <div
+      className="rounded-2xl border border-border/70 bg-card/70 p-5 shadow-sm"
+      dir={isRTL ? 'rtl' : 'ltr'}
+    >
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-2">
           <Button
             variant={view === 'day' ? 'default' : 'outline'}
-            className={view === 'day' ? 'bg-primary text-primary-foreground' : 'border-border/70'}
+            className={
+              view === 'day'
+                ? 'bg-primary text-primary-foreground'
+                : 'border-border/70'
+            }
             onClick={() => onViewChange('day')}
           >
-            Vue jour
+            {t('dayView')}
           </Button>
           <Button
             variant={view === 'period' ? 'default' : 'outline'}
-            className={view === 'period' ? 'bg-primary text-primary-foreground' : 'border-border/70'}
+            className={
+              view === 'period'
+                ? 'bg-primary text-primary-foreground'
+                : 'border-border/70'
+            }
             onClick={() => onViewChange('period')}
           >
-            Période
+            {t('periodView')}
           </Button>
         </div>
 
         <div className="flex items-center gap-2">
-          <Button variant="outline" onClick={onReset} className="border-border/70">
-            Réinitialiser
+          <Button
+            variant="outline"
+            onClick={onReset}
+            className="border-border/70"
+          >
+            {t('reset')}
           </Button>
         </div>
       </div>
 
       <div className="mt-4 grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         <div>
-          <Label htmlFor="visit-search">Recherche membre</Label>
+          <Label htmlFor="visit-search">{t('searchLabel')}</Label>
           <Input
             id="visit-search"
-            placeholder="Nom, email..."
+            placeholder={t('searchPlaceholder')}
             value={search}
             onChange={(event) => onSearchChange(event.target.value)}
             className="mt-2"
@@ -72,7 +92,7 @@ export function VisitFilters({
 
         {view === 'day' ? (
           <div>
-            <Label htmlFor="visit-date">Date</Label>
+            <Label htmlFor="visit-date">{t('dateLabel')}</Label>
             <Input
               id="visit-date"
               type="date"
@@ -84,22 +104,26 @@ export function VisitFilters({
         ) : (
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <Label htmlFor="visit-from">Du</Label>
+              <Label htmlFor="visit-from">{t('fromLabel')}</Label>
               <Input
                 id="visit-from"
                 type="date"
                 value={from}
-                onChange={(event) => onRangeChange({ from: event.target.value, to })}
+                onChange={(event) =>
+                  onRangeChange({ from: event.target.value, to })
+                }
                 className="mt-2"
               />
             </div>
             <div>
-              <Label htmlFor="visit-to">Au</Label>
+              <Label htmlFor="visit-to">{t('toLabel')}</Label>
               <Input
                 id="visit-to"
                 type="date"
                 value={to}
-                onChange={(event) => onRangeChange({ from, to: event.target.value })}
+                onChange={(event) =>
+                  onRangeChange({ from, to: event.target.value })
+                }
                 className="mt-2"
               />
             </div>

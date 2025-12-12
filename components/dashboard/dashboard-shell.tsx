@@ -2,11 +2,9 @@
 
 import { ReactNode, useEffect, useMemo, useState } from 'react'
 import Image from 'next/image'
-import Link from 'next/link'
 import { useSession, signOut } from 'next-auth/react'
-import { usePathname, useRouter } from 'next/navigation'
 import type { LucideIcon } from 'lucide-react'
-import { ChevronRight, LogOut, Menu, ShieldCheck, User, X } from 'lucide-react'
+import { Check, ChevronRight, Globe2, LogOut, Menu, ShieldCheck, User, X } from 'lucide-react'
 import { toast } from 'sonner'
 import { useLocale, useTranslations } from 'next-intl'
 
@@ -19,6 +17,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { ThemeToggle } from '@/components/theme-toggle'
+import { Link, routing, usePathname, useRouter, type AppLocale } from '@/i18n/routing'
 import { cn } from '@/lib/utils'
 
 export const UserRole = {
@@ -50,12 +49,16 @@ export function DashboardShell({
   fallbackRoute = '/login',
   topSlot,
 }: DashboardShellProps) {
-  const locale = useLocale()
+  const locale = useLocale() as AppLocale
   const tShell = useTranslations('dashboard.shell')
   const isRtl = locale === 'ar'
   const { data: session, status } = useSession()
   const router = useRouter()
   const pathname = usePathname()
+  const normalizedPathname = useMemo(() => {
+    const localePattern = new RegExp(`^/(?:${routing.locales.join('|')})(?=/|$)`)
+    return (pathname?.replace(localePattern, '') || '/') || '/'
+  }, [pathname])
   const [sidebarOpen, setSidebarOpen] = useState(false)
 
   const isAllowed = useMemo(() => {
@@ -79,20 +82,38 @@ export function DashboardShell({
   useEffect(() => {
     if (status === 'loading') return
     if (status === 'unauthenticated' || !session?.user) {
-      router.replace('/login')
+      router.replace('/login', { locale })
       return
     }
 
     if (allowedRoles?.length && !isAllowed) {
-      router.replace(fallbackRoute)
+      router.replace(fallbackRoute, { locale })
     }
-  }, [allowedRoles, fallbackRoute, isAllowed, router, session?.user, status])
+  }, [allowedRoles, fallbackRoute, isAllowed, locale, router, session?.user, status])
 
   useEffect(() => {
     if (!subscriptionPastDue || status !== 'authenticated') return
     toast.error(tShell('subscriptionExpired'))
-    signOut({ callbackUrl: '/login' })
-  }, [status, subscriptionPastDue, tShell])
+    signOut({ callbackUrl: `/${locale}/login` })
+  }, [locale, status, subscriptionPastDue, tShell])
+
+  const languageOptions = useMemo(
+    () =>
+      routing.locales.map((code) => ({
+        code,
+        label: code === 'fr' ? 'Français' : code === 'en' ? 'English' : 'العربية',
+      })),
+    [],
+  )
+
+  const currentLanguage = languageOptions.find((option) => option.code === locale)
+
+  const handleLocaleChange = (targetLocale: AppLocale) => {
+    if (targetLocale === locale) return
+    const targetPath = normalizedPathname || '/'
+    router.replace(targetPath as any, { locale: targetLocale })
+    router.refresh()
+  }
 
   if (status === 'loading') {
     return (
@@ -172,7 +193,7 @@ export function DashboardShell({
               <nav className="space-y-2">
                 {navigationItems.map((item) => {
                   const Icon = item.icon
-                  const isActive = pathname === item.href || pathname.startsWith(`${item.href}/`)
+                  const isActive = normalizedPathname === item.href || normalizedPathname.startsWith(`${item.href}/`)
                   return (
                     <Link
                       key={item.href}
@@ -234,7 +255,7 @@ export function DashboardShell({
                 variant="outline"
                 size="sm"
                 className="rounded-xl border-border/70 bg-background text-foreground hover:bg-muted"
-                onClick={() => signOut()}
+                onClick={() => signOut({ callbackUrl: `/${locale}/login` })}
               >
                 <LogOut size={16} className="mr-2" />
                 {tShell('exit')}
@@ -266,6 +287,30 @@ export function DashboardShell({
             <div className="ml-auto flex items-center gap-2 md:gap-3">
               <ThemeToggle />
 
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className="gap-2 rounded-xl border-border/60 bg-card px-3 text-sm font-semibold"
+                  >
+                    <Globe2 className="h-4 w-4" aria-hidden />
+                    <span>{currentLanguage?.label ?? locale.toUpperCase()}</span>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-48">
+                  {languageOptions.map((option) => (
+                    <DropdownMenuItem
+                      key={option.code}
+                      className="flex items-center justify-between"
+                      onClick={() => handleLocaleChange(option.code)}
+                    >
+                      <span>{option.label}</span>
+                      {option.code === locale && <Check className="h-4 w-4 text-primary" aria-hidden />}
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
+
               <div className="hidden flex-col items-end md:flex">
                 <p className="text-sm font-semibold text-foreground">{userDisplayName}</p>
                 <p className="text-xs text-muted-foreground">{userRole}</p>
@@ -291,7 +336,7 @@ export function DashboardShell({
                     </div>
                   </div>
                   <div className="border-t border-border/60" />
-                  <DropdownMenuItem onClick={() => signOut()}>
+                  <DropdownMenuItem onClick={() => signOut({ callbackUrl: `/${locale}/login` })}>
                     <LogOut size={16} className="mr-2" />
                     {tShell('signOut')}
                   </DropdownMenuItem>

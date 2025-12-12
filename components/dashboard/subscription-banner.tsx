@@ -4,6 +4,7 @@ import { useMemo } from 'react'
 import { useSession } from 'next-auth/react'
 import { AlertTriangle, CalendarClock, Sparkles } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import Link from 'next/link'
 
 function formatInterval(interval?: string | null) {
   return interval === 'ANNUAL' ? 'Annuel' : 'Mensuel'
@@ -116,12 +117,12 @@ return (
           </span>
         )}
 
-        <a
+        <Link
           href="/dashboard/settings"
           className="inline-flex items-center rounded-full border border-slate-300 bg-white/70 px-4 py-1 text-sm font-semibold backdrop-blur transition hover:bg-white"
         >
           Gérer mon abonnement
-        </a>
+        </Link>
       </div>
     </div>
   </div>

@@ -1,7 +1,5 @@
 import type { Metadata } from 'next'
 import Image from 'next/image'
-import Link from 'next/link'
-import { getLocale, getTranslations } from 'next-intl/server'
 import {
   ArrowRight,
   BarChart3,
@@ -23,12 +21,19 @@ import { MarketingNavbar } from '@/components/marketing/navbar'
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { routing, type AppLocale } from '@/i18n/routing'
+import { routing, type AppLocale, Link } from '@/i18n/routing'
 import { buildMarketingMetadata } from '@/lib/marketing-content'
 import { DEFAULT_ANNUAL_DISCOUNT, getPlanCatalogAsList } from '@/lib/subscription-plans'
+import { cn } from '@/lib/utils'
+import { getTranslations } from 'next-intl/server'
 
 type HomePageProps = {
   params: { locale: string }
+}
+
+// Static params per locale
+export function generateStaticParams() {
+  return routing.locales.map((locale) => ({ locale }))
 }
 
 export async function generateMetadata({ params }: HomePageProps): Promise<Metadata> {
@@ -39,9 +44,14 @@ export async function generateMetadata({ params }: HomePageProps): Promise<Metad
   return buildMarketingMetadata('home', locale)
 }
 
-export default async function Home() {
-  const locale = (await getLocale()) as AppLocale
-  const t = await getTranslations('marketing.home')
+export default async function Home({ params }: HomePageProps) {
+  const locale = routing.locales.includes(params.locale as AppLocale)
+    ? (params.locale as AppLocale)
+    : routing.defaultLocale
+
+  // const isRTL = locale === 'ar' // Unused variable removed for cleanliness
+
+  const t = await getTranslations({ locale, namespace: 'marketing.home' })
 
   const heroCopy = {
     eyebrow: t('hero.eyebrow'),
@@ -54,13 +64,14 @@ export default async function Home() {
     dashboardDescription: t('hero.dashboard.description'),
     chipAccess: t('hero.dashboard.chips.access'),
     chipKpi: t('hero.dashboard.chips.kpi'),
-    chipPayments: t('hero.dashboard.chips.payments'),
+    // UPDATED: Changed from payments to analytics
+    chipAnalytics: t('hero.dashboard.chips.analytics'),
   }
 
   const planCatalog = getPlanCatalogAsList()
   const priceFormatter = new Intl.NumberFormat(
     locale === 'fr' ? 'fr-MA' : locale === 'ar' ? 'ar-MA' : 'en-US',
-    { style: 'currency', currency: 'MAD' }
+    { style: 'currency', currency: 'MAD' },
   )
 
   const stats = [
@@ -76,6 +87,7 @@ export default async function Home() {
   ]
 
   const featureCards = [
+    // UPDATED: Icon represents analytics now
     { title: t('features.directorView.title'), description: t('features.directorView.body'), icon: BarChart3 },
     { title: t('features.access.title'), description: t('features.access.body'), icon: QrCode },
     { title: t('features.automation.title'), description: t('features.automation.body'), icon: Bell },
@@ -120,9 +132,10 @@ export default async function Home() {
       return (
         <Card
           key={`${plan.tier}-${mode}`}
-          className={`relative overflow-hidden border transition-all duration-300 hover:-translate-y-1 hover:shadow-xl ${
-            plan.highlight ? 'border-primary/60 bg-primary/5' : 'border-border/70 bg-background/80'
-          } animate-slide-up`}
+          className={cn(
+            'relative overflow-hidden border transition-all duration-300 hover:-translate-y-1 hover:shadow-xl animate-slide-up',
+            plan.highlight ? 'border-primary/60 bg-primary/5' : 'border-border/70 bg-background/80',
+          )}
           style={{ animationDelay: `${0.08 + index * 0.05}s` }}
         >
           {plan.highlight && (
@@ -161,7 +174,8 @@ export default async function Home() {
                 <span>{feature}</span>
               </div>
             ))}
-            <Button asChild variant={plan.highlight ? 'default' : 'outline'} className="w-full mt-2">
+            <Button asChild variant={plan.highlight ? 'default' : 'outline'} className="mt-2 w-full">
+              {/* FIXED: Removed localizedHref, used relative path */}
               <Link href="/request-demo">{t('plans.cta')}</Link>
             </Button>
           </CardContent>
@@ -171,45 +185,89 @@ export default async function Home() {
 
   return (
     <div className="relative min-h-screen overflow-hidden bg-background text-foreground">
+      {/* Global bg glows - Tailwind V4 bg-linear syntax */}
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_20%_10%,rgba(59,130,246,0.12),transparent_30%),radial-gradient(circle_at_80%_0%,rgba(37,99,235,0.12),transparent_32%),radial-gradient(circle_at_70%_60%,rgba(14,165,233,0.1),transparent_30%)]" />
 
       <MarketingNavbar />
 
       <main className="relative mx-auto flex max-w-6xl flex-col gap-20 px-4 pb-16 pt-10 md:pt-16">
-        {/* HERO */}
         <header
           id="hero"
-          className="relative overflow-hidden rounded-3xl border border-border/50 bg-card/80 px-6 py-12 shadow-lg backdrop-blur md:px-12"
+          className={cn(
+            'relative overflow-hidden rounded-4xl border border-border/50 bg-card/80 px-6 py-14 shadow-xl backdrop-blur md:px-16',
+            locale === 'ar' ? 'rtl text-right' : 'ltr text-left',
+          )}
         >
-          <div className="floating-orb-primary left-[-60px] -top-20" />
-          <div className="floating-orb-secondary -right-10 top-[20%]" />
-          <div className="floating-orb-tertiary left-[10%] bottom-[-60px]" />
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_30%,rgba(59,130,246,0.08),transparent_32%)]" />
+          {/* Floating orbs */}
+          <div className="floating-orb-primary -left-10 -top-20" />
+          <div className="floating-orb-secondary -right-20 top-[20%]" />
+          <div className="floating-orb-tertiary left-[10%] -bottom-20" />
 
-          <div className="relative grid items-center gap-10 lg:grid-cols-2">
+          <div className="relative grid items-center gap-12 lg:grid-cols-2">
+            {/* TEXT SIDE */}
             <div className="space-y-6 animate-fade-in">
               <p className="inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-4 py-2 text-xs font-semibold uppercase tracking-[0.3em] text-primary">
                 <Sparkles className="h-4 w-4" aria-hidden />
                 {heroCopy.eyebrow}
               </p>
-              <h1 className="text-balance text-5xl font-bold leading-tight md:text-6xl">{heroCopy.title}</h1>
-              <h2 className="text-lg font-semibold text-primary">{heroCopy.subtitle}</h2>
-              <p className="max-w-xl text-lg leading-relaxed text-muted-foreground">{heroCopy.description}</p>
-              <div className="flex flex-wrap gap-3 pt-2">
-                <Button asChild size="lg" className="group transition-transform hover:scale-[1.02] hover:shadow-lg">
-                  <Link href="/request-demo">
-                    {heroCopy.primaryCta}
-                    <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" aria-hidden />
-                  </Link>
-                </Button>
-                <Button asChild size="lg" variant="outline" className="transition hover:bg-primary/10">
+
+              <h1 className="text-balance text-5xl font-bold leading-tight md:text-6xl">
+                {heroCopy.title}
+              </h1>
+
+              <p className="max-w-xl text-lg font-medium text-primary">
+                {heroCopy.subtitle}
+              </p>
+
+              {/* shorter description */}
+              <p className="max-w-xl text-sm md:text-base text-muted-foreground">
+                {heroCopy.description}
+              </p>
+
+              <div
+                className={cn(
+                  'flex flex-wrap gap-3 pt-2',
+                  locale === 'ar' ? 'justify-end' : 'justify-start',
+                )}
+              >
+          <Button
+            asChild
+            size="lg"
+            className="group transition-transform hover:scale-[1.02] hover:shadow-lg"
+          >
+            <Link href="/request-demo">
+              <span className="inline-flex items-center gap-2">
+                {heroCopy.primaryCta}
+                <ArrowRight
+                  className={cn(
+                    'h-4 w-4 transition-transform group-hover:translate-x-1',
+                    locale === 'ar' && 'rotate-180',
+                  )}
+                  aria-hidden
+                />
+              </span>
+            </Link>
+          </Button>
+
+
+                <Button
+                  asChild
+                  size="lg"
+                  variant="outline"
+                  className="transition hover:bg-primary/10"
+                >
+                  {/* FIXED: Removed localizedHref */}
                   <Link href="/login">{heroCopy.secondaryCta}</Link>
                 </Button>
               </div>
 
               <div className="grid gap-6 border-t border-border/30 pt-6 sm:grid-cols-3">
                 {stats.map((item, index) => (
-                  <div key={item.label} className="animate-slide-up" style={{ animationDelay: `${0.05 * (index + 1)}s` }}>
+                  <div
+                    key={item.label}
+                    className="animate-slide-up"
+                    style={{ animationDelay: `${0.05 * (index + 1)}s` }}
+                  >
                     <p className="text-3xl font-bold text-foreground">{item.value}</p>
                     <p className="text-sm text-muted-foreground">{item.label}</p>
                     <p className="text-xs text-muted-foreground/80">{item.detail}</p>
@@ -218,37 +276,66 @@ export default async function Home() {
               </div>
             </div>
 
+            {/* VISUAL SIDE – no card, parallax-y hover */}
             <div className="relative animate-fade-in" style={{ animationDelay: '0.15s' }}>
-              <Card className="relative overflow-hidden border-border/70 bg-background/70 shadow-2xl backdrop-blur">
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-xl">{heroCopy.dashboardTitle}</CardTitle>
-                  <CardDescription>{heroCopy.dashboardDescription}</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="relative aspect-4/3 overflow-hidden rounded-xl border border-border/60 bg-card/70 shadow-lg">
-                    <Image
-                      src="/featured-plateforme.png"
-                      alt={t('hero.dashboard.imageAlt')}
-                      width={1200}
-                      height={900}
-                      priority
-                      className="h-full w-full object-cover"
-                    />
-                    <div className="pointer-events-none absolute inset-0 bg-linear-to-tr from-transparent via-white/5 to-transparent animate-shine opacity-40" />
+              <div className="perspective mx-auto flex w-full max-w-xl items-center justify-center">
+                {/* UPDATED: 
+                  - Added 'group' to container 
+                  - Added 'group-hover:scale-105' to image for the "get big" effect 
+                  - Used your 'hover-lift' class from CSS
+                */}
+                <div className="relative w-full hover-lift group">
+                  <Image
+                    src="/featured-plateforme.png"
+                    alt={t('hero.dashboard.imageAlt')}
+                    width={1200}
+                    height={900}
+                    priority
+                    className="h-auto w-full rounded-3xl object-contain shadow-2xl transition-transform duration-700 ease-out group-hover:scale-105"
+                  />
+
+                  {/* shine sweep */}
+                  <div className="pointer-events-none absolute inset-0 rounded-3xl bg-linear-to-tr from-transparent via-white/10 to-transparent opacity-40 animate-shine" />
+
+                  {/* floating chips */}
+                  <div
+                    className={cn(
+                      'absolute top-4',
+                      locale === 'ar' ? '-right-6' : '-left-6',
+                      'animate-float-left',
+                    )}
+                  >
+                    <div className="rounded-full bg-primary/90 px-3 py-1 text-xs font-semibold text-primary-foreground shadow-lg backdrop-blur-sm">
+                      {heroCopy.chipAccess}
+                    </div>
                   </div>
-                  <div className="mt-4 flex flex-wrap gap-3 text-sm text-muted-foreground">
-                    <span className="inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-3 py-1 text-primary">
-                      <ShieldCheck className="h-4 w-4" aria-hidden /> {heroCopy.chipAccess}
-                    </span>
-                    <span className="inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-3 py-1 text-primary">
-                      <BarChart3 className="h-4 w-4" aria-hidden /> {heroCopy.chipKpi}
-                    </span>
-                    <span className="inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-3 py-1 text-primary">
-                      <CreditCard className="h-4 w-4" aria-hidden /> {heroCopy.chipPayments}
-                    </span>
+
+                  <div
+                    className={cn(
+                      'absolute top-1/3',
+                      locale === 'ar' ? '-left-8' : '-right-8',
+                      'animate-float-right',
+                    )}
+                  >
+                    <div className="rounded-full bg-primary/90 px-3 py-1 text-xs font-semibold text-primary-foreground shadow-lg backdrop-blur-sm">
+                      {heroCopy.chipKpi}
+                    </div>
                   </div>
-                </CardContent>
-              </Card>
+
+                  <div
+                    className={cn(
+                      'absolute top-1/2 -translate-y-1/2',
+                      locale === 'ar' ? '-left-12' : '-right-12',
+                      'animate-float-up',
+                    )}
+                  >
+                    <div className="rounded-full bg-primary/90 px-3 py-1 text-xs font-semibold text-primary-foreground shadow-lg backdrop-blur-sm">
+                      {/* UPDATED: Displays 'Analytiques avancées' (mapped from translations) */}
+                      {heroCopy.chipAnalytics}
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </header>
@@ -277,12 +364,15 @@ export default async function Home() {
                   className="group relative overflow-hidden border border-border/70 bg-background/70 transition-all duration-300 hover:-translate-y-1 hover:border-primary/50 hover:shadow-lg animate-slide-up"
                   style={{ animationDelay: `${0.05 + index * 0.05}s` }}
                 >
+                  {/* Tailwind V4 bg-linear syntax */}
                   <div className="absolute inset-0 bg-linear-to-br from-primary/5 via-transparent to-transparent opacity-0 transition-opacity group-hover:opacity-100" />
                   <CardHeader className="relative space-y-3">
                     <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 text-primary">
                       <Icon className="h-6 w-6" aria-hidden />
                     </div>
-                    <CardTitle className="text-xl transition-colors group-hover:text-primary">{pillar.title}</CardTitle>
+                    <CardTitle className="text-xl transition-colors group-hover:text-primary">
+                      {pillar.title}
+                    </CardTitle>
                     <CardDescription className="leading-relaxed">{pillar.description}</CardDescription>
                   </CardHeader>
                 </Card>
@@ -320,7 +410,9 @@ export default async function Home() {
                       <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 text-primary transition group-hover:scale-105 group-hover:bg-primary/15">
                         <Icon className="h-5 w-5" aria-hidden />
                       </span>
-                      <CardTitle className="text-xl transition-colors group-hover:text-primary">{feature.title}</CardTitle>
+                      <CardTitle className="text-xl transition-colors group-hover:text-primary">
+                        {feature.title}
+                      </CardTitle>
                     </div>
                     <CardDescription className="leading-relaxed">{feature.description}</CardDescription>
                   </CardHeader>
@@ -348,7 +440,13 @@ export default async function Home() {
           </div>
 
           <div className="relative mt-8 space-y-8">
-            <input type="radio" id="billing-monthly" name="billing" defaultChecked className="peer/billing-monthly sr-only" />
+            <input
+              type="radio"
+              id="billing-monthly"
+              name="billing"
+              defaultChecked
+              className="peer/billing-monthly sr-only"
+            />
             <input type="radio" id="billing-annual" name="billing" className="peer/billing-annual sr-only" />
 
             <div className="mx-auto flex w-full max-w-md items-center justify-center gap-2 rounded-full border border-border/60 bg-background/80 p-1 shadow-sm backdrop-blur">
@@ -464,7 +562,12 @@ export default async function Home() {
                   <Link href="/request-demo">{t('sections.contact.primaryCta')}</Link>
                 </Button>
                 <Button asChild variant="secondary" className="transition hover:scale-[1.02] hover:shadow-lg">
-                  <Link href="mailto:hello@gymwatch.ma">{t('sections.contact.secondaryCta')}</Link>
+                    <a
+                      href="mailto:hello@gymwatch.ma"
+                      className="font-semibold text-primary hover:underline"
+                    >
+                    {t('sections.contact.secondaryCta')}
+                    </a>
                 </Button>
               </div>
             </div>
@@ -474,16 +577,23 @@ export default async function Home() {
                   <Headphones className="h-5 w-5" aria-hidden />
                 </div>
                 <div>
-                  <p className="text-sm font-semibold text-foreground">{t('sections.contact.supportTitle')}</p>
-                  <p className="text-sm text-muted-foreground">{t('sections.contact.supportSubtitle')}</p>
+                  <p className="text-sm font-semibold text-foreground">
+                    {t('sections.contact.supportTitle')}
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    {t('sections.contact.supportSubtitle')}
+                  </p>
                 </div>
               </div>
               <div className="mt-4 space-y-2 text-sm text-muted-foreground">
                 <p>
                   {t('sections.contact.emailLabel')}{' '}
-                  <Link href="mailto:hello@gymwatch.ma" className="font-semibold text-primary hover:underline">
+                  <a
+                    href="mailto:hello@gymwatch.ma"
+                    className="font-semibold text-primary hover:underline"
+                  >
                     hello@gymwatch.ma
-                  </Link>
+                  </a>
                 </p>
                 <p>{t('sections.contact.availability')}</p>
                 <p>{t('sections.contact.deployment')}</p>

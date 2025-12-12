@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import type { LucideIcon } from 'lucide-react'
 import { Activity, ArrowRight, CalendarClock, FileSpreadsheet, KeyRound, Lock } from 'lucide-react'
+import { useLocale, useTranslations } from 'next-intl'
 
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -12,7 +13,7 @@ export type FeatureAccessItem = {
   id: 'access' | 'presence' | 'classes' | 'reports'
   title: string
   description: string
-  href: string
+  href: string          // chemin SANS locale (ex: "/dashboard/presence")
   requiredPlan?: 'PRO' | 'ENTERPRISE'
   available: boolean
   icon: LucideIcon
@@ -23,7 +24,7 @@ interface FeatureAccessGridProps {
   planLabel?: string
   compact?: boolean
   showActions?: boolean
-  upgradeHref?: string
+  upgradeHref?: string   // ex: "/dashboard/settings"
   className?: string
 }
 
@@ -35,17 +36,31 @@ export function FeatureAccessGrid({
   upgradeHref = '/dashboard/settings',
   className,
 }: FeatureAccessGridProps) {
+  const locale = useLocale()
+  const t = useTranslations('dashboard.featureAccess')
+  const isRTL = locale === 'ar'
+
+  // Ajoute la locale devant les chemins (on suppose prefix toujours présent)
+  const withLocale = (path: string) => {
+    const base = path.startsWith('/') ? path : `/${path}`
+    return `/${locale}${base}`
+  }
+
   const activeCount = items.filter((item) => item.available).length
   const columns = compact ? 'sm:grid-cols-2' : 'md:grid-cols-2 lg:grid-cols-4'
+  const localizedUpgradeHref = withLocale(upgradeHref)
 
   return (
-    <div className={cn('space-y-3', className)}>
+    <div
+      dir={isRTL ? 'rtl' : 'ltr'}
+      className={cn('space-y-3', className)}
+    >
       <div className="flex flex-wrap items-center justify-between gap-2 text-sm">
         <div className="space-y-0.5">
-          <p className="font-semibold">Modules</p>
+          <p className="font-semibold">{t('modulesTitle')}</p>
           <p className="text-xs text-muted-foreground">
-            {activeCount}/{items.length} actifs
-            {planLabel ? <> · Plan {planLabel}</> : null}
+            {t('modulesCount', { active: activeCount, total: items.length })}
+            {planLabel ? <> · {t('planLabel', { plan: planLabel })}</> : null}
           </p>
         </div>
         {planLabel ? (
@@ -59,6 +74,7 @@ export function FeatureAccessGrid({
         {items.map((item) => {
           const Icon = item.icon
           const isLocked = !item.available
+          const localizedHref = withLocale(item.href)
 
           return (
             <div
@@ -92,7 +108,7 @@ export function FeatureAccessGrid({
                     isLocked ? 'text-muted-foreground' : 'text-foreground',
                   )}
                 >
-                  {isLocked ? 'Non inclus' : 'Inclus'}
+                  {isLocked ? t('badges.notIncluded') : t('badges.included')}
                 </Badge>
               </div>
 
@@ -105,9 +121,9 @@ export function FeatureAccessGrid({
                       className="h-8 rounded-lg border-border/70 text-foreground hover:bg-muted"
                       asChild
                     >
-                      <Link href={upgradeHref}>
+                      <Link href={localizedUpgradeHref}>
                         <Lock className="mr-2 h-3.5 w-3.5" />
-                        Mettre à niveau
+                        {t('actions.upgrade')}
                       </Link>
                     </Button>
                   ) : (
@@ -117,8 +133,8 @@ export function FeatureAccessGrid({
                       className="h-8 rounded-lg px-2 text-xs text-muted-foreground hover:text-foreground"
                       asChild
                     >
-                      <Link href={item.href}>
-                        Ouvrir
+                      <Link href={localizedHref}>
+                        {t('actions.open')}
                         <ArrowRight className="ml-1.5 h-3.5 w-3.5" />
                       </Link>
                     </Button>
@@ -138,8 +154,8 @@ interface LockedFeatureStateProps {
   description: string
   planLabel?: string
   items: FeatureAccessItem[]
-  upgradeHref?: string
-  faqHref?: string
+  upgradeHref?: string   // sans locale
+  faqHref?: string       // sans locale
 }
 
 export function LockedFeatureState({
@@ -150,8 +166,23 @@ export function LockedFeatureState({
   upgradeHref = '/dashboard/settings',
   faqHref = '/faqs',
 }: LockedFeatureStateProps) {
+  const locale = useLocale()
+  const t = useTranslations('dashboard.featureAccess')
+  const isRTL = locale === 'ar'
+
+  const withLocale = (path: string) => {
+    const base = path.startsWith('/') ? path : `/${path}`
+    return `/${locale}${base}`
+  }
+
+  const localizedUpgradeHref = withLocale(upgradeHref)
+  const localizedFaqHref = withLocale(faqHref)
+
   return (
-    <div className="space-y-4 rounded-2xl border border-border/70 bg-muted/60 p-5">
+    <div
+      dir={isRTL ? 'rtl' : 'ltr'}
+      className="space-y-4 rounded-2xl border border-border/70 bg-muted/60 p-5"
+    >
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="space-y-1">
           <p className="text-base font-semibold">{title}</p>
@@ -159,12 +190,17 @@ export function LockedFeatureState({
         </div>
         {planLabel ? (
           <Badge variant="outline" className="border-border/60 text-[11px] uppercase tracking-[0.16em]">
-            Plan {planLabel}
+            {t('planLabel', { plan: planLabel })}
           </Badge>
         ) : null}
       </div>
 
-      <FeatureAccessGrid items={items} planLabel={planLabel} compact showActions={false} />
+      <FeatureAccessGrid
+        items={items}
+        planLabel={planLabel}
+        compact
+        showActions={false}
+      />
 
       <div className="flex flex-wrap gap-2 text-sm">
         <Button
@@ -172,14 +208,14 @@ export function LockedFeatureState({
           variant="outline"
           className="h-8 rounded-lg border-border/70 px-3 text-xs text-foreground hover:bg-muted"
         >
-          <Link href={upgradeHref}>Mettre à niveau</Link>
+          <Link href={localizedUpgradeHref}>{t('actions.upgrade')}</Link>
         </Button>
         <Button
           asChild
           variant="ghost"
           className="h-8 rounded-lg px-2 text-xs text-muted-foreground hover:text-foreground"
         >
-          <Link href={faqHref}>Voir les plans</Link>
+          <Link href={localizedFaqHref}>{t('actions.seePlans')}</Link>
         </Button>
       </div>
     </div>

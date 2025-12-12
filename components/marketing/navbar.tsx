@@ -120,7 +120,6 @@ export function MarketingNavbar({links = [], className}: MarketingNavbarProps) {
     setMenuOpen(false)
 
     startTransition(() => {
-      // Let next-intl router handle locale prefixing – no nested /fr/ar anymore
       router.replace({pathname: cleanPath as any}, {locale: targetLocale})
       router.refresh()
     })

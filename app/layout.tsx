@@ -1,36 +1,69 @@
 import type { ReactNode } from 'react'
-import { Geist, Geist_Mono } from 'next/font/google'
+import localFont from 'next/font/local'
+import { headers } from 'next/headers'
 
 import { routing, type AppLocale } from '@/i18n/routing'
-
 import './globals.css'
-
-const geistSans = Geist({
-  subsets: ['latin'],
-  variable: '--font-geist-sans',
-})
-
-const geistMono = Geist_Mono({
-  subsets: ['latin'],
-  variable: '--font-geist-mono',
-})
 
 type RootLayoutProps = {
   children: ReactNode
-  params: { locale?: string }
+  params?: { locale?: string } | Promise<{ locale?: string }>
 }
+
+// --- Local Fonts ---
+const latinFont = localFont({
+  src: [
+    {
+      path: './fonts/VarelaRound-Regular.ttf',
+      weight: '400',
+      style: 'normal',
+    },
+  ],
+  variable: '--font-latin',
+  display: 'swap',
+})
+
+const arabicFont = localFont({
+  src: [
+    {
+      path: './fonts/NotoSansArabic-Regular.ttf',
+      weight: '400',
+      style: 'normal',
+    },
+  ],
+  variable: '--font-arabic',
+  display: 'swap',
+})
 
 const rtlLocales = new Set<AppLocale>(['ar'])
 
-export default function RootLayout({ children, params }: RootLayoutProps) {
-  const locale = routing.locales.includes(params?.locale as AppLocale)
-    ? (params?.locale as AppLocale)
-    : routing.defaultLocale
-  const direction = rtlLocales.has(locale) ? 'rtl' : 'ltr'
+export default async function RootLayout({ children, params }: RootLayoutProps) {
+  const resolvedParams = await Promise.resolve(params)
+  const localeFromParams = resolvedParams?.locale
+  const localeFromHeader = (await headers()).get('x-next-intl-locale')
+
+  const localeCandidates = [localeFromParams, localeFromHeader, routing.defaultLocale]
+  const locale = localeCandidates.find((value) =>
+    routing.locales.includes(value as AppLocale),
+  ) as AppLocale
+
+  const isRTL = rtlLocales.has(locale)
+  const direction = isRTL ? 'rtl' : 'ltr'
+
+  const fontClass = isRTL ? arabicFont.className : latinFont.className
 
   return (
     <html lang={locale} dir={direction} suppressHydrationWarning>
-      <body className={`${geistSans.variable} ${geistMono.variable} font-sans antialiased`}>{children}</body>
+      <body
+        className={[
+          latinFont.variable,
+          arabicFont.variable,
+          fontClass,
+          'antialiased',
+        ].join(' ')}
+      >
+        {children}
+      </body>
     </html>
   )
 }

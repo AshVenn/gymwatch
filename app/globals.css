@@ -3,8 +3,8 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-sans: var(--font-latin);
+  --font-mono: var(--font-latin);
   --color-card: var(--card);
   --color-card-foreground: var(--card-foreground);
   --color-popover: var(--popover);
@@ -76,6 +76,8 @@ html[dir='rtl'] {
 
 [dir='rtl'] body {
   direction: rtl;
+  --font-sans: var(--font-arabic);
+  --font-mono: var(--font-arabic);
 }
 
 [dir='rtl'] * {
@@ -300,4 +302,9 @@ html[dir='rtl'] {
       transform: none !important;
     }
   }
+}
+
+.hover-lift {
+  transition: transform 0.5s ease; 
+
 }

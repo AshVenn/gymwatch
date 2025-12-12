@@ -1,5 +1,6 @@
 'use client'
 
+import { useLocale, useTranslations } from 'next-intl'
 import {
   Area,
   AreaChart,
@@ -28,25 +29,37 @@ interface VisitChartsProps {
   loading?: boolean
 }
 
-const variantColors = ['var(--chart-1)', 'var(--chart-2)', 'var(--chart-3)', 'var(--chart-4)', 'var(--chart-5)']
-
-const chartConfig = {
-  value: { label: 'Visites', color: 'var(--chart-1)' },
-}
+const variantColors = [
+  'var(--chart-1)',
+  'var(--chart-2)',
+  'var(--chart-3)',
+  'var(--chart-4)',
+  'var(--chart-5)',
+]
 
 function hasData(dataset: ChartDatum[]) {
   return dataset.some((item) => item.value > 0)
 }
 
 export function VisitCharts({ view, byHour, byDay, byVariant, loading }: VisitChartsProps) {
+  const locale = useLocale()
+  const t = useTranslations('visits.charts')
+  const isRTL = locale === 'ar'
+
   const showByHour = view === 'day'
   const showByDay = view === 'period'
 
+  const chartConfig = {
+    value: { label: t('valueLabel'), color: 'var(--chart-1)' },
+  }
+
   return (
-    <div className="grid gap-4 lg:grid-cols-3">
+    <div className="grid gap-4 lg:grid-cols-3" dir={isRTL ? 'rtl' : 'ltr'}>
       <Card className="lg:col-span-2">
         <CardHeader className="pb-3">
-          <CardTitle>{showByHour ? 'Fréquentation horaire' : 'Fréquentation sur la période'}</CardTitle>
+          <CardTitle>
+            {showByHour ? t('hourlyTitle') : t('periodTitle')}
+          </CardTitle>
         </CardHeader>
         <CardContent>
           {loading ? (
@@ -57,15 +70,33 @@ export function VisitCharts({ view, byHour, byDay, byVariant, loading }: VisitCh
                 <ResponsiveContainer width="100%" height={300}>
                   <BarChart data={byHour} margin={{ left: 8, right: 8 }}>
                     <CartesianGrid vertical={false} strokeDasharray="3 3" />
-                    <XAxis dataKey="label" tickLine={false} axisLine={false} tickMargin={8} />
-                    <YAxis allowDecimals={false} tickLine={false} axisLine={false} />
-                    <ChartTooltip cursor={false} content={<ChartTooltipContent hideLabel />} />
-                    <Bar dataKey="value" fill="var(--chart-1)" radius={[6, 6, 4, 4]} />
+                    <XAxis
+                      dataKey="label"
+                      tickLine={false}
+                      axisLine={false}
+                      tickMargin={8}
+                    />
+                    <YAxis
+                      allowDecimals={false}
+                      tickLine={false}
+                      axisLine={false}
+                    />
+                    <ChartTooltip
+                      cursor={false}
+                      content={<ChartTooltipContent hideLabel />}
+                    />
+                    <Bar
+                      dataKey="value"
+                      fill="var(--chart-1)"
+                      radius={[6, 6, 4, 4]}
+                    />
                   </BarChart>
                 </ResponsiveContainer>
               </ChartContainer>
             ) : (
-              <p className="text-sm text-muted-foreground">Aucune visite pour cette journée.</p>
+              <p className="text-sm text-muted-foreground">
+                {t('emptyDay')}
+              </p>
             )
           ) : showByDay ? (
             hasData(byDay) ? (
@@ -73,9 +104,21 @@ export function VisitCharts({ view, byHour, byDay, byVariant, loading }: VisitCh
                 <ResponsiveContainer width="100%" height={300}>
                   <AreaChart data={byDay} margin={{ left: 8, right: 8 }}>
                     <CartesianGrid vertical={false} strokeDasharray="4 4" />
-                    <XAxis dataKey="label" tickLine={false} axisLine={false} tickMargin={8} />
-                    <YAxis allowDecimals={false} tickLine={false} axisLine={false} />
-                    <ChartTooltip cursor={false} content={<ChartTooltipContent hideLabel />} />
+                    <XAxis
+                      dataKey="label"
+                      tickLine={false}
+                      axisLine={false}
+                      tickMargin={8}
+                    />
+                    <YAxis
+                      allowDecimals={false}
+                      tickLine={false}
+                      axisLine={false}
+                    />
+                    <ChartTooltip
+                      cursor={false}
+                      content={<ChartTooltipContent hideLabel />}
+                    />
                     <Area
                       type="monotone"
                       dataKey="value"
@@ -88,7 +131,9 @@ export function VisitCharts({ view, byHour, byDay, byVariant, loading }: VisitCh
                 </ResponsiveContainer>
               </ChartContainer>
             ) : (
-              <p className="text-sm text-muted-foreground">Aucune visite sur cette période.</p>
+              <p className="text-sm text-muted-foreground">
+                {t('emptyPeriod')}
+              </p>
             )
           ) : null}
         </CardContent>
@@ -96,7 +141,7 @@ export function VisitCharts({ view, byHour, byDay, byVariant, loading }: VisitCh
 
       <Card>
         <CardHeader className="pb-3">
-          <CardTitle>Répartition par salle</CardTitle>
+          <CardTitle>{t('byVariantTitle')}</CardTitle>
         </CardHeader>
         <CardContent>
           {loading ? (
@@ -116,7 +161,10 @@ export function VisitCharts({ view, byHour, byDay, byVariant, loading }: VisitCh
                     paddingAngle={4}
                   >
                     {byVariant.map((entry, idx) => (
-                      <Cell key={entry.label} fill={variantColors[idx % variantColors.length]} />
+                      <Cell
+                        key={entry.label}
+                        fill={variantColors[idx % variantColors.length]}
+                      />
                     ))}
                   </Pie>
                   <ChartTooltip content={<ChartTooltipContent />} />
@@ -124,7 +172,9 @@ export function VisitCharts({ view, byHour, byDay, byVariant, loading }: VisitCh
               </ResponsiveContainer>
             </ChartContainer>
           ) : (
-            <p className="text-sm text-muted-foreground">Pas encore de visites enregistrées.</p>
+            <p className="text-sm text-muted-foreground">
+              {t('emptyVariant')}
+            </p>
           )}
         </CardContent>
       </Card>

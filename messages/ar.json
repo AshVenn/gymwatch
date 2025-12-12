@@ -3,6 +3,148 @@
     "localeLabel": "العربية",
     "comingSoon": "ستتم إضافة الترجمات التفصيلية قريبًا."
   },
+  "pagination": {
+      "prev": "السابق",
+      "next": "التالي",
+      "pageXofY": "الصفحة {x} من {y}",
+      "rangeOfTotal": "{start}-{end} من أصل {total}"
+    }
+    ,
+    "variantSelector": {
+      "label": "الفرع",
+      "placeholderAll": "كل الفروع",
+      "placeholderSingle": "اختر فرعاً",
+      "adminLockedNote": "مقفل لهذا الحساب الإداري",
+      "assignedVariantFallback": "فرع مخصص",
+      "allOption": "كل الفروع",
+      "defaultSuffix": "(افتراضي)",
+      "lockedMessage": "عرض الفروع المتعددة متاح في باقة Enterprise."
+    },
+    "subscriptions": {
+      "filters": {
+        "searchLabel": "بحث",
+        "searchPlaceholder": "اسم المشترك أو الخطة...",
+        "statusLabel": "الحالة",
+        "statusPlaceholder": "تصفية حسب الحالة",
+        "statusAll": "الكل",
+        "statusActive": "نشطة",
+        "statusExpiresToday": "تنتهي اليوم",
+        "statusExpired": "منتهية",
+        "sortLabel": "ترتيب",
+        "sortPlaceholder": "اختر طريقة الترتيب",
+        "sortNextExpiry": "أقرب تاريخ انتهاء",
+        "sortRecentStart": "الأحدث بدءاً",
+        "sortPriceDesc": "السعر من الأعلى"
+      },
+        "summary": {
+    "eyebrow": "تدفق الاشتراكات",
+    "title": "الاشتراكات",
+    "description": "رؤية فورية للأعضاء والإيرادات وتواريخ الانتهاء.",
+    "liveBadge": "تحديث فوري",
+    "totalRevenue": {
+      "label": "إجمالي الإيرادات",
+      "helper": "متوسط التذكرة {{avgTicket}}"
+    },
+    "active": {
+      "label": "اشتراكات نشطة",
+      "helper": "معدل احتفاظ {{retentionRate}}٪"
+    },
+    "expiringSoon": {
+      "label": "تنتهي خلال أقل من 5 أيام",
+      "helper": "خطط للتذكيرات"
+    },
+    "expired": {
+      "label": "اشتراكات منتهية",
+      "helper": "يجب متابعتها أولاً"
+    }
+  }
+    },
+    "visits": {
+  "charts": {
+    "hourlyTitle": "الزيارات حسب الساعة",
+    "periodTitle": "الزيارات خلال الفترة",
+    "byVariantTitle": "حسب القاعة",
+    "emptyDay": "لا زيارات في هذا اليوم.",
+    "emptyPeriod": "لا زيارات في هذه الفترة.",
+    "emptyVariant": "لا توجد زيارات مسجلة بعد.",
+    "valueLabel": "زيارات"
+  },
+  "filters": {
+    "dayView": "عرض اليوم",
+    "periodView": "الفترة",
+    "reset": "إعادة تعيين",
+    "searchLabel": "بحث عن عضو",
+    "searchPlaceholder": "الاسم، البريد...",
+    "dateLabel": "التاريخ",
+    "fromLabel": "من",
+    "toLabel": "إلى"
+  }
+}
+,
+    "weekCalendar": {
+        "classesCount": "{count} حصة",
+        "noSessions": "لا حصص في هذا اليوم",
+        "spotsAvailable": "{count, plural, one {{count} مقعد} other {{count} مقاعد}}",
+        "full": "ممتلئ",
+        "waitlistCount": "{count} في الانتظار"
+      }
+      ,
+    "classForm": {
+        "titleLabel": "عنوان الحصة",
+        "titlePlaceholder": "كروس ترينينغ، يوغا...",
+        "coachLabel": "المدرب",
+        "coachPlaceholder": "اسم المدرب",
+        "roomLabel": "القاعة / الاستوديو",
+        "roomPlaceholder": "قاعة A، استوديو 2...",
+        "dateLabel": "التاريخ",
+        "capacityLabel": "الطاقة الاستيعابية",
+        "startTimeLabel": "وقت البداية",
+        "endTimeLabel": "وقت الانتهاء",
+        "variantLabel": "الفرع",
+        "variantPlaceholder": "اختر فرعاً",
+        "lockedVariantFallback": "فرع مقفل",
+        "defaultSuffix": "(افتراضي)",
+        "waitlistLabel": "قائمة الانتظار",
+        "waitlistDescription": "السماح بقائمة انتظار إذا كانت الحصة ممتلئة"
+      }
+
+    ,
+     "auth": {
+    "login": {
+      "toasts": {
+        "demoRequested": "تم إرسال طلب التجربة، ستصلك بيانات الدخول على بريدك الإلكتروني.",
+        "loginSuccess": "تم تسجيل الدخول بنجاح."
+      },
+      "errors": {
+        "planInactive": "اشتراكك غير مفعّل. يرجى تجديده.",
+        "invalidCredentials": "بيانات تسجيل الدخول غير صحيحة.",
+        "unexpected": "حدث خطأ غير متوقع."
+      },
+      "marketing": {
+        "badge": "منصّة إدارة",
+        "headline": "مرحبًا بك في {brand}",
+        "subtitle": "أدِرْ ناديك الرياضي بمنصّة حديثة وسهلة الاستخدام، واطّلع على جميع بياناتك في الوقت الفعلي."
+      },
+      "features": {
+        "security": "أمان متقدّم",
+        "performance": "أداء مُحسَّن",
+        "analytics": "تحليلات في الوقت الفعلي"
+      },
+      "form": {
+        "title": "تسجيل الدخول",
+        "subtitle": "ادخل إلى مساحة GymWatch الخاصة بك",
+        "emailLabel": "البريد الإلكتروني",
+        "emailPlaceholder": "you@gym.ma",
+        "passwordLabel": "كلمة المرور",
+        "passwordPlaceholder": "••••••••",
+        "submitPending": "جارٍ تسجيل الدخول...",
+        "submit": "تسجيل الدخول"
+      },
+      "footer": {
+        "noAccount": "ليس لديك حساب بعد؟",
+        "requestDemo": "اطلب تجربة"
+      }
+    }},
     "marketing": {
     "home": {
       "hero": {
@@ -19,7 +161,7 @@
           "chips": {
             "access": "التحكم في الدخول",
             "kpi": "مؤشرات آنية",
-            "payments": "مدفوعات آمنة"
+            "analytics": "تحليلات متقدمة"
           }
         }
       },
@@ -225,42 +367,6 @@
       }
     }
   },
-   "auth": {
-    "login": {
-      "toasts": {
-        "demoRequested": "تم إرسال طلب التجربة، ستصلك بيانات الدخول على بريدك الإلكتروني.",
-        "loginSuccess": "تم تسجيل الدخول بنجاح."
-      },
-      "errors": {
-        "planInactive": "اشتراكك غير مفعّل. يرجى تجديده.",
-        "invalidCredentials": "بيانات تسجيل الدخول غير صحيحة.",
-        "unexpected": "حدث خطأ غير متوقع."
-      },
-      "marketing": {
-        "badge": "منصّة إدارة",
-        "headline": "مرحبًا بك في {brand}",
-        "subtitle": "أدِرْ ناديك الرياضي بمنصّة حديثة وسهلة الاستخدام، واطّلع على جميع بياناتك في الوقت الفعلي."
-      },
-      "features": {
-        "security": "أمان متقدّم",
-        "performance": "أداء مُحسَّن",
-        "analytics": "تحليلات في الوقت الفعلي"
-      },
-      "form": {
-        "title": "تسجيل الدخول",
-        "subtitle": "ادخل إلى مساحة GymWatch الخاصة بك",
-        "emailLabel": "البريد الإلكتروني",
-        "emailPlaceholder": "you@gym.ma",
-        "passwordLabel": "كلمة المرور",
-        "passwordPlaceholder": "••••••••",
-        "submitPending": "جارٍ تسجيل الدخول...",
-        "submit": "تسجيل الدخول"
-      },
-      "footer": {
-        "noAccount": "ليس لديك حساب بعد؟",
-        "requestDemo": "اطلب تجربة"
-      }
-    }},
   "dashboard": {
     "nav": {
       "dashboard": "لوحة التحكم",
@@ -295,6 +401,24 @@
       "signOut": "تسجيل الخروج",
       "demoBadge": "تجريبي"
     },
+        "featureAccess": {
+          "modulesTitle": "الوحدات",
+          "modulesCount": "{active}/{total} نشط",
+
+          "planLabel": "الخطة {plan}",
+
+          "badges": {
+            "included": "متاح",
+            "notIncluded": "غير متاح"
+          },
+
+          "actions": {
+            "upgrade": "الترقية",
+            "open": "فتح",
+            "seePlans": "عرض الخطط"
+          }
+        }
+      ,
     "classes": {
       "planLabel": {
         "basic": "Basic",

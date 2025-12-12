@@ -1,6 +1,15 @@
+'use client'
+
+import { useLocale, useTranslations } from 'next-intl'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 
@@ -33,47 +42,72 @@ export function SubscriptionFilters({
   quickFilters,
   onQuickFilter,
 }: Props) {
+  const locale = useLocale()
+  const t = useTranslations('subscriptions.filters')
+  const isRTL = locale === 'ar'
+
   return (
-    <div className="rounded-3xl border border-border/70 bg-card p-6 shadow-sm">
+    <div
+      className="rounded-3xl border border-border/70 bg-card p-6 shadow-sm"
+      dir={isRTL ? 'rtl' : 'ltr'}
+    >
       <div className="grid gap-4 md:grid-cols-3">
+        {/* Search */}
         <div>
-          <Label htmlFor="subscription-search">Rechercher</Label>
+          <Label htmlFor="subscription-search">{t('searchLabel')}</Label>
           <Input
             id="subscription-search"
-            placeholder="Nom du membre ou plan..."
+            placeholder={t('searchPlaceholder')}
             value={searchTerm}
             onChange={(event) => onSearch(event.target.value)}
             className="mt-2"
           />
         </div>
+
+        {/* Status */}
         <div>
-          <Label htmlFor="subscription-status">Statut</Label>
+          <Label htmlFor="subscription-status">{t('statusLabel')}</Label>
           <Select value={filterStatus} onValueChange={onStatusChange}>
             <SelectTrigger id="subscription-status" className="mt-2">
-              <SelectValue placeholder="Statut" />
+              <SelectValue placeholder={t('statusPlaceholder')} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="ALL">Tous</SelectItem>
-              <SelectItem value="ACTIVE">Actifs</SelectItem>
-              <SelectItem value="EXPIRES_TODAY">Expire aujourd'hui</SelectItem>
-              <SelectItem value="EXPIRED">Expirés</SelectItem>
+              <SelectItem value="ALL">{t('statusAll')}</SelectItem>
+              <SelectItem value="ACTIVE">{t('statusActive')}</SelectItem>
+              <SelectItem value="EXPIRES_TODAY">
+                {t('statusExpiresToday')}
+              </SelectItem>
+              <SelectItem value="EXPIRED">{t('statusExpired')}</SelectItem>
             </SelectContent>
           </Select>
         </div>
+
+        {/* Sort */}
         <div>
-          <Label htmlFor="subscription-sort">Tri</Label>
-          <Select value={sortBy} onValueChange={(value) => onSortChange(value as SortOption)}>
+          <Label htmlFor="subscription-sort">{t('sortLabel')}</Label>
+          <Select
+            value={sortBy}
+            onValueChange={(value) => onSortChange(value as SortOption)}
+          >
             <SelectTrigger id="subscription-sort" className="mt-2">
-              <SelectValue placeholder="Tri" />
+              <SelectValue placeholder={t('sortPlaceholder')} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="NEXT_EXPIRY">Échéance la plus proche</SelectItem>
-              <SelectItem value="RECENT_START">Début le plus récent</SelectItem>
-              <SelectItem value="PRICE_DESC">Tarif décroissant</SelectItem>
+              <SelectItem value="NEXT_EXPIRY">
+                {t('sortNextExpiry')}
+              </SelectItem>
+              <SelectItem value="RECENT_START">
+                {t('sortRecentStart')}
+              </SelectItem>
+              <SelectItem value="PRICE_DESC">
+                {t('sortPriceDesc')}
+              </SelectItem>
             </SelectContent>
           </Select>
         </div>
       </div>
+
+      {/* Quick filters – labels déjà traduits côté appelant */}
       <div className="mt-4 flex flex-wrap gap-3">
         {quickFilters.map((filter) => {
           const isActive = filterStatus === filter.value
@@ -89,7 +123,14 @@ export function SubscriptionFilters({
               onClick={() => onQuickFilter(filter.value)}
             >
               <span>{filter.label}</span>
-              <span className={cn('rounded-full px-2 py-0.5 text-xs font-semibold', isActive ? 'bg-primary-foreground/20' : 'bg-background')}>
+              <span
+                className={cn(
+                  'rounded-full px-2 py-0.5 text-xs font-semibold',
+                  isActive
+                    ? 'bg-primary-foreground/20'
+                    : 'bg-background',
+                )}
+              >
                 {filter.count}
               </span>
             </Button>

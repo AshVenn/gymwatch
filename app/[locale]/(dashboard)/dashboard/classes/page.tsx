@@ -162,7 +162,7 @@ export default function ClassesPage() {
       if (variantFilter) {
         params.set('variantId', variantFilter)
       }
-      const response = await fetch(`/api/classes?${params.toString()}`)
+      const response = await fetch(`/api/gym-team/classes?${params.toString()}`)
       const data = await response.json().catch(() => ({}))
       if (!response.ok) {
         throw new Error(data.error || t('errors.load'))
@@ -203,7 +203,7 @@ export default function ClassesPage() {
       }
 
       const method = editingId ? 'PUT' : 'POST'
-      const url = editingId ? `/api/classes/${editingId}` : '/api/classes'
+      const url = editingId ? `/api/gym-team/classes/${editingId}` : '/api/gym-team/classes'
 
       const response = await fetch(url, {
         method,
@@ -239,7 +239,7 @@ export default function ClassesPage() {
 
   const deleteClass = useMutation({
     mutationFn: async (classId: string) => {
-      const response = await fetch(`/api/classes/${classId}`, { method: 'DELETE' })
+      const response = await fetch(`/api/gym-team/classes/${classId}`, { method: 'DELETE' })
       const data = await response.json().catch(() => ({}))
       if (!response.ok) {
         throw new Error(data.error || t('errors.delete'))

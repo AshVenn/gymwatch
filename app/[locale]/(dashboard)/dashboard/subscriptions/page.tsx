@@ -105,7 +105,7 @@ export default function SubscriptionsPage() {
       if (normalizedStatus) params.append('status', normalizedStatus)
       if (variantFilter) params.append('variantId', variantFilter)
 
-      const response = await fetch(`/api/subscriptions?${params.toString()}`)
+      const response = await fetch(`/api/gym-team/subscriptions?${params.toString()}`)
       if (!response.ok) throw new Error(t('errors.loadSubscriptions'))
 
       const data = await response.json()
@@ -120,7 +120,9 @@ export default function SubscriptionsPage() {
       const params = new URLSearchParams()
       if (variantFilter) params.set('variantId', variantFilter)
 
-      const response = await fetch(`/api/plans${params.toString() ? `?${params.toString()}` : ''}`)
+      const response = await fetch(
+        `/api/gym-team/plans${params.toString() ? `?${params.toString()}` : ''}`,
+      )
       if (!response.ok) throw new Error(t('errors.loadPlans'))
 
       const data = await response.json()
@@ -139,7 +141,9 @@ export default function SubscriptionsPage() {
 
   const deleteSubscriptionMutation = useMutation({
     mutationFn: async (subscriptionId: string) => {
-      const response = await fetch(`/api/subscriptions/${subscriptionId}`, { method: 'DELETE' })
+      const response = await fetch(`/api/gym-team/subscriptions/${subscriptionId}`, {
+        method: 'DELETE',
+      })
       const data = await response.json().catch(() => ({}))
 
       if (!response.ok) throw new Error((data as any).error || t('errors.deleteFailed'))
@@ -159,7 +163,7 @@ export default function SubscriptionsPage() {
     mutationFn: async () => {
       if (!renewingId) throw new Error(t('errors.noSubscriptionSelected'))
 
-      const response = await fetch(`/api/subscriptions/${renewingId}`, {
+      const response = await fetch(`/api/gym-team/subscriptions/${renewingId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -298,7 +302,7 @@ export default function SubscriptionsPage() {
     try {
       setVisitLoading(memberId)
 
-      const response = await fetch('/api/visits', {
+      const response = await fetch('/api/gym-team/visits', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ memberId, markVisit: true }),

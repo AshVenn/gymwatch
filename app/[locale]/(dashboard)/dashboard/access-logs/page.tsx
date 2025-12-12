@@ -129,7 +129,7 @@ export default function AccessLogsPage() {
       if (to) params.set('to', to)
       params.set('limit', '200')
 
-      const response = await fetch(`/api/access-events?${params.toString()}`)
+      const response = await fetch(`/api/gym-team/access-events?${params.toString()}`)
       const body = await response.json().catch(() => ({}))
       if (!response.ok) {
         throw new Error(body.error || t('errors.load'))
@@ -146,7 +146,7 @@ export default function AccessLogsPage() {
 
   const deleteMutation = useMutation({
     mutationFn: async (eventId: string) => {
-      const response = await fetch(`/api/access-events/${eventId}`, {
+      const response = await fetch(`/api/gym-team/access-events/${eventId}`, {
         method: 'DELETE',
       })
       const body = await response.json().catch(() => ({}))

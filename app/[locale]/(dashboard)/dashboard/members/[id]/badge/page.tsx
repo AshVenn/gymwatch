@@ -103,7 +103,7 @@ export default function MemberBadgePage() {
     queryKey: ['member', memberId],
     enabled: Boolean(memberId),
     queryFn: async () => {
-      const response = await fetch(`/api/members/${memberId}`)
+      const response = await fetch(`/api/gym-team/members/${memberId}`)
       const body = await response.json().catch(() => ({}))
       if (!response.ok) {
         throw new Error(body.error || t('errors.loadMember'))
@@ -117,7 +117,7 @@ export default function MemberBadgePage() {
     enabled: Boolean(memberId) && hasAccessControl,
     queryFn: async () => {
       const params = new URLSearchParams({ memberId: memberId as string, limit: '10' })
-      const response = await fetch(`/api/access-events?${params.toString()}`)
+      const response = await fetch(`/api/gym-team/access-events?${params.toString()}`)
       const body = await response.json().catch(() => ({}))
       if (!response.ok) {
         throw new Error(body.error || t('errors.loadAccess'))
@@ -140,7 +140,7 @@ export default function MemberBadgePage() {
 
   const simulateScan = useMutation({
     mutationFn: async (withVisit: boolean) => {
-      const response = await fetch('/api/access-events', {
+      const response = await fetch('/api/gym-team/access-events', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

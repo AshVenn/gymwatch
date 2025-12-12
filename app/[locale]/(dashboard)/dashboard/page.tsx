@@ -111,7 +111,9 @@ export default function DashboardPage() {
       const params = new URLSearchParams()
       if (variantFilter) params.set('variantId', variantFilter)
 
-      const response = await fetch(`/api/dashboard/stats${params.toString() ? `?${params.toString()}` : ''}`)
+      const response = await fetch(
+        `/api/gym-team/dashboard/stats${params.toString() ? `?${params.toString()}` : ''}`,
+      )
       if (!response.ok) throw new Error(t('errors.statsFetch'))
 
       const data = await response.json()
@@ -255,7 +257,7 @@ export default function DashboardPage() {
       const params = new URLSearchParams({ type })
       if (variantFilter) params.set('variantId', variantFilter)
 
-      const response = await fetch(`/api/reports/excel?${params.toString()}`)
+      const response = await fetch(`/api/gym-team/reports/excel?${params.toString()}`)
       if (!response.ok) {
         const payload = await response.json().catch(() => null)
         const message = (payload as any)?.error ?? t('errors.downloadFailed')

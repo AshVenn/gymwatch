@@ -23,7 +23,7 @@ export function useVariantOptions(options: { allowAll?: boolean } = {}) {
     queryKey: ['gym-variants', session?.user?.gymId],
     enabled: Boolean(session?.user?.gymId),
     queryFn: async () => {
-      const response = await fetch('/api/variants')
+      const response = await fetch('/api/gym-team/variants')
       if (!response.ok) {
         throw new Error('Impossible de charger les variantes')
       }

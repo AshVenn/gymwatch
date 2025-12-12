@@ -165,7 +165,7 @@ export default function PresencePage() {
       }
       params.set('limit', '180')
 
-      const response = await fetch(`/api/visits?${params.toString()}`)
+      const response = await fetch(`/api/gym-team/visits?${params.toString()}`)
       const body = await response.json().catch(() => ({}))
       if (!response.ok) {
         throw new Error(body.error || t('errors.load'))
@@ -240,7 +240,7 @@ export default function PresencePage() {
       if (windowFromIso) payload.rangeFrom = windowFromIso
       if (windowToIso) payload.rangeTo = windowToIso
 
-      const response = await fetch('/api/visits', {
+      const response = await fetch('/api/gym-team/visits', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),

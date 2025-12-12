@@ -113,7 +113,7 @@ export default function ClassDetailPage({ params }: { params: { id: string } }) 
     queryKey: classQueryKey,
     enabled: status === 'authenticated' && hasCourses,
     queryFn: async () => {
-      const response = await fetch(`/api/classes/${params.id}`)
+      const response = await fetch(`/api/gym-team/classes/${params.id}`)
       const data = await response.json().catch(() => ({}))
       if (!response.ok) {
         throw new Error(data.error || t('errors.loadClass'))
@@ -131,7 +131,7 @@ export default function ClassDetailPage({ params }: { params: { id: string } }) 
         paramsQuery.set('variantId', detailQuery.data.gymVariantId)
       }
       const response = await fetch(
-        `/api/members${paramsQuery.toString() ? `?${paramsQuery.toString()}` : ''}`,
+        `/api/gym-team/members${paramsQuery.toString() ? `?${paramsQuery.toString()}` : ''}`,
       )
       const data = await response.json().catch(() => ({}))
       if (!response.ok) {
@@ -166,7 +166,7 @@ export default function ClassDetailPage({ params }: { params: { id: string } }) 
       if (!selectedMember) {
         throw new Error(t('errors.chooseMember'))
       }
-      const response = await fetch(`/api/classes/${params.id}/bookings`, {
+      const response = await fetch(`/api/gym-team/classes/${params.id}/bookings`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ memberId: selectedMember }),
@@ -191,7 +191,7 @@ export default function ClassDetailPage({ params }: { params: { id: string } }) 
   const cancelBooking = useMutation({
     mutationFn: async (bookingId: string) => {
       const response = await fetch(
-        `/api/classes/${params.id}/bookings/${bookingId}`,
+        `/api/gym-team/classes/${params.id}/bookings/${bookingId}`,
         { method: 'DELETE' },
       )
       const data = await response.json().catch(() => ({}))
@@ -222,7 +222,7 @@ export default function ClassDetailPage({ params }: { params: { id: string } }) 
       if (!variantId) {
         throw new Error(t('errors.variantRequired'))
       }
-      const response = await fetch(`/api/classes/${params.id}`, {
+      const response = await fetch(`/api/gym-team/classes/${params.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -255,7 +255,7 @@ export default function ClassDetailPage({ params }: { params: { id: string } }) 
 
   const deleteClass = useMutation({
     mutationFn: async () => {
-      const response = await fetch(`/api/classes/${params.id}`, {
+      const response = await fetch(`/api/gym-team/classes/${params.id}`, {
         method: 'DELETE',
       })
       const data = await response.json().catch(() => ({}))

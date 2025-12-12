@@ -67,7 +67,7 @@ export default function SettingsPage() {
     queryKey: gymKey,
     enabled: Boolean(session?.user?.gymId),
     queryFn: async () => {
-      const response = await fetch('/api/gym')
+      const response = await fetch('/api/gym-team/gym')
       if (!response.ok) throw new Error(t('errors.gymFetch'))
       return response.json()
     },
@@ -76,7 +76,7 @@ export default function SettingsPage() {
   const { data: planSettings } = useQuery<{ limits?: PlanLimitsTable }>({
     queryKey: ['plan-settings-public'],
     queryFn: async () => {
-      const response = await fetch('/api/plan-settings')
+      const response = await fetch('/api/gym-team/plan-settings')
       if (!response.ok) throw new Error(t('errors.planLimitsFetch'))
       return response.json()
     },

@@ -209,7 +209,7 @@ export default function MembersPage() {
     if (lastTokenRef.current === tokenKey) return
     lastTokenRef.current = tokenKey
     try {
-      const response = await fetch('/api/qr/verify', {
+      const response = await fetch('/api/gym-team/qr/verify', {
         method: 'POST',
         headers: {'Content-Type': 'application/json'},
         body: JSON.stringify({
@@ -352,7 +352,7 @@ export default function MembersPage() {
         params.set('variantId', variantFilter)
       }
       const response = await fetch(
-        `/api/reports/excel?${params.toString()}`,
+        `/api/gym-team/reports/excel?${params.toString()}`,
       )
       if (!response.ok) {
         const payload = await response.json().catch(() => null)
@@ -453,7 +453,7 @@ export default function MembersPage() {
         params.set('variantId', variantFilter)
       }
       const response = await fetch(
-        `/api/members${
+        `/api/gym-team/members${
           params.toString() ? `?${params.toString()}` : ''
         }`,
       )
@@ -494,7 +494,7 @@ export default function MembersPage() {
         params.set('variantId', variantFilter)
       }
       const response = await fetch(
-        `/api/plans${
+        `/api/gym-team/plans${
           params.toString() ? `?${params.toString()}` : ''
         }`,
       )
@@ -517,7 +517,7 @@ export default function MembersPage() {
   const saveMemberMutation = useMutation({
     mutationFn: async () => {
       const method = editingId ? 'PUT' : 'POST'
-      const url = editingId ? `/api/members/${editingId}` : '/api/members'
+      const url = editingId ? `/api/gym-team/members/${editingId}` : '/api/gym-team/members'
       const payload = {
         ...formData,
         planId: formData.planId === 'none' ? null : formData.planId,
@@ -570,7 +570,7 @@ export default function MembersPage() {
 
   const deleteMemberMutation = useMutation({
     mutationFn: async (memberId: string) => {
-      const response = await fetch(`/api/members/${memberId}`, {
+      const response = await fetch(`/api/gym-team/members/${memberId}`, {
         method: 'DELETE',
       })
 
@@ -658,7 +658,7 @@ export default function MembersPage() {
     if (!memberId) return
     try {
       setVisitLoading(memberId)
-      const response = await fetch('/api/visits', {
+      const response = await fetch('/api/gym-team/visits', {
         method: 'POST',
         headers: {'Content-Type': 'application/json'},
         body: JSON.stringify({memberId, markVisit: true}),

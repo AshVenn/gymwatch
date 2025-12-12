@@ -191,7 +191,7 @@ export function useSuperAdminStats() {
 export function usePlanSettings() {
   return useQuery<PlanSettingsResponse>({
     queryKey: ['plan-settings'],
-    queryFn: () => fetchJSON('/api/plan-settings'),
+    queryFn: () => fetchJSON('/api/super-admin/plan-settings'),
   })
 }
 
@@ -199,7 +199,7 @@ export function useUpdatePlanSettings() {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: async (payload: PlanSettingsInput) => {
-      return fetchJSON('/api/plan-settings', {
+      return fetchJSON('/api/super-admin/plan-settings', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
@@ -289,7 +289,7 @@ export function usePurgeAccessLogs() {
   return useMutation({
     mutationFn: async () => {
       return fetchJSON<{ deleted: number; lastPurgeAt?: string | null; retentionDays?: number; message?: string }>(
-        '/api/admin/access-logs/purge',
+        '/api/super-admin/access-logs/purge',
         { method: 'POST' },
       )
     },

@@ -80,7 +80,7 @@ export default function PlansPage() {
     queryKey: ['gym', 'plan-limits', gymId],
     enabled: Boolean(gymId),
     queryFn: async () => {
-      const response = await fetch('/api/gym')
+      const response = await fetch('/api/gym-team/gym')
       const body = await response.json().catch(() => ({}))
       if (!response.ok) {
         throw new Error(body.error || t('errors.loadLimits'))
@@ -140,7 +140,9 @@ export default function PlansPage() {
       if (variantFilter) {
         params.set('variantId', variantFilter)
       }
-      const response = await fetch(`/api/plans${params.toString() ? `?${params.toString()}` : ''}`)
+      const response = await fetch(
+        `/api/gym-team/plans${params.toString() ? `?${params.toString()}` : ''}`,
+      )
 
       if (!response.ok) {
         if (response.status === 401) {
@@ -237,7 +239,7 @@ export default function PlansPage() {
   const savePlanMutation = useMutation({
     mutationFn: async (payload: { visitsPerDay: number; maxSessionMinutes: number | null }) => {
       const method = editingId ? 'PUT' : 'POST'
-      const url = editingId ? `/api/plans/${editingId}` : '/api/plans'
+      const url = editingId ? `/api/gym-team/plans/${editingId}` : '/api/gym-team/plans'
 
       const response = await fetch(url, {
         method,
@@ -287,7 +289,7 @@ export default function PlansPage() {
 
   const deletePlanMutation = useMutation({
     mutationFn: async (planId: string) => {
-      const response = await fetch(`/api/plans/${planId}`, { method: 'DELETE' })
+      const response = await fetch(`/api/gym-team/plans/${planId}`, { method: 'DELETE' })
       const data = await response.json().catch(() => ({}))
 
       if (!response.ok) {

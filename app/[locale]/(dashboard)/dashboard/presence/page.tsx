@@ -87,6 +87,7 @@ const defaultSummary = {
 
 export default function PresencePage() {
   const t = useTranslations('dashboard.presence')
+  const tFeatureAccess = useTranslations('dashboard.featureAccess')
   const locale = useLocale()
   const { data: session, status } = useSession()
   const { tier, hasAccessControl, hasPresence, hasCourses, hasExcelReports, hasMultiLocations } = usePlanFeatures()
@@ -125,8 +126,9 @@ export default function PresencePage() {
         hasPresence,
         hasCourses,
         hasExcelReports,
+        t: tFeatureAccess,
       }),
-    [hasAccessControl, hasCourses, hasExcelReports, hasPresence],
+    [hasAccessControl, hasCourses, hasExcelReports, hasPresence, tFeatureAccess],
   )
 
   useEffect(() => {

@@ -1,8 +1,10 @@
 'use client'
+
 import Link from 'next/link'
 import { useSession } from 'next-auth/react'
 import { useEffect, useMemo, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
+import { useTranslations } from 'next-intl'
 import type { LucideIcon } from 'lucide-react'
 import {
   AlertTriangle,
@@ -37,12 +39,7 @@ import { VariantSelector } from '@/components/dashboard/variant-selector'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
-import {
-  ChartConfig,
-  ChartContainer,
-  ChartTooltip,
-  ChartTooltipContent,
-} from '@/components/ui/chart'
+import { ChartConfig, ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart'
 import { Skeleton } from '@/components/ui/skeleton'
 import { toast } from 'sonner'
 
@@ -59,9 +56,11 @@ interface DashboardStats {
 }
 
 export default function DashboardPage() {
+  const t = useTranslations('dashOwAdDashboard')
   const { data: session } = useSession()
   const { hasExcelReports, hasMultiLocations } = usePlanFeatures()
   const [downloading, setDownloading] = useState<string | null>(null)
+
   const {
     variants,
     selectedVariant,
@@ -71,9 +70,11 @@ export default function DashboardPage() {
     defaultVariantId,
     isLoading: variantsLoading,
   } = useVariantOptions({ allowAll: hasMultiLocations })
+
   const isMultiVariantGym = variants.length > 1
   const allowAllVariants = hasMultiLocations || !isMultiVariantGym
   const multiVariantLocked = isMultiVariantGym && !hasMultiLocations
+
   const variantFilter =
     selectedVariant === 'all'
       ? allowAllVariants
@@ -84,9 +85,7 @@ export default function DashboardPage() {
   useEffect(() => {
     if (!allowAllVariants && selectedVariant === 'all') {
       const fallback = lockedVariantId ?? defaultVariantId ?? variants[0]?.id ?? 'all'
-      if (fallback && fallback !== 'all') {
-        setSelectedVariant(fallback)
-      }
+      if (fallback && fallback !== 'all') setSelectedVariant(fallback)
     }
   }, [allowAllVariants, defaultVariantId, lockedVariantId, selectedVariant, setSelectedVariant, variants])
 
@@ -102,7 +101,7 @@ export default function DashboardPage() {
       todayVisitorCount: 0,
       canViewRevenue: true,
     }),
-    [],
+    []
   )
 
   const { data: stats = defaultStats, isLoading, isError } = useQuery({
@@ -110,14 +109,10 @@ export default function DashboardPage() {
     enabled: Boolean(session?.user?.gymId) && !variantsLoading,
     queryFn: async () => {
       const params = new URLSearchParams()
-      if (variantFilter) {
-        params.set('variantId', variantFilter)
-      }
-      const response = await fetch(`/api/dashboard/stats${params.toString() ? `?${params.toString()}` : ''}`)
+      if (variantFilter) params.set('variantId', variantFilter)
 
-      if (!response.ok) {
-        throw new Error('Impossible de charger les statistiques')
-      }
+      const response = await fetch(`/api/dashboard/stats${params.toString() ? `?${params.toString()}` : ''}`)
+      if (!response.ok) throw new Error(t('errors.statsFetch'))
 
       const data = await response.json()
       return {
@@ -133,13 +128,14 @@ export default function DashboardPage() {
       } satisfies DashboardStats
     },
   })
+
   const expiringSoon = (stats.expiringSoon ?? []) as DashboardStats['expiringSoon']
   const [expiringPage, setExpiringPage] = useState(1)
-  useEffect(() => {
-    setExpiringPage(1)
-  }, [expiringSoon.length])
+  useEffect(() => setExpiringPage(1), [expiringSoon.length])
+
   const canViewRevenue = stats.canViewRevenue !== false
   const percentageChange = stats.percentageChange ?? 0
+
   const statCards: Array<{
     title: string
     value: string
@@ -150,55 +146,51 @@ export default function DashboardPage() {
   }> = [
     canViewRevenue
       ? {
-          title: 'Revenus du mois',
-          value: `${(stats.monthlyRevenue ?? 0).toLocaleString()} MAD`,
+          title: t('cards.monthlyRevenue.title'),
+          value: t('cards.monthlyRevenue.value', { value: (stats.monthlyRevenue ?? 0).toLocaleString() }),
           icon: BarChart3,
           accent: 'from-primary/20 via-primary/10 to-primary/5',
-          subtitle: 'Chiffre brut mois en cours',
+          subtitle: t('cards.monthlyRevenue.subtitle'),
         }
       : null,
     {
-      title: "Visites aujourd'hui",
+      title: t('cards.visitsToday.title'),
       value: (stats.todayVisitorCount ?? 0).toLocaleString(),
       icon: Activity,
       accent: 'from-blue-500/20 via-blue-500/10 to-blue-500/5',
-      subtitle: 'Passages enregistres',
+      subtitle: t('cards.visitsToday.subtitle'),
     },
     {
-      title: 'Membres actifs',
+      title: t('cards.activeMembers.title'),
       value: (stats.activeMembers ?? 0).toLocaleString(),
       icon: Users,
       accent: 'from-emerald-500/20 via-emerald-500/10 to-emerald-500/5',
-      subtitle: 'Avec abonnement valide',
+      subtitle: t('cards.activeMembers.subtitle'),
     },
     {
-      title: 'Nouveaux membres ce mois-ci',
+      title: t('cards.newMembers.title'),
       value: (stats.newMembers ?? 0).toLocaleString(),
       icon: UserPlus,
       accent: 'from-amber-500/20 via-amber-500/10 to-amber-500/5',
-      subtitle: 'Conversions recentes',
+      subtitle: t('cards.newMembers.subtitle'),
     },
     canViewRevenue
       ? {
-          title: 'Evolution vs mois dernier',
-          value: `${percentageChange >= 0 ? '+' : ''}${percentageChange}%`,
+          title: t('cards.vsLastMonth.title'),
+          value: t('cards.vsLastMonth.value', {
+            sign: percentageChange >= 0 ? '+' : '',
+            value: percentageChange,
+          }),
           valueClass: percentageChange >= 0 ? 'text-emerald-600' : 'text-red-600',
           icon: TrendingUp,
           accent:
             percentageChange >= 0
               ? 'from-emerald-500/20 via-emerald-500/10 to-emerald-500/5'
               : 'from-rose-500/20 via-rose-500/10 to-rose-500/5',
-          subtitle: 'Progression du revenu',
+          subtitle: t('cards.vsLastMonth.subtitle'),
         }
       : null,
-  ].filter(Boolean) as Array<{
-    title: string
-    value: string
-    valueClass?: string
-    icon: LucideIcon
-    accent: string
-    subtitle?: string
-  }>
+  ].filter(Boolean) as any
 
   if (isLoading || variantsLoading) {
     return (
@@ -218,11 +210,7 @@ export default function DashboardPage() {
   }
 
   if (isError) {
-    return (
-      <div className="py-10 text-center text-red-500">
-        Impossible de charger les statistiques pour le moment.
-      </div>
-    )
+    return <div className="py-10 text-center text-red-500">{t('errors.statsGeneric')}</div>
   }
 
   const planDistribution = (stats.planDistribution ?? []) as DashboardStats['planDistribution']
@@ -239,48 +227,41 @@ export default function DashboardPage() {
   ]
 
   const revenueChartConfig: ChartConfig = {
-    revenue: {
-      label: 'Revenus',
-      color: 'oklch(0.488 0.243 264.376)',
-    },
+    revenue: { label: t('charts.revenueLegend'), color: 'oklch(0.488 0.243 264.376)' },
   }
-
-  const planChartConfig: ChartConfig = {
-    value: {
-      label: 'Abonnements',
-    },
-  }
-
+  const planChartConfig: ChartConfig = { value: { label: t('charts.distributionTitle') } }
   const memberRadialConfig: ChartConfig = {
-    Actifs: { label: 'Actifs', color: computedColors[0] },
-    Inactifs: { label: 'Inactifs', color: computedColors[3] },
+    [t('charts.active')]: { label: t('charts.active'), color: computedColors[0] },
+    [t('charts.inactive')]: { label: t('charts.inactive'), color: computedColors[3] },
   }
 
   const totalMembers = Math.max(
     stats.activeMembers ?? 0,
-    planDistribution.reduce((sum, p) => sum + (p.value ?? 0), 0),
+    planDistribution.reduce((sum, p) => sum + (p.value ?? 0), 0)
   )
 
   const memberRadialData = [
-    { name: 'Actifs', value: stats.activeMembers ?? 0, fill: computedColors[0] },
-    { name: 'Inactifs', value: Math.max(totalMembers - (stats.activeMembers ?? 0), 0), fill: computedColors[3] },
+    { name: t('charts.active'), value: stats.activeMembers ?? 0, fill: computedColors[0] },
+    { name: t('charts.inactive'), value: Math.max(totalMembers - (stats.activeMembers ?? 0), 0), fill: computedColors[3] },
   ]
 
   const downloadExcel = async (type: 'earnings' | 'top-members' | 'loyal-members') => {
     if (type === 'earnings' && !canViewRevenue) {
-      toast.error('Acces revenus reserve au proprietaire')
+      toast.error(t('errors.downloadNotAllowed'))
       return
     }
     try {
       setDownloading(type)
       const params = new URLSearchParams({ type })
       if (variantFilter) params.set('variantId', variantFilter)
+
       const response = await fetch(`/api/reports/excel?${params.toString()}`)
       if (!response.ok) {
         const payload = await response.json().catch(() => null)
-        const message = (payload as any)?.error ?? 'Impossible de telecharger le rapport'
+        const message = (payload as any)?.error ?? t('errors.downloadFailed')
         throw new Error(message)
       }
+
       const blob = await response.blob()
       const url = URL.createObjectURL(blob)
       const anchor = document.createElement('a')
@@ -289,7 +270,7 @@ export default function DashboardPage() {
       anchor.click()
       URL.revokeObjectURL(url)
     } catch (error) {
-      toast.error((error as Error).message ?? 'Export impossible')
+      toast.error((error as Error).message ?? t('errors.exportFailed'))
     } finally {
       setDownloading(null)
     }
@@ -297,29 +278,32 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-8">
+      {/* Hero */}
       <div className="relative overflow-hidden rounded-3xl border border-primary/25 bg-linear-to-r from-primary/15 via-primary/10 to-background p-6 shadow-lg md:p-8">
         <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_10%_20%,hsl(var(--primary)/0.25),transparent_32%),radial-gradient(circle_at_80%_0%,hsl(var(--primary)/0.18),transparent_30%)]" />
         <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_60%_80%,hsl(var(--primary)/0.08),transparent_30%)] blur-2xl" />
         <div className="relative flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
           <div className="space-y-3">
             <Badge variant="outline" className="rounded-full border-primary/40 bg-white/50 text-primary shadow-sm backdrop-blur">
-              Vue generale
+              {t('hero.overviewBadge')}
             </Badge>
+
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
               <Sparkles className="h-4 w-4 text-primary" />
-              Console animee pour vos indicateurs en direct
+              {t('hero.kicker')}
             </div>
-            <h1 className="text-3xl font-bold leading-tight">Tableau de bord GymWatch</h1>
-            <p className="max-w-2xl text-sm text-muted-foreground">
-              Pilotez les membres, les presences et les revenus depuis un espace clair. Les indicateurs se mettent a jour automatiquement par salle.
-            </p>
+
+            <h1 className="text-3xl font-bold leading-tight">{t('hero.title')}</h1>
+            <p className="max-w-2xl text-sm text-muted-foreground">{t('hero.description')}</p>
+
             <div className="flex flex-wrap gap-3">
               <Button className="rounded-2xl shadow-md" asChild>
                 <Link href="/dashboard/members">
                   <Sparkles className="mr-2 h-4 w-4" />
-                  Ajouter un membre
+                  {t('hero.addMember')}
                 </Link>
               </Button>
+
               <Button
                 variant="outline"
                 className="rounded-2xl border-primary/40 bg-card/80 backdrop-blur"
@@ -327,29 +311,38 @@ export default function DashboardPage() {
                 disabled={!hasExcelReports || downloading === 'earnings' || !canViewRevenue}
               >
                 <Download className="mr-2 h-4 w-4" />
-                {hasExcelReports ? (downloading === 'earnings' ? 'Export...' : 'Export revenus') : 'Exporter (Pro)'}
+                {hasExcelReports
+                  ? downloading === 'earnings'
+                    ? t('hero.exporting')
+                    : t('hero.exportRevenue')
+                  : t('hero.exportPro')}
               </Button>
             </div>
           </div>
+
+          {/* Mini stats */}
           <div className="grid w-full max-w-sm gap-3 rounded-2xl border border-border/60 bg-card/85 p-4 shadow-sm backdrop-blur">
             <div className="flex items-center justify-between text-sm">
-              <span className="text-muted-foreground">Membres actifs</span>
+              <span className="text-muted-foreground">{t('miniStats.activeMembers')}</span>
               <span className="text-lg font-semibold">{stats.activeMembers.toLocaleString()}</span>
             </div>
+
             {canViewRevenue ? (
               <div className="flex items-center justify-between text-sm">
-                <span className="text-muted-foreground">Revenus du mois</span>
+                <span className="text-muted-foreground">{t('miniStats.monthlyRevenue')}</span>
                 <span className="text-lg font-semibold">{stats.monthlyRevenue.toLocaleString()} MAD</span>
               </div>
             ) : null}
+
             <div className="flex items-center justify-between text-sm">
-              <span className="text-muted-foreground">Visites aujourd&apos;hui</span>
+              <span className="text-muted-foreground">{t('miniStats.visitsToday')}</span>
               <span className="text-lg font-semibold">{stats.todayVisitorCount.toLocaleString()}</span>
             </div>
+
             <div className="flex items-center justify-between rounded-xl bg-muted/60 px-3 py-2 text-sm">
               <span className="flex items-center gap-2 font-semibold">
                 <TrendingUp className="h-4 w-4 text-primary" />
-                {percentageChange >= 0 ? 'En hausse' : 'En baisse'}
+                {percentageChange >= 0 ? t('miniStats.up') : t('miniStats.down')}
               </span>
               <span className={percentageChange >= 0 ? 'text-emerald-600 font-semibold' : 'text-red-600 font-semibold'}>
                 {percentageChange >= 0 ? '+' : ''}
@@ -360,6 +353,7 @@ export default function DashboardPage() {
         </div>
       </div>
 
+      {/* Variants + quick links */}
       <div className="space-y-3">
         <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
           <VariantSelector
@@ -371,38 +365,43 @@ export default function DashboardPage() {
             loading={variantsLoading}
             allowAll={allowAllVariants}
           />
+
           <div className="flex flex-wrap gap-2">
             <Button variant="ghost" className="rounded-2xl" asChild>
               <Link href="/dashboard/presence">
-                Presence
+                {t('quickLinks.presence')}
                 <ArrowUpRight className="ml-2 h-4 w-4" />
               </Link>
             </Button>
             <Button variant="ghost" className="rounded-2xl" asChild>
               <Link href="/dashboard/access-logs">
-                Controle acces
+                {t('quickLinks.accessLogs')}
                 <ArrowUpRight className="ml-2 h-4 w-4" />
               </Link>
             </Button>
           </div>
         </div>
+
         {multiVariantLocked ? (
           <div className="flex items-start gap-3 rounded-2xl border border-amber-200/70 bg-amber-50 px-4 py-3 text-sm text-amber-900">
             <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-600" />
             <div className="space-y-1">
-              <p className="font-semibold">Vue multi-salles reservee</p>
+              <p className="font-semibold">{t('multiVariant.title')}</p>
               <p>
-                Votre plan actuel ne permet pas d&apos;agreger plusieurs variantes. Choisissez une salle ou{' '}
-                <Link href="/dashboard/settings" className="font-semibold text-amber-900 underline">
-                  mettez a niveau
-                </Link>{' '}
-                pour debloquer les exports consolides.
+                {t.rich('multiVariant.body', {
+                  upgradeLink: (chunks) => (
+                    <Link href="/dashboard/settings" className="font-semibold text-amber-900 underline">
+                      {t('multiVariant.upgrade')}
+                    </Link>
+                  ),
+                })}
               </p>
             </div>
           </div>
         ) : null}
       </div>
 
+      {/* Stat cards */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {statCards.map((card) => {
           const Icon = card.icon
@@ -431,17 +430,18 @@ export default function DashboardPage() {
         })}
       </div>
 
+      {/* Charts */}
       <div className={`grid gap-4 ${canViewRevenue ? 'lg:grid-cols-3' : 'lg:grid-cols-1'}`}>
         {canViewRevenue && (
           <Card className="lg:col-span-2 overflow-hidden rounded-3xl border border-border/70 bg-card/80 shadow-sm backdrop-blur">
             <CardHeader className="pb-0">
               <div className="flex items-center justify-between gap-3">
                 <div>
-                  <CardTitle>Evolution des revenus</CardTitle>
-                  <CardDescription>Douze derniers mois</CardDescription>
+                  <CardTitle>{t('charts.revenueTitle')}</CardTitle>
+                  <CardDescription>{t('charts.revenueSubtitle')}</CardDescription>
                 </div>
                 <Badge variant="outline" className="rounded-full border-border/60">
-                  Mise a jour auto
+                  {t('charts.autoUpdate')}
                 </Badge>
               </div>
             </CardHeader>
@@ -487,11 +487,11 @@ export default function DashboardPage() {
           <CardHeader className="pb-0">
             <div className="flex items-center justify-between gap-3">
               <div>
-                <CardTitle>Repartition des statuts</CardTitle>
-                <CardDescription>Abonnements actifs vs autres</CardDescription>
+                <CardTitle>{t('charts.distributionTitle')}</CardTitle>
+                <CardDescription>{t('charts.distributionSubtitle')}</CardDescription>
               </div>
               <Badge variant="secondary" className="rounded-full bg-primary/10 text-primary">
-                Live
+                {t('charts.live')}
               </Badge>
             </div>
           </CardHeader>
@@ -522,62 +522,68 @@ export default function DashboardPage() {
         </Card>
       </div>
 
+      {/* Expiring + radial */}
       <div className="grid gap-4 lg:grid-cols-2">
         <Card className="flex flex-col overflow-hidden rounded-3xl border border-border/70 bg-card/80 shadow-sm backdrop-blur">
           <CardHeader className="items-center pb-0 text-center">
-            <CardTitle>Taux d'abonnements actifs</CardTitle>
-            <CardDescription>Sur l'ensemble des membres</CardDescription>
+            <CardTitle>{t('charts.radialTitle')}</CardTitle>
+            <CardDescription>{t('charts.radialSubtitle')}</CardDescription>
           </CardHeader>
+
           <CardContent className="flex flex-1 items-center pb-0">
             <ChartContainer config={memberRadialConfig} className="mx-auto w-full max-w-[320px]">
               <div className="relative h-[260px]">
                 <ResponsiveContainer width="100%" height="100%">
-                  <RadialBarChart
-                    data={memberRadialData}
-                    innerRadius="50%"
-                    outerRadius="90%"
-                    startAngle={90}
-                    endAngle={-270}
-                  >
+                  <RadialBarChart data={memberRadialData} innerRadius="50%" outerRadius="90%" startAngle={90} endAngle={-270}>
                     <ChartTooltip cursor={false} content={<ChartTooltipContent />} />
-                    <RadialBar dataKey="value"  background cornerRadius={10} />
+                    <RadialBar dataKey="value" background cornerRadius={10} />
                   </RadialBarChart>
                 </ResponsiveContainer>
+
                 <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
                   <div className="text-3xl font-bold">{stats.activeMembers.toLocaleString()}</div>
-                  <p className="text-sm text-muted-foreground">Actifs</p>
-                  <p className="text-xs text-muted-foreground">{totalMembers.toLocaleString()} membres</p>
+                  <p className="text-sm text-muted-foreground">{t('charts.active')}</p>
+                  <p className="text-xs text-muted-foreground">{t('charts.membersLabel', { count: totalMembers.toLocaleString() })}</p>
                 </div>
               </div>
             </ChartContainer>
           </CardContent>
+
           <CardFooter className="flex-col gap-2 text-sm">
             <div className="flex items-center gap-2 font-medium leading-none">
               <TrendingUp className="h-4 w-4" />
-              {stats.activeMembers.toLocaleString()} actifs sur {totalMembers.toLocaleString()} membres
+              {t('charts.radialFooterLine', {
+                active: stats.activeMembers.toLocaleString(),
+                total: totalMembers.toLocaleString(),
+              })}
             </div>
-            <div className="text-muted-foreground leading-none">Repartition des statuts d'abonnement</div>
+            <div className="text-muted-foreground leading-none">{t('charts.radialFooterHint')}</div>
           </CardFooter>
         </Card>
 
         <Card className="overflow-hidden rounded-3xl border border-border/70 bg-card/80 shadow-sm backdrop-blur">
           <CardHeader>
-            <CardTitle>Abonnements expirant dans les 7 prochains jours</CardTitle>
-            <CardDescription>{expiringSoon.length} abonnements expireront bientot</CardDescription>
+            <CardTitle>{t('expiring.title')}</CardTitle>
+            <CardDescription>{t('expiring.subtitle', { count: expiringSoon.length })}</CardDescription>
           </CardHeader>
+
           <CardContent className="space-y-4">
             {expiringSoon.length === 0 ? (
-              <p className="py-4 text-center text-muted-foreground">Aucun abonnement n'expire dans les 7 prochains jours</p>
+              <p className="py-4 text-center text-muted-foreground">{t('expiring.none')}</p>
             ) : (
               <>
                 <div className="mb-4 flex flex-wrap items-center justify-between gap-3 text-sm text-muted-foreground">
                   <span>
-                    {expiringSoon.length} abonnement{expiringSoon.length > 1 ? 's' : ''} total
+                    {t('expiring.total', {
+                      count: expiringSoon.length,
+                      plural: expiringSoon.length > 1 ? 's' : '',
+                    })}
                   </span>
                   <span className="text-xs uppercase tracking-[0.3em] text-muted-foreground">
-                    Page {expiringPage} / {expiringPageCount}
+                    {t('expiring.page', { page: expiringPage, pageCount: expiringPageCount })}
                   </span>
                 </div>
+
                 <div className="space-y-3">
                   {visibleExpiring.map((subscription) => (
                     <div
@@ -589,12 +595,13 @@ export default function DashboardPage() {
                         <p className="text-sm text-muted-foreground">{subscription.endDate}</p>
                       </div>
                       <div className="text-right">
-                        <p className="font-semibold">{subscription.daysLeft} jours</p>
-                        <p className="text-xs text-muted-foreground">reste</p>
+                        <p className="font-semibold">{t('expiring.days', { count: subscription.daysLeft })}</p>
+                        <p className="text-xs text-muted-foreground">{t('expiring.left')}</p>
                       </div>
                     </div>
                   ))}
                 </div>
+
                 {expiringSoon.length > expiringPageSize && (
                   <PaginationControls
                     page={expiringPage}
@@ -610,18 +617,20 @@ export default function DashboardPage() {
         </Card>
       </div>
 
+      {/* Reports */}
       <Card className="overflow-hidden rounded-3xl border border-border/70 bg-card/80 shadow-sm backdrop-blur">
         <CardHeader className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
           <div>
-            <CardTitle>Rapports et exports</CardTitle>
+            <CardTitle>{t('reports.title')}</CardTitle>
             <CardDescription>
-              {hasExcelReports ? 'Telechargez vos rapports avances au format Excel' : 'Passez au plan Pro pour activer les exports Excel'}
+              {hasExcelReports ? t('reports.subtitlePro') : t('reports.subtitleUpgrade')}
             </CardDescription>
           </div>
           <Badge variant="outline" className="rounded-full border-primary/50 text-primary">
-            Pro recommande
+            {t('reports.proRecommended')}
           </Badge>
         </CardHeader>
+
         <CardContent>
           {hasExcelReports ? (
             <div className="flex flex-wrap gap-3">
@@ -632,30 +641,30 @@ export default function DashboardPage() {
                   onClick={() => downloadExcel('earnings')}
                   disabled={downloading === 'earnings'}
                 >
-                  {downloading === 'earnings' ? 'Export...' : 'Revenus Excel'}
+                  {downloading === 'earnings' ? t('hero.exporting') : t('reports.revenueExcel')}
                 </Button>
               )}
+
               <Button
                 variant="secondary"
                 className="rounded-2xl"
                 onClick={() => downloadExcel('top-members')}
                 disabled={downloading === 'top-members'}
               >
-                {downloading === 'top-members' ? 'Export...' : 'Top membres Excel'}
+                {downloading === 'top-members' ? t('hero.exporting') : t('reports.topMembersExcel')}
               </Button>
+
               <Button
                 variant="secondary"
                 className="rounded-2xl"
                 onClick={() => downloadExcel('loyal-members')}
                 disabled={downloading === 'loyal-members'}
               >
-                {downloading === 'loyal-members' ? 'Membres fideles...' : 'Membres fideles Excel'}
+                {downloading === 'loyal-members' ? t('reports.loyalExporting') : t('reports.loyalMembersExcel')}
               </Button>
             </div>
           ) : (
-            <p className="text-sm text-muted-foreground">
-              Les exports Excel (revenus, top membres, fidelite) sont reserves au plan Pro.
-            </p>
+            <p className="text-sm text-muted-foreground">{t('reports.excelRestricted')}</p>
           )}
         </CardContent>
       </Card>

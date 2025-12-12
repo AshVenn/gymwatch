@@ -19,6 +19,8 @@ export type FeatureAccessItem = {
   icon: LucideIcon
 }
 
+type Translate = (key: string, values?: Record<string, unknown>) => string
+
 interface FeatureAccessGridProps {
   items: FeatureAccessItem[]
   planLabel?: string
@@ -227,14 +229,15 @@ export function buildFeatureAccessItems(options: {
   hasPresence: boolean
   hasCourses: boolean
   hasExcelReports?: boolean
+  t: Translate
 }): FeatureAccessItem[] {
-  const { hasAccessControl, hasPresence, hasCourses, hasExcelReports = false } = options
+  const { hasAccessControl, hasPresence, hasCourses, hasExcelReports = false, t } = options
 
   return [
     {
       id: 'access' as const,
-      title: 'Contrôle accès',
-      description: 'QR, simulateur et journaux.',
+      title: t('items.access.title'),
+      description: t('items.access.description'),
       href: '/dashboard/access-logs',
       requiredPlan: 'PRO' as const,
       available: hasAccessControl,
@@ -242,8 +245,8 @@ export function buildFeatureAccessItems(options: {
     },
     {
       id: 'presence' as const,
-      title: 'Présence',
-      description: 'Vue temps réel des visites.',
+      title: t('items.presence.title'),
+      description: t('items.presence.description'),
       href: '/dashboard/presence',
       requiredPlan: 'PRO' as const,
       available: hasPresence,
@@ -251,8 +254,8 @@ export function buildFeatureAccessItems(options: {
     },
     {
       id: 'classes' as const,
-      title: 'Cours & planning',
-      description: 'Agenda, capacités et listes.',
+      title: t('items.classes.title'),
+      description: t('items.classes.description'),
       href: '/dashboard/classes',
       requiredPlan: 'ENTERPRISE' as const,
       available: hasCourses,
@@ -260,8 +263,8 @@ export function buildFeatureAccessItems(options: {
     },
     {
       id: 'reports' as const,
-      title: 'Exports Excel',
-      description: 'Visites et membres en XLSX.',
+      title: t('items.reports.title'),
+      description: t('items.reports.description'),
       href: '/dashboard',
       requiredPlan: 'PRO' as const,
       available: hasExcelReports,

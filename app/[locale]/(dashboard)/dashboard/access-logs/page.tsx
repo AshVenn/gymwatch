@@ -28,6 +28,7 @@ type AccessLogResponse = {
 
 export default function AccessLogsPage() {
   const t = useTranslations('dashboard.accessLogs')
+  const tFeatureAccess = useTranslations('dashboard.featureAccess')
   const { data: session, status } = useSession()
   const { tier, hasAccessControl, hasPresence, hasCourses, hasExcelReports, hasMultiLocations } = usePlanFeatures()
   const queryClient = useQueryClient()
@@ -83,8 +84,9 @@ export default function AccessLogsPage() {
         hasPresence,
         hasCourses,
         hasExcelReports,
+        t: tFeatureAccess,
       }),
-    [hasAccessControl, hasCourses, hasExcelReports, hasPresence],
+    [hasAccessControl, hasCourses, hasExcelReports, hasPresence, tFeatureAccess],
   )
 
   useEffect(() => {
@@ -418,4 +420,3 @@ export default function AccessLogsPage() {
     </div>
   )
 }
-

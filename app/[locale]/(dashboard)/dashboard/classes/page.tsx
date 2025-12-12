@@ -84,6 +84,7 @@ export default function ClassesPage() {
   const { tier, hasAccessControl, hasPresence, hasCourses, hasExcelReports } = usePlanFeatures()
   const t = useTranslations('dashboard.classes')
   const tNav = useTranslations('dashboard.nav')
+  const tFeatureAccess = useTranslations('dashboard.featureAccess')
   const locale = useLocale()
 
   const [weekStart, setWeekStart] = useState<Date>(startOfWeek(new Date()))
@@ -113,8 +114,9 @@ export default function ClassesPage() {
         hasPresence,
         hasCourses,
         hasExcelReports,
+        t: tFeatureAccess,
       }),
-    [hasAccessControl, hasCourses, hasExcelReports, hasPresence],
+    [hasAccessControl, hasCourses, hasExcelReports, hasPresence, tFeatureAccess],
   )
 
   const [dialogOpen, setDialogOpen] = useState(false)

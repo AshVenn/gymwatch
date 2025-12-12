@@ -3,108 +3,400 @@
     "localeLabel": "English",
     "comingSoon": "Detailed translations coming soon."
   },
-  "pagination": {
-      "prev": "Previous",
-      "next": "Next",
-      "pageXofY": "Page {x} of {y}",
-      "rangeOfTotal": "{start}-{end} of {total} items"
-    },
-    "variantSelector": {
-      "label": "Variant",
-      "placeholderAll": "All variants",
-      "placeholderSingle": "Select a variant",
-      "adminLockedNote": "Locked for this admin account",
-      "assignedVariantFallback": "Assigned variant",
-      "allOption": "All variants",
-      "defaultSuffix": "(default)",
-      "lockedMessage": "Multi-location overview is available on the Enterprise plan."
-    },
-    "subscriptions": {
-  "filters": {
-    "searchLabel": "Search",
-    "searchPlaceholder": "Member name or plan...",
-    "statusLabel": "Status",
-    "statusPlaceholder": "Filter by status",
-    "statusAll": "All",
-    "statusActive": "Active",
-    "statusExpiresToday": "Expiring today",
-    "statusExpired": "Expired",
-    "sortLabel": "Sort",
-    "sortPlaceholder": "Choose sort",
-    "sortNextExpiry": "Nearest expiry",
-    "sortRecentStart": "Most recent start",
-    "sortPriceDesc": "Price (high to low)"
-  },  "summary": {
-    "eyebrow": "Subscription flow",
-    "title": "Subscriptions",
-    "description": "Real-time view of members, revenue and upcoming renewals.",
-    "liveBadge": "Live updated",
-    "totalRevenue": {
-      "label": "Total revenue",
-      "helper": "Average ticket {{avgTicket}}"
-    },
-    "active": {
-      "label": "Active subscriptions",
-      "helper": "{{retentionRate}}% retention"
-    },
-    "expiringSoon": {
-      "label": "Expiring in < 5 days",
-      "helper": "Plan your follow-ups"
-    },
-    "expired": {
-      "label": "Expired subscriptions",
-      "helper": "Handle these first"
-    }
-  }
-},
-"visits": {
-  "charts": {
-    "hourlyTitle": "Visits by hour",
-    "periodTitle": "Visits over the period",
-    "byVariantTitle": "Visits by room",
-    "emptyDay": "No visits for this day.",
-    "emptyPeriod": "No visits in this period.",
-    "emptyVariant": "No visits recorded yet.",
-    "valueLabel": "Visits"
+    "metadata": {
+    "titleDefault": "GymWatch - Modern gym management",
+    "titleTemplate": "%s | GymWatch",
+    "description": "GymWatch helps gyms manage subscriptions, members, and revenue with an intelligent dashboard.",
+    "applicationName": "GymWatch",
+    "keywords": "gym, subscriptions, fitness, management, software",
+    "openGraphTitle": "GymWatch - Centralize your fitness club management",
+    "openGraphDescription": "Multi-tenant dashboard to track members, subscriptions, and revenue in real time.",
+    "openGraphImageAlt": "GymWatch abstract pattern",
+    "twitterTitle": "GymWatch - Gym management solution",
+    "twitterDescription": "Automate subscriptions, streamline operations, and empower your members with GymWatch."
   },
-  "filters": {
-    "dayView": "Day view",
-    "periodView": "Period",
-    "reset": "Reset",
-    "searchLabel": "Member search",
-    "searchPlaceholder": "Name, email...",
+    "dashOwAdSubscriptions": {
+    "errors": {
+      "loadSubscriptions": "Unable to load subscriptions",
+      "loadPlans": "Unable to load plans",
+      "loadSubscriptionsInline": "Unable to load subscriptions.",
+      "deleteFailed": "Unable to delete this subscription",
+      "renewFailed": "Unable to renew the subscription",
+      "noSubscriptionSelected": "No subscription selected",
+      "markVisitFailed": "Unable to mark the visit"
+    },
+    "quickFilters": {
+      "all": "All",
+      "active": "Active",
+      "expiresToday": "Expires today",
+      "expired": "Expired"
+    },
+    "visit": {
+      "button": "Mark a visit",
+      "dialogTitle": "Record a visit",
+      "dialogDesc": "Pick a member to record a visit today.",
+      "searchPlaceholder": "Search a member",
+      "noneFound": "No members found.",
+      "endLine": "Ends: {date} - {daysLeft} days left",
+      "saving": "Saving...",
+      "validate": "Confirm"
+    },
+    "table": {
+      "found": "{count} subscription{plural} found",
+      "page": "Page {page} / {pageCount}",
+      "member": "Member",
+      "plan": "Plan",
+      "start": "Start",
+      "end": "End",
+      "remaining": "Remaining",
+      "amount": "Amount",
+      "status": "Status",
+      "variant": "Variant",
+      "actions": "Actions",
+      "late": "{count} days late",
+      "left": "{count} days left",
+      "idPrefix": "#{id}"
+    },
+    "status": {
+      "active": "Active",
+      "expiresToday": "Expires today",
+      "expired": "Expired"
+    },
+    "actions": {
+      "markVisit": "Mark visit",
+      "editRenew": "Edit / renew",
+      "delete": "Delete"
+    },
+    "renew": {
+      "title": "Update subscription",
+      "planLabel": "Plan",
+      "planPlaceholder": "Select a plan",
+      "startDateLabel": "Start date",
+      "endPreview": "Estimated end: {date}",
+      "createPaymentTitle": "Create a payment",
+      "createPaymentDesc": "Disable if you’re fixing a date mistake.",
+      "saving": "Updating...",
+      "save": "Save"
+    },
+    "empty": {
+      "title": "No subscriptions match your filters.",
+      "desc": "Adjust search or status to show other members.",
+      "reset": "Reset filters"
+    },
+    "confirm": {
+      "delete": "Are you sure you want to delete this subscription?"
+    },
+    "toasts": {
+      "deleted": "Subscription deleted successfully",
+      "updated": "Subscription updated",
+      "selectPlan": "Please select a plan.",
+      "selectStartDate": "Please choose a start date.",
+      "inactiveOrExpired": "Inactive or expired subscription",
+      "dailyLimitReached": "{name} reached the daily limit",
+      "lastVisitWarning": "Last visit today for {name}{remaining}",
+      "markedPresent": "{name} marked present ({count} visits today){remaining}"
+    },
+    "labels": {
+      "memberFallback": "Member",
+      "remainingVisitsOne": " (1 remaining)",
+      "remainingVisitsMany": " ({count} remaining)",
+      "remainingShortOne": " - 1 left",
+      "remainingShortMany": " - {count} left"
+    }
+  },
+    "dashOwAdDashboard": {
+    "errors": {
+      "statsFetch": "Unable to load stats",
+      "statsGeneric": "Unable to load stats right now.",
+      "downloadNotAllowed": "Revenue access is restricted to the owner",
+      "downloadFailed": "Unable to download the report",
+      "exportFailed": "Export failed"
+    },
+    "hero": {
+      "overviewBadge": "Overview",
+      "kicker": "Animated console for your live metrics",
+      "title": "GymWatch Dashboard",
+      "description": "Manage members, attendance, and revenue from one clear space. Metrics update automatically per gym.",
+      "addMember": "Add member",
+      "exporting": "Exporting...",
+      "exportRevenue": "Revenue export",
+      "exportPro": "Export (Pro)"
+    },
+    "miniStats": {
+      "activeMembers": "Active members",
+      "monthlyRevenue": "Monthly revenue",
+      "visitsToday": "Visits today",
+      "up": "Up",
+      "down": "Down"
+    },
+    "quickLinks": {
+      "presence": "Attendance",
+      "accessLogs": "Access logs"
+    },
+    "multiVariant": {
+      "title": "Multi-gym view restricted",
+      "body": "Your current plan can’t aggregate multiple variants. Select a gym or {upgradeLink} to unlock consolidated exports.",
+      "upgrade": "upgrade"
+    },
+    "cards": {
+      "monthlyRevenue": {
+        "title": "Monthly revenue",
+        "subtitle": "Gross revenue this month",
+        "value": "{value} MAD"
+      },
+      "visitsToday": {
+        "title": "Visits today",
+        "subtitle": "Recorded check-ins"
+      },
+      "activeMembers": {
+        "title": "Active members",
+        "subtitle": "With a valid subscription"
+      },
+      "newMembers": {
+        "title": "New members this month",
+        "subtitle": "Recent conversions"
+      },
+      "vsLastMonth": {
+        "title": "Change vs last month",
+        "subtitle": "Revenue trend",
+        "value": "{sign}{value}%"
+      }
+    },
+    "charts": {
+      "revenueTitle": "Revenue trend",
+      "revenueSubtitle": "Last 12 months",
+      "autoUpdate": "Auto update",
+      "revenueLegend": "Revenue",
+      "distributionTitle": "Status distribution",
+      "distributionSubtitle": "Active subscriptions vs others",
+      "live": "Live",
+      "radialTitle": "Active subscription rate",
+      "radialSubtitle": "Across all members",
+      "active": "Active",
+      "inactive": "Inactive",
+      "membersLabel": "{count} members",
+      "radialFooterLine": "{active} active out of {total} members",
+      "radialFooterHint": "Subscription status breakdown"
+    },
+    "expiring": {
+      "title": "Subscriptions expiring in the next 7 days",
+      "subtitle": "{count} subscriptions will expire soon",
+      "none": "No subscriptions expire in the next 7 days",
+      "total": "{count} subscription{plural}",
+      "page": "Page {page} / {pageCount}",
+      "days": "{count} days",
+      "left": "left"
+    },
+    "reports": {
+      "title": "Reports & exports",
+      "subtitlePro": "Download advanced Excel reports",
+      "subtitleUpgrade": "Upgrade to Pro to enable Excel exports",
+      "proRecommended": "Pro recommended",
+      "revenueExcel": "Revenue (Excel)",
+      "topMembersExcel": "Top members (Excel)",
+      "loyalMembersExcel": "Loyal members (Excel)",
+      "loyalExporting": "Loyal members...",
+      "excelRestricted": "Excel exports (revenue, top members, loyalty) are available on the Pro plan only."
+    }
+  },
+    "dashOwAdGymSettings": {
+    "errors": {
+      "gymFetch": "Unable to load gym settings",
+      "planLimitsFetch": "Unable to load plan limits",
+      "gymInfoLoadTitle": "Unable to load",
+      "gymInfoLoadDesc": "An error occurred while loading gym information."
+    },
+    "header": {
+      "eyebrow": "Settings",
+      "title": "Gym space",
+      "description": "This information is read-only for gym accounts. Contact support if you need updates.",
+      "roleUnknown": "Unknown role",
+      "planPill": "Plan {plan}"
+    },
+    "badges": {
+      "billing": "{interval}"
+    },
+    "fields": {
+      "user": "User",
+      "email": "Email",
+      "gym": "Gym",
+      "billing": "Billing",
+      "fullName": "Full name",
+      "role": "Role",
+      "plan": "Plan",
+      "gymId": "Gym ID",
+      "gymIdHint": "Automatically linked to your account.",
+      "gymName": "Name",
+      "phone": "Phone",
+      "city": "City",
+      "country": "Country",
+      "address": "Address",
+      "maxSession": "Max session duration"
+    },
+    "sections": {
+      "userProfileTitle": "User profile",
+      "userProfileDesc": "Information from your account and subscription.",
+      "gymInfoTitle": "Gym information",
+      "gymInfoDesc": "Automatically retrieved from the gym profile.",
+      "planLimitsTitle": "Plan limits",
+      "planLimitsDesc": "Caps applied to your subscription offers."
+    },
+    "readonlyNote": "Global settings updates are disabled for owner/admin accounts.",
+    "common": {
+      "notProvided": "Not provided",
+      "minutes": "{count} minutes"
+    },
+    "roles": {
+      "GYM_OWNER": "Owner",
+      "GYM_ADMIN": "Admin"
+    },
+    "plans": {
+      "BASIC": "Basic",
+      "PRO": "Pro",
+      "ENTERPRISE": "Enterprise"
+    },
+    "intervals": {
+      "ANNUAL": "Annual",
+      "MONTHLY": "Monthly"
+    },
+    "limits": {
+      "currentTitle": "Your current limit",
+      "unlimitedPerVariant": "Unlimited per variant",
+      "unlimitedPerNetwork": "Unlimited on network",
+      "perVariant": "{count} active plan(s) per variant",
+      "perNetwork": "{count} active plan(s) on network",
+      "overrideNote": "Override applied by support. Owners/admins cannot modify these values.",
+      "autoNote": "Values calculated automatically based on your plan.",
+      "tierVariant": "{count} plan(s) per variant",
+      "tierNetwork": "{count} plan(s) network",
+      "tierUnlimitedVariant": "Unlimited per variant",
+      "tierUnlimitedNetwork": "Unlimited network",
+      "footer": "Limits apply only to active plans. Contact support for exceptions."
+    }
+  },
+  "subscriptionBanner": {
+    "brandLine": "GymWatch Plan {plan}{demoSuffix}",
+    "demoSuffix": " (Demo)",
+    "planInterval": "{plan} · {interval}",
+    "demoActiveUntil": "Demo account active until {date}",
+    "thanks": "Thanks for using GymWatch.",
+    "expiredMessage": "Your subscription has expired. Renew your plan to keep access to features.",
+    "expiringIn": "Your subscription will expire in {days, plural, one {# day} other {# days}}.",
+    "actionRequired": "Action required",
+    "reminder": "Reminder",
+    "daysLeftBadge": "{days, plural, one {# day left} other {# days left}}",
+    "manage": "Manage subscription",
+    "plan": {
+      "basic": "Basic",
+      "pro": "Pro",
+      "enterprise": "Enterprise"
+    },
+    "interval": {
+      "monthly": "Monthly",
+      "annual": "Annual"
+    }
+  },
+  "pagination": {
+    "prev": "Previous",
+    "next": "Next",
+    "pageXofY": "Page {x} of {y}",
+    "rangeOfTotal": "{start}-{end} of {total} items"
+  },
+  "variantSelector": {
+    "label": "Variant",
+    "placeholderAll": "All variants",
+    "placeholderSingle": "Select a variant",
+    "adminLockedNote": "Locked for this admin account",
+    "assignedVariantFallback": "Assigned variant",
+    "allOption": "All variants",
+    "defaultSuffix": "(default)",
+    "lockedMessage": "Multi-location overview is available on the Enterprise plan."
+  },
+  "subscriptions": {
+    "filters": {
+      "searchLabel": "Search",
+      "searchPlaceholder": "Member name or plan...",
+      "statusLabel": "Status",
+      "statusPlaceholder": "Filter by status",
+      "statusAll": "All",
+      "statusActive": "Active",
+      "statusExpiresToday": "Expiring today",
+      "statusExpired": "Expired",
+      "sortLabel": "Sort",
+      "sortPlaceholder": "Choose sort",
+      "sortNextExpiry": "Nearest expiry",
+      "sortRecentStart": "Most recent start",
+      "sortPriceDesc": "Price (high to low)"
+    },
+    "summary": {
+      "eyebrow": "Subscription flow",
+      "title": "Subscriptions",
+      "description": "Real-time view of members, revenue and upcoming renewals.",
+      "liveBadge": "Live updated",
+      "totalRevenue": {
+        "label": "Total revenue",
+        "helper": "Average ticket {avgTicket}"
+      },
+      "active": {
+        "label": "Active subscriptions",
+        "helper": "{retentionRate}% retention"
+      },
+      "expiringSoon": {
+        "label": "Expiring in < 5 days",
+        "helper": "Plan your follow-ups"
+      },
+      "expired": {
+        "label": "Expired subscriptions",
+        "helper": "Handle these first"
+      }
+    }
+  },
+  "visits": {
+    "charts": {
+      "hourlyTitle": "Visits by hour",
+      "periodTitle": "Visits over the period",
+      "byVariantTitle": "Visits by room",
+      "emptyDay": "No visits for this day.",
+      "emptyPeriod": "No visits in this period.",
+      "emptyVariant": "No visits recorded yet.",
+      "valueLabel": "Visits"
+    },
+    "filters": {
+      "dayView": "Day view",
+      "periodView": "Period",
+      "reset": "Reset",
+      "searchLabel": "Member search",
+      "searchPlaceholder": "Name, email...",
+      "dateLabel": "Date",
+      "fromLabel": "From",
+      "toLabel": "To"
+    }
+  },
+  "classForm": {
+    "titleLabel": "Class title",
+    "titlePlaceholder": "Cross-training, Yoga...",
+    "coachLabel": "Coach",
+    "coachPlaceholder": "Coach name",
+    "roomLabel": "Room / Studio",
+    "roomPlaceholder": "Room A, Studio 2...",
     "dateLabel": "Date",
-    "fromLabel": "From",
-    "toLabel": "To"
-  }
-}
-
-,
-    "classForm": {
-        "titleLabel": "Class title",
-        "titlePlaceholder": "Cross-training, Yoga...",
-        "coachLabel": "Coach",
-        "coachPlaceholder": "Coach name",
-        "roomLabel": "Room / Studio",
-        "roomPlaceholder": "Room A, Studio 2...",
-        "dateLabel": "Date",
-        "capacityLabel": "Capacity",
-        "startTimeLabel": "Start time",
-        "endTimeLabel": "End time",
-        "variantLabel": "Variant",
-        "variantPlaceholder": "Select a variant",
-        "lockedVariantFallback": "Locked variant",
-        "defaultSuffix": "(default)",
-        "waitlistLabel": "Waitlist",
-        "waitlistDescription": "Allow a waitlist when the class is full"
-      },
-    "weekCalendar": {
-        "classesCount": "{count, plural, one {{count} class} other {{count} classes}}",
-        "noSessions": "No classes this day",
-        "spotsAvailable": "{count, plural, one {{count} spot} other {{count} spots}}",
-        "full": "Full",
-        "waitlistCount": "{count, plural, one {{count} on waitlist} other {{count} on waitlist}}"
-      },
+    "capacityLabel": "Capacity",
+    "startTimeLabel": "Start time",
+    "endTimeLabel": "End time",
+    "variantLabel": "Variant",
+    "variantPlaceholder": "Select a variant",
+    "lockedVariantFallback": "Locked variant",
+    "defaultSuffix": "(default)",
+    "waitlistLabel": "Waitlist",
+    "waitlistDescription": "Allow a waitlist when the class is full"
+  },
+  "weekCalendar": {
+    "classesCount": "{count, plural, one {{count} class} other {{count} classes}}",
+    "noSessions": "No classes this day",
+    "spotsAvailable": "{count, plural, one {{count} spot} other {{count} spots}}",
+    "full": "Full",
+    "waitlistCount": "{count, plural, one {{count} on waitlist} other {{count} on waitlist}}"
+  },
   "auth": {
     "login": {
       "toasts": {
@@ -142,7 +434,7 @@
       }
     }
   },
-    "marketing": {
+  "marketing": {
     "home": {
       "hero": {
         "eyebrow": "Gym management SaaS",
@@ -283,7 +575,10 @@
           "basic": {
             "name": "Basic",
             "description": "Essential features to centralize your members.",
-            "badges": ["Email support", "Due date alerts"],
+            "badges": [
+              "Email support",
+              "Due date alerts"
+            ],
             "features": [
               "Member and membership management",
               "Expiration alerts and reminders",
@@ -294,7 +589,10 @@
           "pro": {
             "name": "Pro",
             "description": "Automations, QR codes and advanced exports.",
-            "badges": ["QR codes", "Excel exports"],
+            "badges": [
+              "QR codes",
+              "Excel exports"
+            ],
             "features": [
               "Everything in Basic",
               "QR code access control",
@@ -307,7 +605,11 @@
           "enterprise": {
             "name": "Enterprise",
             "description": "Multi-site offer with advanced automations and unlimited catalog.",
-            "badges": ["Unlimited locations", "Automations", "Classes & scheduling"],
+            "badges": [
+              "Unlimited locations",
+              "Automations",
+              "Classes & scheduling"
+            ],
             "features": [
               "Unlimited clubs and users",
               "Advanced access control (QR, badge, member app)",
@@ -365,22 +667,38 @@
     }
   },
   "dashboard": {
-      "featureAccess": {
-          "modulesTitle": "Modules",
-          "modulesCount": "{active}/{total} active",
-          "planLabel": "Plan {plan}",
-
-          "badges": {
-            "included": "Included",
-            "notIncluded": "Not included"
-          },
-
-          "actions": {
-            "upgrade": "Upgrade",
-            "open": "Open",
-            "seePlans": "View plans"
-          }
+    "featureAccess": {
+      "modulesTitle": "Modules",
+      "modulesCount": "{active}/{total} active",
+      "planLabel": "Plan {plan}",
+      "badges": {
+        "included": "Included",
+        "notIncluded": "Not included"
+      },
+      "actions": {
+        "upgrade": "Upgrade",
+        "open": "Open",
+        "seePlans": "View plans"
+      },
+      "items": {
+        "access": {
+          "title": "Access control",
+          "description": "QR, simulator and logs"
         },
+        "presence": {
+          "title": "Presence",
+          "description": "Real-time visit view"
+        },
+        "classes": {
+          "title": "Classes & scheduling",
+          "description": "Agenda, capacities and lists"
+        },
+        "reports": {
+          "title": "Excel exports",
+          "description": "Visits and members in XLSX"
+        }
+      }
+    },
     "classes": {
       "planLabel": {
         "basic": "Basic",
@@ -795,8 +1113,8 @@
         "unauthenticated": "Access denied. Please sign in."
       }
     },
-      "members": {
-             "badge": {
+    "members": {
+      "badge": {
         "errors": {
           "loadMember": "Unable to load member.",
           "loadAccess": "Unable to load member access events.",

@@ -3,113 +3,402 @@
     "localeLabel": "العربية",
     "comingSoon": "ستتم إضافة الترجمات التفصيلية قريبًا."
   },
-  "pagination": {
-      "prev": "السابق",
-      "next": "التالي",
-      "pageXofY": "الصفحة {x} من {y}",
-      "rangeOfTotal": "{start}-{end} من أصل {total}"
-    }
-    ,
-    "variantSelector": {
-      "label": "الفرع",
-      "placeholderAll": "كل الفروع",
-      "placeholderSingle": "اختر فرعاً",
-      "adminLockedNote": "مقفل لهذا الحساب الإداري",
-      "assignedVariantFallback": "فرع مخصص",
-      "allOption": "كل الفروع",
-      "defaultSuffix": "(افتراضي)",
-      "lockedMessage": "عرض الفروع المتعددة متاح في باقة Enterprise."
-    },
-    "subscriptions": {
-      "filters": {
-        "searchLabel": "بحث",
-        "searchPlaceholder": "اسم المشترك أو الخطة...",
-        "statusLabel": "الحالة",
-        "statusPlaceholder": "تصفية حسب الحالة",
-        "statusAll": "الكل",
-        "statusActive": "نشطة",
-        "statusExpiresToday": "تنتهي اليوم",
-        "statusExpired": "منتهية",
-        "sortLabel": "ترتيب",
-        "sortPlaceholder": "اختر طريقة الترتيب",
-        "sortNextExpiry": "أقرب تاريخ انتهاء",
-        "sortRecentStart": "الأحدث بدءاً",
-        "sortPriceDesc": "السعر من الأعلى"
-      },
-        "summary": {
-    "eyebrow": "تدفق الاشتراكات",
-    "title": "الاشتراكات",
-    "description": "رؤية فورية للأعضاء والإيرادات وتواريخ الانتهاء.",
-    "liveBadge": "تحديث فوري",
-    "totalRevenue": {
-      "label": "إجمالي الإيرادات",
-      "helper": "متوسط التذكرة {{avgTicket}}"
-    },
-    "active": {
-      "label": "اشتراكات نشطة",
-      "helper": "معدل احتفاظ {{retentionRate}}٪"
-    },
-    "expiringSoon": {
-      "label": "تنتهي خلال أقل من 5 أيام",
-      "helper": "خطط للتذكيرات"
-    },
-    "expired": {
-      "label": "اشتراكات منتهية",
-      "helper": "يجب متابعتها أولاً"
-    }
-  }
-    },
-    "visits": {
-  "charts": {
-    "hourlyTitle": "الزيارات حسب الساعة",
-    "periodTitle": "الزيارات خلال الفترة",
-    "byVariantTitle": "حسب القاعة",
-    "emptyDay": "لا زيارات في هذا اليوم.",
-    "emptyPeriod": "لا زيارات في هذه الفترة.",
-    "emptyVariant": "لا توجد زيارات مسجلة بعد.",
-    "valueLabel": "زيارات"
+    "metadata": {
+    "titleDefault": "GymWatch - إدارة حديثة للصالات الرياضية",
+    "titleTemplate": "%s | GymWatch",
+    "description": "يساعد GymWatch الصالات الرياضية على إدارة الاشتراكات والأعضاء والإيرادات عبر لوحة تحكم ذكية.",
+    "applicationName": "GymWatch",
+    "keywords": "صالة رياضية, اشتراكات, لياقة, إدارة, برنامج",
+    "openGraphTitle": "GymWatch - وحّد إدارة نادي اللياقة الخاص بك",
+    "openGraphDescription": "لوحة تحكم متعددة المستأجرين لتتبع الأعضاء والاشتراكات والإيرادات لحظيًا.",
+    "openGraphImageAlt": "نمط تجريدي لـ GymWatch",
+    "twitterTitle": "GymWatch - حل إدارة الصالات الرياضية",
+    "twitterDescription": "أتمتة الاشتراكات، تبسيط العمليات، وتمكين الأعضاء باستخدام GymWatch."
   },
-  "filters": {
-    "dayView": "عرض اليوم",
-    "periodView": "الفترة",
-    "reset": "إعادة تعيين",
-    "searchLabel": "بحث عن عضو",
-    "searchPlaceholder": "الاسم، البريد...",
-    "dateLabel": "التاريخ",
-    "fromLabel": "من",
-    "toLabel": "إلى"
-  }
-}
-,
-    "weekCalendar": {
-        "classesCount": "{count} حصة",
-        "noSessions": "لا حصص في هذا اليوم",
-        "spotsAvailable": "{count, plural, one {{count} مقعد} other {{count} مقاعد}}",
-        "full": "ممتلئ",
-        "waitlistCount": "{count} في الانتظار"
+    "dashOwAdSubscriptions": {
+    "errors": {
+      "loadSubscriptions": "تعذّر تحميل الاشتراكات",
+      "loadPlans": "تعذّر تحميل الخطط",
+      "loadSubscriptionsInline": "تعذّر تحميل الاشتراكات.",
+      "deleteFailed": "تعذّر حذف هذا الاشتراك",
+      "renewFailed": "تعذّر تجديد الاشتراك",
+      "noSubscriptionSelected": "لم يتم تحديد اشتراك",
+      "markVisitFailed": "تعذّر تسجيل الزيارة"
+    },
+    "quickFilters": {
+      "all": "الكل",
+      "active": "نشطة",
+      "expiresToday": "تنتهي اليوم",
+      "expired": "منتهية"
+    },
+    "visit": {
+      "button": "تسجيل زيارة",
+      "dialogTitle": "تسجيل زيارة",
+      "dialogDesc": "اختر عضوًا لتسجيل زيارة اليوم.",
+      "searchPlaceholder": "ابحث عن عضو",
+      "noneFound": "لا يوجد أعضاء مطابقون.",
+      "endLine": "ينتهي: {date} - متبقّي {daysLeft} يوم",
+      "saving": "جارٍ الحفظ...",
+      "validate": "تأكيد"
+    },
+    "table": {
+      "found": "تم العثور على {count} اشتراك{plural}",
+      "page": "الصفحة {page} / {pageCount}",
+      "member": "العضو",
+      "plan": "الخطة",
+      "start": "البداية",
+      "end": "النهاية",
+      "remaining": "المتبقي",
+      "amount": "المبلغ",
+      "status": "الحالة",
+      "variant": "الفرع/الفئة",
+      "actions": "الإجراءات",
+      "late": "متأخر {count} يوم",
+      "left": "متبقّي {count} يوم",
+      "idPrefix": "#{id}"
+    },
+    "status": {
+      "active": "نشط",
+      "expiresToday": "ينتهي اليوم",
+      "expired": "منتهي"
+    },
+    "actions": {
+      "markVisit": "تسجيل زيارة",
+      "editRenew": "تعديل / تجديد",
+      "delete": "حذف"
+    },
+    "renew": {
+      "title": "تحديث الاشتراك",
+      "planLabel": "الخطة",
+      "planPlaceholder": "اختر خطة",
+      "startDateLabel": "تاريخ البداية",
+      "endPreview": "النهاية المتوقعة: {date}",
+      "createPaymentTitle": "إنشاء دفعة",
+      "createPaymentDesc": "عطّل هذا الخيار إذا كنت تصحّح خطأ في التاريخ.",
+      "saving": "جارٍ التحديث...",
+      "save": "حفظ"
+    },
+    "empty": {
+      "title": "لا توجد اشتراكات تطابق عوامل التصفية.",
+      "desc": "عدّل البحث أو الحالة لعرض أعضاء آخرين.",
+      "reset": "إعادة ضبط الفلاتر"
+    },
+    "confirm": {
+      "delete": "هل أنت متأكد أنك تريد حذف هذا الاشتراك؟"
+    },
+    "toasts": {
+      "deleted": "تم حذف الاشتراك بنجاح",
+      "updated": "تم تحديث الاشتراك",
+      "selectPlan": "يرجى اختيار خطة.",
+      "selectStartDate": "يرجى اختيار تاريخ البداية.",
+      "inactiveOrExpired": "الاشتراك غير نشط أو منتهي",
+      "dailyLimitReached": "{name} وصل إلى الحد اليومي",
+      "lastVisitWarning": "هذه آخر زيارة اليوم لـ {name}{remaining}",
+      "markedPresent": "تم تسجيل حضور {name} ({count} زيارات اليوم){remaining}"
+    },
+    "labels": {
+      "memberFallback": "عضو",
+      "remainingVisitsOne": " (متبقية 1)",
+      "remainingVisitsMany": " (متبقية {count})",
+      "remainingShortOne": " - متبقي 1",
+      "remainingShortMany": " - متبقي {count}"
+    }
+  },
+    "dashOwAdDashboard": {
+    "errors": {
+      "statsFetch": "تعذّر تحميل الإحصائيات",
+      "statsGeneric": "تعذّر تحميل الإحصائيات في الوقت الحالي.",
+      "downloadNotAllowed": "عرض الإيرادات متاح للمالك فقط",
+      "downloadFailed": "تعذّر تنزيل التقرير",
+      "exportFailed": "تعذّر التصدير"
+    },
+    "hero": {
+      "overviewBadge": "نظرة عامة",
+      "kicker": "لوحة ديناميكية لمؤشراتك المباشرة",
+      "title": "لوحة تحكم GymWatch",
+      "description": "أدر الأعضاء والحضور والإيرادات من مساحة واضحة. يتم تحديث المؤشرات تلقائيًا لكل نادي.",
+      "addMember": "إضافة عضو",
+      "exporting": "جارٍ التصدير...",
+      "exportRevenue": "تصدير الإيرادات",
+      "exportPro": "تصدير (Pro)"
+    },
+    "miniStats": {
+      "activeMembers": "الأعضاء النشطون",
+      "monthlyRevenue": "إيرادات الشهر",
+      "visitsToday": "زيارات اليوم",
+      "up": "ارتفاع",
+      "down": "انخفاض"
+    },
+    "quickLinks": {
+      "presence": "الحضور",
+      "accessLogs": "سجل الدخول"
+    },
+    "multiVariant": {
+      "title": "عرض متعدد الأندية (مقيّد)",
+      "body": "خطتك الحالية لا تدعم تجميع عدة فروع/فئات. اختر ناديًا أو {upgradeLink} لفتح التقارير الموحّدة.",
+      "upgrade": "قم بالترقية"
+    },
+    "cards": {
+      "monthlyRevenue": {
+        "title": "إيرادات الشهر",
+        "subtitle": "الإيراد الإجمالي للشهر الحالي",
+        "value": "{value} MAD"
+      },
+      "visitsToday": {
+        "title": "زيارات اليوم",
+        "subtitle": "عمليات دخول مسجّلة"
+      },
+      "activeMembers": {
+        "title": "أعضاء نشطون",
+        "subtitle": "اشتراك صالح"
+      },
+      "newMembers": {
+        "title": "أعضاء جدد هذا الشهر",
+        "subtitle": "تحويلات حديثة"
+      },
+      "vsLastMonth": {
+        "title": "التغيّر مقارنة بالشهر الماضي",
+        "subtitle": "اتجاه الإيرادات",
+        "value": "{sign}{value}%"
       }
-      ,
-    "classForm": {
-        "titleLabel": "عنوان الحصة",
-        "titlePlaceholder": "كروس ترينينغ، يوغا...",
-        "coachLabel": "المدرب",
-        "coachPlaceholder": "اسم المدرب",
-        "roomLabel": "القاعة / الاستوديو",
-        "roomPlaceholder": "قاعة A، استوديو 2...",
-        "dateLabel": "التاريخ",
-        "capacityLabel": "الطاقة الاستيعابية",
-        "startTimeLabel": "وقت البداية",
-        "endTimeLabel": "وقت الانتهاء",
-        "variantLabel": "الفرع",
-        "variantPlaceholder": "اختر فرعاً",
-        "lockedVariantFallback": "فرع مقفل",
-        "defaultSuffix": "(افتراضي)",
-        "waitlistLabel": "قائمة الانتظار",
-        "waitlistDescription": "السماح بقائمة انتظار إذا كانت الحصة ممتلئة"
+    },
+    "charts": {
+      "revenueTitle": "تطوّر الإيرادات",
+      "revenueSubtitle": "آخر 12 شهرًا",
+      "autoUpdate": "تحديث تلقائي",
+      "revenueLegend": "الإيرادات",
+      "distributionTitle": "توزيع الحالات",
+      "distributionSubtitle": "الاشتراكات النشطة مقابل الأخرى",
+      "live": "مباشر",
+      "radialTitle": "نسبة الاشتراكات النشطة",
+      "radialSubtitle": "على مستوى جميع الأعضاء",
+      "active": "نشط",
+      "inactive": "غير نشط",
+      "membersLabel": "{count} عضو",
+      "radialFooterLine": "{active} نشط من أصل {total} عضو",
+      "radialFooterHint": "تفصيل حالات الاشتراك"
+    },
+    "expiring": {
+      "title": "اشتراكات تنتهي خلال 7 أيام القادمة",
+      "subtitle": "{count} اشتراكًا سينتهي قريبًا",
+      "none": "لا توجد اشتراكات تنتهي خلال 7 أيام القادمة",
+      "total": "{count} اشتراك{plural}",
+      "page": "الصفحة {page} / {pageCount}",
+      "days": "{count} يوم",
+      "left": "متبقّي"
+    },
+    "reports": {
+      "title": "التقارير والتصدير",
+      "subtitlePro": "حمّل تقارير Excel المتقدمة",
+      "subtitleUpgrade": "قم بالترقية إلى Pro لتفعيل تصدير Excel",
+      "proRecommended": "Pro موصى به",
+      "revenueExcel": "إيرادات Excel",
+      "topMembersExcel": "أفضل الأعضاء Excel",
+      "loyalMembersExcel": "الأعضاء الأوفياء Excel",
+      "loyalExporting": "الأعضاء الأوفياء...",
+      "excelRestricted": "تصدير Excel (الإيرادات، أفضل الأعضاء، الولاء) متاح في خطة Pro فقط."
+    }
+  },
+    "dashOwAdGymSettings": {
+    "errors": {
+      "gymFetch": "تعذّر تحميل إعدادات النادي",
+      "planLimitsFetch": "تعذّر تحميل حدود الخطط",
+      "gymInfoLoadTitle": "تعذّر التحميل",
+      "gymInfoLoadDesc": "حدث خطأ أثناء تحميل معلومات النادي."
+    },
+    "header": {
+      "eyebrow": "الإعدادات",
+      "title": "مساحة النادي",
+      "description": "هذه المعلومات للقراءة فقط لحسابات النادي. يرجى التواصل مع الدعم في حال الحاجة إلى التحديث.",
+      "roleUnknown": "دور غير معروف",
+      "planPill": "الخطة {plan}"
+    },
+    "badges": {
+      "billing": "{interval}"
+    },
+    "fields": {
+      "user": "المستخدم",
+      "email": "البريد الإلكتروني",
+      "gym": "النادي",
+      "billing": "الفوترة",
+      "fullName": "الاسم الكامل",
+      "role": "الدور",
+      "plan": "الخطة",
+      "gymId": "معرّف النادي",
+      "gymIdHint": "مرتبط تلقائيًا بحسابك.",
+      "gymName": "الاسم",
+      "phone": "الهاتف",
+      "city": "المدينة",
+      "country": "الدولة",
+      "address": "العنوان",
+      "maxSession": "المدة القصوى للجلسة"
+    },
+    "sections": {
+      "userProfileTitle": "ملف المستخدم",
+      "userProfileDesc": "معلومات مأخوذة من حسابك واشتراكك.",
+      "gymInfoTitle": "معلومات النادي",
+      "gymInfoDesc": "يتم جلبها تلقائيًا من ملف النادي.",
+      "planLimitsTitle": "حدود الخطط",
+      "planLimitsDesc": "القيود المطبّقة على عروض الاشتراك."
+    },
+    "readonlyNote": "تعديل الإعدادات العامة معطّل لحسابات المالك/المشرف.",
+    "common": {
+      "notProvided": "غير مذكور",
+      "minutes": "{count} دقيقة"
+    },
+    "roles": {
+      "GYM_OWNER": "المالك",
+      "GYM_ADMIN": "مشرف"
+    },
+    "plans": {
+      "BASIC": "Basic",
+      "PRO": "Pro",
+      "ENTERPRISE": "Enterprise"
+    },
+    "intervals": {
+      "ANNUAL": "سنوي",
+      "MONTHLY": "شهري"
+    },
+    "limits": {
+      "currentTitle": "الحد الحالي",
+      "unlimitedPerVariant": "غير محدود لكل فئة",
+      "unlimitedPerNetwork": "غير محدود على الشبكة",
+      "perVariant": "{count} خطة نشطة لكل فئة",
+      "perNetwork": "{count} خطة نشطة على الشبكة",
+      "overrideNote": "تم تطبيق استثناء من قبل الدعم. لا يمكن للمالك/المشرف تعديل هذه القيم.",
+      "autoNote": "يتم احتساب القيم تلقائيًا حسب خطتك.",
+      "tierVariant": "{count} خطة لكل فئة",
+      "tierNetwork": "{count} خطة على الشبكة",
+      "tierUnlimitedVariant": "غير محدود لكل فئة",
+      "tierUnlimitedNetwork": "غير محدود على الشبكة",
+      "footer": "يتم تطبيق الحدود على الخطط النشطة فقط. تواصل مع الدعم لأي استثناء."
+    }
+  },
+    "subscriptionBanner": {
+    "brandLine": "خطة GymWatch {plan}{demoSuffix}",
+    "demoSuffix": " (تجريبي)",
+    "planInterval": "{plan} · {interval}",
+    "demoActiveUntil": "الحساب التجريبي نشط حتى {date}",
+    "thanks": "شكرًا لاستخدامك GymWatch.",
+    "expiredMessage": "انتهت صلاحية اشتراكك. جدّد خطتك للاحتفاظ بإمكانية الوصول إلى الميزات.",
+    "expiringIn": "سينتهي اشتراكك خلال {days, plural, one {# يوم} other {# أيام}}.",
+    "actionRequired": "إجراء مطلوب",
+    "reminder": "تذكير",
+    "daysLeftBadge": "متبقّي {days, plural, one {# يوم} other {# أيام}}",
+    "manage": "إدارة الاشتراك",
+    "plan": {
+      "basic": "Basic",
+      "pro": "Pro",
+      "enterprise": "Enterprise"
+    },
+    "interval": {
+      "monthly": "شهري",
+      "annual": "سنوي"
+    }
+  },
+  "pagination": {
+    "prev": "السابق",
+    "next": "التالي",
+    "pageXofY": "الصفحة {x} من {y}",
+    "rangeOfTotal": "{start}-{end} من أصل {total}"
+  },
+  "variantSelector": {
+    "label": "الفرع",
+    "placeholderAll": "كل الفروع",
+    "placeholderSingle": "اختر فرعاً",
+    "adminLockedNote": "مقفل لهذا الحساب الإداري",
+    "assignedVariantFallback": "فرع مخصص",
+    "allOption": "كل الفروع",
+    "defaultSuffix": "(افتراضي)",
+    "lockedMessage": "عرض الفروع المتعددة متاح في باقة Enterprise."
+  },
+  "subscriptions": {
+    "filters": {
+      "searchLabel": "بحث",
+      "searchPlaceholder": "اسم المشترك أو الخطة...",
+      "statusLabel": "الحالة",
+      "statusPlaceholder": "تصفية حسب الحالة",
+      "statusAll": "الكل",
+      "statusActive": "نشطة",
+      "statusExpiresToday": "تنتهي اليوم",
+      "statusExpired": "منتهية",
+      "sortLabel": "ترتيب",
+      "sortPlaceholder": "اختر طريقة الترتيب",
+      "sortNextExpiry": "أقرب تاريخ انتهاء",
+      "sortRecentStart": "الأحدث بدءاً",
+      "sortPriceDesc": "السعر من الأعلى"
+    },
+      "summary": {
+        "eyebrow": "تدفق الاشتراكات",
+        "title": "الاشتراكات",
+        "description": "عرض فوري للأعضاء والإيرادات وتواريخ الانتهاء.",
+        "liveBadge": "محدَّث مباشرة",
+        "totalRevenue": {
+          "label": "إجمالي الإيرادات",
+          "helper": "متوسط التذكرة {avgTicket}"
+        },
+        "active": {
+          "label": "اشتراكات نشطة",
+          "helper": "نسبة الاحتفاظ {retentionRate}٪"
+        },
+        "expiringSoon": {
+          "label": "تنتهي خلال أقل من 5 أيام",
+          "helper": "خطط للتذكير والمتابعة"
+        },
+        "expired": {
+          "label": "اشتراكات منتهية",
+          "helper": "تتطلب المعالجة بشكل عاجل"
+        }
       }
 
-    ,
-     "auth": {
+  },
+  "visits": {
+    "charts": {
+      "hourlyTitle": "الزيارات حسب الساعة",
+      "periodTitle": "الزيارات خلال الفترة",
+      "byVariantTitle": "حسب القاعة",
+      "emptyDay": "لا زيارات في هذا اليوم.",
+      "emptyPeriod": "لا زيارات في هذه الفترة.",
+      "emptyVariant": "لا توجد زيارات مسجلة بعد.",
+      "valueLabel": "زيارات"
+    },
+    "filters": {
+      "dayView": "عرض اليوم",
+      "periodView": "الفترة",
+      "reset": "إعادة تعيين",
+      "searchLabel": "بحث عن عضو",
+      "searchPlaceholder": "الاسم، البريد...",
+      "dateLabel": "التاريخ",
+      "fromLabel": "من",
+      "toLabel": "إلى"
+    }
+  },
+  "weekCalendar": {
+    "classesCount": "{count} حصة",
+    "noSessions": "لا حصص في هذا اليوم",
+    "spotsAvailable": "{count, plural, one {{count} مقعد} other {{count} مقاعد}}",
+    "full": "ممتلئ",
+    "waitlistCount": "{count} في الانتظار"
+  },
+  "classForm": {
+    "titleLabel": "عنوان الحصة",
+    "titlePlaceholder": "كروس ترينينغ، يوغا...",
+    "coachLabel": "المدرب",
+    "coachPlaceholder": "اسم المدرب",
+    "roomLabel": "القاعة / الاستوديو",
+    "roomPlaceholder": "قاعة A، استوديو 2...",
+    "dateLabel": "التاريخ",
+    "capacityLabel": "الطاقة الاستيعابية",
+    "startTimeLabel": "وقت البداية",
+    "endTimeLabel": "وقت الانتهاء",
+    "variantLabel": "الفرع",
+    "variantPlaceholder": "اختر فرعاً",
+    "lockedVariantFallback": "فرع مقفل",
+    "defaultSuffix": "(افتراضي)",
+    "waitlistLabel": "قائمة الانتظار",
+    "waitlistDescription": "السماح بقائمة انتظار إذا كانت الحصة ممتلئة"
+  },
+  "auth": {
     "login": {
       "toasts": {
         "demoRequested": "تم إرسال طلب التجربة، ستصلك بيانات الدخول على بريدك الإلكتروني.",
@@ -144,8 +433,9 @@
         "noAccount": "ليس لديك حساب بعد؟",
         "requestDemo": "اطلب تجربة"
       }
-    }},
-    "marketing": {
+    }
+  },
+  "marketing": {
     "home": {
       "hero": {
         "eyebrow": "منصة لإدارة النوادي الرياضية",
@@ -286,7 +576,10 @@
           "basic": {
             "name": "Basic",
             "description": "الوظائف الأساسية لمركزة بيانات الأعضاء.",
-            "badges": ["دعم عبر البريد", "تنبيهات لمواعيد الاستحقاق"],
+            "badges": [
+              "دعم عبر البريد",
+              "تنبيهات لمواعيد الاستحقاق"
+            ],
             "features": [
               "إدارة الأعضاء والاشتراكات",
               "تنبيهات انتهاء الصلاحية والتذكيرات",
@@ -297,7 +590,10 @@
           "pro": {
             "name": "Pro",
             "description": "أتمتة، رموز QR وتصدير متقدم للتقارير.",
-            "badges": ["رموز QR", "تصدير إلى Excel"],
+            "badges": [
+              "رموز QR",
+              "تصدير إلى Excel"
+            ],
             "features": [
               "كل ما في خطة Basic",
               "التحكم في الدخول عبر رمز QR",
@@ -310,7 +606,11 @@
           "enterprise": {
             "name": "Enterprise",
             "description": "حزمة للشبكات متعددة الفروع مع أتمتة متقدمة وكاتالوج غير محدود.",
-            "badges": ["فروع غير محدودة", "أتمتة", "الحصص والجدولة"],
+            "badges": [
+              "فروع غير محدودة",
+              "أتمتة",
+              "الحصص والجدولة"
+            ],
             "features": [
               "عدد غير محدود من الفروع والمستخدمين",
               "تحكم متقدم في الدخول (QR، بطاقات، تطبيق للعضو)",
@@ -401,24 +701,39 @@
       "signOut": "تسجيل الخروج",
       "demoBadge": "تجريبي"
     },
-        "featureAccess": {
-          "modulesTitle": "الوحدات",
-          "modulesCount": "{active}/{total} نشط",
-
-          "planLabel": "الخطة {plan}",
-
-          "badges": {
-            "included": "متاح",
-            "notIncluded": "غير متاح"
-          },
-
-          "actions": {
-            "upgrade": "الترقية",
-            "open": "فتح",
-            "seePlans": "عرض الخطط"
-          }
+    "featureAccess": {
+      "modulesTitle": "الوحدات",
+      "modulesCount": "{active}/{total} نشطة",
+      "planLabel": "الخطة {plan}",
+      "badges": {
+        "included": "متاح",
+        "notIncluded": "غير متاح"
+      },
+      "actions": {
+        "upgrade": "الترقية",
+        "open": "فتح",
+        "seePlans": "عرض الخطط"
+      },
+      "items": {
+        "access": {
+          "title": "التحكم في الدخول",
+          "description": "الدخول عبر رمز QR، المحاكاة وسجلات الدخول"
+        },
+        "presence": {
+          "title": "الحضور",
+          "description": "عرض فوري لزيارات الأعضاء"
+        },
+        "classes": {
+          "title": "الدروس والجدولة",
+          "description": "البرنامج، السعة وقوائم المشاركين"
+        },
+        "reports": {
+          "title": "تصدير Excel",
+          "description": "تصدير بيانات الأعضاء والزيارات بصيغة XLSX"
         }
-      ,
+      }
+    }
+,
     "classes": {
       "planLabel": {
         "basic": "Basic",
@@ -481,7 +796,7 @@
         "submitCreate": "إنشاء الحصة"
       }
     },
-        "classesDetail": {
+    "classesDetail": {
       "page": {
         "unauthenticated": "تم رفض الوصول. يرجى تسجيل الدخول.",
         "noGym": "لا يوجد نادٍ رياضي مرتبط بحسابك.",
@@ -800,8 +1115,8 @@
         "unauthenticated": "الدخول مرفوض. يرجى تسجيل الدخول."
       }
     },
-     "members": {
-       "badge": {
+    "members": {
+      "badge": {
         "errors": {
           "loadMember": "تعذّر تحميل بيانات العضو.",
           "loadAccess": "تعذّر تحميل سجلات دخول هذا العضو.",

@@ -18,6 +18,7 @@ import { useTranslations } from 'next-intl'
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const tNav = useTranslations('dashboard.nav')
+  const tFeatureAccess = useTranslations('dashboard.featureAccess')
   const { tier, hasAccessControl, hasPresence, hasCourses, hasExcelReports } = usePlanFeatures()
   const planLabel = tier === 'ENTERPRISE' ? 'Enterprise' : tier === 'PRO' ? 'Pro' : 'Basic'
   const featureCards = buildFeatureAccessItems({
@@ -25,6 +26,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     hasPresence,
     hasCourses,
     hasExcelReports,
+    t: tFeatureAccess,
   })
   const navigationItems: NavigationItem[] = [
     { href: '/dashboard', label: tNav('dashboard'), icon: LayoutGrid },

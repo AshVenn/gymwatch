@@ -1,27 +1,20 @@
 'use client'
 
-import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from '@/components/ui/sheet'
+import { useTranslations } from 'next-intl'
+
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+} from '@/components/ui/sheet'
 import { useSuperAdminGym } from '@/app/[locale]/(dashboard)/super-admin/hooks'
 import { GymTeam } from './GymDetailDialog/GymTeam'
 import { GymPlans } from './GymDetailDialog/GymPlans'
 import { GymSubscriptionSettings } from './GymDetailDialog/GymSubscriptionSettings'
 
 type ActionType = 'team' | 'plans' | 'subscription'
-
-const LABELS: Record<ActionType, { title: string; description: string }> = {
-  team: {
-    title: "Équipe admin",
-    description: 'Ajoutez ou consultez les comptes administrateurs.',
-  },
-  plans: {
-    title: "Plans d'abonnement",
-    description: 'Gérez les offres proposées à cette salle.',
-  },
-  subscription: {
-    title: "Paramètres d'abonnement",
-    description: 'Ajustez le statut, la facturation et les exports.',
-  },
-}
 
 type Props = {
   gymId: string | null
@@ -30,8 +23,35 @@ type Props = {
 }
 
 export function GymActionSheet({ gymId, type, onClose }: Props) {
+  const t = useTranslations('superAdminActionSheet')
   const open = Boolean(gymId && type)
   const { data: gym, isLoading } = useSuperAdminGym(open ? gymId : null)
+
+  const getTitle = (value: ActionType) => {
+    switch (value) {
+      case 'team':
+        return t('labels.team.title')
+      case 'plans':
+        return t('labels.plans.title')
+      case 'subscription':
+        return t('labels.subscription.title')
+      default:
+        return ''
+    }
+  }
+
+  const getDescription = (value: ActionType) => {
+    switch (value) {
+      case 'team':
+        return t('labels.team.description')
+      case 'plans':
+        return t('labels.plans.description')
+      case 'subscription':
+        return t('labels.subscription.description')
+      default:
+        return ''
+    }
+  }
 
   return (
     <Sheet open={open} onOpenChange={(value) => !value && onClose()}>
@@ -39,12 +59,12 @@ export function GymActionSheet({ gymId, type, onClose }: Props) {
         {type ? (
           <>
             <SheetHeader>
-              <SheetTitle>{LABELS[type].title}</SheetTitle>
-              <SheetDescription>{LABELS[type].description}</SheetDescription>
+              <SheetTitle>{getTitle(type)}</SheetTitle>
+              <SheetDescription>{getDescription(type)}</SheetDescription>
             </SheetHeader>
 
             {isLoading || !gym ? (
-              <div className="py-10 text-center text-muted-foreground">Chargement…</div>
+              <div className="py-10 text-center text-muted-foreground">{t('loading')}</div>
             ) : type === 'team' ? (
               <GymTeam gym={gym} />
             ) : type === 'plans' ? (

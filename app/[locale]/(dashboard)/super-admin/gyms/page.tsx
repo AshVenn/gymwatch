@@ -1,6 +1,7 @@
 'use client'
 
 import { useMemo, useState } from 'react'
+import { useTranslations } from 'next-intl'
 import type { GymPlanTier, GymSubscriptionStatus } from '../hooks'
 
 import { useSuperAdminGyms } from '../hooks'
@@ -16,6 +17,8 @@ import { usePagination } from '@/components/dashboard/pagination-controls'
 import { Skeleton } from '@/components/ui/skeleton'
 
 export default function SuperAdminGymsPage() {
+  const t = useTranslations('superAdminGyms')
+
   const { data: gyms = [], isLoading } = useSuperAdminGyms()
   const [searchTerm, setSearchTerm] = useState('')
   const [statusFilter, setStatusFilter] = useState<'ALL' | GymSubscriptionStatus>('ALL')
@@ -33,8 +36,10 @@ export default function SuperAdminGymsPage() {
         gym.name.toLowerCase().includes(query) ||
         gym.email.toLowerCase().includes(query) ||
         gym.owner?.email?.toLowerCase().includes(query)
+
       const matchesStatus = statusFilter === 'ALL' ? true : gym.subscriptionStatus === statusFilter
       const matchesPlan = planFilter === 'ALL' ? true : gym.subscriptionPlan === planFilter
+
       return matchesSearch && matchesStatus && matchesPlan
     })
   }, [gyms, planFilter, searchTerm, statusFilter])
@@ -54,8 +59,8 @@ export default function SuperAdminGymsPage() {
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-semibold">Gestion des salles</h1>
-          <p className="text-muted-foreground">Supervisez les abonnements, équipes et performances.</p>
+          <h1 className="text-3xl font-semibold">{t('header.title')}</h1>
+          <p className="text-muted-foreground">{t('header.subtitle')}</p>
         </div>
         <CreateGymDialog />
       </div>
@@ -96,10 +101,7 @@ export default function SuperAdminGymsPage() {
         onAction={handleAction}
       />
 
-      <GymDetailDialog
-        gymId={currentAction.type === 'overview' ? currentAction.gymId : null}
-        onClose={closeAction}
-      />
+      <GymDetailDialog gymId={currentAction.type === 'overview' ? currentAction.gymId : null} onClose={closeAction} />
 
       <GymActionSheet
         gymId={
@@ -115,15 +117,9 @@ export default function SuperAdminGymsPage() {
         onClose={closeAction}
       />
 
-      <EditGymDialog
-        gymId={currentAction.type === 'edit' ? currentAction.gymId : null}
-        onClose={closeAction}
-      />
+      <EditGymDialog gymId={currentAction.type === 'edit' ? currentAction.gymId : null} onClose={closeAction} />
 
-      <DeleteGymDialog
-        gym={currentAction.type === 'delete' ? selectedGym : null}
-        onClose={closeAction}
-      />
+      <DeleteGymDialog gym={currentAction.type === 'delete' ? selectedGym : null} onClose={closeAction} />
     </div>
   )
 }

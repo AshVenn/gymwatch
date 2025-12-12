@@ -379,6 +379,24 @@ export function useDeleteGym() {
   })
 }
 
+export function useConvertDemoGym() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: async ({ gymId }: { gymId: string }) => {
+      return fetchJSON(`/api/super-admin/gyms/${gymId}/convert`, { method: 'POST' })
+    },
+    onSuccess: (_data, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['super-admin', 'gyms'] })
+      queryClient.invalidateQueries({ queryKey: ['super-admin', 'gym', variables.gymId] })
+      toast.success('Démo convertie en compte actif')
+    },
+    onError: (error: Error) => {
+      toast.error(error.message)
+    },
+  })
+}
+
 export function useCreateGymAdmin() {
   const queryClient = useQueryClient()
 

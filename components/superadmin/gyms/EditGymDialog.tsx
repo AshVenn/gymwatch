@@ -4,6 +4,8 @@ import { useEffect } from 'react'
 import { z } from 'zod'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
+import { useTranslations } from 'next-intl'
+
 import {
   Dialog,
   DialogContent,
@@ -23,23 +25,25 @@ import {
 import { Input } from '@/components/ui/input'
 import { useSuperAdminGym, useUpdateGymProfile } from '@/app/[locale]/(dashboard)/super-admin/hooks'
 
-const schema = z.object({
-  name: z.string().min(2, 'Nom requis'),
-  email: z.string().email('Email invalide'),
-  phone: z.string().min(6, 'Numéro requis'),
-  city: z.string().min(2, 'Ville requise'),
-  country: z.string().min(2, 'Pays requis'),
-  address: z.string().optional(),
-})
-
-type FormValues = z.infer<typeof schema>
-
 type Props = {
   gymId: string | null
   onClose: () => void
 }
 
 export function EditGymDialog({ gymId, onClose }: Props) {
+  const t = useTranslations('superAdminEditGym')
+
+  const schema = z.object({
+    name: z.string().min(2, t('validation.nameMin')),
+    email: z.string().email(t('validation.emailInvalid')),
+    phone: z.string().min(6, t('validation.phoneMin')),
+    city: z.string().min(2, t('validation.cityMin')),
+    country: z.string().min(2, t('validation.countryMin')),
+    address: z.string().optional(),
+  })
+
+  type FormValues = z.infer<typeof schema>
+
   const open = Boolean(gymId)
   const { data: gym, isLoading } = useSuperAdminGym(gymId)
   const updateGym = useUpdateGymProfile()
@@ -95,12 +99,12 @@ export function EditGymDialog({ gymId, onClose }: Props) {
     <Dialog open={open} onOpenChange={(value) => !value && !updateGym.isPending && onClose()}>
       <DialogContent className="max-w-md sm:max-w-lg md:max-w-2xl w-[95vw] max-h-[90vh] overflow-y-auto rounded-2xl">
         <DialogHeader>
-          <DialogTitle>Modifier la salle</DialogTitle>
-          <DialogDescription>Mettez à jour les informations publiques.</DialogDescription>
+          <DialogTitle>{t('title')}</DialogTitle>
+          <DialogDescription>{t('description')}</DialogDescription>
         </DialogHeader>
 
         {isLoading && !gym ? (
-          <div className="py-8 text-center text-muted-foreground">Chargement…</div>
+          <div className="py-8 text-center text-muted-foreground">{t('loading')}</div>
         ) : (
           <Form {...form}>
             <form className="space-y-4" onSubmit={form.handleSubmit(handleSubmit)}>
@@ -109,7 +113,7 @@ export function EditGymDialog({ gymId, onClose }: Props) {
                 name="name"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Nom</FormLabel>
+                    <FormLabel>{t('fields.name')}</FormLabel>
                     <FormControl>
                       <Input {...field} />
                     </FormControl>
@@ -117,12 +121,13 @@ export function EditGymDialog({ gymId, onClose }: Props) {
                   </FormItem>
                 )}
               />
+
               <FormField
                 control={form.control}
                 name="email"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Email</FormLabel>
+                    <FormLabel>{t('fields.email')}</FormLabel>
                     <FormControl>
                       <Input type="email" {...field} />
                     </FormControl>
@@ -130,12 +135,13 @@ export function EditGymDialog({ gymId, onClose }: Props) {
                   </FormItem>
                 )}
               />
+
               <FormField
                 control={form.control}
                 name="phone"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Téléphone</FormLabel>
+                    <FormLabel>{t('fields.phone')}</FormLabel>
                     <FormControl>
                       <Input {...field} />
                     </FormControl>
@@ -143,13 +149,14 @@ export function EditGymDialog({ gymId, onClose }: Props) {
                   </FormItem>
                 )}
               />
+
               <div className="grid gap-4 md:grid-cols-2">
                 <FormField
                   control={form.control}
                   name="city"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Ville</FormLabel>
+                      <FormLabel>{t('fields.city')}</FormLabel>
                       <FormControl>
                         <Input {...field} />
                       </FormControl>
@@ -157,12 +164,13 @@ export function EditGymDialog({ gymId, onClose }: Props) {
                     </FormItem>
                   )}
                 />
+
                 <FormField
                   control={form.control}
                   name="country"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Pays</FormLabel>
+                      <FormLabel>{t('fields.country')}</FormLabel>
                       <FormControl>
                         <Input {...field} />
                       </FormControl>
@@ -171,12 +179,13 @@ export function EditGymDialog({ gymId, onClose }: Props) {
                   )}
                 />
               </div>
+
               <FormField
                 control={form.control}
                 name="address"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Adresse</FormLabel>
+                    <FormLabel>{t('fields.address')}</FormLabel>
                     <FormControl>
                       <Input {...field} />
                     </FormControl>
@@ -184,8 +193,9 @@ export function EditGymDialog({ gymId, onClose }: Props) {
                   </FormItem>
                 )}
               />
+
               <Button type="submit" className="w-full" disabled={updateGym.isPending}>
-                {updateGym.isPending ? 'Enregistrement…' : 'Enregistrer'}
+                {updateGym.isPending ? t('actions.saving') : t('actions.save')}
               </Button>
             </form>
           </Form>

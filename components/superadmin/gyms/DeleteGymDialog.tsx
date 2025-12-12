@@ -1,5 +1,7 @@
 'use client'
 
+import { useTranslations } from 'next-intl'
+
 import type { SuperAdminGym } from '@/app/[locale]/(dashboard)/super-admin/hooks'
 import { Badge } from '@/components/ui/badge'
 import {
@@ -14,21 +16,25 @@ import {
 } from '@/components/ui/alert-dialog'
 import { useDeleteGym } from '@/app/[locale]/(dashboard)/super-admin/hooks'
 
-const STATUS_LABEL: Record<string, string> = {
-  ACTIVE: 'Actif',
-  SUSPENDED: 'Suspendue',
-  EXPIRED: 'Expirée',
-}
-
 type Props = {
   gym: SuperAdminGym | null
   onClose: () => void
 }
 
 export function DeleteGymDialog({ gym, onClose }: Props) {
+  const t = useTranslations('superAdminDeleteGym')
   const deleteGym = useDeleteGym()
+
   const open = Boolean(gym)
   const canDelete = gym ? gym.subscriptionStatus === 'SUSPENDED' || gym.subscriptionStatus === 'EXPIRED' : false
+
+  const statusLabel = (status?: string | null) => {
+    if (!status) return '-'
+    if (status === 'ACTIVE') return t('statuses.active')
+    if (status === 'SUSPENDED') return t('statuses.suspended')
+    if (status === 'EXPIRED') return t('statuses.expired')
+    return status
+  }
 
   const handleDelete = () => {
     if (!gym) return
@@ -53,39 +59,40 @@ export function DeleteGymDialog({ gym, onClose }: Props) {
     >
       <AlertDialogContent className="max-w-md sm:max-w-lg w-[95vw]">
         <AlertDialogHeader>
-          <AlertDialogTitle>Supprimer la salle</AlertDialogTitle>
+          <AlertDialogTitle>{t('title')}</AlertDialogTitle>
+
           <AlertDialogDescription className="space-y-3 text-left">
             {gym ? (
               <>
                 <p>
-                  Cette action supprimera définitivement{' '}
-                  <span className="font-semibold text-foreground">{gym.name}</span> ainsi que toutes les données associées
-                  (propriétaire, admins, plans, membres, paiements, inscriptions).
+                  {t('body.permanentDeletePrefix')}{' '}
+                  <span className="font-semibold text-foreground">{gym.name}</span>{' '}
+                  {t('body.permanentDeleteSuffix')}
                 </p>
+
                 <div className="flex flex-wrap items-center gap-2 rounded-lg border border-border/60 bg-muted/40 px-3 py-2 text-sm">
-                  <span>Statut actuel :</span>
+                  <span>{t('body.currentStatus')}</span>
                   <Badge variant={gym.subscriptionStatus === 'EXPIRED' ? 'destructive' : 'secondary'}>
-                    {STATUS_LABEL[gym.subscriptionStatus] ?? gym.subscriptionStatus}
+                    {statusLabel(gym.subscriptionStatus)}
                   </Badge>
                 </div>
-                <p>
-                  Seules les salles <strong>suspendues</strong> ou <strong>expirées</strong> peuvent être supprimées. Les
-                  salles actives doivent être suspendues avant suppression.
-                </p>
+
+                <p>{t('body.rules')}</p>
               </>
             ) : (
-              'Confirmez la suppression de cette salle.'
+              t('body.fallback')
             )}
           </AlertDialogDescription>
         </AlertDialogHeader>
+
         <AlertDialogFooter>
-          <AlertDialogCancel disabled={deleteGym.isPending}>Annuler</AlertDialogCancel>
+          <AlertDialogCancel disabled={deleteGym.isPending}>{t('actions.cancel')}</AlertDialogCancel>
           <AlertDialogAction
             className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             onClick={handleDelete}
             disabled={!canDelete || deleteGym.isPending}
           >
-            {deleteGym.isPending ? 'Suppression...' : 'Supprimer'}
+            {deleteGym.isPending ? t('actions.deleting') : t('actions.delete')}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

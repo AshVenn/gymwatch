@@ -5,54 +5,65 @@ import { Plus } from 'lucide-react'
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
 import { zodResolver } from '@hookform/resolvers/zod'
+import { useLocale, useTranslations } from 'next-intl'
 
-import { useCreateGym, usePlanSettings, GymSubscriptionStatus, GymPlanTier, GymBillingInterval } from '@/app/[locale]/(dashboard)/super-admin/hooks'
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
+import {
+  useCreateGym,
+  usePlanSettings,
+  GymSubscriptionStatus,
+  GymPlanTier,
+  GymBillingInterval,
+} from '@/app/[locale]/(dashboard)/super-admin/hooks'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
+import {
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from '@/components/ui/form'
 import { PLAN_PRICING, getPlanFeatures } from '@/lib/subscription-plans'
 import { PlanModuleBadges } from './PlanModules'
 import { Badge } from '@/components/ui/badge'
 
-const schema = z.object({
-  name: z.string().min(2, 'Nom requis'),
-  email: z.string().email('Email invalide'),
-  phone: z.string().min(6, 'Numero requis'),
-  address: z.string().optional(),
-  city: z.string().optional(),
-  country: z.string().optional(),
-  tier: z.enum(['BASIC', 'PRO', 'ENTERPRISE']),
-  interval: z.enum(['MONTHLY', 'ANNUAL']),
-  status: z.enum(['ACTIVE', 'SUSPENDED', 'EXPIRED']),
-  expiresAt: z.string().optional(),
-  grace: z.coerce.number().min(0).max(30),
-  maxAdmins: z.coerce.number().min(1),
-  gymType: z.enum(['SINGLE', 'MULTI']),
-  variantNames: z.string().optional(),
-  ownerEmail: z.string().email('Email invalide'),
-  ownerPassword: z.string().min(8, 'Min. 8 caracteres'),
-  ownerFirstName: z.string().optional(),
-  ownerLastName: z.string().optional(),
-}).superRefine((values, ctx) => {
-  if (values.gymType === 'MULTI') {
-    const variants = (values.variantNames ?? '')
-      .split(',')
-      .map((name) => name.trim())
-      .filter(Boolean)
-
-    if (!variants.length) {
-      ctx.addIssue({
-        code: 'custom',
-        path: ['variantNames'],
-        message: 'Ajoutez au moins une variante',
-      })
-    }
-  }
-})
-
-type CreateGymValues = z.infer<typeof schema>
+type CreateGymValues = {
+  name: string
+  email: string
+  phone: string
+  address?: string
+  city?: string
+  country?: string
+  tier: 'BASIC' | 'PRO' | 'ENTERPRISE'
+  interval: 'MONTHLY' | 'ANNUAL'
+  status: 'ACTIVE' | 'SUSPENDED' | 'EXPIRED'
+  expiresAt?: string
+  grace: number
+  maxAdmins: number
+  gymType: 'SINGLE' | 'MULTI'
+  variantNames?: string
+  ownerEmail: string
+  ownerPassword: string
+  ownerFirstName?: string
+  ownerLastName?: string
+}
 
 const defaultValues: CreateGymValues = {
   name: '',
@@ -76,11 +87,58 @@ const defaultValues: CreateGymValues = {
 }
 
 export function CreateGymDialog() {
+  const t = useTranslations('superAdminCreateGym')
+  const locale = useLocale()
+
   const [open, setOpen] = useState(false)
+
+  const schema = useMemo(
+    () =>
+      z
+        .object({
+          name: z.string().min(2, t('validation.nameRequired')),
+          email: z.string().email(t('validation.invalidEmail')),
+          phone: z.string().min(6, t('validation.phoneRequired')),
+          address: z.string().optional(),
+          city: z.string().optional(),
+          country: z.string().optional(),
+          tier: z.enum(['BASIC', 'PRO', 'ENTERPRISE']),
+          interval: z.enum(['MONTHLY', 'ANNUAL']),
+          status: z.enum(['ACTIVE', 'SUSPENDED', 'EXPIRED']),
+          expiresAt: z.string().optional(),
+          grace: z.coerce.number().min(0).max(30),
+          maxAdmins: z.coerce.number().min(1, t('validation.minAdmins')),
+          gymType: z.enum(['SINGLE', 'MULTI']),
+          variantNames: z.string().optional(),
+          ownerEmail: z.string().email(t('validation.invalidEmail')),
+          ownerPassword: z.string().min(8, t('validation.min8')),
+          ownerFirstName: z.string().optional(),
+          ownerLastName: z.string().optional(),
+        })
+        .superRefine((values, ctx) => {
+          if (values.gymType === 'MULTI') {
+            const variants = (values.variantNames ?? '')
+              .split(',')
+              .map((name) => name.trim())
+              .filter(Boolean)
+
+            if (!variants.length) {
+              ctx.addIssue({
+                code: 'custom',
+                path: ['variantNames'],
+                message: t('validation.atLeastOneVariant'),
+              })
+            }
+          }
+        }),
+    [t],
+  )
+
   const form = useForm<CreateGymValues>({
     resolver: zodResolver(schema),
     defaultValues,
   })
+
   const createGym = useCreateGym()
   const planSettings = usePlanSettings()
 
@@ -89,12 +147,14 @@ export function CreateGymDialog() {
   const gymType = form.watch('gymType') as 'SINGLE' | 'MULTI'
   const variantNamesValue = form.watch('variantNames') ?? ''
   const gymNameValue = form.watch('name')
+
   const pricingTable = planSettings.data?.pricing ?? PLAN_PRICING
   const estimatedPrice = pricingTable[selectedTier][selectedInterval]
   const selectedFeatures = useMemo(() => getPlanFeatures(selectedTier), [selectedTier])
+
   const parsedVariants = useMemo(() => {
     if (gymType === 'SINGLE') {
-      const base = (gymNameValue || '').trim() || 'Principal'
+      const base = (gymNameValue || '').trim() || t('defaults.singleVariantFallback')
       return [{ name: base, isDefault: true }]
     }
 
@@ -103,9 +163,16 @@ export function CreateGymDialog() {
       .map((name) => name.trim())
       .filter(Boolean)
 
-    const base = names.length ? names : ['Principal']
+    const base = names.length ? names : [t('defaults.multiVariantFallback')]
     return base.map((name, index) => ({ name, isDefault: index === 0 }))
-  }, [gymNameValue, gymType, variantNamesValue])
+  }, [gymNameValue, gymType, t, variantNamesValue])
+
+  const currencyLocale = locale === 'ar' ? 'ar-MA' : locale === 'en' ? 'en-US' : 'fr-MA'
+  const estimatedPriceLabel = estimatedPrice.toLocaleString(currencyLocale, {
+    style: 'currency',
+    currency: 'MAD',
+    maximumFractionDigits: 0,
+  })
 
   useEffect(() => {
     if (!open) {
@@ -121,9 +188,10 @@ export function CreateGymDialog() {
             .map((name) => name.trim())
             .filter(Boolean)
             .map((name, index) => ({ name, isDefault: index === 0 }))
-        : [{ name: values.name?.trim() || 'Principal', isDefault: true }]
+        : [{ name: values.name?.trim() || t('defaults.singleVariantFallback'), isDefault: true }]
 
-    const safeVariants = variantList.length ? variantList : [{ name: 'Principal', isDefault: true }]
+    const safeVariants =
+      variantList.length ? variantList : [{ name: t('defaults.singleVariantFallback'), isDefault: true }]
 
     createGym.mutate(
       {
@@ -143,7 +211,7 @@ export function CreateGymDialog() {
         owner: {
           email: values.ownerEmail,
           password: values.ownerPassword,
-          firstName: values.ownerFirstName || 'Proprietaire',
+          firstName: values.ownerFirstName || t('defaults.ownerFirstName'),
           lastName: values.ownerLastName || values.name,
         },
       },
@@ -160,13 +228,14 @@ export function CreateGymDialog() {
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button className="gap-2">
-          <Plus className="h-4 w-4" /> Ajouter une salle
+          <Plus className="h-4 w-4" /> {t('actions.addGym')}
         </Button>
       </DialogTrigger>
+
       <DialogContent className="max-w-md sm:max-w-lg md:max-w-3xl w-[95vw] max-h-[90vh] overflow-y-auto space-y-6 rounded-2xl px-4 py-6 sm:px-8">
         <DialogHeader>
-          <DialogTitle>Nouvelle salle</DialogTitle>
-          <DialogDescription>Enregistrez une salle et son proprietaire.</DialogDescription>
+          <DialogTitle>{t('title')}</DialogTitle>
+          <DialogDescription>{t('description')}</DialogDescription>
         </DialogHeader>
 
         <Form {...form}>
@@ -177,7 +246,7 @@ export function CreateGymDialog() {
                 name="name"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Nom</FormLabel>
+                    <FormLabel>{t('fields.name')}</FormLabel>
                     <FormControl>
                       <Input {...field} />
                     </FormControl>
@@ -185,12 +254,13 @@ export function CreateGymDialog() {
                   </FormItem>
                 )}
               />
+
               <FormField
                 control={form.control}
                 name="email"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Email</FormLabel>
+                    <FormLabel>{t('fields.email')}</FormLabel>
                     <FormControl>
                       <Input type="email" {...field} />
                     </FormControl>
@@ -205,7 +275,7 @@ export function CreateGymDialog() {
               name="phone"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Telephone</FormLabel>
+                  <FormLabel>{t('fields.phone')}</FormLabel>
                   <FormControl>
                     <Input {...field} />
                   </FormControl>
@@ -219,7 +289,7 @@ export function CreateGymDialog() {
               name="address"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Adresse</FormLabel>
+                  <FormLabel>{t('fields.address')}</FormLabel>
                   <FormControl>
                     <Input {...field} />
                   </FormControl>
@@ -234,19 +304,20 @@ export function CreateGymDialog() {
                 name="city"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Ville</FormLabel>
+                    <FormLabel>{t('fields.city')}</FormLabel>
                     <FormControl>
                       <Input {...field} />
                     </FormControl>
                   </FormItem>
                 )}
               />
+
               <FormField
                 control={form.control}
                 name="country"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Pays</FormLabel>
+                    <FormLabel>{t('fields.country')}</FormLabel>
                     <FormControl>
                       <Input {...field} />
                     </FormControl>
@@ -261,37 +332,34 @@ export function CreateGymDialog() {
                 name="gymType"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Type de salle</FormLabel>
+                    <FormLabel>{t('fields.gymType')}</FormLabel>
                     <Select onValueChange={field.onChange} value={field.value}>
                       <FormControl>
                         <SelectTrigger>
-                          <SelectValue placeholder="Choisir un type" />
+                          <SelectValue placeholder={t('placeholders.chooseType')} />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="SINGLE">Mono-salle</SelectItem>
-                        <SelectItem value="MULTI">Multi-salles (variants)</SelectItem>
+                        <SelectItem value="SINGLE">{t('gymTypes.single')}</SelectItem>
+                        <SelectItem value="MULTI">{t('gymTypes.multi')}</SelectItem>
                       </SelectContent>
                     </Select>
-                    <FormDescription>
-                      Mono-salle : un seul emplacement. Multi-salles : plusieurs variantes/locaux.
-                    </FormDescription>
+
+                    <FormDescription>{t('hints.gymType')}</FormDescription>
                   </FormItem>
                 )}
               />
 
               <div className="rounded-xl border border-dashed border-border/60 bg-muted/20 p-4">
-                <p className="text-sm font-semibold">Apercu des variantes</p>
+                <p className="text-sm font-semibold">{t('variants.previewTitle')}</p>
                 <div className="mt-2 flex flex-wrap gap-2">
                   {parsedVariants.map((variant) => (
                     <Badge key={variant.name} variant={variant.isDefault ? 'secondary' : 'outline'}>
-                      {variant.name} {variant.isDefault ? '(defaut)' : ''}
+                      {variant.name} {variant.isDefault ? `(${t('labels.default')})` : ''}
                     </Badge>
                   ))}
                 </div>
-                <p className="mt-2 text-xs text-muted-foreground">
-                  La premiere variante est appliquee par defaut aux nouveaux comptes.
-                </p>
+                <p className="mt-2 text-xs text-muted-foreground">{t('variants.firstDefaultHint')}</p>
               </div>
             </div>
 
@@ -301,9 +369,9 @@ export function CreateGymDialog() {
                 name="variantNames"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Variantes (separees par une virgule)</FormLabel>
+                    <FormLabel>{t('fields.variantNames')}</FormLabel>
                     <FormControl>
-                      <Input {...field} placeholder="Principal, Premium, Budget" />
+                      <Input {...field} placeholder={t('placeholders.variantNames')} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -311,9 +379,9 @@ export function CreateGymDialog() {
               />
             ) : (
               <div className="rounded-xl border border-border/60 bg-muted/20 p-4">
-                <p className="text-sm font-semibold">Variante unique</p>
+                <p className="text-sm font-semibold">{t('variants.singleTitle')}</p>
                 <p className="text-xs text-muted-foreground">
-                  Utilisation automatique du nom de la salle : {parsedVariants[0]?.name}
+                  {t('variants.singleHint', { name: parsedVariants[0]?.name ?? '-' })}
                 </p>
               </div>
             )}
@@ -324,28 +392,29 @@ export function CreateGymDialog() {
                 name="tier"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Plan</FormLabel>
+                    <FormLabel>{t('fields.plan')}</FormLabel>
                     <Select onValueChange={field.onChange} value={field.value}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value="BASIC">Basic</SelectItem>
-                          <SelectItem value="PRO">Pro</SelectItem>
-                          <SelectItem value="ENTERPRISE">Enterprise</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </FormItem>
-                  )}
-                />
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="BASIC">{t('plans.basic')}</SelectItem>
+                        <SelectItem value="PRO">{t('plans.pro')}</SelectItem>
+                        <SelectItem value="ENTERPRISE">{t('plans.enterprise')}</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </FormItem>
+                )}
+              />
+
               <FormField
                 control={form.control}
                 name="interval"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Facturation</FormLabel>
+                    <FormLabel>{t('fields.billing')}</FormLabel>
                     <Select onValueChange={field.onChange} value={field.value}>
                       <FormControl>
                         <SelectTrigger>
@@ -353,22 +422,24 @@ export function CreateGymDialog() {
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="MONTHLY">Mensuel</SelectItem>
-                        <SelectItem value="ANNUAL">Annuel</SelectItem>
+                        <SelectItem value="MONTHLY">{t('labels.monthly')}</SelectItem>
+                        <SelectItem value="ANNUAL">{t('labels.annual')}</SelectItem>
                       </SelectContent>
                     </Select>
+
                     <FormDescription>
-                      Tarif estimatif: {estimatedPrice.toLocaleString('fr-MA', { style: 'currency', currency: 'MAD' })}
+                      {t('hints.estimatedPrice', { price: estimatedPriceLabel })}
                     </FormDescription>
                   </FormItem>
                 )}
               />
+
               <FormField
                 control={form.control}
                 name="status"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Statut</FormLabel>
+                    <FormLabel>{t('fields.status')}</FormLabel>
                     <Select onValueChange={field.onChange} value={field.value}>
                       <FormControl>
                         <SelectTrigger>
@@ -376,9 +447,9 @@ export function CreateGymDialog() {
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="ACTIVE">Actif</SelectItem>
-                        <SelectItem value="SUSPENDED">Suspendu</SelectItem>
-                        <SelectItem value="EXPIRED">Expire</SelectItem>
+                        <SelectItem value="ACTIVE">{t('statuses.active')}</SelectItem>
+                        <SelectItem value="SUSPENDED">{t('statuses.suspended')}</SelectItem>
+                        <SelectItem value="EXPIRED">{t('statuses.expired')}</SelectItem>
                       </SelectContent>
                     </Select>
                   </FormItem>
@@ -388,9 +459,9 @@ export function CreateGymDialog() {
 
             <div className="rounded-xl border border-border/60 bg-muted/20 p-4">
               <div className="flex flex-wrap items-center justify-between gap-2 text-sm">
-                <p className="font-semibold">Modules inclus dans le plan {selectedTier}</p>
+                <p className="font-semibold">{t('modules.title', { tier: selectedTier })}</p>
                 <span className="text-xs text-muted-foreground">
-                  Estimation: {estimatedPrice.toLocaleString('fr-MA', { style: 'currency', currency: 'MAD' })}
+                  {t('modules.estimate', { price: estimatedPriceLabel })}
                 </span>
               </div>
               <PlanModuleBadges features={selectedFeatures} />
@@ -402,24 +473,25 @@ export function CreateGymDialog() {
                 name="expiresAt"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Expiration</FormLabel>
+                    <FormLabel>{t('fields.expiresAt')}</FormLabel>
                     <FormControl>
                       <Input
                         type="date"
                         value={field.value || ''}
                         onChange={(e) => field.onChange(e.target.value)}
-                        placeholder="Choisir une date"
+                        placeholder={t('placeholders.chooseDate')}
                       />
                     </FormControl>
                   </FormItem>
                 )}
               />
+
               <FormField
                 control={form.control}
                 name="grace"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Jours de grace</FormLabel>
+                    <FormLabel>{t('fields.graceDays')}</FormLabel>
                     <FormControl>
                       <Input type="number" {...field} />
                     </FormControl>
@@ -427,12 +499,13 @@ export function CreateGymDialog() {
                   </FormItem>
                 )}
               />
+
               <FormField
                 control={form.control}
                 name="maxAdmins"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Admins autorises</FormLabel>
+                    <FormLabel>{t('fields.maxAdmins')}</FormLabel>
                     <FormControl>
                       <Input type="number" {...field} />
                     </FormControl>
@@ -448,7 +521,7 @@ export function CreateGymDialog() {
                 name="ownerEmail"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Email proprietaire</FormLabel>
+                    <FormLabel>{t('fields.ownerEmail')}</FormLabel>
                     <FormControl>
                       <Input type="email" {...field} />
                     </FormControl>
@@ -456,12 +529,13 @@ export function CreateGymDialog() {
                   </FormItem>
                 )}
               />
+
               <FormField
                 control={form.control}
                 name="ownerPassword"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Mot de passe initial</FormLabel>
+                    <FormLabel>{t('fields.ownerPassword')}</FormLabel>
                     <FormControl>
                       <Input type="password" {...field} />
                     </FormControl>
@@ -477,19 +551,20 @@ export function CreateGymDialog() {
                 name="ownerFirstName"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Prenom proprietaire</FormLabel>
+                    <FormLabel>{t('fields.ownerFirstName')}</FormLabel>
                     <FormControl>
                       <Input {...field} />
                     </FormControl>
                   </FormItem>
                 )}
               />
+
               <FormField
                 control={form.control}
                 name="ownerLastName"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Nom proprietaire</FormLabel>
+                    <FormLabel>{t('fields.ownerLastName')}</FormLabel>
                     <FormControl>
                       <Input {...field} />
                     </FormControl>
@@ -499,7 +574,7 @@ export function CreateGymDialog() {
             </div>
 
             <Button type="submit" className="w-full" disabled={createGym.isPending}>
-              {createGym.isPending ? 'Creation...' : 'Creer'}
+              {createGym.isPending ? t('actions.creating') : t('actions.create')}
             </Button>
           </form>
         </Form>

@@ -1,6 +1,14 @@
 'use client'
 
-import { BarChart3, ClipboardList, FileCog, PenSquare, Trash2, Users } from 'lucide-react'
+import { useTranslations } from 'next-intl'
+import {
+  BarChart3,
+  ClipboardList,
+  FileCog,
+  PenSquare,
+  Trash2,
+  Users,
+} from 'lucide-react'
 import type { SuperAdminGym } from '@/app/[locale]/(dashboard)/super-admin/hooks'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -24,7 +32,13 @@ import { cn } from '@/lib/utils'
 import { PlanModuleBadges } from './PlanModules'
 import { getPlanFeatures } from '@/lib/subscription-plans'
 
-export type GymAction = 'overview' | 'team' | 'plans' | 'subscription' | 'edit' | 'delete'
+export type GymAction =
+  | 'overview'
+  | 'team'
+  | 'plans'
+  | 'subscription'
+  | 'edit'
+  | 'delete'
 
 type Props = {
   gyms: SuperAdminGym[]
@@ -39,38 +53,46 @@ type Props = {
   onAction: (gymId: string, action: GymAction) => void
 }
 
-const STATUS_LABEL: Record<string, string> = {
-  ACTIVE: 'Actif',
-  SUSPENDED: 'Suspendue',
-  EXPIRED: 'Expiree',
+const STATUS_KEY: Record<string, 'active' | 'suspended' | 'expired'> = {
+  ACTIVE: 'active',
+  SUSPENDED: 'suspended',
+  EXPIRED: 'expired',
 }
 
-const PLAN_LABEL: Record<string, string> = {
-  BASIC: 'Basic',
-  PRO: 'Pro',
-  ENTERPRISE: 'Enterprise',
+const PLAN_KEY: Record<string, 'basic' | 'pro' | 'enterprise'> = {
+  BASIC: 'basic',
+  PRO: 'pro',
+  ENTERPRISE: 'enterprise',
 }
 
-const INTERVAL_LABEL: Record<string, string> = {
-  MONTHLY: 'mensuel',
-  ANNUAL: 'annuel',
+const INTERVAL_KEY: Record<string, 'monthly' | 'annual'> = {
+  MONTHLY: 'monthly',
+  ANNUAL: 'annual',
 }
 
-const ROW_ACTIONS: Array<{
-  type: GymAction
-  icon: React.ComponentType<{ size?: number }>
-  label: string
-  tone?: 'destructive'
-}> = [
-  { type: 'overview', icon: BarChart3, label: "Vue d'ensemble" },
-  { type: 'team', icon: Users, label: 'Administrateurs' },
-  { type: 'plans', icon: ClipboardList, label: 'Plans' },
-  { type: 'subscription', icon: FileCog, label: 'Abonnement' },
-  { type: 'edit', icon: PenSquare, label: 'Modifier' },
-  { type: 'delete', icon: Trash2, label: 'Supprimer', tone: 'destructive' },
-]
+export function GymsTable({
+  gyms,
+  isLoading,
+  pagination,
+  totalItems,
+  onAction,
+}: Props) {
+  const t = useTranslations('superAdminGymsTable')
 
-export function GymsTable({ gyms, isLoading, pagination, totalItems, onAction }: Props) {
+  const ROW_ACTIONS: Array<{
+    type: GymAction
+    icon: React.ComponentType<{ size?: number }>
+    label: string
+    tone?: 'destructive'
+  }> = [
+    { type: 'overview', icon: BarChart3, label: t('actions.overview') },
+    { type: 'team', icon: Users, label: t('actions.team') },
+    { type: 'plans', icon: ClipboardList, label: t('actions.plans') },
+    { type: 'subscription', icon: FileCog, label: t('actions.subscription') },
+    { type: 'edit', icon: PenSquare, label: t('actions.edit') },
+    { type: 'delete', icon: Trash2, label: t('actions.delete'), tone: 'destructive' },
+  ]
+
   if (isLoading) {
     return (
       <div className="rounded-2xl border border-border/70 bg-card p-4">
@@ -102,7 +124,11 @@ export function GymsTable({ gyms, isLoading, pagination, totalItems, onAction }:
   }
 
   if (!gyms.length) {
-    return <div className="py-10 text-center text-muted-foreground">Aucune salle ne correspond a vos filtres.</div>
+    return (
+      <div className="py-10 text-center text-muted-foreground">
+        {t('empty')}
+      </div>
+    )
   }
 
   return (
@@ -110,119 +136,166 @@ export function GymsTable({ gyms, isLoading, pagination, totalItems, onAction }:
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead>Nom</TableHead>
-            <TableHead>Statut</TableHead>
-            <TableHead>Membres</TableHead>
-            <TableHead>Abonnements</TableHead>
-            <TableHead>Expiration</TableHead>
-            <TableHead className="text-right">Actions</TableHead>
+            <TableHead>{t('columns.name')}</TableHead>
+            <TableHead>{t('columns.status')}</TableHead>
+            <TableHead>{t('columns.members')}</TableHead>
+            <TableHead>{t('columns.subscriptions')}</TableHead>
+            <TableHead>{t('columns.expiration')}</TableHead>
+            <TableHead className="text-right">{t('columns.actions')}</TableHead>
           </TableRow>
         </TableHeader>
 
         <TableBody>
           {gyms.map((gym) => {
             const variantTotal = gym.variantCount ?? gym.variants?.length ?? 0
-            const planFeatures = gym.planFeatures ?? getPlanFeatures(gym.subscriptionPlan)
+            const planFeatures =
+              gym.planFeatures ?? getPlanFeatures(gym.subscriptionPlan)
+
+            const statusKey = STATUS_KEY[gym.subscriptionStatus] ?? 'active'
+            const planKey = PLAN_KEY[gym.subscriptionPlan] ?? 'basic'
+            const intervalKey = INTERVAL_KEY[gym.billingInterval] ?? 'monthly'
 
             return (
               <TableRow key={gym.id}>
-              <TableCell>
-                <div className="flex items-center gap-2 font-medium">
-                  {gym.name}
-                  {gym.isDemo ? (
-                    <Badge variant="outline" className="border-primary/60 text-primary">
-                      DEMO
-                    </Badge>
-                  ) : null}
-                </div>
-                <p className="text-xs text-muted-foreground">{gym.email}</p>
-              </TableCell>
-
-              <TableCell>
-                <Badge variant={gym.subscriptionStatus === 'EXPIRED' ? 'destructive' : 'secondary'}>
-                  {STATUS_LABEL[gym.subscriptionStatus] ?? gym.subscriptionStatus}
-                </Badge>
-
-                <p className="text-xs text-muted-foreground">
-                  {gym.isDemo && <span className="font-semibold text-primary">Demo </span>}
-                  Plan {PLAN_LABEL[gym.subscriptionPlan] ?? gym.subscriptionPlan} {' - '}
-                  {INTERVAL_LABEL[gym.billingInterval] ?? gym.billingInterval} {' - '}
-                  {gym.subscriptionPrice.toLocaleString('fr-MA', {
-                    style: 'currency',
-                    currency: 'MAD',
-                  })}
-                </p>
-                <p className="text-xs text-muted-foreground">
-                  {gym.variantMode === 'MULTI' ? 'Multi-salles' : 'Mono-salle'} - {variantTotal} variante(s)
-                </p>
-                {gym.variants?.length ? (
-                  <div className="mt-1 flex flex-wrap gap-1">
-                    {gym.variants.slice(0, 3).map((variant) => (
-                      <Badge key={variant.id} variant={variant.isDefault ? 'secondary' : 'outline'} className="text-[11px]">
-                        {variant.name}
-                        {variant.isDefault ? ' (defaut)' : ''}
+                <TableCell>
+                  <div className="flex items-center gap-2 font-medium">
+                    {gym.name}
+                    {gym.isDemo ? (
+                      <Badge
+                        variant="outline"
+                        className="border-primary/60 text-primary"
+                      >
+                        {t('demoBadge')}
                       </Badge>
-                    ))}
-                    {(gym.variantCount ?? 0) > (gym.variants?.length ?? 0) && (
-                      <Badge variant="outline" className="text-[11px]">
-                        +{(gym.variantCount ?? 0) - (gym.variants?.length ?? 0)} autre(s)
-                      </Badge>
-                    )}
+                    ) : null}
                   </div>
-                ) : (
-                  <p className="text-xs text-muted-foreground">Variante unique</p>
-                )}
-                <PlanModuleBadges features={planFeatures} />
-              </TableCell>
+                  <p className="text-xs text-muted-foreground">{gym.email}</p>
+                </TableCell>
 
-              <TableCell>{gym.memberCount}</TableCell>
-              <TableCell>{gym.activeSubscriptions}</TableCell>
+                <TableCell>
+                  <Badge
+                    variant={
+                      gym.subscriptionStatus === 'EXPIRED'
+                        ? 'destructive'
+                        : 'secondary'
+                    }
+                  >
+                    {t(`status.${statusKey}`)}
+                  </Badge>
 
-              <TableCell>
-                <p>
-                  {gym.subscriptionExpiresAt
-                    ? new Date(gym.subscriptionExpiresAt).toLocaleDateString('fr-FR')
-                    : '--'}
-                </p>
-
-                {gym.isDemo && gym.demoEndsAt ? (
-                  <p className="text-xs text-primary">Demo jusqu'au {new Date(gym.demoEndsAt).toLocaleDateString('fr-FR')}</p>
-                ) : null}
-
-                {typeof gym.daysRemaining === 'number' && (
                   <p className="text-xs text-muted-foreground">
-                    {gym.daysRemaining > 0 ? `${gym.daysRemaining} j restants` : 'Expiree'}
+                    {gym.isDemo ? (
+                      <span className="font-semibold text-primary">
+                        {t('demoPrefix')}{' '}
+                      </span>
+                    ) : null}
+                    {t('planLine', {
+                      plan: t(`plan.${planKey}`),
+                      interval: t(`interval.${intervalKey}`),
+                      price: gym.subscriptionPrice.toLocaleString('fr-MA', {
+                        style: 'currency',
+                        currency: 'MAD',
+                      }),
+                    })}
                   </p>
-                )}
-              </TableCell>
 
-              <TableCell>
-                <TooltipProvider>
-                  <div className="flex justify-end gap-1">
-                    {ROW_ACTIONS.map(({ type, icon: Icon, label, tone }) => (
-                      <Tooltip key={type}>
-                        <TooltipTrigger asChild>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className={cn(
-                              'h-8 w-8',
-                              tone === 'destructive' &&
-                                'text-destructive hover:text-destructive focus-visible:text-destructive',
-                            )}
-                            onClick={() => onAction(gym.id, type)}
-                            aria-label={label}
-                          >
-                            <Icon size={16} />
-                          </Button>
-                        </TooltipTrigger>
-                        <TooltipContent>{label}</TooltipContent>
-                      </Tooltip>
-                    ))}
-                  </div>
-                </TooltipProvider>
-              </TableCell>
-            </TableRow>
+                  <p className="text-xs text-muted-foreground">
+                    {t(
+                      gym.variantMode === 'MULTI'
+                        ? 'variantMode.multi'
+                        : 'variantMode.single',
+                    )}{' '}
+                    - {t('variantCount', { count: variantTotal })}
+                  </p>
+
+                  {gym.variants?.length ? (
+                    <div className="mt-1 flex flex-wrap gap-1">
+                      {gym.variants.slice(0, 3).map((variant) => (
+                        <Badge
+                          key={variant.id}
+                          variant={variant.isDefault ? 'secondary' : 'outline'}
+                          className="text-[11px]"
+                        >
+                          {variant.name}
+                          {variant.isDefault ? ` (${t('default')})` : ''}
+                        </Badge>
+                      ))}
+
+                      {(gym.variantCount ?? 0) >
+                        (gym.variants?.length ?? 0) && (
+                        <Badge variant="outline" className="text-[11px]">
+                          +
+                          {(gym.variantCount ?? 0) -
+                            (gym.variants?.length ?? 0)}{' '}
+                          {t('others')}
+                        </Badge>
+                      )}
+                    </div>
+                  ) : (
+                    <p className="text-xs text-muted-foreground">
+                      {t('singleVariant')}
+                    </p>
+                  )}
+
+                  <PlanModuleBadges features={planFeatures} />
+                </TableCell>
+
+                <TableCell>{gym.memberCount}</TableCell>
+                <TableCell>{gym.activeSubscriptions}</TableCell>
+
+                <TableCell>
+                  <p>
+                    {gym.subscriptionExpiresAt
+                      ? new Date(gym.subscriptionExpiresAt).toLocaleDateString(
+                          'fr-FR',
+                        )
+                      : t('none')}
+                  </p>
+
+                  {gym.isDemo && gym.demoEndsAt ? (
+                    <p className="text-xs text-primary">
+                      {t('demoUntil', {
+                        date: new Date(gym.demoEndsAt).toLocaleDateString('fr-FR'),
+                      })}
+                    </p>
+                  ) : null}
+
+                  {typeof gym.daysRemaining === 'number' && (
+                    <p className="text-xs text-muted-foreground">
+                      {gym.daysRemaining > 0
+                        ? t('daysRemaining', { count: gym.daysRemaining })
+                        : t('expired')}
+                    </p>
+                  )}
+                </TableCell>
+
+                <TableCell>
+                  <TooltipProvider>
+                    <div className="flex justify-end gap-1">
+                      {ROW_ACTIONS.map(({ type, icon: Icon, label, tone }) => (
+                        <Tooltip key={type}>
+                          <TooltipTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className={cn(
+                                'h-8 w-8',
+                                tone === 'destructive' &&
+                                  'text-destructive hover:text-destructive focus-visible:text-destructive',
+                              )}
+                              onClick={() => onAction(gym.id, type)}
+                              aria-label={label}
+                            >
+                              <Icon size={16} />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>{label}</TooltipContent>
+                        </Tooltip>
+                      ))}
+                    </div>
+                  </TooltipProvider>
+                </TableCell>
+              </TableRow>
             )
           })}
         </TableBody>
@@ -231,14 +304,13 @@ export function GymsTable({ gyms, isLoading, pagination, totalItems, onAction }:
       <div className="border-t border-border/70 px-4 py-4">
         {gyms.length > 0 && (
           <div className="mb-4 flex flex-wrap items-center justify-between gap-3 text-sm text-muted-foreground">
-            <span>
-              {totalItems} salle{totalItems > 1 ? 's' : ''} total
-            </span>
+            <span>{t('totalGyms', { count: totalItems })}</span>
             <span className="text-xs uppercase tracking-[0.3em]">
-              Page {pagination.page} / {pagination.pageCount}
+              {t('page', { page: pagination.page, pageCount: pagination.pageCount })}
             </span>
           </div>
         )}
+
         <PaginationControls
           page={pagination.page}
           pageCount={pagination.pageCount}

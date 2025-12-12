@@ -2,16 +2,19 @@
 
 import { useEffect, useState } from 'react'
 import type { SuperAdminGymDetail } from '@/app/[locale]/(dashboard)/super-admin/hooks'
-import { useLocale } from 'next-intl'
+import { useLocale, useTranslations } from 'next-intl'
 import { useQueryClient } from '@tanstack/react-query'
+
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
+
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form'
+
 import { PlanModuleBadges } from '../PlanModules'
 import { getPlanFeatures } from '@/lib/subscription-plans'
 import { toast } from 'sonner'
@@ -32,6 +35,7 @@ const schema = z.object({
 type SubscriptionValues = z.infer<typeof schema>
 
 export function GymSubscriptionSettings({ gym }: Props) {
+  const t = useTranslations('superAdminGymSubscription')
   const locale = useLocale()
   const queryClient = useQueryClient()
 
@@ -46,10 +50,11 @@ export function GymSubscriptionSettings({ gym }: Props) {
       maxAdmins: gym.maxAdminAccounts,
     },
   })
+
   const planFeatures = gym.planFeatures ?? getPlanFeatures(gym.subscriptionPlan)
   const variantTotal = gym.variantCount ?? gym.variants?.length ?? 0
 
-  const [downloading, setDownloading] = useState<string | null>(null)
+  const [downloading, setDownloading] = useState<'excel' | 'pdf' | null>(null)
   const [processingInvoice, setProcessingInvoice] = useState<'download' | 'print' | null>(null)
 
   useEffect(() => {
@@ -65,8 +70,10 @@ export function GymSubscriptionSettings({ gym }: Props) {
 
   const handleInvoice = async (mode: 'download' | 'print', values?: SubscriptionValues) => {
     const payload = values ?? form.getValues()
+
     try {
       setProcessingInvoice(mode)
+
       const response = await fetch(`/api/super-admin/gyms/${gym.id}/invoice`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -82,12 +89,13 @@ export function GymSubscriptionSettings({ gym }: Props) {
       })
 
       if (!response.ok) {
-        const message = await response.text().catch(() => 'Impossible de générer la facture')
-        throw new Error(message || 'Impossible de générer la facture')
+        const message = await response.text().catch(() => t('errors.invoiceGeneric'))
+        throw new Error(message || t('errors.invoiceGeneric'))
       }
 
       const blob = await response.blob()
       const url = URL.createObjectURL(blob)
+
       if (mode === 'print') {
         const win = window.open(url)
         if (win) {
@@ -96,18 +104,22 @@ export function GymSubscriptionSettings({ gym }: Props) {
             win.print()
           }
         }
+        toast.success(t('toasts.invoicePrintReady'))
       } else {
         const anchor = document.createElement('a')
         anchor.href = url
         anchor.download = `gym-renewal-${Date.now()}.pdf`
         anchor.click()
+        toast.success(t('toasts.invoiceDownloaded'))
       }
+
       setTimeout(() => URL.revokeObjectURL(url), 1000)
+
       queryClient.invalidateQueries({ queryKey: ['super-admin', 'gym', gym.id] })
       queryClient.invalidateQueries({ queryKey: ['super-admin', 'gyms'] })
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Erreur de facture'
-      toast.error(message)
+      const msg = error instanceof Error ? error.message : t('errors.invoiceGeneric')
+      toast.error(msg)
     } finally {
       setProcessingInvoice(null)
     }
@@ -118,23 +130,27 @@ export function GymSubscriptionSettings({ gym }: Props) {
   const downloadReport = async (format: 'excel' | 'pdf') => {
     try {
       setDownloading(format)
+
       const endpoint =
         format === 'excel'
           ? `/api/super-admin/reports/excel?scope=gym&gymId=${gym.id}&locale=${locale}`
           : `/api/super-admin/reports/pdf?scope=gym&gymId=${gym.id}&locale=${locale}`
 
       const response = await fetch(endpoint)
-      if (!response.ok) throw new Error('Export impossible')
+      if (!response.ok) throw new Error(t('errors.exportFailed'))
 
       const blob = await response.blob()
       const url = URL.createObjectURL(blob)
       const anchor = document.createElement('a')
       anchor.href = url
-      anchor.download = `gym-${gym.id}-${Date.now()}.${format}`
+      anchor.download = `gym-${gym.id}-${Date.now()}.${format === 'excel' ? 'xlsx' : 'pdf'}`
       anchor.click()
       URL.revokeObjectURL(url)
+
+      toast.success(t('toasts.exportSuccess', { format: format.toUpperCase() }))
     } catch (error) {
-      console.error(error)
+      const msg = error instanceof Error ? error.message : t('errors.exportFailed')
+      toast.error(msg)
     } finally {
       setDownloading(null)
     }
@@ -143,16 +159,16 @@ export function GymSubscriptionSettings({ gym }: Props) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Paramètres d'abonnement</CardTitle>
-        <CardDescription>Mettez à jour le plan ou la capacité.</CardDescription>
+        <CardTitle>{t('title')}</CardTitle>
+        <CardDescription>{t('description')}</CardDescription>
       </CardHeader>
 
       <CardContent>
         <div className="mb-4 rounded-lg border border-border/60 bg-muted/20 p-4">
-          <p className="text-sm font-semibold">Modules actifs</p>
+          <p className="text-sm font-semibold">{t('modulesActive')}</p>
           <PlanModuleBadges features={planFeatures} />
           <p className="mt-2 text-xs text-muted-foreground">
-            {gym.variantMode === 'MULTI' ? 'Multi-salles' : 'Mono-salle'} - {variantTotal} variante(s)
+            {t(gym.variantMode === 'MULTI' ? 'variantMode.multi' : 'variantMode.mono', { count: variantTotal })}
           </p>
         </div>
 
@@ -164,7 +180,7 @@ export function GymSubscriptionSettings({ gym }: Props) {
               name="status"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Statut</FormLabel>
+                  <FormLabel>{t('fields.status')}</FormLabel>
                   <Select onValueChange={field.onChange} value={field.value}>
                     <FormControl>
                       <SelectTrigger>
@@ -172,9 +188,9 @@ export function GymSubscriptionSettings({ gym }: Props) {
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      <SelectItem value="ACTIVE">Actif</SelectItem>
-                      <SelectItem value="SUSPENDED">Suspendu</SelectItem>
-                      <SelectItem value="EXPIRED">Expiré</SelectItem>
+                      <SelectItem value="ACTIVE">{t('status.active')}</SelectItem>
+                      <SelectItem value="SUSPENDED">{t('status.suspended')}</SelectItem>
+                      <SelectItem value="EXPIRED">{t('status.expired')}</SelectItem>
                     </SelectContent>
                   </Select>
                 </FormItem>
@@ -188,7 +204,7 @@ export function GymSubscriptionSettings({ gym }: Props) {
                 name="plan"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Plan</FormLabel>
+                    <FormLabel>{t('fields.plan')}</FormLabel>
                     <Select onValueChange={field.onChange} value={field.value}>
                       <FormControl>
                         <SelectTrigger>
@@ -196,9 +212,9 @@ export function GymSubscriptionSettings({ gym }: Props) {
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="BASIC">Basic</SelectItem>
-                        <SelectItem value="PRO">Pro</SelectItem>
-                        <SelectItem value="ENTERPRISE">Enterprise</SelectItem>
+                        <SelectItem value="BASIC">{t('plan.basic')}</SelectItem>
+                        <SelectItem value="PRO">{t('plan.pro')}</SelectItem>
+                        <SelectItem value="ENTERPRISE">{t('plan.enterprise')}</SelectItem>
                       </SelectContent>
                     </Select>
                   </FormItem>
@@ -210,7 +226,7 @@ export function GymSubscriptionSettings({ gym }: Props) {
                 name="interval"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Facturation</FormLabel>
+                    <FormLabel>{t('fields.interval')}</FormLabel>
                     <Select onValueChange={field.onChange} value={field.value}>
                       <FormControl>
                         <SelectTrigger>
@@ -218,8 +234,8 @@ export function GymSubscriptionSettings({ gym }: Props) {
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="MONTHLY">Mensuel</SelectItem>
-                        <SelectItem value="ANNUAL">Annuel</SelectItem>
+                        <SelectItem value="MONTHLY">{t('interval.monthly')}</SelectItem>
+                        <SelectItem value="ANNUAL">{t('interval.annual')}</SelectItem>
                       </SelectContent>
                     </Select>
                   </FormItem>
@@ -233,13 +249,13 @@ export function GymSubscriptionSettings({ gym }: Props) {
               name="expiresAt"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Date d'expiration</FormLabel>
+                  <FormLabel>{t('fields.expiresAt')}</FormLabel>
                   <FormControl>
                     <Input
                       type="date"
                       value={field.value || ''}
                       onChange={(e) => field.onChange(e.target.value)}
-                      placeholder="Choisir une date"
+                      placeholder={t('placeholders.pickDate')}
                     />
                   </FormControl>
                 </FormItem>
@@ -253,7 +269,7 @@ export function GymSubscriptionSettings({ gym }: Props) {
                 name="grace"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Jours de grâce</FormLabel>
+                    <FormLabel>{t('fields.graceDays')}</FormLabel>
                     <FormControl>
                       <Input type="number" {...field} />
                     </FormControl>
@@ -267,7 +283,7 @@ export function GymSubscriptionSettings({ gym }: Props) {
                 name="maxAdmins"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Admins autorisés</FormLabel>
+                    <FormLabel>{t('fields.maxAdmins')}</FormLabel>
                     <FormControl>
                       <Input type="number" {...field} />
                     </FormControl>
@@ -279,7 +295,7 @@ export function GymSubscriptionSettings({ gym }: Props) {
 
             {/* Exports */}
             <div className="rounded-lg border border-dashed border-border/60 p-4">
-              <p className="text-sm font-semibold">Exports du gymnase</p>
+              <p className="text-sm font-semibold">{t('exports.title')}</p>
               <div className="mt-2 flex flex-wrap gap-3">
                 <Button
                   type="button"
@@ -288,7 +304,7 @@ export function GymSubscriptionSettings({ gym }: Props) {
                   onClick={() => downloadReport('excel')}
                   disabled={downloading === 'excel'}
                 >
-                  {downloading === 'excel' ? 'Export...' : 'Rapport Excel'}
+                  {downloading === 'excel' ? t('exports.loading') : t('exports.excel')}
                 </Button>
 
                 <Button
@@ -298,15 +314,16 @@ export function GymSubscriptionSettings({ gym }: Props) {
                   onClick={() => downloadReport('pdf')}
                   disabled={downloading === 'pdf'}
                 >
-                  {downloading === 'pdf' ? 'Export...' : 'Rapport PDF'}
+                  {downloading === 'pdf' ? t('exports.loading') : t('exports.pdf')}
                 </Button>
               </div>
             </div>
 
             <div className="flex flex-col gap-3 sm:flex-row sm:justify-end">
               <Button type="submit" className="w-full sm:w-auto" disabled={processingInvoice !== null}>
-                {processingInvoice === 'download' ? 'Génération...' : 'Télécharger la facture'}
+                {processingInvoice === 'download' ? t('invoice.generating') : t('invoice.download')}
               </Button>
+
               <Button
                 type="button"
                 variant="outline"
@@ -314,7 +331,7 @@ export function GymSubscriptionSettings({ gym }: Props) {
                 onClick={form.handleSubmit((values) => handleInvoice('print', values))}
                 disabled={processingInvoice !== null}
               >
-                {processingInvoice === 'print' ? 'Préparation...' : 'Imprimer'}
+                {processingInvoice === 'print' ? t('invoice.preparing') : t('invoice.print')}
               </Button>
             </div>
           </form>

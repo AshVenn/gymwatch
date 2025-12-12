@@ -446,6 +446,39 @@ export async function updateGymFromSuperAdmin(
   }
 }
 
+export async function convertDemoGym(gymId: string) {
+  const gym = await prisma.gym.findUnique({
+    where: { id: gymId },
+    select: {
+      id: true,
+      isDemo: true,
+      subscriptionStatus: true,
+    },
+  })
+
+  if (!gym) {
+    throw new Error("NOT_FOUND")
+  }
+  if (!gym.isDemo) {
+    throw new Error("NOT_DEMO")
+  }
+
+  const nextStatus =
+    gym.subscriptionStatus === GymSubscriptionStatus.EXPIRED ? GymSubscriptionStatus.ACTIVE : gym.subscriptionStatus
+
+  await prisma.gym.update({
+    where: { id: gymId },
+    data: {
+      isDemo: false,
+      demoEndsAt: null,
+      subscriptionStatus: nextStatus,
+      subscriptionExpiresAt: null,
+    },
+  })
+
+  return getSuperAdminGymDetail(gymId)
+}
+
 export async function createGymForSuperAdmin(data: {
   name: string
   email: string

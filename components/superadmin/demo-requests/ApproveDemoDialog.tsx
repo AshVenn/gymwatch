@@ -5,53 +5,80 @@ import { useForm } from 'react-hook-form'
 import { z } from 'zod'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { CalendarClock, Sparkles } from 'lucide-react'
+import { useLocale, useTranslations } from 'next-intl'
 
-import type { DemoRequest, GymBillingInterval, GymPlanTier } from '@/app/[locale]/(dashboard)/super-admin/hooks'
-import { useApproveDemoRequest, usePlanSettings } from '@/app/[locale]/(dashboard)/super-admin/hooks'
+import type {
+  DemoRequest,
+  GymBillingInterval,
+  GymPlanTier,
+} from '@/app/[locale]/(dashboard)/super-admin/hooks'
+import {
+  useApproveDemoRequest,
+  usePlanSettings,
+} from '@/app/[locale]/(dashboard)/super-admin/hooks'
 import { PLAN_PRICING } from '@/lib/subscription-plans'
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { toast } from 'sonner'
 
 function slugifyVariantName(value: string) {
-  return value
-    .toLowerCase()
-    .trim()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/(^-|-$)+/g, '') || 'principal'
+  return (
+    value
+      .toLowerCase()
+      .trim()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/(^-|-$)+/g, '') || 'principal'
+  )
 }
 
-const schema = z.object({
-  name: z.string().min(2, 'Nom requis'),
-  email: z.string().email('Email invalide'),
-  phone: z.string().min(6, 'Telephone requis'),
-  address: z.string().optional(),
-  city: z.string().optional(),
-  country: z.string().optional(),
-  plan: z.enum(['BASIC', 'PRO', 'ENTERPRISE']),
-  billingInterval: z.enum(['MONTHLY', 'ANNUAL']),
-  expiresAt: z.string().optional(),
-  grace: z.coerce.number().min(0).max(30),
-  maxAdmins: z.coerce.number().min(1).max(20),
-  demoEndsAt: z.string().optional(),
-  variantNames: z.string().min(1, 'Au moins une variante'),
-  ownerEmail: z.string().email('Email invalide'),
-  ownerPassword: z.string().min(8, 'Min. 8 caracteres'),
-  ownerFirstName: z.string().optional(),
-  ownerLastName: z.string().optional(),
-  adminEmail: z.string().email().optional(),
-  adminPassword: z.string().min(8).optional(),
-  adminFirstName: z.string().optional(),
-  adminLastName: z.string().optional(),
-  adminVariantSlug: z.string().optional(),
-  resolutionNote: z.string().optional(),
-})
-
-type ApproveValues = z.infer<typeof schema>
+type ApproveValues = {
+  name: string
+  email: string
+  phone: string
+  address?: string
+  city?: string
+  country?: string
+  plan: 'BASIC' | 'PRO' | 'ENTERPRISE'
+  billingInterval: 'MONTHLY' | 'ANNUAL'
+  expiresAt?: string
+  grace: number
+  maxAdmins: number
+  demoEndsAt?: string
+  variantNames: string
+  ownerEmail: string
+  ownerPassword: string
+  ownerFirstName?: string
+  ownerLastName?: string
+  adminEmail?: string
+  adminPassword?: string
+  adminFirstName?: string
+  adminLastName?: string
+  adminVariantSlug?: string
+  resolutionNote?: string
+}
 
 const defaultValues: ApproveValues = {
   name: '',
@@ -86,10 +113,48 @@ type Props = {
   onApproved?: (payload: { requestId: string; createdGymId?: string }) => void
 }
 
-export function ApproveDemoDialog({ request, open, onOpenChange, onApproved }: Props) {
+export function ApproveDemoDialog({
+  request,
+  open,
+  onOpenChange,
+  onApproved,
+}: Props) {
+  const t = useTranslations('superAdminApproveDemo')
+  const locale = useLocale()
+
   const approveDemo = useApproveDemoRequest()
   const [prefilled, setPrefilled] = useState(false)
   const planSettings = usePlanSettings()
+
+  const schema = useMemo(
+    () =>
+      z.object({
+        name: z.string().min(2, t('validation.nameRequired')),
+        email: z.string().email(t('validation.invalidEmail')),
+        phone: z.string().min(6, t('validation.phoneRequired')),
+        address: z.string().optional(),
+        city: z.string().optional(),
+        country: z.string().optional(),
+        plan: z.enum(['BASIC', 'PRO', 'ENTERPRISE']),
+        billingInterval: z.enum(['MONTHLY', 'ANNUAL']),
+        expiresAt: z.string().optional(),
+        grace: z.coerce.number().min(0).max(30),
+        maxAdmins: z.coerce.number().min(1).max(20),
+        demoEndsAt: z.string().optional(),
+        variantNames: z.string().min(1, t('validation.atLeastOneVariant')),
+        ownerEmail: z.string().email(t('validation.invalidEmail')),
+        ownerPassword: z.string().min(8, t('validation.min8')),
+        ownerFirstName: z.string().optional(),
+        ownerLastName: z.string().optional(),
+        adminEmail: z.string().email().optional(),
+        adminPassword: z.string().min(8).optional(),
+        adminFirstName: z.string().optional(),
+        adminLastName: z.string().optional(),
+        adminVariantSlug: z.string().optional(),
+        resolutionNote: z.string().optional(),
+      }),
+    [t],
+  )
 
   const form = useForm<ApproveValues>({
     resolver: zodResolver(schema),
@@ -103,19 +168,20 @@ export function ApproveDemoDialog({ request, open, onOpenChange, onApproved }: P
       .map((name) => name.trim())
       .filter(Boolean)
 
-    const base = raw?.length ? raw : ['Principal']
+    const base = raw?.length ? raw : [t('defaults.defaultVariant')]
     return base.map((name, index) => ({
       name,
       slug: slugifyVariantName(name),
       isDefault: index === 0,
     }))
-  }, [variantNamesValue])
+  }, [t, variantNamesValue])
 
   useEffect(() => {
     if (request && open) {
       const defaultExpiration = new Date(Date.now() + 14 * 24 * 60 * 60 * 1000)
         .toISOString()
         .split('T')[0]
+
       form.reset({
         name: request.gymName,
         email: request.gymEmail,
@@ -129,7 +195,7 @@ export function ApproveDemoDialog({ request, open, onOpenChange, onApproved }: P
         grace: 7,
         maxAdmins: 3,
         demoEndsAt: defaultExpiration,
-        variantNames: 'Principal, Annexe',
+        variantNames: t('defaults.variantNames'),
         ownerEmail: request.adminEmail,
         ownerPassword: '',
         ownerFirstName: request.adminFirstName ?? '',
@@ -141,12 +207,13 @@ export function ApproveDemoDialog({ request, open, onOpenChange, onApproved }: P
         adminVariantSlug: '',
         resolutionNote: '',
       })
+
       setPrefilled(true)
     } else if (!request) {
       form.reset(defaultValues)
       setPrefilled(false)
     }
-  }, [form, open, request])
+  }, [form, open, request, t])
 
   const pricingTable = planSettings.data?.pricing ?? PLAN_PRICING
 
@@ -156,8 +223,20 @@ export function ApproveDemoDialog({ request, open, onOpenChange, onApproved }: P
     return pricingTable[plan][interval]
   }, [form, pricingTable])
 
+  const intervalLabel = form.watch('billingInterval') === 'ANNUAL'
+    ? t('labels.annual')
+    : t('labels.monthly')
+
+  const currencyLocale = locale === 'ar' ? 'ar-MA' : locale === 'en' ? 'en-US' : 'fr-MA'
+  const estimatedPriceLabel = estimatedPrice.toLocaleString(currencyLocale, {
+    style: 'currency',
+    currency: 'MAD',
+    maximumFractionDigits: 0,
+  })
+
   const onSubmit = (values: ApproveValues) => {
     if (!request) return
+
     approveDemo.mutate(
       {
         requestId: request.id,
@@ -186,16 +265,17 @@ export function ApproveDemoDialog({ request, open, onOpenChange, onApproved }: P
                   {
                     email: values.adminEmail,
                     password: values.adminPassword,
-                    firstName: values.adminFirstName || 'Admin',
-                    lastName: values.adminLastName || 'Demo',
-                    variantSlug: values.adminVariantSlug || parsedVariants[0]?.slug,
+                    firstName: values.adminFirstName || t('defaults.adminFirstName'),
+                    lastName: values.adminLastName || t('defaults.adminLastName'),
+                    variantSlug:
+                      values.adminVariantSlug || parsedVariants[0]?.slug,
                   },
                 ]
               : undefined,
           owner: {
             email: values.ownerEmail,
             password: values.ownerPassword,
-            firstName: values.ownerFirstName || 'Proprietaire',
+            firstName: values.ownerFirstName || t('defaults.ownerFirstName'),
             lastName: values.ownerLastName || values.name,
           },
         },
@@ -207,7 +287,12 @@ export function ApproveDemoDialog({ request, open, onOpenChange, onApproved }: P
             requestId: request.id,
             createdGymId: (createdGym as any)?.id,
           })
-          toast.success('Compte demo provisionne')
+          toast.success(t('toast.provisioned'))
+        },
+        onError: (error) => {
+          toast.error(
+            error instanceof Error ? error.message : t('toast.failed'),
+          )
         },
       },
     )
@@ -219,21 +304,21 @@ export function ApproveDemoDialog({ request, open, onOpenChange, onApproved }: P
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-3xl w-[95vw] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Creer le compte demo</DialogTitle>
-          <DialogDescription>
-            Les champs sont pre-remplis depuis la demande. Ajustez si necessaire avant de confirmer.
-          </DialogDescription>
+          <DialogTitle>{t('title')}</DialogTitle>
+          <DialogDescription>{t('description')}</DialogDescription>
         </DialogHeader>
 
         <div className="space-y-6">
           <div className="flex items-center justify-between rounded-lg border border-dashed border-border/70 bg-muted/40 px-4 py-3 text-sm text-muted-foreground">
             <div className="flex items-center gap-2">
               <Sparkles className="h-4 w-4 text-primary" />
-              <span>Plan {form.watch('plan')} - {form.watch('billingInterval') === 'ANNUAL' ? 'Annuel' : 'Mensuel'}</span>
+              <span>
+                {t('labels.plan')} {form.watch('plan')} - {intervalLabel}
+              </span>
             </div>
             <div className="flex items-center gap-2 text-foreground">
               <CalendarClock className="h-4 w-4 text-primary" />
-              <span>{estimatedPrice.toLocaleString('fr-MA', { style: 'currency', currency: 'MAD' })}</span>
+              <span>{estimatedPriceLabel}</span>
             </div>
           </div>
 
@@ -245,7 +330,7 @@ export function ApproveDemoDialog({ request, open, onOpenChange, onApproved }: P
                   name="name"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Nom de la salle</FormLabel>
+                      <FormLabel>{t('fields.gymName')}</FormLabel>
                       <FormControl>
                         <Input {...field} />
                       </FormControl>
@@ -253,12 +338,13 @@ export function ApproveDemoDialog({ request, open, onOpenChange, onApproved }: P
                     </FormItem>
                   )}
                 />
+
                 <FormField
                   control={form.control}
                   name="email"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Email</FormLabel>
+                      <FormLabel>{t('fields.email')}</FormLabel>
                       <FormControl>
                         <Input type="email" {...field} />
                       </FormControl>
@@ -274,7 +360,7 @@ export function ApproveDemoDialog({ request, open, onOpenChange, onApproved }: P
                   name="phone"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Telephone</FormLabel>
+                      <FormLabel>{t('fields.phone')}</FormLabel>
                       <FormControl>
                         <Input {...field} />
                       </FormControl>
@@ -282,12 +368,13 @@ export function ApproveDemoDialog({ request, open, onOpenChange, onApproved }: P
                     </FormItem>
                   )}
                 />
+
                 <FormField
                   control={form.control}
                   name="address"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Adresse</FormLabel>
+                      <FormLabel>{t('fields.address')}</FormLabel>
                       <FormControl>
                         <Input {...field} />
                       </FormControl>
@@ -303,7 +390,7 @@ export function ApproveDemoDialog({ request, open, onOpenChange, onApproved }: P
                   name="city"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Ville</FormLabel>
+                      <FormLabel>{t('fields.city')}</FormLabel>
                       <FormControl>
                         <Input {...field} />
                       </FormControl>
@@ -311,12 +398,13 @@ export function ApproveDemoDialog({ request, open, onOpenChange, onApproved }: P
                     </FormItem>
                   )}
                 />
+
                 <FormField
                   control={form.control}
                   name="country"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Pays</FormLabel>
+                      <FormLabel>{t('fields.country')}</FormLabel>
                       <FormControl>
                         <Input {...field} />
                       </FormControl>
@@ -331,18 +419,23 @@ export function ApproveDemoDialog({ request, open, onOpenChange, onApproved }: P
                 name="variantNames"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Variantes du gym (separees par des virgules)</FormLabel>
+                    <FormLabel>{t('fields.variantsLabel')}</FormLabel>
                     <FormControl>
-                      <Input placeholder="Principal, Premium, Budget" {...field} />
+                      <Input placeholder={t('fields.variantsPlaceholder')} {...field} />
                     </FormControl>
                     <FormMessage />
                     <p className="text-xs text-muted-foreground">
-                      La premiere variante est appliquee par defaut aux nouveaux comptes.
+                      {t('hints.firstVariantDefault')}
                     </p>
+
                     <div className="mt-2 flex flex-wrap gap-2">
                       {parsedVariants.map((variant) => (
-                        <Badge key={variant.slug} variant={variant.isDefault ? 'secondary' : 'outline'}>
-                          {variant.name} {variant.isDefault ? '(defaut)' : ''}
+                        <Badge
+                          key={variant.slug}
+                          variant={variant.isDefault ? 'secondary' : 'outline'}
+                        >
+                          {variant.name}{' '}
+                          {variant.isDefault ? `(${t('labels.default')})` : ''}
                         </Badge>
                       ))}
                     </div>
@@ -356,7 +449,7 @@ export function ApproveDemoDialog({ request, open, onOpenChange, onApproved }: P
                   name="plan"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Plan</FormLabel>
+                      <FormLabel>{t('fields.plan')}</FormLabel>
                       <Select onValueChange={field.onChange} value={field.value}>
                         <FormControl>
                           <SelectTrigger>
@@ -364,20 +457,21 @@ export function ApproveDemoDialog({ request, open, onOpenChange, onApproved }: P
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          <SelectItem value="BASIC">Basic</SelectItem>
-                          <SelectItem value="PRO">Pro</SelectItem>
-                          <SelectItem value="ENTERPRISE">Enterprise</SelectItem>
+                          <SelectItem value="BASIC">{t('plans.basic')}</SelectItem>
+                          <SelectItem value="PRO">{t('plans.pro')}</SelectItem>
+                          <SelectItem value="ENTERPRISE">{t('plans.enterprise')}</SelectItem>
                         </SelectContent>
                       </Select>
                     </FormItem>
                   )}
                 />
+
                 <FormField
                   control={form.control}
                   name="billingInterval"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Facturation</FormLabel>
+                      <FormLabel>{t('fields.billing')}</FormLabel>
                       <Select onValueChange={field.onChange} value={field.value}>
                         <FormControl>
                           <SelectTrigger>
@@ -385,8 +479,8 @@ export function ApproveDemoDialog({ request, open, onOpenChange, onApproved }: P
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          <SelectItem value="MONTHLY">Mensuel</SelectItem>
-                          <SelectItem value="ANNUAL">Annuel</SelectItem>
+                          <SelectItem value="MONTHLY">{t('labels.monthly')}</SelectItem>
+                          <SelectItem value="ANNUAL">{t('labels.annual')}</SelectItem>
                         </SelectContent>
                       </Select>
                     </FormItem>
@@ -400,7 +494,7 @@ export function ApproveDemoDialog({ request, open, onOpenChange, onApproved }: P
                   name="expiresAt"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Expiration abonnement</FormLabel>
+                      <FormLabel>{t('fields.subscriptionExpiresAt')}</FormLabel>
                       <FormControl>
                         <Input
                           type="date"
@@ -412,12 +506,13 @@ export function ApproveDemoDialog({ request, open, onOpenChange, onApproved }: P
                     </FormItem>
                   )}
                 />
+
                 <FormField
                   control={form.control}
                   name="demoEndsAt"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Fin de la demo</FormLabel>
+                      <FormLabel>{t('fields.demoEndsAt')}</FormLabel>
                       <FormControl>
                         <Input
                           type="date"
@@ -429,12 +524,13 @@ export function ApproveDemoDialog({ request, open, onOpenChange, onApproved }: P
                     </FormItem>
                   )}
                 />
+
                 <FormField
                   control={form.control}
                   name="grace"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Jours de grace</FormLabel>
+                      <FormLabel>{t('fields.graceDays')}</FormLabel>
                       <FormControl>
                         <Input type="number" {...field} />
                       </FormControl>
@@ -450,7 +546,7 @@ export function ApproveDemoDialog({ request, open, onOpenChange, onApproved }: P
                   name="maxAdmins"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Admins autorises</FormLabel>
+                      <FormLabel>{t('fields.maxAdmins')}</FormLabel>
                       <FormControl>
                         <Input type="number" {...field} />
                       </FormControl>
@@ -458,14 +554,15 @@ export function ApproveDemoDialog({ request, open, onOpenChange, onApproved }: P
                     </FormItem>
                   )}
                 />
+
                 <FormField
                   control={form.control}
                   name="resolutionNote"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Note interne (optionnel)</FormLabel>
+                      <FormLabel>{t('fields.internalNote')}</FormLabel>
                       <FormControl>
-                        <Input placeholder="Access envoye par mail..." {...field} />
+                        <Input placeholder={t('fields.internalNotePlaceholder')} {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -479,7 +576,7 @@ export function ApproveDemoDialog({ request, open, onOpenChange, onApproved }: P
                   name="ownerEmail"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Email proprietaire</FormLabel>
+                      <FormLabel>{t('fields.ownerEmail')}</FormLabel>
                       <FormControl>
                         <Input type="email" {...field} />
                       </FormControl>
@@ -487,12 +584,13 @@ export function ApproveDemoDialog({ request, open, onOpenChange, onApproved }: P
                     </FormItem>
                   )}
                 />
+
                 <FormField
                   control={form.control}
                   name="ownerPassword"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Mot de passe proprietaire</FormLabel>
+                      <FormLabel>{t('fields.ownerPassword')}</FormLabel>
                       <FormControl>
                         <Input type="password" {...field} />
                       </FormControl>
@@ -508,7 +606,7 @@ export function ApproveDemoDialog({ request, open, onOpenChange, onApproved }: P
                   name="ownerFirstName"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Prenom proprietaire</FormLabel>
+                      <FormLabel>{t('fields.ownerFirstName')}</FormLabel>
                       <FormControl>
                         <Input {...field} />
                       </FormControl>
@@ -516,12 +614,13 @@ export function ApproveDemoDialog({ request, open, onOpenChange, onApproved }: P
                     </FormItem>
                   )}
                 />
+
                 <FormField
                   control={form.control}
                   name="ownerLastName"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Nom proprietaire</FormLabel>
+                      <FormLabel>{t('fields.ownerLastName')}</FormLabel>
                       <FormControl>
                         <Input {...field} />
                       </FormControl>
@@ -532,14 +631,15 @@ export function ApproveDemoDialog({ request, open, onOpenChange, onApproved }: P
               </div>
 
               <div className="rounded-lg border border-dashed border-border/60 p-4">
-                <p className="text-sm font-semibold">Ajouter un admin secondaire (optionnel)</p>
+                <p className="text-sm font-semibold">{t('secondaryAdmin.title')}</p>
+
                 <div className="mt-3 grid gap-3 md:grid-cols-2">
                   <FormField
                     control={form.control}
                     name="adminEmail"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Email admin</FormLabel>
+                        <FormLabel>{t('secondaryAdmin.email')}</FormLabel>
                         <FormControl>
                           <Input type="email" {...field} />
                         </FormControl>
@@ -547,12 +647,13 @@ export function ApproveDemoDialog({ request, open, onOpenChange, onApproved }: P
                       </FormItem>
                     )}
                   />
+
                   <FormField
                     control={form.control}
                     name="adminPassword"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Mot de passe admin</FormLabel>
+                        <FormLabel>{t('secondaryAdmin.password')}</FormLabel>
                         <FormControl>
                           <Input type="password" {...field} />
                         </FormControl>
@@ -561,13 +662,14 @@ export function ApproveDemoDialog({ request, open, onOpenChange, onApproved }: P
                     )}
                   />
                 </div>
+
                 <div className="mt-3 grid gap-3 md:grid-cols-2">
                   <FormField
                     control={form.control}
                     name="adminFirstName"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Prenom admin</FormLabel>
+                        <FormLabel>{t('secondaryAdmin.firstName')}</FormLabel>
                         <FormControl>
                           <Input {...field} />
                         </FormControl>
@@ -575,12 +677,13 @@ export function ApproveDemoDialog({ request, open, onOpenChange, onApproved }: P
                       </FormItem>
                     )}
                   />
+
                   <FormField
                     control={form.control}
                     name="adminLastName"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Nom admin</FormLabel>
+                        <FormLabel>{t('secondaryAdmin.lastName')}</FormLabel>
                         <FormControl>
                           <Input {...field} />
                         </FormControl>
@@ -589,30 +692,36 @@ export function ApproveDemoDialog({ request, open, onOpenChange, onApproved }: P
                     )}
                   />
                 </div>
+
                 <div className="mt-3">
                   <FormField
                     control={form.control}
                     name="adminVariantSlug"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Variante assignee</FormLabel>
+                        <FormLabel>{t('secondaryAdmin.variant')}</FormLabel>
+
                         <Select onValueChange={field.onChange} value={field.value}>
                           <FormControl>
                             <SelectTrigger>
-                              <SelectValue placeholder={parsedVariants[0]?.name ?? 'Par defaut'} />
+                              <SelectValue placeholder={parsedVariants[0]?.name ?? t('labels.default')} />
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
                             {parsedVariants.map((variant) => (
                               <SelectItem key={variant.slug} value={variant.slug}>
-                                {variant.name} {variant.isDefault ? '(defaut)' : ''}
+                                {variant.name}{' '}
+                                {variant.isDefault ? `(${t('labels.default')})` : ''}
                               </SelectItem>
                             ))}
                           </SelectContent>
                         </Select>
+
                         <FormMessage />
                         <p className="text-xs text-muted-foreground">
-                          Par defaut : {parsedVariants[0]?.name ?? 'Principal'}
+                          {t('secondaryAdmin.defaultVariant', {
+                            name: parsedVariants[0]?.name ?? t('defaults.defaultVariant'),
+                          })}
                         </p>
                       </FormItem>
                     )}
@@ -620,8 +729,12 @@ export function ApproveDemoDialog({ request, open, onOpenChange, onApproved }: P
                 </div>
               </div>
 
-              <Button type="submit" className="w-full" disabled={approveDemo.isPending || !prefilled}>
-                {approveDemo.isPending ? 'Creation en cours...' : 'Creer le compte demo'}
+              <Button
+                type="submit"
+                className="w-full"
+                disabled={approveDemo.isPending || !prefilled}
+              >
+                {approveDemo.isPending ? t('actions.creating') : t('actions.create')}
               </Button>
             </form>
           </Form>

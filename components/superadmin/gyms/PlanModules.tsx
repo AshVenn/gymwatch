@@ -1,3 +1,6 @@
+'use client'
+
+import { useTranslations } from 'next-intl'
 import type { PlanFeatures } from '@/lib/subscription-plans'
 import { Badge } from '@/components/ui/badge'
 import { cn } from '@/lib/utils'
@@ -15,51 +18,19 @@ type ModuleKey = keyof PlanFeatures
 
 type ModuleMeta = {
   key: ModuleKey
-  label: string
-  description: string
   icon: LucideIcon
 }
 
 const MODULES: ModuleMeta[] = [
-  {
-    key: 'accessControl',
-    label: "Controle d'acces",
-    description: 'Scan QR, filtrage des membres et controle des passages.',
-    icon: ShieldCheck,
-  },
-  {
-    key: 'presenceTracking',
-    label: 'Suivi de presence',
-    description: 'Comptage en temps reel, alertes de seuils et absences.',
-    icon: Activity,
-  },
-  {
-    key: 'courses',
-    label: 'Cours & planning',
-    description: 'Gestion des cours, reservations et capacite par variante.',
-    icon: CheckCircle2,
-  },
-  {
-    key: 'qrTools',
-    label: 'Outils QR',
-    description: 'Generation de QR codes et partage avec les membres.',
-    icon: QrCode,
-  },
-  {
-    key: 'qrDownloads',
-    label: 'Exports QR',
-    description: 'Exports rapides des QR codes et impressions.',
-    icon: Download,
-  },
-  {
-    key: 'excelReports',
-    label: 'Exports Excel',
-    description: 'Rapports finances, abonnements et passages en Excel.',
-    icon: FileSpreadsheet,
-  },
+  { key: 'accessControl', icon: ShieldCheck },
+  { key: 'presenceTracking', icon: Activity },
+  { key: 'courses', icon: CheckCircle2 },
+  { key: 'qrTools', icon: QrCode },
+  { key: 'qrDownloads', icon: Download },
+  { key: 'excelReports', icon: FileSpreadsheet },
 ]
 
-function resolveModules(features?: PlanFeatures) {
+function resolveModules(features: PlanFeatures | undefined) {
   return MODULES.map((module) => ({
     ...module,
     enabled: Boolean(features?.[module.key]),
@@ -72,10 +43,11 @@ type BadgesProps = {
 }
 
 export function PlanModuleBadges({ features, className }: BadgesProps) {
-  const enabledModules = resolveModules(features).filter((module) => module.enabled)
+  const t = useTranslations('planModules')
+  const enabledModules = resolveModules(features).filter((m) => m.enabled)
 
   if (!enabledModules.length) {
-    return <p className="text-[11px] text-muted-foreground">Aucun module actif sur ce plan.</p>
+    return <p className="text-[11px] text-muted-foreground">{t('badges.empty')}</p>
   }
 
   return (
@@ -87,7 +59,7 @@ export function PlanModuleBadges({ features, className }: BadgesProps) {
           className="flex items-center gap-1 border-border/70 text-[11px] font-medium"
         >
           <module.icon className="h-3 w-3" />
-          {module.label}
+          {t(`modules.${module.key}.label`)}
         </Badge>
       ))}
     </div>
@@ -99,6 +71,7 @@ type ListProps = {
 }
 
 export function PlanModuleList({ features }: ListProps) {
+  const t = useTranslations('planModules')
   const modules = resolveModules(features)
 
   return (
@@ -114,12 +87,12 @@ export function PlanModuleList({ features }: ListProps) {
           <module.icon className={cn('mt-0.5 h-4 w-4', module.enabled ? 'text-primary' : 'text-muted-foreground')} />
           <div className="space-y-1">
             <div className="flex items-center gap-2">
-              <p className="text-sm font-semibold">{module.label}</p>
+              <p className="text-sm font-semibold">{t(`modules.${module.key}.label`)}</p>
               <Badge variant={module.enabled ? 'secondary' : 'outline'} className="text-[11px]">
-                {module.enabled ? 'Actif' : 'Inactif'}
+                {module.enabled ? t('status.active') : t('status.inactive')}
               </Badge>
             </div>
-            <p className="text-xs text-muted-foreground">{module.description}</p>
+            <p className="text-xs text-muted-foreground">{t(`modules.${module.key}.description`)}</p>
           </div>
         </div>
       ))}

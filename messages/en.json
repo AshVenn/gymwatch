@@ -3,7 +3,7 @@
     "localeLabel": "English",
     "comingSoon": "Detailed translations coming soon."
   },
-    "metadata": {
+  "metadata": {
     "titleDefault": "GymWatch - Modern gym management",
     "titleTemplate": "%s | GymWatch",
     "description": "GymWatch helps gyms manage subscriptions, members, and revenue with an intelligent dashboard.",
@@ -15,7 +15,762 @@
     "twitterTitle": "GymWatch - Gym management solution",
     "twitterDescription": "Automate subscriptions, streamline operations, and empower your members with GymWatch."
   },
-    "dashOwAdSubscriptions": {
+    "superAdminDemoRequestsPage": {
+    "title": "Demo requests",
+    "subtitle": "Review requests and provision demo accounts.",
+    "filters": {
+      "ALL": "All",
+      "PENDING": "Pending",
+      "RESOLVED": "Resolved",
+      "REFUSED": "Refused"
+    },
+    "status": {
+      "PENDING": "Pending",
+      "RESOLVED": "Resolved",
+      "REFUSED": "Refused"
+    },
+    "searchPlaceholder": "Search by email or gym...",
+    "resultsCount": "{count} request(s) found",
+    "table": {
+      "gym": "Gym",
+      "adminContact": "Admin contact",
+      "plan": "Plan",
+      "status": "Status",
+      "requested": "Requested",
+      "resolution": "Resolution",
+      "actions": "Actions"
+    },
+    "actions": {
+      "view": "View",
+      "createDemo": "Create demo",
+      "markResolved": "Mark resolved",
+      "refuse": "Refuse"
+    },
+    "details": {
+      "title": "Request details",
+      "sentOn": "Sent on {date}",
+      "notProvided": "Not provided",
+      "missingAddress": "Missing address",
+      "noMessage": "No message added."
+    },
+    "empty": "No requests match your filters.",
+    "errors": {
+      "load": "Unable to load requests."
+    }
+  },
+  "superAdminSettings": {
+    "title": "Plan settings",
+    "subtitle": "Adjust pricing, annual discount, and plan limits per tier.",
+    "password": {
+      "cardTitle": "Change password",
+      "cardDescription": "Takes effect immediately and forces logout.",
+      "current": "Current password",
+      "new": "New password",
+      "confirm": "Confirm",
+      "submit": "Update",
+      "submitting": "Updating..."
+    },
+    "toast": {
+      "passwordUpdated": "Password updated. You will be signed out.",
+      "passwordError": "Unable to change password",
+      "unexpectedError": "Unexpected error"
+    },
+    "validation": {
+      "min8": "Minimum 8 characters",
+      "passwordMismatch": "Passwords do not match"
+    }
+  },
+  "superAdminApproveDemo": {
+    "title": "Create demo account",
+    "description": "Fields are prefilled from the request. Adjust if needed before confirming.",
+    "labels": {
+      "plan": "Plan",
+      "monthly": "Monthly",
+      "annual": "Annual",
+      "default": "default"
+    },
+    "fields": {
+      "gymName": "Gym name",
+      "email": "Email",
+      "phone": "Phone",
+      "address": "Address",
+      "city": "City",
+      "country": "Country",
+      "variantsLabel": "Gym variants (comma separated)",
+      "variantsPlaceholder": "Main, Premium, Budget",
+      "plan": "Plan",
+      "billing": "Billing",
+      "subscriptionExpiresAt": "Subscription expiry",
+      "demoEndsAt": "Demo end date",
+      "graceDays": "Grace days",
+      "maxAdmins": "Allowed admins",
+      "internalNote": "Internal note (optional)",
+      "internalNotePlaceholder": "Access sent by email...",
+      "ownerEmail": "Owner email",
+      "ownerPassword": "Owner password",
+      "ownerFirstName": "Owner first name",
+      "ownerLastName": "Owner last name"
+    },
+    "hints": {
+      "firstVariantDefault": "The first variant is applied by default to new accounts."
+    },
+    "plans": {
+      "basic": "Basic",
+      "pro": "Pro",
+      "enterprise": "Enterprise"
+    },
+    "secondaryAdmin": {
+      "title": "Add a secondary admin (optional)",
+      "email": "Admin email",
+      "password": "Admin password",
+      "firstName": "Admin first name",
+      "lastName": "Admin last name",
+      "variant": "Assigned variant",
+      "defaultVariant": "Default: {name}"
+    },
+    "actions": {
+      "create": "Create demo account",
+      "creating": "Creating..."
+    },
+    "toast": {
+      "provisioned": "Demo account provisioned",
+      "failed": "Unable to create demo account"
+    },
+    "validation": {
+      "nameRequired": "Name is required",
+      "invalidEmail": "Invalid email",
+      "phoneRequired": "Phone is required",
+      "atLeastOneVariant": "At least one variant",
+      "min8": "Min. 8 characters"
+    },
+    "defaults": {
+      "variantNames": "Main, Annex",
+      "defaultVariant": "Main",
+      "ownerFirstName": "Owner",
+      "adminFirstName": "Admin",
+      "adminLastName": "Demo"
+    }
+  },
+  "superAdminCreateGym": {
+    "title": "New gym",
+    "description": "Register a gym and its owner.",
+    "labels": {
+      "monthly": "Monthly",
+      "annual": "Annual",
+      "default": "default"
+    },
+    "actions": {
+      "addGym": "Add gym",
+      "create": "Create",
+      "creating": "Creating..."
+    },
+    "fields": {
+      "name": "Name",
+      "email": "Email",
+      "phone": "Phone",
+      "address": "Address",
+      "city": "City",
+      "country": "Country",
+      "gymType": "Gym type",
+      "variantNames": "Variants (comma separated)",
+      "plan": "Plan",
+      "billing": "Billing",
+      "status": "Status",
+      "expiresAt": "Expiration",
+      "graceDays": "Grace days",
+      "maxAdmins": "Allowed admins",
+      "ownerEmail": "Owner email",
+      "ownerPassword": "Initial password",
+      "ownerFirstName": "Owner first name",
+      "ownerLastName": "Owner last name"
+    },
+    "placeholders": {
+      "chooseType": "Choose a type",
+      "variantNames": "Main, Premium, Budget",
+      "chooseDate": "Pick a date"
+    },
+    "gymTypes": {
+      "single": "Single location",
+      "multi": "Multi locations (variants)"
+    },
+    "hints": {
+      "gymType": "Single: one location. Multi: multiple variants/locations.",
+      "estimatedPrice": "Estimated price: {price}"
+    },
+    "variants": {
+      "previewTitle": "Variants preview",
+      "firstDefaultHint": "The first variant is applied by default to new accounts.",
+      "singleTitle": "Single variant",
+      "singleHint": "Automatically uses the gym name: {name}"
+    },
+    "plans": {
+      "basic": "Basic",
+      "pro": "Pro",
+      "enterprise": "Enterprise"
+    },
+    "statuses": {
+      "active": "Active",
+      "suspended": "Suspended",
+      "expired": "Expired"
+    },
+    "modules": {
+      "title": "Modules included in {tier}",
+      "estimate": "Estimate: {price}"
+    },
+    "validation": {
+      "nameRequired": "Name is required",
+      "invalidEmail": "Invalid email",
+      "phoneRequired": "Phone is required",
+      "min8": "Min. 8 characters",
+      "atLeastOneVariant": "Add at least one variant",
+      "minAdmins": "Minimum 1"
+    },
+    "defaults": {
+      "singleVariantFallback": "Main",
+      "multiVariantFallback": "Main",
+      "ownerFirstName": "Owner"
+    }
+  },
+  "superAdminDeleteGym": {
+    "title": "Delete gym",
+    "statuses": {
+      "active": "Active",
+      "suspended": "Suspended",
+      "expired": "Expired"
+    },
+    "body": {
+      "permanentDeletePrefix": "This action will permanently delete",
+      "permanentDeleteSuffix": "and all associated data (owner, admins, plans, members, payments, subscriptions).",
+      "currentStatus": "Current status:",
+      "rules": "Only suspended or expired gyms can be deleted. Active gyms must be suspended before deletion.",
+      "fallback": "Confirm deletion of this gym."
+    },
+    "actions": {
+      "cancel": "Cancel",
+      "delete": "Delete",
+      "deleting": "Deleting..."
+    }
+  },
+  "superAdminEditGym": {
+    "title": "Edit gym",
+    "description": "Update public gym information.",
+    "loading": "Loading…",
+    "fields": {
+      "name": "Name",
+      "email": "Email",
+      "phone": "Phone",
+      "city": "City",
+      "country": "Country",
+      "address": "Address"
+    },
+    "actions": {
+      "save": "Save",
+      "saving": "Saving…"
+    },
+    "validation": {
+      "nameMin": "Name is required",
+      "emailInvalid": "Invalid email",
+      "phoneMin": "Phone is required",
+      "cityMin": "City is required",
+      "countryMin": "Country is required"
+    }
+  },
+  "superAdminActionSheet": {
+    "loading": "Loading…",
+    "labels": {
+      "team": {
+        "title": "Admin team",
+        "description": "Add or review administrator accounts."
+      },
+      "plans": {
+        "title": "Subscription plans",
+        "description": "Manage the offers available for this gym."
+      },
+      "subscription": {
+        "title": "Subscription settings",
+        "description": "Adjust status, billing, and exports."
+      }
+    }
+  },
+  "superAdminGymFilters": {
+    "searchPlaceholder": "Search a gym or an owner",
+    "status": {
+      "placeholder": "Status",
+      "all": "All statuses",
+      "active": "Active",
+      "suspended": "Suspended",
+      "expired": "Expired"
+    },
+    "plan": {
+      "placeholder": "Plan",
+      "all": "All plans",
+      "basic": "Basic",
+      "pro": "Pro",
+      "enterprise": "Enterprise"
+    }
+  },
+  "superAdminGymsTable": {
+    "empty": "No gyms match your filters.",
+    "columns": {
+      "name": "Name",
+      "status": "Status",
+      "members": "Members",
+      "subscriptions": "Subscriptions",
+      "expiration": "Expiration",
+      "actions": "Actions"
+    },
+    "demoBadge": "DEMO",
+    "demoPrefix": "Demo",
+    "planLine": "Plan {plan} - {interval} - {price}",
+    "status": {
+      "active": "Active",
+      "suspended": "Suspended",
+      "expired": "Expired"
+    },
+    "plan": {
+      "basic": "Basic",
+      "pro": "Pro",
+      "enterprise": "Enterprise"
+    },
+    "interval": {
+      "monthly": "monthly",
+      "annual": "annual"
+    },
+    "variantMode": {
+      "single": "Single location",
+      "multi": "Multi locations"
+    },
+    "variantCount": "{count} variant(s)",
+    "default": "default",
+    "others": "other(s)",
+    "singleVariant": "Single variant",
+    "none": "--",
+    "demoUntil": "Demo until {date}",
+    "daysRemaining": "{count} days left",
+    "expired": "Expired",
+    "totalGyms": "{count} gym{count, plural, one {} other {s}} total",
+    "page": "Page {page} / {pageCount}",
+    "actions": {
+      "overview": "Overview",
+      "team": "Admins",
+      "plans": "Plans",
+      "subscription": "Subscription",
+      "edit": "Edit",
+      "delete": "Delete"
+    }
+  },
+  "superAdminGymAnalytics": {
+    "expiry": {
+      "title": "Expiry trend",
+      "description": "Last 6 months"
+    },
+    "statusChart": {
+      "title": "Status breakdown",
+      "description": "Gym subscriptions"
+    },
+    "upcoming": {
+      "empty": "No upcoming expiry.",
+      "unknownDate": "Unknown date"
+    },
+    "status": {
+      "ACTIVE": "Active",
+      "SUSPENDED": "Suspended",
+      "EXPIRED": "Expired",
+      "EXPIRES_TODAY": "Expires today",
+      "INCONNU": "Unknown"
+    }
+  },
+  "superAdminGymDetail": {
+    "demoPill": "DEMO",
+    "unknownLocation": "Unknown location",
+    "planPrefix": "Plan",
+    "type": {
+      "single": "Single gym",
+      "multi": "Multi gyms"
+    },
+    "variantsTitle": "Gym variants",
+    "variantsCount": "{count} variant(s)",
+    "default": "default",
+    "noVariants": "No variants saved",
+    "demoUntil": "Demo until {date}",
+    "hint": "Use the quick actions from the table to manage the team, plans, and subscription settings for this gym.",
+    "plan": {
+      "BASIC": "Basic",
+      "PRO": "Pro",
+      "ENTERPRISE": "Enterprise"
+    },
+    "interval": {
+      "MONTHLY": "monthly",
+      "ANNUAL": "annual"
+    },
+    "convert": {
+      "cta": "Convert demo to live",
+      "pending": "Converting...",
+      "helper": "Removes demo limits and marks the gym as active.",
+      "confirm": "Convert {name} to an active gym?"
+    }
+  },
+  "superAdminGymPlans": {
+    "title": "Commercial plans",
+    "description": "Plans currently offered by the gym.",
+    "table": {
+      "name": "Name",
+      "duration": "Duration",
+      "price": "Price",
+      "visitsPerDay": "Visits / day",
+      "maxSession": "Max session",
+      "variant": "Variant",
+      "status": "Status"
+    },
+    "durationDays": "{days} days",
+    "minutes": "{minutes} min",
+    "unlimited": "Unlimited",
+    "defaultVisit": "1",
+    "variantOrGym": "Variant / gym",
+    "none": "-",
+    "active": "Active",
+    "inactive": "Inactive",
+    "empty": "No plans configured."
+  },
+  "superAdminGymStats": {
+    "members": {
+      "title": "Members",
+      "helper": "Registered on the platform"
+    },
+    "activeSubscriptions": {
+      "title": "Active subscriptions",
+      "helper": "Synced daily"
+    },
+    "revenue30d": {
+      "title": "Revenue (30 days)",
+      "helper": "Reported payments"
+    }
+  },
+  "superAdminGymSubscription": {
+    "title": "Subscription settings",
+    "description": "Update the plan or capacity.",
+    "modulesActive": "Active modules",
+    "variantMode": {
+      "mono": "Single site - {count} variant(s)",
+      "multi": "Multi-sites - {count} variant(s)"
+    },
+    "fields": {
+      "status": "Status",
+      "plan": "Plan",
+      "interval": "Billing",
+      "expiresAt": "Expiration date",
+      "graceDays": "Grace days",
+      "maxAdmins": "Allowed admins"
+    },
+    "placeholders": {
+      "pickDate": "Pick a date"
+    },
+    "status": {
+      "active": "Active",
+      "suspended": "Suspended",
+      "expired": "Expired"
+    },
+    "plan": {
+      "basic": "Basic",
+      "pro": "Pro",
+      "enterprise": "Enterprise"
+    },
+    "interval": {
+      "monthly": "Monthly",
+      "annual": "Annual"
+    },
+    "exports": {
+      "title": "Gym exports",
+      "excel": "Excel report",
+      "pdf": "PDF report",
+      "loading": "Exporting..."
+    },
+    "invoice": {
+      "download": "Download invoice",
+      "print": "Print",
+      "generating": "Generating...",
+      "preparing": "Preparing..."
+    },
+    "toasts": {
+      "invoiceDownloaded": "Invoice downloaded.",
+      "invoicePrintReady": "Invoice ready to print.",
+      "exportSuccess": "{format} report downloaded."
+    },
+    "errors": {
+      "invoiceGeneric": "Unable to generate invoice",
+      "exportFailed": "Export failed"
+    }
+  },
+  "superAdminGymTeam": {
+    "title": "Team ({used}/{max})",
+    "infinite": "∞",
+    "capacityUsed": "Capacity used:",
+    "empty": "No administrators yet.",
+    "addTitle": "Add an administrator",
+    "capacityReached": "Maximum capacity reached. Increase allowed admins or remove an admin.",
+    "fields": {
+      "email": "Email",
+      "firstName": "First name",
+      "lastName": "Last name",
+      "variant": "Variant",
+      "tempPassword": "Temporary password"
+    },
+    "placeholders": {
+      "defaultVariant": "Default"
+    },
+    "labels": {
+      "variant": "Variant",
+      "default": "default"
+    },
+    "actions": {
+      "creating": "Creating...",
+      "add": "Add"
+    },
+    "toasts": {
+      "created": "Admin created successfully."
+    },
+    "errors": {
+      "createFailed": "Failed to create admin."
+    },
+    "validation": {
+      "email": "Invalid email",
+      "firstName": "Invalid first name",
+      "lastName": "Invalid last name",
+      "password": "Password is too short"
+    }
+  },
+  "superAdminGymSummary": {
+    "cards": {
+      "activeGyms": {
+        "label": "Active gyms"
+      },
+      "members": {
+        "label": "Managed members"
+      },
+      "suspended": {
+        "label": "Suspensions"
+      },
+      "adminCapacity": {
+        "label": "Admin capacity"
+      }
+    },
+    "helpers": {
+      "totalGyms": "{count} total",
+      "subscriptions": "{count} subscriptions",
+      "expired": "{count} expired",
+      "adminUsage": "Used access"
+    }
+  },
+  "planModules": {
+    "badges": {
+      "empty": "No active modules on this plan."
+    },
+    "status": {
+      "active": "Active",
+      "inactive": "Inactive"
+    },
+    "modules": {
+      "accessControl": {
+        "label": "Access control",
+        "description": "QR scan, member filtering, and entry control."
+      },
+      "presenceTracking": {
+        "label": "Presence tracking",
+        "description": "Real-time counting, threshold alerts, and absences."
+      },
+      "courses": {
+        "label": "Classes & schedule",
+        "description": "Class management, bookings, and capacity per variant."
+      },
+      "qrTools": {
+        "label": "QR tools",
+        "description": "Generate QR codes and share them with members."
+      },
+      "qrDownloads": {
+        "label": "QR exports",
+        "description": "Quick QR exports and printing."
+      },
+      "excelReports": {
+        "label": "Excel exports",
+        "description": "Finance, subscriptions, and access reports in Excel."
+      }
+    }
+  },
+  "planSettings": {
+    "title": "Plans, pricing & limits",
+    "description": "Set monthly prices, annual discount, and plan caps per tier.",
+    "meta": {
+      "never": "Never",
+      "lastUpdated": "Last updated: {value}"
+    },
+    "preview": {
+      "title": "Auto preview",
+      "subtitle": "Annual prices update automatically based on the applied discount ({discount}%)."
+    },
+    "pricing": {
+      "perMonth": "/ month",
+      "perYear": "/ year"
+    },
+    "fields": {
+      "basicMonthly": "Basic (monthly)",
+      "proMonthly": "Pro (monthly)",
+      "enterpriseMonthly": "Enterprise (monthly)",
+      "annualDiscount": "Annual discount (%)"
+    },
+    "badges": {
+      "currency": "Amounts in MAD",
+      "discountRule": "Discount applied over 12 months"
+    },
+    "saving": {
+      "inline": "Updating plan settings...",
+      "cta": "Save pricing",
+      "ctaPending": "Saving..."
+    },
+    "limits": {
+      "title": "Plan caps",
+      "description": "Maximum number of active plans per variant and across the network. Use -1 for unlimited.",
+      "unlimitedHint": "Unlimited = -1",
+      "unlimited": "Unlimited",
+      "activeCount": "{count} active",
+      "perVariant": "Per variant",
+      "perNetwork": "Per network",
+      "effective": "Effective: {perVariant} per site, {perNetwork} network."
+    }
+  },
+  "superAdminDemoRequests": {
+    "header": {
+      "title": "Demo requests",
+      "subtitle": "Review requests and provision demo accounts."
+    },
+    "status": {
+      "pending": "Pending",
+      "resolved": "Resolved",
+      "refused": "Refused"
+    },
+    "counters": {
+      "all": "All"
+    },
+    "search": {
+      "placeholder": "Search by email or gym..."
+    },
+    "results": {
+      "none": "0 requests found",
+      "count": "{count, plural, one {# request found} other {# requests found}}"
+    },
+    "table": {
+      "gym": "Gym",
+      "adminContact": "Admin contact",
+      "plan": "Plan",
+      "status": "Status",
+      "requested": "Requested",
+      "resolution": "Resolution",
+      "actions": "Actions"
+    },
+    "actions": {
+      "view": "View",
+      "createDemo": "Create demo",
+      "demoCreated": "Demo created",
+      "markResolved": "Mark as resolved",
+      "refuse": "Refuse"
+    },
+    "states": {
+      "empty": "No requests match your filters.",
+      "error": "Unable to load requests."
+    },
+    "details": {
+      "title": "Request details",
+      "sentOn": "Sent on {date}",
+      "notProvided": "Not provided",
+      "missingAddress": "Missing address",
+      "noMessage": "No message added."
+    },
+    "plans": {
+      "basic": "Basic",
+      "pro": "Pro",
+      "enterprise": "Enterprise"
+    }
+  },
+  "superAdminGyms": {
+    "header": {
+      "title": "Gym management",
+      "subtitle": "Monitor subscriptions, teams, and performance."
+    }
+  },
+  "superAdminOverview": {
+    "header": {
+      "title": "Overview",
+      "subtitle": "Consolidated tracking of gyms and subscriptions."
+    },
+    "exports": {
+      "title": "Global exports",
+      "subtitle": "Consolidated reports for all gyms.",
+      "excel": "Excel report",
+      "pdf": "PDF report",
+      "exporting": "Exporting..."
+    },
+    "kpis": {
+      "totalGyms": "Total gyms",
+      "activeSubscribers": "Active subscribers",
+      "totalMembers": "Members (all gyms)",
+      "monthlyRevenue": "Revenue this month"
+    },
+    "charts": {
+      "revenue": {
+        "title": "Revenue trend",
+        "subtitle": "Last six months",
+        "footer": "Steady growth observed this semester.",
+        "seriesLabel": "Revenue"
+      },
+      "status": {
+        "title": "Status breakdown",
+        "subtitle": "Active vs suspended gyms",
+        "seriesLabel": "Gyms"
+      },
+      "radial": {
+        "title": "Active gyms rate",
+        "subtitle": "Across the full fleet",
+        "activeLabel": "Active",
+        "suspendedLabel": "Suspended",
+        "expiredLabel": "Expired",
+        "centerActive": "Active",
+        "centerGyms": "{count} gyms",
+        "footerLine": "{share}% active gyms out of {total}",
+        "footerHint": "Status distribution across the fleet"
+      }
+    },
+    "expiring": {
+      "title": "Expiring subscriptions",
+      "subtitle": "Gyms to watch in the next 10 days.",
+      "empty": "No gyms are close to expiring.",
+      "expiresInDays": "Expires in {days} day{days, plural, one {} other {s}}",
+      "inspect": "Inspect"
+    },
+    "status": {
+      "active": "Active",
+      "suspended": "Suspended",
+      "expired": "Expired"
+    },
+    "errors": {
+      "loadFailed": "Unable to load global statistics."
+    },
+    "toasts": {
+      "downloadSuccess": "{format} report downloaded successfully",
+      "downloadError": "Download error",
+      "exportFailed": "Export failed",
+      "unknownError": "Unknown error",
+      "invalidFileType": "Invalid file type received: {contentType}",
+      "emptyFile": "The received file is empty"
+    }
+  },
+  "superAdminLayout": {
+    "nav": {
+      "overview": "Overview",
+      "gyms": "Gyms",
+      "demoRequests": "Demo requests",
+      "settings": "Settings"
+    }
+  },
+  "dashOwAdSubscriptions": {
     "errors": {
       "loadSubscriptions": "Unable to load subscriptions",
       "loadPlans": "Unable to load plans",
@@ -23,7 +778,8 @@
       "deleteFailed": "Unable to delete this subscription",
       "renewFailed": "Unable to renew the subscription",
       "noSubscriptionSelected": "No subscription selected",
-      "markVisitFailed": "Unable to mark the visit"
+      "markVisitFailed": "Unable to mark the visit",
+      "invoiceFailed": "Unable to generate the invoice"
     },
     "quickFilters": {
       "all": "All",
@@ -85,16 +841,6 @@
       "saving": "Updating...",
       "save": "Save"
     },
-    "errors": {
-      "invoiceFailed": "Unable to generate the invoice",
-      "loadSubscriptions": "Unable to load subscriptions",
-      "loadPlans": "Unable to load plans",
-      "loadSubscriptionsInline": "Unable to load subscriptions.",
-      "deleteFailed": "Unable to delete this subscription",
-      "renewFailed": "Unable to renew the subscription",
-      "noSubscriptionSelected": "No subscription selected",
-      "markVisitFailed": "Unable to mark the visit"
-    },
     "empty": {
       "title": "No subscriptions match your filters.",
       "desc": "Adjust search or status to show other members.",
@@ -121,7 +867,7 @@
       "remainingShortMany": " - {count} left"
     }
   },
-    "dashOwAdDashboard": {
+  "dashOwAdDashboard": {
     "errors": {
       "statsFetch": "Unable to load stats",
       "statsGeneric": "Unable to load stats right now.",
@@ -216,7 +962,7 @@
       "excelRestricted": "Excel exports (revenue, top members, loyalty) are available on the Pro plan only."
     }
   },
-    "dashOwAdGymSettings": {
+  "dashOwAdGymSettings": {
     "errors": {
       "gymFetch": "Unable to load gym settings",
       "planLimitsFetch": "Unable to load plan limits",

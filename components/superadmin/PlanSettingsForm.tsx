@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useMemo } from 'react'
+import { useTranslations, useLocale } from 'next-intl'
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -25,7 +26,11 @@ import {
   computePricingFromSettings,
   isUnlimitedLimit,
 } from '@/lib/subscription-plans'
-import { usePlanSettings, useUpdatePlanSettings, type PlanSettingsInput } from '@/app/[locale]/(dashboard)/super-admin/hooks'
+import {
+  usePlanSettings,
+  useUpdatePlanSettings,
+  type PlanSettingsInput,
+} from '@/app/[locale]/(dashboard)/super-admin/hooks'
 
 const schema = z.object({
   basicMonthlyPrice: z.coerce.number().min(0),
@@ -40,15 +45,19 @@ const schema = z.object({
   enterprisePlanLimitPerNetwork: z.coerce.number().int().min(-1),
 })
 
-function formatCurrency(value: number) {
-  return value.toLocaleString('fr-MA', { style: 'currency', currency: 'MAD' })
-}
-
-function formatLimit(value?: number | null) {
-  return isUnlimitedLimit(value) ? 'Illimite' : `${value ?? 0} actifs`
+function formatCurrency(value: number, locale: string) {
+  // Keep MAD + 0 decimals like your app
+  return value.toLocaleString(locale === 'ar' ? 'ar-MA' : 'fr-MA', {
+    style: 'currency',
+    currency: 'MAD',
+    maximumFractionDigits: 0,
+  })
 }
 
 export function PlanSettingsForm() {
+  const t = useTranslations('planSettings')
+  const locale = useLocale()
+
   const { data, isLoading } = usePlanSettings()
   const updateSettings = useUpdatePlanSettings()
 
@@ -101,30 +110,34 @@ export function PlanSettingsForm() {
     [watchedBasic, watchedPro, watchedEnterprise, watchedDiscount],
   )
 
+  const formatLimit = (value?: number | null) => {
+    if (isUnlimitedLimit(value)) return t('limits.unlimited')
+    return t('limits.activeCount', { count: value ?? 0 })
+  }
+
   const onSubmit = (values: PlanSettingsInput) => {
     updateSettings.mutate(values)
   }
 
   const lastUpdatedLabel = data?.settings.updatedAt
-    ? new Date(data.settings.updatedAt).toLocaleString('fr-FR', {
-        dateStyle: 'medium',
-        timeStyle: 'short',
-      })
-    : 'Jamais'
+    ? new Date(data.settings.updatedAt).toLocaleString(
+        locale === 'en' ? 'en-US' : locale === 'ar' ? 'ar-MA' : 'fr-FR',
+        { dateStyle: 'medium', timeStyle: 'short' },
+      )
+    : t('meta.never')
 
   return (
     <Card>
       <CardHeader className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <CardTitle>Plans, tarifs et limites</CardTitle>
-          <CardDescription>
-            Definissez les prix mensuels, la remise annuelle et les plafonds de plans par formule.
-          </CardDescription>
+          <CardTitle>{t('title')}</CardTitle>
+          <CardDescription>{t('description')}</CardDescription>
         </div>
         <Badge variant="outline" className="w-fit">
-          Derniere mise a jour : {lastUpdatedLabel}
+          {t('meta.lastUpdated', { value: lastUpdatedLabel })}
         </Badge>
       </CardHeader>
+
       <CardContent>
         {isLoading ? (
           <div className="space-y-4">
@@ -140,10 +153,11 @@ export function PlanSettingsForm() {
           <Form {...form}>
             <form className="space-y-6" onSubmit={form.handleSubmit(onSubmit)}>
               <div className="rounded-xl border border-border/70 bg-muted/40 p-3 text-sm">
-                <p className="font-medium">Apercu automatique</p>
+                <p className="font-medium">{t('preview.title')}</p>
                 <p className="text-muted-foreground">
-                  Les prix annuels se mettent a jour selon la remise appliquee ({watchedDiscount}%).
+                  {t('preview.subtitle', { discount: watchedDiscount })}
                 </p>
+
                 <div className="mt-3 grid gap-2 md:grid-cols-3">
                   {(['BASIC', 'PRO', 'ENTERPRISE'] as const).map((tier) => (
                     <div
@@ -152,9 +166,11 @@ export function PlanSettingsForm() {
                     >
                       <div className="font-semibold">{tier}</div>
                       <div className="flex flex-col items-end">
-                        <span>{formatCurrency(previewPricing[tier].MONTHLY)} / mois</span>
+                        <span>
+                          {formatCurrency(previewPricing[tier].MONTHLY, locale)} {t('pricing.perMonth')}
+                        </span>
                         <span className="text-xs text-muted-foreground">
-                          {formatCurrency(previewPricing[tier].ANNUAL)} / an
+                          {formatCurrency(previewPricing[tier].ANNUAL, locale)} {t('pricing.perYear')}
                         </span>
                       </div>
                     </div>
@@ -168,7 +184,7 @@ export function PlanSettingsForm() {
                   name="basicMonthlyPrice"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Basic (mensuel)</FormLabel>
+                      <FormLabel>{t('fields.basicMonthly')}</FormLabel>
                       <FormControl>
                         <Input type="number" min={0} step="10" {...field} />
                       </FormControl>
@@ -181,7 +197,7 @@ export function PlanSettingsForm() {
                   name="proMonthlyPrice"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Pro (mensuel)</FormLabel>
+                      <FormLabel>{t('fields.proMonthly')}</FormLabel>
                       <FormControl>
                         <Input type="number" min={0} step="10" {...field} />
                       </FormControl>
@@ -194,7 +210,7 @@ export function PlanSettingsForm() {
                   name="enterpriseMonthlyPrice"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Enterprise (mensuel)</FormLabel>
+                      <FormLabel>{t('fields.enterpriseMonthly')}</FormLabel>
                       <FormControl>
                         <Input type="number" min={0} step="10" {...field} />
                       </FormControl>
@@ -207,7 +223,7 @@ export function PlanSettingsForm() {
                   name="annualDiscountPercent"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Remise annuelle (%)</FormLabel>
+                      <FormLabel>{t('fields.annualDiscount')}</FormLabel>
                       <FormControl>
                         <Input type="number" min={0} max={90} step="1" {...field} />
                       </FormControl>
@@ -218,25 +234,24 @@ export function PlanSettingsForm() {
               </div>
 
               <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-                <Badge variant="secondary">Montants en MAD</Badge>
-                <Badge variant="outline">Reduction appliquee sur 12 mois</Badge>
-                {updateSettings.isPending && <span>Mise a jour des plans...</span>}
+                <Badge variant="secondary">{t('badges.currency')}</Badge>
+                <Badge variant="outline">{t('badges.discountRule')}</Badge>
+                {updateSettings.isPending && <span>{t('saving.inline')}</span>}
               </div>
 
               <div className="space-y-3 rounded-xl border border-border/70 bg-muted/30 p-3">
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <div>
-                    <p className="font-semibold">Plafonds de plans</p>
-                    <p className="text-xs text-muted-foreground">
-                      Nombre maximum de plans actifs par variante et sur le reseau. Utilisez -1 pour un palier illimite.
-                    </p>
+                    <p className="font-semibold">{t('limits.title')}</p>
+                    <p className="text-xs text-muted-foreground">{t('limits.description')}</p>
                   </div>
                   <Badge variant="outline" className="border-dashed border-border/60 text-[11px]">
-                    Illimite = -1
+                    {t('limits.unlimitedHint')}
                   </Badge>
                 </div>
 
                 <div className="grid gap-4 lg:grid-cols-3">
+                  {/* BASIC */}
                   <div className="space-y-2 rounded-lg border border-border/60 bg-background/70 p-3">
                     <p className="text-sm font-semibold">Basic</p>
                     <FormField
@@ -244,7 +259,7 @@ export function PlanSettingsForm() {
                       name="basicPlanLimitPerVariant"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Par variante</FormLabel>
+                          <FormLabel>{t('limits.perVariant')}</FormLabel>
                           <FormControl>
                             <Input type="number" step="1" {...field} />
                           </FormControl>
@@ -257,7 +272,7 @@ export function PlanSettingsForm() {
                       name="basicPlanLimitPerNetwork"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Par reseau</FormLabel>
+                          <FormLabel>{t('limits.perNetwork')}</FormLabel>
                           <FormControl>
                             <Input type="number" step="1" {...field} />
                           </FormControl>
@@ -266,11 +281,14 @@ export function PlanSettingsForm() {
                       )}
                     />
                     <p className="text-[11px] text-muted-foreground">
-                      Effectif: {formatLimit(form.watch('basicPlanLimitPerVariant'))} par site,{' '}
-                      {formatLimit(form.watch('basicPlanLimitPerNetwork'))} reseau.
+                      {t('limits.effective', {
+                        perVariant: formatLimit(form.watch('basicPlanLimitPerVariant')),
+                        perNetwork: formatLimit(form.watch('basicPlanLimitPerNetwork')),
+                      })}
                     </p>
                   </div>
 
+                  {/* PRO */}
                   <div className="space-y-2 rounded-lg border border-border/60 bg-background/70 p-3">
                     <p className="text-sm font-semibold">Pro</p>
                     <FormField
@@ -278,7 +296,7 @@ export function PlanSettingsForm() {
                       name="proPlanLimitPerVariant"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Par variante</FormLabel>
+                          <FormLabel>{t('limits.perVariant')}</FormLabel>
                           <FormControl>
                             <Input type="number" step="1" {...field} />
                           </FormControl>
@@ -291,7 +309,7 @@ export function PlanSettingsForm() {
                       name="proPlanLimitPerNetwork"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Par reseau</FormLabel>
+                          <FormLabel>{t('limits.perNetwork')}</FormLabel>
                           <FormControl>
                             <Input type="number" step="1" {...field} />
                           </FormControl>
@@ -300,11 +318,14 @@ export function PlanSettingsForm() {
                       )}
                     />
                     <p className="text-[11px] text-muted-foreground">
-                      Effectif: {formatLimit(form.watch('proPlanLimitPerVariant'))} par site,{' '}
-                      {formatLimit(form.watch('proPlanLimitPerNetwork'))} reseau.
+                      {t('limits.effective', {
+                        perVariant: formatLimit(form.watch('proPlanLimitPerVariant')),
+                        perNetwork: formatLimit(form.watch('proPlanLimitPerNetwork')),
+                      })}
                     </p>
                   </div>
 
+                  {/* ENTERPRISE */}
                   <div className="space-y-2 rounded-lg border border-border/60 bg-background/70 p-3">
                     <p className="text-sm font-semibold">Enterprise</p>
                     <FormField
@@ -312,7 +333,7 @@ export function PlanSettingsForm() {
                       name="enterprisePlanLimitPerVariant"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Par variante</FormLabel>
+                          <FormLabel>{t('limits.perVariant')}</FormLabel>
                           <FormControl>
                             <Input type="number" step="1" {...field} />
                           </FormControl>
@@ -325,7 +346,7 @@ export function PlanSettingsForm() {
                       name="enterprisePlanLimitPerNetwork"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Par reseau</FormLabel>
+                          <FormLabel>{t('limits.perNetwork')}</FormLabel>
                           <FormControl>
                             <Input type="number" step="1" {...field} />
                           </FormControl>
@@ -334,15 +355,17 @@ export function PlanSettingsForm() {
                       )}
                     />
                     <p className="text-[11px] text-muted-foreground">
-                      Effectif: {formatLimit(form.watch('enterprisePlanLimitPerVariant'))} par site,{' '}
-                      {formatLimit(form.watch('enterprisePlanLimitPerNetwork'))} reseau.
+                      {t('limits.effective', {
+                        perVariant: formatLimit(form.watch('enterprisePlanLimitPerVariant')),
+                        perNetwork: formatLimit(form.watch('enterprisePlanLimitPerNetwork')),
+                      })}
                     </p>
                   </div>
                 </div>
               </div>
 
               <Button type="submit" disabled={updateSettings.isPending}>
-                {updateSettings.isPending ? 'Enregistrement...' : 'Enregistrer les tarifs'}
+                {updateSettings.isPending ? t('saving.ctaPending') : t('saving.cta')}
               </Button>
             </form>
           </Form>

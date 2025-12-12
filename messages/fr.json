@@ -15,6 +15,761 @@
     "twitterTitle": "GymWatch - La solution de gestion des salles de sport",
     "twitterDescription": "Automatisez vos abonnements, simplifiez vos opérations et inspirez vos membres avec GymWatch."
   },
+  "superAdminDemoRequestsPage": {
+    "title": "Demandes de démo",
+    "subtitle": "Validez les demandes et provisionnez des comptes démo.",
+    "filters": {
+      "ALL": "Toutes",
+      "PENDING": "En attente",
+      "RESOLVED": "Résolues",
+      "REFUSED": "Refusées"
+    },
+    "status": {
+      "PENDING": "En attente",
+      "RESOLVED": "Résolue",
+      "REFUSED": "Refusée"
+    },
+    "searchPlaceholder": "Rechercher par email ou salle...",
+    "resultsCount": "{count} demande trouvée",
+    "table": {
+      "gym": "Salle",
+      "adminContact": "Contact admin",
+      "plan": "Plan",
+      "status": "Statut",
+      "requested": "Demandée",
+      "resolution": "Résolution",
+      "actions": "Actions"
+    },
+    "actions": {
+      "view": "Voir",
+      "createDemo": "Créer la démo",
+      "markResolved": "Marquer résolue",
+      "refuse": "Refuser"
+    },
+    "details": {
+      "title": "Détails de la demande",
+      "sentOn": "Envoyée le {date}",
+      "notProvided": "Non renseigné",
+      "missingAddress": "Adresse manquante",
+      "noMessage": "Aucun message ajouté."
+    },
+    "empty": "Aucune demande ne correspond à vos filtres.",
+    "errors": {
+      "load": "Impossible de charger les demandes."
+    }
+  },
+  "superAdminSettings": {
+    "title": "Paramétrage des plans",
+    "subtitle": "Ajustez les prix, la remise annuelle et les plafonds de plans par palier.",
+    "password": {
+      "cardTitle": "Changer le mot de passe",
+      "cardDescription": "Valide immédiatement et force la reconnexion.",
+      "current": "Mot de passe actuel",
+      "new": "Nouveau mot de passe",
+      "confirm": "Confirmer",
+      "submit": "Mettre à jour",
+      "submitting": "Mise à jour..."
+    },
+    "toast": {
+      "passwordUpdated": "Mot de passe mis à jour. Vous allez être déconnecté.",
+      "passwordError": "Impossible de changer le mot de passe",
+      "unexpectedError": "Erreur inattendue"
+    },
+    "validation": {
+      "min8": "8 caractères minimum",
+      "passwordMismatch": "Les mots de passe ne correspondent pas"
+    }
+  },
+  "superAdminApproveDemo": {
+    "title": "Créer le compte démo",
+    "description": "Les champs sont pré-remplis depuis la demande. Ajustez si nécessaire avant de confirmer.",
+    "labels": {
+      "plan": "Plan",
+      "monthly": "Mensuel",
+      "annual": "Annuel",
+      "default": "défaut"
+    },
+    "fields": {
+      "gymName": "Nom de la salle",
+      "email": "Email",
+      "phone": "Téléphone",
+      "address": "Adresse",
+      "city": "Ville",
+      "country": "Pays",
+      "variantsLabel": "Variantes du gym (séparées par des virgules)",
+      "variantsPlaceholder": "Principal, Premium, Budget",
+      "plan": "Plan",
+      "billing": "Facturation",
+      "subscriptionExpiresAt": "Expiration abonnement",
+      "demoEndsAt": "Fin de la démo",
+      "graceDays": "Jours de grâce",
+      "maxAdmins": "Admins autorisés",
+      "internalNote": "Note interne (optionnel)",
+      "internalNotePlaceholder": "Accès envoyé par mail...",
+      "ownerEmail": "Email propriétaire",
+      "ownerPassword": "Mot de passe propriétaire",
+      "ownerFirstName": "Prénom propriétaire",
+      "ownerLastName": "Nom propriétaire"
+    },
+    "hints": {
+      "firstVariantDefault": "La première variante est appliquée par défaut aux nouveaux comptes."
+    },
+    "plans": {
+      "basic": "Basic",
+      "pro": "Pro",
+      "enterprise": "Enterprise"
+    },
+    "secondaryAdmin": {
+      "title": "Ajouter un admin secondaire (optionnel)",
+      "email": "Email admin",
+      "password": "Mot de passe admin",
+      "firstName": "Prénom admin",
+      "lastName": "Nom admin",
+      "variant": "Variante assignée",
+      "defaultVariant": "Par défaut : {name}"
+    },
+    "actions": {
+      "create": "Créer le compte démo",
+      "creating": "Création en cours..."
+    },
+    "toast": {
+      "provisioned": "Compte démo provisionné",
+      "failed": "Impossible de créer le compte démo"
+    },
+    "validation": {
+      "nameRequired": "Nom requis",
+      "invalidEmail": "Email invalide",
+      "phoneRequired": "Téléphone requis",
+      "atLeastOneVariant": "Au moins une variante",
+      "min8": "Min. 8 caractères"
+    },
+    "defaults": {
+      "variantNames": "Principal, Annexe",
+      "defaultVariant": "Principal",
+      "ownerFirstName": "Propriétaire",
+      "adminFirstName": "Admin",
+      "adminLastName": "Démo"
+    }
+  },
+  "superAdminCreateGym": {
+    "title": "Nouvelle salle",
+    "description": "Enregistrez une salle et son propriétaire.",
+    "labels": {
+      "monthly": "Mensuel",
+      "annual": "Annuel",
+      "default": "défaut"
+    },
+    "actions": {
+      "addGym": "Ajouter une salle",
+      "create": "Créer",
+      "creating": "Création..."
+    },
+    "fields": {
+      "name": "Nom",
+      "email": "Email",
+      "phone": "Téléphone",
+      "address": "Adresse",
+      "city": "Ville",
+      "country": "Pays",
+      "gymType": "Type de salle",
+      "variantNames": "Variantes (séparées par une virgule)",
+      "plan": "Plan",
+      "billing": "Facturation",
+      "status": "Statut",
+      "expiresAt": "Expiration",
+      "graceDays": "Jours de grâce",
+      "maxAdmins": "Admins autorisés",
+      "ownerEmail": "Email propriétaire",
+      "ownerPassword": "Mot de passe initial",
+      "ownerFirstName": "Prénom propriétaire",
+      "ownerLastName": "Nom propriétaire"
+    },
+    "placeholders": {
+      "chooseType": "Choisir un type",
+      "variantNames": "Principal, Premium, Budget",
+      "chooseDate": "Choisir une date"
+    },
+    "gymTypes": {
+      "single": "Mono-salle",
+      "multi": "Multi-salles (variantes)"
+    },
+    "hints": {
+      "gymType": "Mono-salle : un seul emplacement. Multi-salles : plusieurs variantes/locaux.",
+      "estimatedPrice": "Tarif estimatif : {price}"
+    },
+    "variants": {
+      "previewTitle": "Aperçu des variantes",
+      "firstDefaultHint": "La première variante est appliquée par défaut aux nouveaux comptes.",
+      "singleTitle": "Variante unique",
+      "singleHint": "Utilisation automatique du nom de la salle : {name}"
+    },
+    "plans": {
+      "basic": "Basic",
+      "pro": "Pro",
+      "enterprise": "Enterprise"
+    },
+    "statuses": {
+      "active": "Actif",
+      "suspended": "Suspendu",
+      "expired": "Expiré"
+    },
+    "modules": {
+      "title": "Modules inclus dans le plan {tier}",
+      "estimate": "Estimation : {price}"
+    },
+    "validation": {
+      "nameRequired": "Nom requis",
+      "invalidEmail": "Email invalide",
+      "phoneRequired": "Numéro requis",
+      "min8": "Min. 8 caractères",
+      "atLeastOneVariant": "Ajoutez au moins une variante",
+      "minAdmins": "Minimum 1"
+    },
+    "defaults": {
+      "singleVariantFallback": "Principal",
+      "multiVariantFallback": "Principal",
+      "ownerFirstName": "Propriétaire"
+    }
+  },
+  "superAdminDeleteGym": {
+    "title": "Supprimer la salle",
+    "statuses": {
+      "active": "Active",
+      "suspended": "Suspendue",
+      "expired": "Expirée"
+    },
+    "body": {
+      "permanentDeletePrefix": "Cette action supprimera définitivement",
+      "permanentDeleteSuffix": "ainsi que toutes les données associées (propriétaire, admins, plans, membres, paiements, inscriptions).",
+      "currentStatus": "Statut actuel :",
+      "rules": "Seules les salles suspendues ou expirées peuvent être supprimées. Les salles actives doivent être suspendues avant suppression.",
+      "fallback": "Confirmez la suppression de cette salle."
+    },
+    "actions": {
+      "cancel": "Annuler",
+      "delete": "Supprimer",
+      "deleting": "Suppression..."
+    }
+  },
+  "superAdminEditGym": {
+    "title": "Modifier la salle",
+    "description": "Mettez à jour les informations publiques.",
+    "loading": "Chargement…",
+    "fields": {
+      "name": "Nom",
+      "email": "Email",
+      "phone": "Téléphone",
+      "city": "Ville",
+      "country": "Pays",
+      "address": "Adresse"
+    },
+    "actions": {
+      "save": "Enregistrer",
+      "saving": "Enregistrement…"
+    },
+    "validation": {
+      "nameMin": "Nom requis",
+      "emailInvalid": "Email invalide",
+      "phoneMin": "Numéro requis",
+      "cityMin": "Ville requise",
+      "countryMin": "Pays requis"
+    }
+  },
+  "superAdminGymFilters": {
+    "searchPlaceholder": "Rechercher une salle ou un propriétaire",
+    "status": {
+      "placeholder": "Statut",
+      "all": "Tous les statuts",
+      "active": "Actifs",
+      "suspended": "Suspendus",
+      "expired": "Expirés"
+    },
+    "plan": {
+      "placeholder": "Plan",
+      "all": "Tous les plans",
+      "basic": "Basic",
+      "pro": "Pro",
+      "enterprise": "Enterprise"
+    }
+  },
+  "superAdminActionSheet": {
+    "loading": "Chargement…",
+    "labels": {
+      "team": {
+        "title": "Équipe admin",
+        "description": "Ajoutez ou consultez les comptes administrateurs."
+      },
+      "plans": {
+        "title": "Plans d'abonnement",
+        "description": "Gérez les offres proposées à cette salle."
+      },
+      "subscription": {
+        "title": "Paramètres d'abonnement",
+        "description": "Ajustez le statut, la facturation et les exports."
+      }
+    }
+  },
+  "superAdminGymAnalytics": {
+    "expiry": {
+      "title": "Tendance des expirations",
+      "description": "6 derniers mois"
+    },
+    "statusChart": {
+      "title": "Répartition des statuts",
+      "description": "Abonnements de la salle"
+    },
+    "upcoming": {
+      "empty": "Pas d'expiration immédiate.",
+      "unknownDate": "Date inconnue"
+    },
+    "status": {
+      "ACTIVE": "Actif",
+      "SUSPENDED": "Suspendu",
+      "EXPIRED": "Expiré",
+      "EXPIRES_TODAY": "Expire aujourd'hui",
+      "INCONNU": "Inconnu"
+    }
+  },
+  "superAdminGymDetail": {
+    "demoPill": "DÉMO",
+    "unknownLocation": "Localisation inconnue",
+    "planPrefix": "Plan",
+    "type": {
+      "single": "Mono-salle",
+      "multi": "Multi-salles"
+    },
+    "variantsTitle": "Variantes du gym",
+    "variantsCount": "{count} variante(s)",
+    "default": "défaut",
+    "noVariants": "Aucune variante enregistrée",
+    "demoUntil": "Démo jusqu'au {date}",
+    "hint": "Utilisez les actions rapides du tableau pour gérer l'équipe, les plans et les paramètres d'abonnement de cette salle.",
+    "plan": {
+      "BASIC": "Basic",
+      "PRO": "Pro",
+      "ENTERPRISE": "Enterprise"
+    },
+    "interval": {
+      "MONTHLY": "mensuel",
+      "ANNUAL": "annuel"
+    },
+    "convert": {
+      "cta": "Convertir la démo",
+      "pending": "Conversion...",
+      "helper": "Supprime le mode démo et active la salle.",
+      "confirm": "Convertir {name} en salle active ?"
+    }
+  },
+  "superAdminGymPlans": {
+    "title": "Plans commercialisés",
+    "description": "Tarifs actuellement proposés par la salle.",
+    "table": {
+      "name": "Nom",
+      "duration": "Durée",
+      "price": "Prix",
+      "visitsPerDay": "Visites / jour",
+      "maxSession": "Session max",
+      "variant": "Variante",
+      "status": "Statut"
+    },
+    "durationDays": "{days} jours",
+    "minutes": "{minutes} min",
+    "unlimited": "Illimité",
+    "defaultVisit": "1",
+    "variantOrGym": "Variante / salle",
+    "none": "-",
+    "active": "Actif",
+    "inactive": "Inactif",
+    "empty": "Aucun plan configuré."
+  },
+  "superAdminGymStats": {
+    "members": {
+      "title": "Membres",
+      "helper": "Inscrits sur la plateforme"
+    },
+    "activeSubscriptions": {
+      "title": "Abonnements actifs",
+      "helper": "Synchronisés quotidiennement"
+    },
+    "revenue30d": {
+      "title": "Revenus (30 jours)",
+      "helper": "Paiements déclarés"
+    }
+  },
+  "superAdminGymSubscription": {
+    "title": "Paramètres d'abonnement",
+    "description": "Mettez à jour le plan ou la capacité.",
+    "modulesActive": "Modules actifs",
+    "variantMode": {
+      "mono": "Mono-salle - {count} variante(s)",
+      "multi": "Multi-salles - {count} variante(s)"
+    },
+    "fields": {
+      "status": "Statut",
+      "plan": "Plan",
+      "interval": "Facturation",
+      "expiresAt": "Date d'expiration",
+      "graceDays": "Jours de grâce",
+      "maxAdmins": "Admins autorisés"
+    },
+    "placeholders": {
+      "pickDate": "Choisir une date"
+    },
+    "status": {
+      "active": "Actif",
+      "suspended": "Suspendu",
+      "expired": "Expiré"
+    },
+    "plan": {
+      "basic": "Basic",
+      "pro": "Pro",
+      "enterprise": "Enterprise"
+    },
+    "interval": {
+      "monthly": "Mensuel",
+      "annual": "Annuel"
+    },
+    "exports": {
+      "title": "Exports du gymnase",
+      "excel": "Rapport Excel",
+      "pdf": "Rapport PDF",
+      "loading": "Export..."
+    },
+    "invoice": {
+      "download": "Télécharger la facture",
+      "print": "Imprimer",
+      "generating": "Génération...",
+      "preparing": "Préparation..."
+    },
+    "toasts": {
+      "invoiceDownloaded": "Facture téléchargée.",
+      "invoicePrintReady": "Facture prête à imprimer.",
+      "exportSuccess": "Rapport {format} téléchargé."
+    },
+    "errors": {
+      "invoiceGeneric": "Impossible de générer la facture",
+      "exportFailed": "Export impossible"
+    }
+  },
+  "superAdminGymTeam": {
+    "title": "Équipe ({used}/{max})",
+    "infinite": "∞",
+    "capacityUsed": "Capacité utilisée :",
+    "empty": "Aucun administrateur pour le moment.",
+    "addTitle": "Ajouter un administrateur",
+    "capacityReached": "Capacité maximale atteinte. Augmentez le nombre d'admins autorisés ou supprimez un admin.",
+    "fields": {
+      "email": "Email",
+      "firstName": "Prénom",
+      "lastName": "Nom",
+      "variant": "Variante",
+      "tempPassword": "Mot de passe temporaire"
+    },
+    "placeholders": {
+      "defaultVariant": "Par défaut"
+    },
+    "labels": {
+      "variant": "Variante",
+      "default": "défaut"
+    },
+    "actions": {
+      "creating": "Création...",
+      "add": "Ajouter"
+    },
+    "toasts": {
+      "created": "Administrateur créé avec succès."
+    },
+    "errors": {
+      "createFailed": "Impossible de créer l'administrateur."
+    },
+    "validation": {
+      "email": "Email invalide",
+      "firstName": "Prénom invalide",
+      "lastName": "Nom invalide",
+      "password": "Mot de passe trop court"
+    }
+  },
+  "superAdminGymsTable": {
+    "empty": "Aucune salle ne correspond à vos filtres.",
+    "columns": {
+      "name": "Nom",
+      "status": "Statut",
+      "members": "Membres",
+      "subscriptions": "Abonnements",
+      "expiration": "Expiration",
+      "actions": "Actions"
+    },
+    "demoBadge": "DEMO",
+    "demoPrefix": "Démo",
+    "planLine": "Plan {plan} - {interval} - {price}",
+    "status": {
+      "active": "Actif",
+      "suspended": "Suspendue",
+      "expired": "Expirée"
+    },
+    "plan": {
+      "basic": "Basic",
+      "pro": "Pro",
+      "enterprise": "Enterprise"
+    },
+    "interval": {
+      "monthly": "mensuel",
+      "annual": "annuel"
+    },
+    "variantMode": {
+      "single": "Mono-salle",
+      "multi": "Multi-salles"
+    },
+    "variantCount": "{count} variante(s)",
+    "default": "défaut",
+    "others": "autre(s)",
+    "singleVariant": "Variante unique",
+    "none": "--",
+    "demoUntil": "Démo jusqu'au {date}",
+    "daysRemaining": "{count} j restants",
+    "expired": "Expirée",
+    "totalGyms": "{count} salle{count, plural, one {} other {s}} total",
+    "page": "Page {page} / {pageCount}",
+    "actions": {
+      "overview": "Vue d'ensemble",
+      "team": "Administrateurs",
+      "plans": "Plans",
+      "subscription": "Abonnement",
+      "edit": "Modifier",
+      "delete": "Supprimer"
+    }
+  },
+  "superAdminGymSummary": {
+    "cards": {
+      "activeGyms": {
+        "label": "Salles actives"
+      },
+      "members": {
+        "label": "Membres gérés"
+      },
+      "suspended": {
+        "label": "Suspensions"
+      },
+      "adminCapacity": {
+        "label": "Capacité admins"
+      }
+    },
+    "helpers": {
+      "totalGyms": "{count} au total",
+      "subscriptions": "{count} abonnements",
+      "expired": "{count} expirées",
+      "adminUsage": "Accès utilisés"
+    }
+  },
+  "planModules": {
+    "badges": {
+      "empty": "Aucun module actif sur ce plan."
+    },
+    "status": {
+      "active": "Actif",
+      "inactive": "Inactif"
+    },
+    "modules": {
+      "accessControl": {
+        "label": "Contrôle d’accès",
+        "description": "Scan QR, filtrage des membres et contrôle des passages."
+      },
+      "presenceTracking": {
+        "label": "Suivi de présence",
+        "description": "Comptage en temps réel, alertes de seuils et absences."
+      },
+      "courses": {
+        "label": "Cours & planning",
+        "description": "Gestion des cours, réservations et capacité par variante."
+      },
+      "qrTools": {
+        "label": "Outils QR",
+        "description": "Génération de QR codes et partage avec les membres."
+      },
+      "qrDownloads": {
+        "label": "Exports QR",
+        "description": "Exports rapides des QR codes et impressions."
+      },
+      "excelReports": {
+        "label": "Exports Excel",
+        "description": "Rapports finances, abonnements et passages en Excel."
+      }
+    }
+  },
+  "planSettings": {
+    "title": "Plans, tarifs et limites",
+    "description": "Définissez les prix mensuels, la remise annuelle et les plafonds de plans par formule.",
+    "meta": {
+      "never": "Jamais",
+      "lastUpdated": "Dernière mise à jour : {value}"
+    },
+    "preview": {
+      "title": "Aperçu automatique",
+      "subtitle": "Les prix annuels se mettent à jour selon la remise appliquée ({discount}%)."
+    },
+    "pricing": {
+      "perMonth": "/ mois",
+      "perYear": "/ an"
+    },
+    "fields": {
+      "basicMonthly": "Basic (mensuel)",
+      "proMonthly": "Pro (mensuel)",
+      "enterpriseMonthly": "Enterprise (mensuel)",
+      "annualDiscount": "Remise annuelle (%)"
+    },
+    "badges": {
+      "currency": "Montants en MAD",
+      "discountRule": "Réduction appliquée sur 12 mois"
+    },
+    "saving": {
+      "inline": "Mise à jour des plans...",
+      "cta": "Enregistrer les tarifs",
+      "ctaPending": "Enregistrement..."
+    },
+    "limits": {
+      "title": "Plafonds de plans",
+      "description": "Nombre maximum de plans actifs par variante et sur le réseau. Utilisez -1 pour un palier illimité.",
+      "unlimitedHint": "Illimité = -1",
+      "unlimited": "Illimité",
+      "activeCount": "{count} actifs",
+      "perVariant": "Par variante",
+      "perNetwork": "Par réseau",
+      "effective": "Effectif : {perVariant} par site, {perNetwork} réseau."
+    }
+  },
+  "superAdminDemoRequests": {
+    "header": {
+      "title": "Demandes de démo",
+      "subtitle": "Validez les demandes et provisionnez des comptes démo."
+    },
+    "status": {
+      "pending": "En attente",
+      "resolved": "Résolue",
+      "refused": "Refusée"
+    },
+    "counters": {
+      "all": "Toutes"
+    },
+    "search": {
+      "placeholder": "Rechercher par email ou salle..."
+    },
+    "results": {
+      "none": "0 demande trouvée",
+      "count": "{count, plural, one {# demande trouvée} other {# demandes trouvées}}"
+    },
+    "table": {
+      "gym": "Salle",
+      "adminContact": "Contact admin",
+      "plan": "Plan",
+      "status": "Statut",
+      "requested": "Demandée",
+      "resolution": "Résolution",
+      "actions": "Actions"
+    },
+    "actions": {
+      "view": "Voir",
+      "createDemo": "Créer la démo",
+      "demoCreated": "Démo créée",
+      "markResolved": "Marquer résolue",
+      "refuse": "Refuser"
+    },
+    "states": {
+      "empty": "Aucune demande ne correspond à vos filtres.",
+      "error": "Impossible de charger les demandes."
+    },
+    "details": {
+      "title": "Détails de la demande",
+      "sentOn": "Envoyée le {date}",
+      "notProvided": "Non renseigné",
+      "missingAddress": "Adresse manquante",
+      "noMessage": "Aucun message ajouté."
+    },
+    "plans": {
+      "basic": "Basic",
+      "pro": "Pro",
+      "enterprise": "Enterprise"
+    }
+  },
+  "superAdminGyms": {
+    "header": {
+      "title": "Gestion des salles",
+      "subtitle": "Supervisez les abonnements, équipes et performances."
+    }
+  },
+  "superAdminOverview": {
+    "header": {
+      "title": "Vue d'ensemble",
+      "subtitle": "Suivi consolidé des salles et abonnements."
+    },
+    "exports": {
+      "title": "Exports globaux",
+      "subtitle": "Rapports consolidés pour toutes les salles.",
+      "excel": "Rapport Excel",
+      "pdf": "Rapport PDF",
+      "exporting": "Export en cours..."
+    },
+    "kpis": {
+      "totalGyms": "Nombre total de salles",
+      "activeSubscribers": "Abonnés actifs",
+      "totalMembers": "Membres (toutes salles)",
+      "monthlyRevenue": "Revenus ce mois-ci"
+    },
+    "charts": {
+      "revenue": {
+        "title": "Évolution des revenus",
+        "subtitle": "Six derniers mois",
+        "footer": "Croissance continue observée ce semestre.",
+        "seriesLabel": "Revenus"
+      },
+      "status": {
+        "title": "Répartition des statuts",
+        "subtitle": "Salles actives vs. suspendues",
+        "seriesLabel": "Salles"
+      },
+      "radial": {
+        "title": "Taux de salles actives",
+        "subtitle": "Sur l'ensemble du parc",
+        "activeLabel": "Actives",
+        "suspendedLabel": "Suspendues",
+        "expiredLabel": "Expirées",
+        "centerActive": "Actives",
+        "centerGyms": "{count} salles",
+        "footerLine": "{share}% de salles actives sur {total} au total",
+        "footerHint": "Répartition des statuts sur l'ensemble du parc"
+      }
+    },
+    "expiring": {
+      "title": "Abonnements proches d'échéance",
+      "subtitle": "Salles à suivre durant les 10 prochains jours.",
+      "empty": "Aucune salle n'approche de l'échéance.",
+      "expiresInDays": "Expire dans {days} jour{days, plural, one {} other {s}}",
+      "inspect": "Inspecter"
+    },
+    "status": {
+      "active": "Actif",
+      "suspended": "Suspendu",
+      "expired": "Expiré"
+    },
+    "errors": {
+      "loadFailed": "Impossible de charger les statistiques globales."
+    },
+    "toasts": {
+      "downloadSuccess": "Rapport {format} téléchargé avec succès",
+      "downloadError": "Erreur lors du téléchargement",
+      "exportFailed": "Export impossible",
+      "unknownError": "Erreur inconnue",
+      "invalidFileType": "Type de fichier invalide reçu: {contentType}",
+      "emptyFile": "Le fichier reçu est vide"
+    }
+  },
+  "superAdminLayout": {
+    "nav": {
+      "overview": "Vue d'ensemble",
+      "gyms": "Gestion des salles",
+      "demoRequests": "Demandes de démo",
+      "settings": "Paramètres"
+    }
+  },
   "dashOwAdSubscriptions": {
     "errors": {
       "loadSubscriptions": "Impossible de charger les abonnements",

@@ -1,4 +1,4 @@
-"use client"
+'use client'
 
 import { useTransition } from 'react'
 import { useForm } from 'react-hook-form'
@@ -6,8 +6,15 @@ import { z } from 'zod'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { toast } from 'sonner'
 import { signOut } from 'next-auth/react'
+import { useTranslations } from 'next-intl'
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import {
@@ -20,21 +27,25 @@ import {
 } from '@/components/ui/form'
 import { PlanSettingsForm } from '@/components/superadmin/PlanSettingsForm'
 
-const passwordSchema = z
-  .object({
-    currentPassword: z.string().min(8, '8 caractères minimum'),
-    newPassword: z.string().min(8, '8 caractères minimum'),
-    confirmPassword: z.string().min(8, '8 caractères minimum'),
-  })
-  .refine((data) => data.newPassword === data.confirmPassword, {
-    message: 'Les mots de passe ne correspondent pas',
-    path: ['confirmPassword'],
-  })
-
-type PasswordFormValues = z.infer<typeof passwordSchema>
-
 export default function SuperAdminSettingsPage() {
+  const t = useTranslations('superAdminSettings')
   const [pendingPassword, startPasswordTransition] = useTransition()
+
+  /**
+   * Zod schema (localized)
+   */
+  const passwordSchema = z
+    .object({
+      currentPassword: z.string().min(8, t('validation.min8')),
+      newPassword: z.string().min(8, t('validation.min8')),
+      confirmPassword: z.string().min(8, t('validation.min8')),
+    })
+    .refine((data) => data.newPassword === data.confirmPassword, {
+      message: t('validation.passwordMismatch'),
+      path: ['confirmPassword'],
+    })
+
+  type PasswordFormValues = z.infer<typeof passwordSchema>
 
   const passwordForm = useForm<PasswordFormValues>({
     resolver: zodResolver(passwordSchema),
@@ -45,6 +56,9 @@ export default function SuperAdminSettingsPage() {
     },
   })
 
+  /**
+   * Submit password change
+   */
   const submitPassword = (values: PasswordFormValues) => {
     startPasswordTransition(async () => {
       try {
@@ -53,79 +67,110 @@ export default function SuperAdminSettingsPage() {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(values),
         })
+
         const data = await response.json().catch(() => ({}))
+
         if (!response.ok) {
-          throw new Error(data.error || 'Impossible de changer le mot de passe')
+          throw new Error(data.error || t('toast.passwordError'))
         }
-        toast.success('Mot de passe mis à jour. Vous allez être déconnecté.')
+
+        toast.success(t('toast.passwordUpdated'))
         passwordForm.reset()
         await signOut({ callbackUrl: '/login' })
       } catch (error) {
-        toast.error(error instanceof Error ? error.message : 'Erreur inattendue')
+        toast.error(
+          error instanceof Error ? error.message : t('toast.unexpectedError')
+        )
       }
     })
   }
 
   return (
     <div className="space-y-6">
+      {/* Header */}
       <div>
-        <h1 className="text-3xl font-semibold">Paramétrage des plans</h1>
-        <p className="text-muted-foreground">
-          Ajustez les prix, la remise annuelle et les plafonds de plans par palier.
-        </p>
+        <h1 className="text-3xl font-semibold">{t('title')}</h1>
+        <p className="text-muted-foreground">{t('subtitle')}</p>
       </div>
 
+      {/* Plan settings */}
       <PlanSettingsForm />
 
+      {/* Password change */}
       <Card>
         <CardHeader>
-          <CardTitle>Changer le mot de passe</CardTitle>
-          <CardDescription>Valide immédiatement et force la reconnexion.</CardDescription>
+          <CardTitle>{t('password.cardTitle')}</CardTitle>
+          <CardDescription>{t('password.cardDescription')}</CardDescription>
         </CardHeader>
+
         <CardContent>
           <Form {...passwordForm}>
-            <form className="space-y-4" onSubmit={passwordForm.handleSubmit(submitPassword)}>
+            <form
+              className="space-y-4"
+              onSubmit={passwordForm.handleSubmit(submitPassword)}
+            >
               <FormField
                 control={passwordForm.control}
                 name="currentPassword"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Mot de passe actuel</FormLabel>
+                    <FormLabel>{t('password.current')}</FormLabel>
                     <FormControl>
-                      <Input type="password" autoComplete="current-password" {...field} />
+                      <Input
+                        type="password"
+                        autoComplete="current-password"
+                        {...field}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
+
               <FormField
                 control={passwordForm.control}
                 name="newPassword"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Nouveau mot de passe</FormLabel>
+                    <FormLabel>{t('password.new')}</FormLabel>
                     <FormControl>
-                      <Input type="password" autoComplete="new-password" {...field} />
+                      <Input
+                        type="password"
+                        autoComplete="new-password"
+                        {...field}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
+
               <FormField
                 control={passwordForm.control}
                 name="confirmPassword"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Confirmer</FormLabel>
+                    <FormLabel>{t('password.confirm')}</FormLabel>
                     <FormControl>
-                      <Input type="password" autoComplete="new-password" {...field} />
+                      <Input
+                        type="password"
+                        autoComplete="new-password"
+                        {...field}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
-              <Button type="submit" className="w-full" disabled={pendingPassword}>
-                {pendingPassword ? 'Mise à jour...' : 'Mettre à jour'}
+
+              <Button
+                type="submit"
+                className="w-full"
+                disabled={pendingPassword}
+              >
+                {pendingPassword
+                  ? t('password.submitting')
+                  : t('password.submit')}
               </Button>
             </form>
           </Form>

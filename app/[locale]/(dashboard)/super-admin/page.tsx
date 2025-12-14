@@ -3,14 +3,14 @@ import { useState } from "react"
 import Link from "next/link"
 import { toast } from "sonner"
 import { useLocale, useTranslations } from "next-intl"
-import { usePurgeAccessLogs, useSuperAdminStats } from "./hooks"
+import { useSuperAdminStats } from "./hooks"
 
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
 
-import { Activity, AlertTriangle, Building2, Gauge, TrendingUp, Users2, Download, Trash2 } from "lucide-react"
+import { Activity, AlertTriangle, Building2, Gauge, TrendingUp, Users2, Download } from "lucide-react"
 
 import {
   CartesianGrid,
@@ -39,8 +39,6 @@ export default function SuperAdminOverviewPage() {
   const { data: stats, isLoading, isError } = useSuperAdminStats()
   const locale = useLocale()
   const [downloading, setDownloading] = useState<"excel" | "pdf" | null>(null)
-  const purgeLogs = usePurgeAccessLogs()
-  const purgeRetentionDays = 30
 
   const currencyFormatter = new Intl.NumberFormat(locale === "ar" ? "ar-MA" : locale === "en" ? "en-US" : "fr-MA", {
     style: "currency",
@@ -282,27 +280,6 @@ export default function SuperAdminOverviewPage() {
           >
             <Download size={16} />
             {downloading === "pdf" ? t("exports.exporting") : t("exports.pdf")}
-          </Button>
-        </CardContent>
-      </Card>
-
-      <Card className="border-border/60 bg-card/90 backdrop-blur-sm rounded-3xl shadow-lg transition-all duration-300 hover:shadow-xl">
-        <CardHeader>
-          <CardTitle className="text-xl">{t("maintenance.title")}</CardTitle>
-          <CardDescription className="text-base">
-            {t("maintenance.subtitle", { days: purgeRetentionDays })}
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="flex flex-wrap items-center justify-between gap-3">
-          <p className="text-sm text-muted-foreground">{t("maintenance.hint", { days: purgeRetentionDays })}</p>
-          <Button
-            variant="destructive"
-            onClick={() => purgeLogs.mutate()}
-            disabled={purgeLogs.isPending}
-            className="gap-2 rounded-xl shadow-sm"
-          >
-            <Trash2 size={16} />
-            {purgeLogs.isPending ? t("maintenance.purging") : t("maintenance.button")}
           </Button>
         </CardContent>
       </Card>

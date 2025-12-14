@@ -78,6 +78,13 @@
     "validation": {
       "min8": "8 caractères minimum",
       "passwordMismatch": "Les mots de passe ne correspondent pas"
+    },
+    "maintenance": {
+      "title": "Nettoyage des logs d'acc?s",
+      "subtitle": "Supprimer les journaux d'acc?s plus anciens que {days} jours.",
+      "hint": "Seuls les logs de plus de {days} jours sont supprim?s. Les entr?es r?centes sont conserv?es.",
+      "button": "Purger les logs",
+      "purging": "Purge en cours..."
     }
   },
   "superAdminApproveDemo": {
@@ -707,13 +714,6 @@
       "excel": "Rapport Excel",
       "pdf": "Rapport PDF",
       "exporting": "Export en cours..."
-    },
-    "maintenance": {
-      "title": "Nettoyage des logs d'accès",
-      "subtitle": "Supprimer les journaux d'accès plus anciens que {days} jours.",
-      "hint": "Seuls les logs de plus de {days} jours sont supprimés. Les entrées récentes sont conservées.",
-      "button": "Purger les logs",
-      "purging": "Purge en cours..."
     },
     "kpis": {
       "totalGyms": "Nombre total de salles",
@@ -1827,94 +1827,93 @@
         }
       }
     },
-      "presence": {
-        "title": "Suivi de présence",
-        "subtitle": "Consultez les visites par salle et surveillez l’occupation quotidienne.",
-        "locked": {
-          "title": "Le suivi de présence n’est pas disponible avec ce forfait",
-          "description": "La présence en direct et les graphiques de fréquentation sont disponibles à partir du forfait Pro."
-        },
-        "actions": {
-          "refreshing": "Actualisation...",
-          "refresh": "Actualiser"
-        },
-        "manualCheckout": {
-          "trigger": "Sortie manuelle",
-          "title": "Marquer une sortie",
-          "description": "Enregistrez une sortie manuelle pour une visite en cours et ajustez l’heure si besoin.",
-          "noOpenVisits": "Aucune visite en cours.",
-          "visitLabel": "Visite en cours",
-          "visitPlaceholder": "Choisir une visite",
-          "checkoutDate": "Date de sortie",
-          "checkoutTime": "Heure de sortie",
-          "windowFrom": "Fenêtre de début (optionnel)",
-          "windowTo": "Fenêtre de fin (optionnel)",
-          "arrivalInfo": "Entrée enregistrée le {date} à {time} - {variant}",
-          "cancel": "Annuler",
-          "submit": "Enregistrer la sortie",
-          "submitPending": "Enregistrement...",
-          "toasts": {
-            "base": "Sortie enregistrée",
-            "member": "pour {memberName}",
-            "duration": "({minutes} min)",
-            "limit": "limite {limit} min dépassée",
-            "overstay": "dépassement de session"
-          }
-        },
-        "summary": {
-          "visits": "Visites",
-          "unique": "Visiteurs uniques",
-          "present": "À l’intérieur",
-          "pendingCheckout": "Sortie non scannée",
-          "avgDuration": "Durée moyenne"
-        },
-        "charts": {
-          "title": "Aperçu de fréquentation"
-        },
-        "table": {
-          "title": "Dernières visites",
-          "emptyTitle": "Aucune visite pour ces filtres",
-          "emptyBody": "Utilisez les filtres pour changer la période, ou enregistrez une nouvelle visite depuis la fiche membre.",
-          "maxDuration": "Durée max : {minutes} min",
-          "timePlaceholder": "--",
-          "headers": {
-            "member": "Membre",
-            "location": "Salle",
-            "date": "Date",
-            "checkIn": "Entrée",
-            "checkOut": "Sortie",
-            "status": "Statut",
-            "duration": "Durée"
-          },
-          "status": {
-            "ongoing": "En cours",
-            "completed": "Terminée",
-            "exceeded": "Durée dépassée"
-          },
-          "limit": "Limite {limit} min",
-          "duration": {
-            "instant": "Instantané",
-            "onlyMinutes": "{minutes} min",
-            "onlyHours": "{hours} h",
-            "hoursMinutes": "{hours} h {minutes} min"
-          }
-        },
-        "multiVariantLocked": {
-          "title": "Agrégation multi-salles verrouillée",
-          "body": "Les statistiques consolidées sont réservées au forfait Enterprise. Sélectionnez une salle ou",
-          "upgrade": "mettez à niveau"
-        },
-        "recent": {
-          "title": "Visites récentes"
-        },
-        "errors": {
-          "load": "Impossible de charger les visites",
-          "checkout": "Impossible d’enregistrer la sortie",
-          "noSelection": "Sélectionnez une visite en cours",
-          "unauthenticated": "Accès refusé. Veuillez vous connecter."
+    "presence": {
+      "title": "Suivi de présence",
+      "subtitle": "Consultez les visites par salle et surveillez l’occupation quotidienne.",
+      "locked": {
+        "title": "Le suivi de présence n’est pas disponible avec ce forfait",
+        "description": "La présence en direct et les graphiques de fréquentation sont disponibles à partir du forfait Pro."
+      },
+      "actions": {
+        "refreshing": "Actualisation...",
+        "refresh": "Actualiser"
+      },
+      "manualCheckout": {
+        "trigger": "Sortie manuelle",
+        "title": "Marquer une sortie",
+        "description": "Enregistrez une sortie manuelle pour une visite en cours et ajustez l’heure si besoin.",
+        "noOpenVisits": "Aucune visite en cours.",
+        "visitLabel": "Visite en cours",
+        "visitPlaceholder": "Choisir une visite",
+        "checkoutDate": "Date de sortie",
+        "checkoutTime": "Heure de sortie",
+        "windowFrom": "Fenêtre de début (optionnel)",
+        "windowTo": "Fenêtre de fin (optionnel)",
+        "arrivalInfo": "Entrée enregistrée le {date} à {time} - {variant}",
+        "cancel": "Annuler",
+        "submit": "Enregistrer la sortie",
+        "submitPending": "Enregistrement...",
+        "toasts": {
+          "base": "Sortie enregistrée",
+          "member": "pour {memberName}",
+          "duration": "({minutes} min)",
+          "limit": "limite {limit} min dépassée",
+          "overstay": "dépassement de session"
         }
+      },
+      "summary": {
+        "visits": "Visites",
+        "unique": "Visiteurs uniques",
+        "present": "À l’intérieur",
+        "pendingCheckout": "Sortie non scannée",
+        "avgDuration": "Durée moyenne"
+      },
+      "charts": {
+        "title": "Aperçu de fréquentation"
+      },
+      "table": {
+        "title": "Dernières visites",
+        "emptyTitle": "Aucune visite pour ces filtres",
+        "emptyBody": "Utilisez les filtres pour changer la période, ou enregistrez une nouvelle visite depuis la fiche membre.",
+        "maxDuration": "Durée max : {minutes} min",
+        "timePlaceholder": "--",
+        "headers": {
+          "member": "Membre",
+          "location": "Salle",
+          "date": "Date",
+          "checkIn": "Entrée",
+          "checkOut": "Sortie",
+          "status": "Statut",
+          "duration": "Durée"
+        },
+        "status": {
+          "ongoing": "En cours",
+          "completed": "Terminée",
+          "exceeded": "Durée dépassée"
+        },
+        "limit": "Limite {limit} min",
+        "duration": {
+          "instant": "Instantané",
+          "onlyMinutes": "{minutes} min",
+          "onlyHours": "{hours} h",
+          "hoursMinutes": "{hours} h {minutes} min"
+        }
+      },
+      "multiVariantLocked": {
+        "title": "Agrégation multi-salles verrouillée",
+        "body": "Les statistiques consolidées sont réservées au forfait Enterprise. Sélectionnez une salle ou",
+        "upgrade": "mettez à niveau"
+      },
+      "recent": {
+        "title": "Visites récentes"
+      },
+      "errors": {
+        "load": "Impossible de charger les visites",
+        "checkout": "Impossible d’enregistrer la sortie",
+        "noSelection": "Sélectionnez une visite en cours",
+        "unauthenticated": "Accès refusé. Veuillez vous connecter."
       }
-      ,
+    },
     "members": {
       "badge": {
         "errors": {

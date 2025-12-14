@@ -6,7 +6,7 @@ import { LoginClient } from './login-client'
 import { routing } from '@/i18n/routing'
 
 type LoginPageProps = {
-  params: { locale: string }
+  params: Promise<{ locale: string }>
 }
 
 function resolveLocale(rawLocale: string): AppLocale | null {
@@ -16,7 +16,8 @@ function resolveLocale(rawLocale: string): AppLocale | null {
 }
 
 export default async function LoginPage({ params }: LoginPageProps) {
-  const locale = resolveLocale(params.locale)
+  const { locale: localeParam } = await params
+  const locale = resolveLocale(localeParam)
   if (!locale) {
     notFound()
   }

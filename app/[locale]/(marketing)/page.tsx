@@ -18,7 +18,6 @@ import {
 } from "lucide-react"
 
 import { MarketingNavbar } from "@/components/marketing/navbar"
-import { MarketingFooter } from "@/components/marketing/footer"
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -49,6 +48,9 @@ export default async function Home({ params }: HomePageProps) {
   const locale = routing.locales.includes(rawLocale as AppLocale) ? (rawLocale as AppLocale) : routing.defaultLocale
 
   const t = await getTranslations({ locale, namespace: "marketing.home" })
+
+  const supportEmail = process.env.SUPPORT_EMAIL || "contact@gymwatch.ma"
+  const supportHref = `mailto:${supportEmail}`
 
   const heroCopy = {
     eyebrow: t("hero.eyebrow"),
@@ -533,8 +535,8 @@ export default async function Home({ params }: HomePageProps) {
                   <Link href="/request-demo">{t("sections.contact.primaryCta")}</Link>
                 </Button>
                 <Button asChild variant="secondary" className="transition hover:scale-[1.02] hover:shadow-lg">
-                  <a href="mailto:hello@gymwatch.ma" className="font-semibold text-primary hover:underline">
-                    {t("sections.contact.secondaryCta")}
+                  <a href={supportHref} className="font-semibold text-primary hover:underline">
+                    {supportEmail}
                   </a>
                 </Button>
               </div>
@@ -552,8 +554,8 @@ export default async function Home({ params }: HomePageProps) {
               <div className="mt-4 space-y-2 text-sm text-muted-foreground">
                 <p>
                   {t("sections.contact.emailLabel")}{" "}
-                  <a href="mailto:hello@gymwatch.ma" className="font-semibold text-primary hover:underline">
-                    hello@gymwatch.ma
+                  <a href={supportHref} className="font-semibold text-primary hover:underline">
+                    {supportEmail}
                   </a>
                 </p>
                 <p>{t("sections.contact.availability")}</p>
@@ -563,8 +565,6 @@ export default async function Home({ params }: HomePageProps) {
           </div>
         </section>
       </main>
-
-      <MarketingFooter />
     </div>
   )
 }

@@ -15,6 +15,815 @@
     "twitterTitle": "GymWatch - La solution de gestion des salles de sport",
     "twitterDescription": "Automatisez vos abonnements, simplifiez vos opérations et inspirez vos membres avec GymWatch."
   },
+      "footer": {
+      "brand": {
+        "description": "La plateforme tout-en-un pour gérer votre salle de sport avec intelligence et simplicité."
+      },
+      "social": {
+        "facebookLabel": "Facebook",
+        "twitterLabel": "Twitter",
+        "instagramLabel": "Instagram",
+        "linkedinLabel": "LinkedIn",
+        "facebookHref": "#",
+        "twitterHref": "#",
+        "instagramHref": "#",
+        "linkedinHref": "#"
+      },
+      "product": {
+        "title": "Produit",
+        "features": "Fonctionnalités",
+        "pricing": "Tarifs",
+        "resources": "Ressources",
+        "requestDemo": "Demander une démo",
+        "about": "À propos"
+      },
+      "support": {
+        "title": "Support",
+        "contact": "Contact",
+        "docs": "Documentation"
+      },
+      "legal": {
+        "title": "Légal",
+        "privacy": "Confidentialité",
+        "terms": "Conditions",
+        "cookies": "Cookies",
+        "licenses": "Licences"
+      },
+      "bottom": {
+        "copyright": "© {year} GymWatch. Tous droits réservés."
+      }
+    },
+  "terms": {
+    "metadata": {
+      "title": "Conditions d’utilisation | GymWatch",
+      "description": "Conditions d’utilisation de GymWatch : accès, sécurité, responsabilités et droit applicable.",
+      "keywords": ["conditions", "CGU", "GymWatch", "salle de sport", "Maroc"]
+    },
+    "badge": "Légal",
+    "title": "Conditions d’utilisation",
+    "subtitle": "Ces conditions encadrent l’accès et l’utilisation de GymWatch.",
+    "updatedAt": "Dernière mise à jour : {date}",
+    "updatedAtDate": "14/12/2025",
+    "sections": {
+      "overview": {
+        "title": "Conditions générales",
+        "description": "Veuillez lire attentivement ces conditions avant d’utiliser GymWatch."
+      },
+      "scope": {
+        "title": "1. Champ d’application",
+        "body": "Les présentes conditions s’appliquent à l’utilisation du site et de l’application GymWatch, destinés à la gestion de salles de sport (membres, abonnements, accès, reporting)."
+      },
+      "definitions": {
+        "title": "2. Définitions",
+        "items": [
+          "« Service » : la plateforme GymWatch et ses fonctionnalités.",
+          "« Client » : l’entité (salle/réseau) utilisant GymWatch.",
+          "« Utilisateur » : toute personne disposant d’un compte (owner/admin/user).",
+          "« Données » : informations saisies ou générées via le Service."
+        ]
+      },
+      "account": {
+        "title": "3. Compte & sécurité",
+        "body": "Vous êtes responsable de la confidentialité de vos identifiants, de l’usage de votre compte et de l’exactitude des informations fournies."
+      },
+      "acceptableUse": {
+        "title": "4. Usage acceptable",
+        "items": [
+          "Ne pas tenter d’accéder à des comptes ou données non autorisés.",
+          "Ne pas perturber le service (intrusion, surcharge, scraping abusif).",
+          "Ne pas utiliser GymWatch à des fins illégales ou frauduleuses."
+        ]
+      },
+      "data": {
+        "title": "5. Données & confidentialité",
+        "body": "GymWatch peut traiter des données telles que emails, numéros de téléphone et adresses. Les détails sont décrits dans la politique de confidentialité.",
+        "cta": "Lire la politique de confidentialité"
+      },
+      "availability": {
+        "title": "6. Disponibilité",
+        "body": "Nous mettons en œuvre des moyens raisonnables pour assurer la disponibilité du Service. Des maintenances ou incidents peuvent occasionner des interruptions temporaires."
+      },
+      "ip": {
+        "title": "7. Propriété intellectuelle",
+        "body": "Les éléments du Service (marque, design, contenu, code) restent la propriété de GymWatch ou de ses concédants."
+      },
+      "liability": {
+        "title": "8. Responsabilité",
+        "body": "Le Service est fourni « en l’état ». Dans les limites permises par la loi, GymWatch ne peut être tenu responsable des dommages indirects liés à l’utilisation du Service."
+      },
+      "termination": {
+        "title": "9. Résiliation",
+        "body": "Vous pouvez cesser d’utiliser le Service à tout moment. Nous pouvons suspendre un compte en cas d’abus, de violation des conditions ou de risque de sécurité."
+      },
+      "changes": {
+        "title": "10. Modifications",
+        "body": "Nous pouvons mettre à jour ces conditions. La date de mise à jour sera indiquée en haut de la page."
+      },
+      "law": {
+        "title": "11. Droit applicable",
+        "body": "Ces conditions sont régies par le droit marocain. En cas de litige, les juridictions compétentes au Maroc pourront être saisies."
+      },
+      "contact": {
+        "title": "12. Contact",
+        "body": "Pour toute question concernant ces conditions :"
+      }
+    }
+  },
+  "docs": {
+    "metadata": {
+      "title": "Documentation | GymWatch",
+      "description": "Guides pour déployer GymWatch : multi-salles, rôles, contrôle d’accès, sécurité et dépannage.",
+      "keywords": ["documentation", "GymWatch", "contrôle d’accès", "multi-salles", "support"]
+    },
+    "hero": {
+      "badge": "Documentation",
+      "title": "Documentation GymWatch",
+      "description": "Guides courts et pratiques pour déployer GymWatch, configurer vos sites, gérer les rôles et sécuriser votre contrôle d’accès.",
+      "primaryCta": "Demander une démo",
+      "secondaryCta": "Contacter le support",
+      "emailCta": "Écrire par email"
+    },
+    "sections": {
+      "gettingStarted": {
+        "title": "Démarrage rapide",
+        "description": "Les étapes essentielles pour être opérationnel.",
+        "bullets": [
+          "Créer votre première salle (site) et vos variantes",
+          "Importer/ajouter des membres et définir les plans",
+          "Activer les règles d’accès (QR / badge) par site"
+        ]
+      },
+      "roles": {
+        "title": "Rôles & permissions",
+        "description": "Qui peut faire quoi ?",
+        "bullets": [
+          "Owner/Admin : configuration, plans, équipes",
+          "Staff : check-in / check-out, suivi de présence",
+          "Règles granulaires par site (multi-salles)"
+        ]
+      },
+      "access": {
+        "title": "Contrôle d’accès",
+        "description": "QR, badge, et règles de session.",
+        "bullets": [
+          "Validation d’entrée et sortie (manuel ou QR)",
+          "Limites : visites/jour, durée max de session",
+          "Journalisation : historique et audit"
+        ]
+      },
+      "security": {
+        "title": "Sécurité & données",
+        "description": "Bonnes pratiques et conformité.",
+        "bullets": [
+          "Accès par rôles, logs, traçabilité",
+          "Sauvegardes et hygiène des comptes",
+          "Gestion des données : emails, téléphone, adresses"
+        ]
+      }
+    },
+    "faq": {
+      "eyebrow": "Aide",
+      "title": "Questions fréquentes",
+      "description": "Les réponses rapides aux questions qu’on reçoit le plus souvent.",
+      "items": [
+        {
+          "q": "Comment déployer GymWatch sur plusieurs salles ?",
+          "a": "Créez un site par salle, puis assignez variantes, plans et règles d’accès. Les rôles permettent de limiter les accès par équipe/site."
+        },
+        {
+          "q": "Le contrôle d’accès peut être manuel ?",
+          "a": "Oui. Vous pouvez enregistrer entrée/sortie manuellement (et ensuite ajouter QR/badge si besoin)."
+        },
+        {
+          "q": "Où configurer la durée maximale d’une session ?",
+          "a": "Dans les réglages (par variante et/ou plan selon votre modèle). Cela permet de détecter les sessions dépassées."
+        },
+        {
+          "q": "Quelles données sont collectées ?",
+          "a": "GymWatch peut stocker des informations comme email, téléphone et adresse selon votre configuration. Pas de paiements si vous ne les activez pas."
+        },
+        {
+          "q": "Comment contacter le support ?",
+          "a": "Utilisez la page Contact ou envoyez un email au support. Réponse sous 24h ouvrées."
+        }
+      ]
+    },
+    "bottom": {
+      "kicker": "Besoin d’un accompagnement ?",
+      "title": "Onboarding & déploiement multi-salles",
+      "description": "On vous aide à cadrer, paramétrer et lancer GymWatch pour votre réseau.",
+      "primary": "Planifier une démo",
+      "secondary": "Voir les fonctionnalités"
+    }
+  },
+  "licenses": {
+    "metadata": {
+      "title": "Licences open-source | GymWatch",
+      "description": "Liste des licences des dépendances open-source utilisées par GymWatch.",
+      "keywords": ["licences", "open-source", "GymWatch", "dépendances"]
+    },
+    "hero": {
+      "badge": "Licences",
+      "title": "Licences open-source",
+      "description": "GymWatch s’appuie sur des bibliothèques open-source. Vous trouverez ici les principales informations et le fichier complet généré automatiquement.",
+      "openFile": "Ouvrir le fichier des licences",
+      "downloadFile": "Télécharger"
+    },
+    "content": {
+      "title": "Bibliothèques et licences",
+      "description": "Cette page fournit une vue d’ensemble. Le fichier complet est disponible ci-dessous.",
+      "listIntro": "Exemples de composants utilisés :",
+      "items": {
+        "framework": "Framework & runtime (Next.js / React)",
+        "ui": "UI (Tailwind CSS, shadcn/ui, Radix UI, Lucide)",
+        "i18n": "Internationalisation (next-intl)",
+        "auth": "Authentification (next-auth)",
+        "analytics": "Analytics (@vercel/analytics)"
+      },
+      "fullListTitle": "Liste complète",
+      "fullListBody": "Consultez la liste complète et les textes de licences ici :",
+      "brandTitle": "Marque & contenus",
+      "brandBody": "Le nom, le logo et l’identité visuelle GymWatch ne sont pas sous licence open-source.",
+      "contactCta": "Contacter le support",
+      "backHome": "Retour à l’accueil"
+    },
+    "footerNote": "Dernière mise à jour : fichier généré automatiquement lors du build."
+  },
+    "cookies": {
+    "metadata": {
+      "title": "Politique de cookies | GymWatch",
+      "description": "Informations sur l’utilisation des cookies et technologies similaires sur GymWatch.",
+      "keywords": ["cookies", "politique de cookies", "GymWatch", "confidentialité"]
+    },
+    "hero": {
+      "badge": "Cookies",
+      "title": "Politique de cookies",
+      "description": "Cette page explique comment GymWatch utilise les cookies et comment vous pouvez les gérer."
+    },
+    "sections": {
+      "what": {
+        "title": "Que sont les cookies ?",
+        "subtitle": "Définition simple et rôle dans le fonctionnement du site.",
+        "p1": "Un cookie est un petit fichier enregistré sur votre appareil (ordinateur, mobile). Il permet à un site de se souvenir d’informations, par exemple votre session ou vos préférences.",
+        "p2": "Certaines technologies similaires (stockage local, identifiants techniques) peuvent aussi être utilisées pour assurer la sécurité et le bon fonctionnement."
+      },
+      "use": {
+        "title": "Quels cookies utilisons-nous ?",
+        "subtitle": "GymWatch utilise principalement des cookies nécessaires au fonctionnement.",
+        "necessary": {
+          "title": "Cookies strictement nécessaires",
+          "items": [
+            "Authentification et maintien de session (connexion, sécurité).",
+            "Protection contre les abus et activités suspectes.",
+            "Fonctionnalités essentielles (navigation, formulaires)."
+          ]
+        },
+        "preferences": {
+          "title": "Cookies de préférences",
+          "items": [
+            "Préférences d’affichage (ex. thème clair/sombre).",
+            "Préférences de langue."
+          ]
+        },
+        "analytics": {
+          "title": "Mesure d’audience",
+          "body": "Nous pouvons utiliser des mesures agrégées pour comprendre les performances du site (pages consultées, stabilité, temps de chargement), afin d’améliorer l’expérience. Lorsque cela nécessite des traceurs, nous appliquons les paramètres de confidentialité appropriés."
+        }
+      },
+      "manage": {
+        "title": "Comment gérer vos cookies ?",
+        "subtitle": "Vous gardez le contrôle via votre navigateur.",
+        "p1": "Vous pouvez supprimer ou bloquer les cookies depuis les paramètres de votre navigateur. Attention : bloquer certains cookies peut empêcher la connexion ou dégrader certaines fonctionnalités.",
+        "p2": "Pour toute question, vous pouvez nous contacter.",
+        "actions": {
+          "privacy": "Voir la confidentialité",
+          "contact": "Contacter le support"
+        }
+      }
+    }
+  },
+    "privacy": {
+    "metadata": {
+      "title": "Politique de confidentialité | GymWatch",
+      "description": "Comment GymWatch collecte, utilise et protège vos données personnelles (Maroc).",
+      "keywords": ["confidentialité", "données personnelles", "GymWatch", "Maroc", "CNDP", "loi 09-08"]
+    },
+    "hero": {
+      "badge": "Confidentialité",
+      "title": "Politique de confidentialité",
+      "subtitle": "Transparence sur les données que nous collectons et la manière dont nous les protégeons.",
+      "primaryCta": "Demander une démo",
+      "secondaryCta": "Nous écrire",
+      "disclaimer": "Ce document est fourni à titre informatif et ne constitue pas un avis juridique."
+    },
+    "sections": {
+      "intro": {
+        "title": "Résumé",
+        "body": "GymWatch est un logiciel SaaS de gestion de salles de sport. Nous ne traitons pas de paiements sur la plateforme. Nous collectons principalement des données de contact (email, téléphone) et des informations liées à la gestion (adresses, membres, abonnements) afin de fournir le service."
+      },
+      "collected": {
+        "title": "Données collectées",
+        "items": [
+          "Données d’identification et de contact : nom, prénom, email, téléphone.",
+          "Données de compte : identifiants, rôle, logs d’accès, paramètres.",
+          "Données de gestion : adresses (salle / réseau), fiches membres, abonnements, présence, contrôle d’accès.",
+          "Données techniques : informations de navigation basiques, journaux de sécurité, mesures anti-abus."
+        ]
+      },
+      "purposes": {
+        "title": "Finalités",
+        "items": [
+          "Créer et gérer votre compte, vos équipes et vos salles.",
+          "Assurer le fonctionnement du service (abonnements, accès, présence, reporting).",
+          "Communiquer avec vous (support, réponses, notifications liées au service).",
+          "Sécuriser la plateforme (prévention fraude/abus, audit, traçabilité).",
+          "Améliorer le produit (statistiques d’usage agrégées, qualité de service)."
+        ]
+      },
+      "legal": {
+        "title": "Base légale & conformité (Maroc)",
+        "items": [
+          "Exécution du service : traitement nécessaire pour fournir GymWatch.",
+          "Consentement : lorsque requis (ex. communications non essentielles).",
+          "Intérêt légitime : sécurité, prévention des abus, amélioration du service.",
+          "Référence au cadre marocain de protection des données (loi 09-08) et aux exigences CNDP lorsque applicable."
+        ]
+      },
+      "retention": {
+        "title": "Durée de conservation",
+        "body": "Nous conservons les données uniquement le temps nécessaire au service, puis les supprimons/archivons selon les obligations légales et besoins de preuve/sécurité."
+      },
+      "security": {
+        "title": "Sécurité",
+        "body": "Chiffrement en transit, contrôles d’accès, journalisation, sauvegardes et mesures organisationnelles pour limiter les accès non autorisés."
+      },
+      "rights": {
+        "title": "Vos droits",
+        "items": [
+          "Accès, rectification et mise à jour de vos données.",
+          "Opposition ou limitation dans certains cas.",
+          "Suppression des données (selon contraintes légales/contractuelles).",
+          "Contact support pour toute demande liée à la confidentialité."
+        ]
+      },
+      "contact": {
+        "title": "Nous contacter",
+        "body": "Pour toute question ou demande liée à la confidentialité, contactez-nous via email ou la page Contact.",
+        "actions": {
+          "email": "Email support",
+          "contactPage": "Page Contact"
+        }
+      },
+      "changes": {
+        "title": "Modifications",
+        "body": "Nous pouvons mettre à jour cette politique pour refléter l’évolution du service ou des exigences légales. La version à jour est publiée sur cette page.",
+        "lastUpdatedLabel": "Dernière mise à jour :",
+        "lastUpdatedValue": "14/12/2025"
+      }
+    }
+  },
+    "ressources": {
+    "metadata": {
+      "title": "Ressources GymWatch",
+      "description": "Guides et articles sur la gestion de salles de sport : fidélisation, contrôle d’accès, automatisation des abonnements et réseaux multi-salles.",
+      "keywords": ["ressources", "gestion salle de sport", "contrôle d’accès", "SaaS fitness", "multi-salles"]
+    },
+    "nav": {
+      "features": "Fonctionnalités",
+      "plans": "Plans",
+      "faq": "FAQ",
+      "contact": "Contact"
+    },
+    "hero": {
+      "badge": "Ressources",
+      "title": "Ressources et guides GymWatch",
+      "description": "Articles pour les dirigeants de salles de sport : contrôle d’accès, fidélisation des membres, automatisation des abonnements et pilotage des réseaux multi-sites.",
+      "primaryCta": "Demander une démo"
+    },
+    "resourcesCta": {
+      "read": "Lire"
+    },
+    "resources": [
+      {
+        "key": "qr",
+        "title": "Mettre en place un contrôle d’accès fiable en réseau multi-salles",
+        "description": "Checklist pour sécuriser vos entrées avec QR codes, badges et règles par site, sans bloquer l’expérience membre."
+      },
+      {
+        "key": "automations",
+        "title": "Réduire le churn avec des relances automatisées",
+        "description": "Emails/SMS sur échéances et impayés : exemples de scénarios pour conserver vos abonnements actifs."
+      },
+      {
+        "key": "kpi",
+        "title": "Piloter les KPI d’un groupe de salles de sport",
+        "description": "Les indicateurs essentiels : revenus, fréquentation, marge, et comment les suivre dans un SaaS pour salles de sport."
+      }
+    ],
+    "bottom": {
+      "kicker": "Envie d’aller plus loin ?",
+      "title": "Accélérez votre réseau avec GymWatch",
+      "description": "Un SaaS de gestion de salle de sport qui combine contrôle d’accès, abonnements, reporting et automatisations pour vos clubs.",
+      "actions": {
+        "features": "Voir les fonctionnalités",
+        "plans": "Comparer les plans"
+      }
+    }
+  },
+    "contact": {
+    "metadata": {
+      "title": "Contact et support | GymWatch",
+      "description": "Contactez GymWatch : support, onboarding et déploiement multi-salles pour votre logiciel de gestion de salle de sport.",
+      "keywords": ["contact GymWatch", "support", "onboarding", "multi-salles", "logiciel salle de sport"]
+    },
+    "nav": {
+      "features": "Fonctionnalités",
+      "plans": "Plans",
+      "faq": "FAQ",
+      "contact": "Contact"
+    },
+    "hero": {
+      "badge": "Contact / Support",
+      "title": "Contact et support",
+      "description": "Besoin d’un déploiement multi-salles complexe ? Notre équipe vous accompagne pour la mise en place de GymWatch dans votre réseau : cadrage, migration, formation et support continu."
+    },
+    "form": {
+      "title": "Écrivez-nous",
+      "description": "Réponse en moins de 24h ouvrées. Nous sécurisons vos données et vos échanges.",
+      "fields": {
+        "name": { "label": "Nom et prénom", "placeholder": "Votre nom" },
+        "email": { "label": "Email professionnel", "placeholder": "you@entreprise.com" },
+        "company": { "label": "Société / réseau", "placeholder": "Nom de la salle ou du réseau" },
+        "sites": { "label": "Nombre de sites", "placeholder": "Ex. 3 salles" },
+        "message": {
+          "label": "Votre besoin",
+          "placeholder": "Décrivez vos attentes : contrôle d'accès, abonnements, reporting, déploiement multi-salles…"
+        }
+      },
+      "actions": { "send": "Envoyer", "emailDirect": "Nous écrire directement" }
+    },
+    "side": {
+      "support": {
+        "title": "Support dédié",
+        "description": "Assistance onboarding et run pour vos équipes.",
+        "items": [
+          "Équipe support disponible 8h00 - 19h00 CET",
+          "Réponse en moins de 24h ouvrées",
+          "Données sécurisées et journalisées"
+        ]
+      },
+      "details": {
+        "title": "Coordonnées",
+        "description": "Contactez-nous par le canal qui vous convient.",
+        "address": "Adresse : Casablanca & remote, déploiement dans tout le Maroc."
+      }
+    },
+    "bottom": {
+      "kicker": "Déploiement",
+      "title": "Onboarding multi-salles en quelques jours",
+      "description": "Migration des membres, paramétrage du contrôle d'accès, formation des équipes : nous orchestrons le lancement pour que GymWatch soit opérationnel rapidement.",
+      "actions": { "primary": "Planifier une démo", "secondary": "Voir les plans" }
+    }
+  },
+    "about": {
+    "metadata": {
+      "title": "À propos | GymWatch",
+      "description": "Découvrez la mission de GymWatch : optimiser la gestion des salles de sport et réseaux multi-salles avec fiabilité, sécurité et automatisation.",
+      "keywords": ["GymWatch", "SaaS salles de sport", "multi-salles", "abonnements", "contrôle d'accès"]
+    },
+    "nav": {
+      "features": "Fonctionnalités",
+      "plans": "Plans",
+      "faq": "FAQ",
+      "contact": "Contact"
+    },
+    "badge": "À propos",
+    "hero": {
+      "title": "À propos de GymWatch",
+      "description": "Nous aidons les réseaux de salles de sport à piloter leurs membres, leurs abonnements et leur contrôle d’accès avec une plateforme unique, fiable et sécurisée.",
+      "actions": {
+        "requestDemo": "Demander une démo",
+        "viewFeatures": "Voir les fonctionnalités"
+      }
+    },
+    "cards": {
+      "mission": {
+        "title": "Mission",
+        "description": "Optimiser la gestion des salles de sport et réseaux multi-salles avec un SaaS fiable et élégant."
+      },
+      "security": {
+        "title": "Fiabilité & sécurité",
+        "description": "Chiffrement, sauvegardes et rôles granulaires pour protéger vos données et vos accès."
+      },
+      "vision": {
+        "title": "Vision",
+        "description": "Automatiser vos opérations, réduire le churn et offrir une expérience moderne à vos membres."
+      }
+    },
+    "trajectory": {
+      "title": "Notre trajectoire"
+    },
+    "timeline": [
+      { "title": "Création", "detail": "Lancement de GymWatch pour simplifier la gestion des abonnements et du contrôle d'accès." },
+      { "title": "Scale multi-salles", "detail": "Support natif des réseaux multi-sites avec reporting consolidé et rôles granulaires." },
+      { "title": "Automatisation", "detail": "Relances, facturation et intégrations API pour réduire les tâches manuelles." },
+      { "title": "Vision", "detail": "Un logiciel de gestion de salle de sport premium, sécurisé et toujours à jour pour vos équipes." }
+    ],
+    "team": {
+      "kicker": "Notre équipe",
+      "title": "Experts produit, data et opérations",
+      "description": "Nous combinons expérience terrain (front desk, opérations) et expertise SaaS pour livrer un logiciel de gestion de salle de sport fiable, orienté data et accessible.",
+      "bullets": ["Support et accompagnement dédiés", "Livraison continue d'améliorations produit"],
+      "actions": {
+        "contact": "Échanger avec nous",
+        "choosePlan": "Choisir un plan"
+      }
+    }
+  },
+    "faqs": {
+    "metadata": {
+      "title": "FAQ | GymWatch",
+      "description": "Questions fréquentes sur GymWatch : multi-salles, abonnements, contrôle d’accès, sécurité et déploiement.",
+      "keywords": ["FAQ GymWatch", "logiciel salle de sport", "contrôle d'accès", "abonnements", "multi-salles"]
+    },
+    "hero": {
+      "eyebrow": "FAQ",
+      "title": "Réponses aux questions fréquentes",
+      "subtitle": "Tout ce qu’il faut savoir avant de démarrer.",
+      "description": "Découvrez comment GymWatch accompagne les salles et réseaux : abonnements, paiements, contrôle d’accès et reporting."
+    },
+    "accordion": {
+      "title": "Questions fréquentes",
+      "description": "Multi-sites, analytics, contrôle d’accès et roadmap : tout est ici."
+    },
+    "items": [
+      {
+        "question": "Qu’est-ce que GymWatch ?",
+        "answer": "GymWatch est une plateforme web pour piloter vos salles de sport : abonnements, paiements, contrôle d’accès et reporting, le tout en temps réel depuis un simple navigateur."
+      },
+      {
+        "question": "GymWatch gère-t-il plusieurs salles ou franchises ?",
+        "answer": "Oui. L’interface multi-sites vous permet de suivre chaque club (membres, revenus, passages) et d’agréger les chiffres clés pour comparer vos performances."
+      },
+      {
+        "question": "Faut-il installer un logiciel ?",
+        "answer": "Non. GymWatch est 100 % web : un navigateur suffit. Les QR codes et le scan fonctionnent via une tablette ou un smartphone connecté."
+      },
+      {
+        "question": "Comment se passe le passage de l’offre Basic à Pro / Enterprise ?",
+        "answer": "Vous pouvez changer d’offre à tout moment. Le passage à Pro ou Enterprise débloque les QR codes, les exports CSV/PDF, les statistiques détaillées ainsi que les scénarios d’automatisation avancés."
+      },
+      {
+        "question": "Puis-je commencer avec une salle et en ajouter d’autres plus tard ?",
+        "answer": "Oui. Ajoutez de nouvelles salles en quelques clics, puis rattachez vos équipes et vos membres. Les droits d’accès et les rapports peuvent être filtrés par salle."
+      },
+      {
+        "question": "Comment sont gérées les données et la sécurité ?",
+        "answer": "Les données sont chiffrées en transit et sauvegardées régulièrement. Les accès sont liés à des comptes administrateurs avec rôles, et nous appliquons les bonnes pratiques de journalisation et de séparation des environnements."
+      }
+    ],
+    "cta": {
+      "kicker": "Support",
+      "title": "Besoin d’aide pour votre déploiement ?",
+      "description": "Parlez à un expert GymWatch pour cadrer votre configuration multi-salles et votre modèle de facturation.",
+      "primaryCta": "Demander une démo",
+      "secondaryCta": "Contacter le support"
+    }
+  },
+    "subscriptionPlans": {
+    "tiers": {
+      "basic": {
+        "name": "Basic",
+        "description": "Fonctionnalités essentielles pour centraliser vos membres",
+        "badges": ["Support email", "Alertes d’échéance"],
+        "features": [
+          "Gestion des membres et abonnements",
+          "Alertes d’expiration et relances",
+          "Analyses essentielles",
+          "Support email prioritaire"
+        ]
+      },
+      "pro": {
+        "name": "Pro",
+        "description": "Automatisations, QR codes et exports avancés",
+        "badges": ["QR codes", "Exports Excel"],
+        "features": [
+          "Tout le plan Basic",
+          "Contrôle d’accès par QR code",
+          "Suivi de présence en temps réel",
+          "Alertes audio succès/échec",
+          "Exports Excel revenus & fidélité",
+          "Exports PDF/Excel multi-salles"
+        ]
+      },
+      "enterprise": {
+        "name": "Enterprise",
+        "highlightLabel": "Enterprise",
+        "description": "Offre multi-sites avec automatisations avancées et catalogue illimité",
+        "badges": ["Multi-salles illimitées", "Automatisations", "Cours & planning"],
+        "features": [
+          "Salles et utilisateurs illimités",
+          "Contrôle d’accès avancé (QR, badge, app membre)",
+          "Suivi de présence multi-sites",
+          "Gestion des cours et planning (multi-équipes)",
+          "Exports CSV/PDF complets",
+          "Statistiques détaillées multi-sites",
+          "Scénarios marketing (emails/SMS) en préparation"
+        ]
+      }
+    }
+  },
+    "plans": {
+    "metadata": {
+      "title": "Plans & Tarifs | GymWatch",
+      "description": "Comparez les plans GymWatch (mensuel/annuel), découvrez les fonctionnalités incluses et nos réponses aux questions fréquentes.",
+      "keywords": ["tarifs gym", "plans SaaS salle de sport", "abonnement gestion salle de sport", "pricing gym software"]
+    },
+    "hero": {
+      "eyebrow": "Tarifs",
+      "title": "Plans conçus pour les réseaux de salles",
+      "subtitle": "Facturation claire, fonctionnalités premium, déploiement guidé.",
+      "description": "Choisissez le plan adapté à votre salle ou votre réseau. Passez en annuel pour économiser et obtenir un accompagnement prioritaire.",
+      "primaryCta": "Demander une démo",
+      "secondaryCta": "Parler à un expert"
+    },
+    "pricing": {
+      "monthly": "Mensuel",
+      "annual": "Annuel (-{discount}%)",
+      "perMonth": "/ mois",
+      "recommended": "Recommandé",
+      "start": "Démarrer",
+      "billingHintAnnual": "Facturé {total} / an",
+      "billingHintMonthly": "Facturation mensuelle, sans engagement",
+      "saveAnnual": "Économisez {discount}% avec l'annuel"
+    },
+    "info": {
+      "allPlans": {
+        "title": "Inclus dans tous les plans",
+        "description": "Support, sécurité et mise à jour continue pour vos clubs.",
+        "points": [
+          "Accès web sécurisé, sauvegardes régulières et chiffrement des données.",
+          "Support email prioritaire pour vos équipes siège et clubs.",
+          "Améliorations produit continues sans interruption de service."
+        ]
+      },
+      "multisite": {
+        "title": "Déploiement multi-salles",
+        "description": "Onboarding et migration guidée pour les réseaux.",
+        "points": [
+          "Migration des membres, abonnements et historiques de paiements.",
+          "Configuration des droits par site et formation des équipes front desk.",
+          "Support dédié pendant la phase de lancement."
+        ]
+      }
+    },
+    "faq": {
+      "kicker": "FAQ Tarifs",
+      "title": "Questions sur la tarification",
+      "description": "Tout savoir sur la facturation, les remises annuelles et le déploiement pour votre réseau de salles de sport.",
+      "viewAll": "Voir toutes les FAQs",
+      "items": {
+        "annualBilling": {
+          "q": "Comment fonctionne la facturation annuelle ?",
+          "a": "Le mode annuel applique automatiquement une remise de {discount}% et présente un montant mensuel équivalent. La facture annuelle est émise en une fois."
+        },
+        "changePlan": {
+          "q": "Peut-on changer de plan en cours de route ?",
+          "a": "Oui, vous pouvez passer du plan Basic au plan Pro ou Enterprise à tout moment. Les nouvelles fonctionnalités sont débloquées immédiatement."
+        },
+        "accessControl": {
+          "q": "Le contrôle d’accès est-il inclus ?",
+          "a": "Oui dans les plans Pro et Enterprise. Vous pouvez gérer les droits par salle, suivre les passages et déclencher des alertes en temps réel."
+        },
+        "multiSiteHelp": {
+          "q": "Proposez-vous une assistance au déploiement multi-sites ?",
+          "a": "Oui, nous accompagnons les réseaux pour la migration des données, la configuration des accès et la formation des équipes locales."
+        }
+      }
+    }
+  },
+    "features": {
+    "metadata": {
+      "title": "Fonctionnalités de GymWatch",
+      "description": "Découvrez GymWatch, SaaS pour salles de sport : vue multi-salles, contrôle d’accès, gestion des abonnements et reporting avancé.",
+      "keywords": [
+        "logiciel de gestion de salle de sport",
+        "SaaS pour salles de sport",
+        "contrôle d’accès",
+        "réseaux multi-salles",
+        "gestion des abonnements"
+      ]
+    },
+    "nav": {
+      "features": "Fonctionnalités",
+      "plans": "Plans",
+      "faq": "FAQ",
+      "contact": "Contact"
+    },
+    "badge": "Fonctionnalités",
+    "hero": {
+      "title": "Fonctionnalités de GymWatch",
+      "description": "Un logiciel de gestion de salle de sport premium pour vos réseaux multi-salles : contrôle d'accès, abonnements, paiements et reporting dans une interface unifiée.",
+      "actions": {
+        "comparePlans": "Comparer les plans",
+        "talkToExpert": "Parler à un expert"
+      }
+    },
+    "sections": {
+      "multi": {
+        "title": "Vue multi-salles",
+        "description": "Surveillez vos clubs en un clin d’œil : fréquentation, revenus, NPS et incidents par site pour vos réseaux multi-salles / multi-sites.",
+        "points": [
+          "Tableaux de bord consolidés par club et par réseau",
+          "Filtrez par site, par équipe ou par segment de membres",
+          "Alertes en temps réel sur les anomalies d’accès ou de paiement"
+        ]
+      },
+      "access": {
+        "title": "Contrôle d’accès et suivi de présence",
+        "description": "QR codes, badges ou tourniquets : validez les passages en quelques millisecondes avec journalisation complète.",
+        "points": [
+          "Droits par salle, plage horaire et type d’abonnement",
+          "Logs instantanés et alertes en cas d’échec ou de fraude",
+          "Statistiques de passage pour ajuster vos équipes"
+        ]
+      },
+      "subscriptions": {
+        "title": "Gestion des abonnements et paiements",
+        "description": "Contrats, reconduction, prorata et factures propres. Automatisez la facturation sans tableur ni double saisie.",
+        "points": [
+          "Encaissement multi-moyens et facturation en marque blanche",
+          "Suspension (freeze), reconduction automatique et changements de plans",
+          "Gestion des remises et coupons contrôlés"
+        ]
+      },
+      "automations": {
+        "title": "Automatisations et relances",
+        "description": "Réduisez le churn grâce aux relances email/SMS sur échéances, impayés et retours d’accès refusés.",
+        "points": [
+          "Scénarios prêts à l’emploi pour les renouvellements",
+          "Relances sur impayés et suivi des paiements récurrents",
+          "Notifications internes pour vos équipes front desk"
+        ]
+      },
+      "reporting": {
+        "title": "Reporting et tableaux de bord",
+        "description": "Indicateurs financiers et opérationnels pour vos salles et votre holding, exportables en CSV/PDF.",
+        "points": [
+          "Revenus, marge, churn et fréquentation par site",
+          "Exports comptables pour équipes finance et franchiseurs",
+          "Partage sécurisé des rapports aux responsables locaux"
+        ]
+      },
+      "security": {
+        "title": "Fiabilité, sécurité et API",
+        "description": "SaaS pour salles de sport sécurisé : chiffrement, sauvegardes, rôles granulaires et API ouverte.",
+        "points": [
+          "Rôles et permissions par équipe et par site",
+          "Journal d’activité pour les actions sensibles",
+          "API pour CRM, site vitrine et tourniquets"
+        ]
+      }
+    },
+    "mini": {
+      "presence": {
+        "title": "Suivi de présence",
+        "description": "Contrôle d'accès et suivi des passages par tranche horaire pour mieux planifier vos équipes.",
+        "points": [
+          "Synchronisation en temps réel sur l'ensemble des clubs.",
+          "Alertes sur tentatives refusées et capacité d'accueil.",
+          "Exports pour vos audits et franchises."
+        ]
+      },
+      "finance": {
+        "title": "Automatisation financière",
+        "description": "Réduisez les impayés avec des relances automatisées et des factures propres.",
+        "points": [
+          "Relances email/SMS paramétrables et historiques traçables.",
+          "Factures en marque blanche conformes aux exigences locales.",
+          "Suivi des encaissements par club et par plan."
+        ]
+      },
+      "security": {
+        "title": "Sécurité et API",
+        "description": "Sécurisez vos données et connectez GymWatch à vos outils existants.",
+        "points": [
+          "Chiffrement, sauvegardes régulières et journal d'activité.",
+          "Permissions fines pour chaque équipe et rôle.",
+          "API documentée pour CRM, sites web ou tourniquets."
+        ]
+      }
+    },
+    "cta": {
+      "kicker": "Prêt à explorer ?",
+      "title": "Testez GymWatch sur votre réseau",
+      "description": "Un expert vous accompagne pour cadrer la gestion des abonnements, le contrôle d'accès et le reporting multi-salles.",
+      "actions": {
+        "requestDemo": "Demander une démo",
+        "viewPlans": "Voir les plans"
+      }
+    }
+  },
   "superAdminDemoRequestsPage": {
     "title": "Demandes de démo",
     "subtitle": "Validez les demandes et provisionnez des comptes démo.",

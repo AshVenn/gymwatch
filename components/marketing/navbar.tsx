@@ -33,6 +33,22 @@ const LOCALE_ABBREVIATIONS: Record<AppLocale, string> = {
   ar: "AR",
 }
 
+function hrefKey(href: LinkHref) {
+  if (typeof href === "string") return href
+  try {
+    return JSON.stringify(href)
+  } catch {
+    return String(href)
+  }
+}
+
+function hrefPath(href: LinkHref) {
+  if (typeof href === "string") return href
+  // next-intl typed href objects usually have pathname
+  // fallback to stringified
+  return (href as any)?.pathname ?? hrefKey(href)
+}
+
 export function MarketingNavbar({ links = [], className }: MarketingNavbarProps) {
   const router = useRouter()
   const pathname = usePathname()
@@ -44,14 +60,29 @@ export function MarketingNavbar({ links = [], className }: MarketingNavbarProps)
 
   const localeCopy = getMarketingCopy(locale)
 
-  const computedLinks: NavLink[] = links.length
-    ? links
-    : [
-        ...(getMarketingNavLinks(locale, {
-          useHomeAnchors: pathname === "/",
-        }) as NavLink[]),
-        { label: localeCopy.nav?.about || "About", href: "/about" as LinkHref },
-      ]
+  const computedLinks: NavLink[] = useMemo(() => {
+    const useHomeAnchors = pathname === "/"
+
+    const base = links.length
+      ? links
+      : (getMarketingNavLinks(locale, { useHomeAnchors }) as NavLink[])
+
+    const allowed = new Set([
+      "/features",
+      "/plans",
+      "/faqs",
+      "/contact",
+      "/#features",
+      "/#plans",
+      "/#contact",
+    ])
+
+    const filtered = base.filter((item) => allowed.has(hrefPath(item.href)))
+
+    const map = new Map<string, NavLink>()
+    for (const item of filtered) map.set(hrefKey(item.href), item)
+    return Array.from(map.values())
+  }, [links, locale, pathname])
 
   const localeOptions = useMemo(
     () =>
@@ -67,8 +98,9 @@ export function MarketingNavbar({ links = [], className }: MarketingNavbarProps)
       return {
         login: "Sign in",
         requestDemo: localeCopy.hero.home.primaryCta,
-        dashboard: "Go to dashboard",
+        dashboard: "Dashboard",
         signOut: "Sign out",
+        menuLabel: "Menu",
       }
     }
 
@@ -76,16 +108,18 @@ export function MarketingNavbar({ links = [], className }: MarketingNavbarProps)
       return {
         login: "تسجيل الدخول",
         requestDemo: localeCopy.hero.home.primaryCta,
-        dashboard: "الانتقال إلى اللوحة",
+        dashboard: "لوحة التحكم",
         signOut: "تسجيل الخروج",
+        menuLabel: "القائمة",
       }
     }
 
     return {
       login: "Se connecter",
       requestDemo: localeCopy.hero.home.primaryCta,
-      dashboard: "Aller au dashboard",
+      dashboard: "Dashboard",
       signOut: "Se déconnecter",
+      menuLabel: "Menu",
     }
   }, [locale, localeCopy.hero.home.primaryCta])
 
@@ -151,29 +185,29 @@ export function MarketingNavbar({ links = [], className }: MarketingNavbarProps)
               className="transition-transform duration-500 group-hover:scale-110 group-hover:rotate-3 dark:invert dark:brightness-200"
             />
           </div>
-          <div>
+          <div className="hidden sm:block">
             <p className="text-[11px] uppercase tracking-[0.3em] text-muted-foreground transition-colors group-hover:text-primary">
               GymWatch
             </p>
-            <p className="text-sm font-semibold transition-colors group-hover:text-primary">
-              {localeCopy.brandTagline}
-            </p>
+            <p className="text-sm font-semibold transition-colors group-hover:text-primary">{localeCopy.brandTagline}</p>
           </div>
         </Link>
 
+        {/* Desktop links (minimal) */}
         <nav className="hidden items-center gap-6 text-sm font-medium text-muted-foreground md:flex">
           {computedLinks.map((link) => (
             <Link
-              key={String(link.href)}
+              key={hrefKey(link.href)}
               href={link.href}
               className="group relative py-2 transition-colors hover:text-foreground"
             >
               {link.label}
-              <span className="absolute bottom-0 left-0 h-0.5 w-0 rounded-full bg-linear-to-r from-primary to-primary/60 transition-all duration-300 group-hover:w-full" />
+              <span className="absolute bottom-0 left-0 h-0.5 w-0 rounded-full bg-primary transition-all duration-300 group-hover:w-full" />
             </Link>
           ))}
         </nav>
 
+        {/* Desktop actions */}
         <div className="hidden items-center gap-2 md:flex">
           <ThemeToggle />
 
@@ -188,12 +222,12 @@ export function MarketingNavbar({ links = [], className }: MarketingNavbarProps)
                 <span className="text-sm font-bold tracking-wider">{LOCALE_ABBREVIATIONS[locale]}</span>
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-40 border-border/70 rounded-xl">
+            <DropdownMenuContent align="end" className="w-40 rounded-xl border-border/70">
               {localeOptions.map((option) => (
                 <DropdownMenuItem
                   key={option.code}
                   onClick={() => handleLocaleChange(option.code)}
-                  className="flex items-center justify-between transition-colors rounded-lg"
+                  className="flex items-center justify-between rounded-lg transition-colors"
                 >
                   <span className="font-medium">{option.label}</span>
                   {option.code === locale && <Check className="h-4 w-4 text-primary" aria-hidden />}
@@ -211,19 +245,19 @@ export function MarketingNavbar({ links = [], className }: MarketingNavbarProps)
                   className="gap-2 rounded-xl border-border/70 bg-card/50 px-3 transition-all hover:border-primary/40 hover:bg-card hover:shadow-md"
                 >
                   <User className="h-4 w-4" />
-                  <span className="text-sm font-semibold max-w-[120px] truncate">
+                  <span className="max-w-[140px] truncate text-sm font-semibold">
                     {session.user.email ?? "Account"}
                   </span>
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-52 border-border/70 rounded-xl">
-                <DropdownMenuItem onClick={() => router.push(dashboardRoute)} className="transition-colors rounded-lg">
+              <DropdownMenuContent align="end" className="w-52 rounded-xl border-border/70">
+                <DropdownMenuItem onClick={() => router.push(dashboardRoute)} className="rounded-lg transition-colors">
                   <LayoutDashboard className="mr-2 h-4 w-4" />
                   {authCopy.dashboard}
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   onClick={() => signOut({ callbackUrl: "/" })}
-                  className="transition-colors rounded-lg text-destructive focus:text-destructive"
+                  className="rounded-lg text-destructive transition-colors focus:text-destructive"
                 >
                   <LogOut className="mr-2 h-4 w-4" />
                   {authCopy.signOut}
@@ -236,15 +270,16 @@ export function MarketingNavbar({ links = [], className }: MarketingNavbarProps)
                 variant="ghost"
                 size="sm"
                 onClick={() => router.push("/login")}
-                className="transition-all hover:text-primary hover:scale-105 rounded-xl"
+                className="rounded-xl transition-all hover:scale-105 hover:text-primary"
               >
                 {authCopy.login}
               </Button>
+
               {!isAuthPage && (
                 <Button
                   size="sm"
                   onClick={() => router.push("/request-demo")}
-                  className="shadow-md transition-all hover:scale-105 hover:shadow-lg rounded-xl"
+                  className="rounded-xl shadow-md transition-all hover:scale-105 hover:shadow-lg"
                 >
                   {authCopy.requestDemo}
                 </Button>
@@ -253,6 +288,7 @@ export function MarketingNavbar({ links = [], className }: MarketingNavbarProps)
           )}
         </div>
 
+        {/* Mobile actions */}
         <div className="flex items-center gap-2 md:hidden">
           <ThemeToggle />
           <Button
@@ -267,10 +303,11 @@ export function MarketingNavbar({ links = [], className }: MarketingNavbarProps)
         </div>
       </div>
 
+      {/* Mobile menu */}
       {menuOpen && (
         <div className="animate-in slide-in-from-top-2 border-t border-border/60 bg-background/95 backdrop-blur-xl md:hidden">
           <div className="flex items-center justify-between px-4 py-3">
-            <p className="text-sm font-semibold">Navigation</p>
+            <p className="text-sm font-semibold">{authCopy.menuLabel}</p>
             <Button
               variant="ghost"
               size="icon"
@@ -281,10 +318,11 @@ export function MarketingNavbar({ links = [], className }: MarketingNavbarProps)
               <X className="h-5 w-5" />
             </Button>
           </div>
+
           <div className="space-y-2 px-4 pb-4">
             {computedLinks.map((link) => (
               <Link
-                key={String(link.href)}
+                key={hrefKey(link.href)}
                 href={link.href}
                 className="block rounded-xl border border-border/60 px-4 py-2.5 text-sm font-medium transition-all hover:border-primary/40 hover:bg-primary/10"
                 onClick={() => setMenuOpen(false)}
@@ -293,6 +331,7 @@ export function MarketingNavbar({ links = [], className }: MarketingNavbarProps)
               </Link>
             ))}
 
+            {/* locale switch (simple) */}
             <div className="flex items-center justify-between rounded-xl border border-border/60 px-4 py-2.5">
               <div className="flex items-center gap-2 text-sm font-medium">
                 <Globe2 className="h-4 w-4" aria-hidden />
@@ -306,7 +345,7 @@ export function MarketingNavbar({ links = [], className }: MarketingNavbarProps)
                     variant={option.code === locale ? "secondary" : "ghost"}
                     onClick={() => handleLocaleChange(option.code)}
                     disabled={isPending}
-                    className="h-8 px-2.5 text-xs font-bold rounded-lg"
+                    className="h-8 rounded-lg px-2.5 text-xs font-bold"
                   >
                     {LOCALE_ABBREVIATIONS[option.code]}
                   </Button>
@@ -316,15 +355,12 @@ export function MarketingNavbar({ links = [], className }: MarketingNavbarProps)
 
             {!session?.user ? (
               <>
-                <Button
-                  className="w-full transition hover:scale-105 rounded-xl"
-                  onClick={() => router.push("/request-demo")}
-                >
+                <Button className="w-full rounded-xl transition hover:scale-105" onClick={() => router.push("/request-demo")}>
                   {authCopy.requestDemo}
                 </Button>
                 <Button
                   variant="ghost"
-                  className="w-full transition hover:text-primary rounded-xl"
+                  className="w-full rounded-xl transition hover:text-primary"
                   onClick={() => router.push("/login")}
                 >
                   {authCopy.login}
@@ -333,7 +369,7 @@ export function MarketingNavbar({ links = [], className }: MarketingNavbarProps)
             ) : (
               <>
                 <Button
-                  className="w-full transition hover:scale-105 rounded-xl"
+                  className="w-full rounded-xl transition hover:scale-105"
                   onClick={() => {
                     router.push(dashboardRoute)
                     setMenuOpen(false)
@@ -343,7 +379,7 @@ export function MarketingNavbar({ links = [], className }: MarketingNavbarProps)
                 </Button>
                 <Button
                   variant="outline"
-                  className="w-full transition bg-transparent rounded-xl"
+                  className="w-full rounded-xl bg-transparent transition"
                   onClick={() => {
                     setMenuOpen(false)
                     signOut({ callbackUrl: "/" })

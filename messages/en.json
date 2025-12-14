@@ -3,7 +3,7 @@
     "localeLabel": "English",
     "comingSoon": "Detailed translations coming soon."
   },
-  "metadata": {
+    "metadata": {
     "titleDefault": "GymWatch - Modern gym management",
     "titleTemplate": "%s | GymWatch",
     "description": "GymWatch helps gyms manage subscriptions, members, and revenue with an intelligent dashboard.",
@@ -14,6 +14,824 @@
     "openGraphImageAlt": "GymWatch abstract pattern",
     "twitterTitle": "GymWatch - Gym management solution",
     "twitterDescription": "Automate subscriptions, streamline operations, and empower your members with GymWatch."
+  },
+  "footer": {
+      "brand": {
+        "description": "The all-in-one platform to run your gym with clarity and simplicity."
+      },
+      "social": {
+        "facebookLabel": "Facebook",
+        "twitterLabel": "X",
+        "instagramLabel": "Instagram",
+        "linkedinLabel": "LinkedIn",
+        "facebookHref": "#",
+        "twitterHref": "#",
+        "instagramHref": "#",
+        "linkedinHref": "#"
+      },
+      "product": {
+        "title": "Product",
+        "features": "Features",
+        "pricing": "Pricing",
+        "resources": "Resources",
+        "requestDemo": "Request a demo",
+        "about": "About"
+      },
+      "support": {
+        "title": "Support",
+        "contact": "Contact",
+        "docs": "Documentation"
+      },
+      "legal": {
+        "title": "Legal",
+        "privacy": "Privacy",
+        "terms": "Terms",
+        "cookies": "Cookies",
+        "licenses": "Licenses"
+      },
+      "bottom": {
+        "copyright": "© {year} GymWatch. All rights reserved."
+      }
+    },
+     "terms": {
+    "metadata": {
+      "title": "Terms of Use | GymWatch",
+      "description": "GymWatch Terms of Use: access, security, responsibilities and governing law.",
+      "keywords": ["terms", "GymWatch", "gym software", "Morocco"]
+    },
+    "badge": "Legal",
+    "title": "Terms of Use",
+    "subtitle": "These terms govern access to and use of GymWatch.",
+    "updatedAt": "Last updated: {date}",
+    "updatedAtDate": "2025-12-14",
+    "sections": {
+      "overview": {
+        "title": "General terms",
+        "description": "Please read these terms carefully before using GymWatch."
+      },
+      "scope": {
+        "title": "1. Scope",
+        "body": "These terms apply to the GymWatch website and app used to manage gyms (members, subscriptions, access, reporting)."
+      },
+      "definitions": {
+        "title": "2. Definitions",
+        "items": [
+          "“Service”: the GymWatch platform and its features.",
+          "“Customer”: the gym/company using GymWatch.",
+          "“User”: anyone with an account (owner/admin/user).",
+          "“Data”: information entered or generated through the Service."
+        ]
+      },
+      "account": {
+        "title": "3. Account & security",
+        "body": "You are responsible for keeping credentials confidential, for account activity, and for the accuracy of the information you provide."
+      },
+      "acceptableUse": {
+        "title": "4. Acceptable use",
+        "items": [
+          "Do not try to access unauthorized accounts or data.",
+          "Do not disrupt the service (intrusion, overload, abusive scraping).",
+          "Do not use GymWatch for illegal or fraudulent purposes."
+        ]
+      },
+      "data": {
+        "title": "5. Data & privacy",
+        "body": "GymWatch may process data such as emails, phone numbers and addresses. Details are described in the Privacy Policy.",
+        "cta": "Read the Privacy Policy"
+      },
+      "availability": {
+        "title": "6. Availability",
+        "body": "We use reasonable efforts to keep the Service available. Maintenance or incidents may cause temporary interruptions."
+      },
+      "ip": {
+        "title": "7. Intellectual property",
+        "body": "All Service elements (brand, design, content, code) remain the property of GymWatch or its licensors."
+      },
+      "liability": {
+        "title": "8. Liability",
+        "body": "The Service is provided “as is”. To the extent permitted by law, GymWatch is not liable for indirect damages arising from use of the Service."
+      },
+      "termination": {
+        "title": "9. Termination",
+        "body": "You may stop using the Service at any time. We may suspend an account in case of abuse, terms violations, or security risk."
+      },
+      "changes": {
+        "title": "10. Changes",
+        "body": "We may update these terms. The update date will be shown at the top of the page."
+      },
+      "law": {
+        "title": "11. Governing law",
+        "body": "These terms are governed by Moroccan law. Moroccan courts may have jurisdiction in case of dispute."
+      },
+      "contact": {
+        "title": "12. Contact",
+        "body": "Questions about these terms:"
+      }
+    }
+  }
+,
+    "docs": {
+    "metadata": {
+      "title": "Documentation | GymWatch",
+      "description": "Guides to deploy GymWatch: multi-location setup, roles, access control, security and troubleshooting.",
+      "keywords": ["documentation", "GymWatch", "access control", "multi-location", "support"]
+    },
+    "hero": {
+      "badge": "Documentation",
+      "title": "GymWatch Documentation",
+      "description": "Short, practical guides to deploy GymWatch, configure locations, manage roles, and secure your access control.",
+      "primaryCta": "Book a demo",
+      "secondaryCta": "Contact support",
+      "emailCta": "Email support"
+    },
+    "sections": {
+      "gettingStarted": {
+        "title": "Quick start",
+        "description": "The essentials to go live fast.",
+        "bullets": [
+          "Create your first location and its variants",
+          "Add/import members and define plans",
+          "Enable access rules (QR / badge) per location"
+        ]
+      },
+      "roles": {
+        "title": "Roles & permissions",
+        "description": "Who can do what?",
+        "bullets": [
+          "Owner/Admin: configuration, plans, teams",
+          "Staff: check-in / check-out, attendance tracking",
+          "Granular rules per location (multi-site)"
+        ]
+      },
+      "access": {
+        "title": "Access control",
+        "description": "QR, badge, and session rules.",
+        "bullets": [
+          "Manual or QR-based entry/exit",
+          "Limits: visits/day, max session duration",
+          "Audit logs: history and traceability"
+        ]
+      },
+      "security": {
+        "title": "Security & data",
+        "description": "Best practices and compliance.",
+        "bullets": [
+          "Role-based access, logs, traceability",
+          "Backups and account hygiene",
+          "Data handling: emails, phone numbers, addresses"
+        ]
+      }
+    },
+    "faq": {
+      "eyebrow": "Help",
+      "title": "Frequently asked questions",
+      "description": "Fast answers to the questions we get most often.",
+      "items": [
+        {
+          "q": "How do I deploy GymWatch across multiple locations?",
+          "a": "Create one location per club, then assign variants, plans, and access rules. Roles help limit access per team/location."
+        },
+        {
+          "q": "Can access control be manual?",
+          "a": "Yes. You can record check-in/out manually, then add QR/badges later if needed."
+        },
+        {
+          "q": "Where do I set a max session duration?",
+          "a": "In settings (per variant and/or plan depending on your model). This helps detect over-duration sessions."
+        },
+        {
+          "q": "What data is collected?",
+          "a": "GymWatch can store data like email, phone, and address depending on your setup. No payments if you don’t enable them."
+        },
+        {
+          "q": "How do I contact support?",
+          "a": "Use the Contact page or send an email to support. We answer within 1 business day."
+        }
+      ]
+    },
+    "bottom": {
+      "kicker": "Need guidance?",
+      "title": "Onboarding & multi-location rollout",
+      "description": "We help you scope, configure, and launch GymWatch for your network.",
+      "primary": "Schedule a demo",
+      "secondary": "View features"
+    }
+  },
+    "licenses": {
+    "metadata": {
+      "title": "Open-source licenses | GymWatch",
+      "description": "License information for open-source dependencies used by GymWatch.",
+      "keywords": ["licenses", "open source", "GymWatch", "dependencies"]
+    },
+    "hero": {
+      "badge": "Licenses",
+      "title": "Open-source licenses",
+      "description": "GymWatch relies on open-source libraries. This page provides an overview and a link to the full auto-generated license file.",
+      "openFile": "Open licenses file",
+      "downloadFile": "Download"
+    },
+    "content": {
+      "title": "Libraries & licenses",
+      "description": "This is a short overview. The full license file is available below.",
+      "listIntro": "Examples of used components:",
+      "items": {
+        "framework": "Framework & runtime (Next.js / React)",
+        "ui": "UI (Tailwind CSS, shadcn/ui, Radix UI, Lucide)",
+        "i18n": "Internationalization (next-intl)",
+        "auth": "Authentication (next-auth)",
+        "analytics": "Analytics (@vercel/analytics)"
+      },
+      "fullListTitle": "Full list",
+      "fullListBody": "See the full list and license texts here:",
+      "brandTitle": "Brand & assets",
+      "brandBody": "The GymWatch name, logo, and visual identity are not open-source.",
+      "contactCta": "Contact support",
+      "backHome": "Back home"
+    },
+    "footerNote": "Last updated: file automatically generated during build."
+  },
+    "cookies": {
+    "metadata": {
+      "title": "Cookie Policy | GymWatch",
+      "description": "Information about cookies and similar technologies used on GymWatch.",
+      "keywords": ["cookies", "cookie policy", "GymWatch", "privacy"]
+    },
+    "hero": {
+      "badge": "Cookies",
+      "title": "Cookie Policy",
+      "description": "This page explains how GymWatch uses cookies and how you can manage them."
+    },
+    "sections": {
+      "what": {
+        "title": "What are cookies?",
+        "subtitle": "A simple definition and why they matter.",
+        "p1": "A cookie is a small file stored on your device (computer or phone). It helps a website remember information such as your session or preferences.",
+        "p2": "Similar technologies (local storage, technical identifiers) may also be used to ensure security and proper operation."
+      },
+      "use": {
+        "title": "Which cookies do we use?",
+        "subtitle": "GymWatch mainly uses cookies that are required to operate.",
+        "necessary": {
+          "title": "Strictly necessary cookies",
+          "items": [
+            "Authentication and session persistence (login, security).",
+            "Protection against abuse and suspicious activity.",
+            "Core features (navigation, forms)."
+          ]
+        },
+        "preferences": {
+          "title": "Preference cookies",
+          "items": [
+            "Display preferences (e.g., light/dark theme).",
+            "Language preferences."
+          ]
+        },
+        "analytics": {
+          "title": "Audience measurement",
+          "body": "We may use aggregated measurements to understand site performance (views, stability, load time) to improve the experience. When trackers are required, we apply appropriate privacy settings."
+        }
+      },
+      "manage": {
+        "title": "How to manage cookies",
+        "subtitle": "You stay in control in your browser settings.",
+        "p1": "You can delete or block cookies in your browser settings. Note: blocking certain cookies may prevent login or reduce functionality.",
+        "p2": "If you have questions, contact us.",
+        "actions": {
+          "privacy": "View privacy",
+          "contact": "Contact support"
+        }
+      }
+    }
+  },
+    "privacy": {
+    "metadata": {
+      "title": "Privacy Policy | GymWatch",
+      "description": "How GymWatch collects, uses, and protects your personal data (Morocco).",
+      "keywords": ["privacy", "personal data", "GymWatch", "Morocco", "CNDP", "Law 09-08"]
+    },
+    "hero": {
+      "badge": "Privacy",
+      "title": "Privacy Policy",
+      "subtitle": "Clear information about the data we collect and how we protect it.",
+      "primaryCta": "Book a demo",
+      "secondaryCta": "Email us",
+      "disclaimer": "This document is provided for information purposes and is not legal advice."
+    },
+    "sections": {
+      "intro": {
+        "title": "Summary",
+        "body": "GymWatch is a gym-management SaaS. We do not process payments on the platform. We mainly collect contact data (email, phone) and operational data (addresses, members, subscriptions) to deliver the service."
+      },
+      "collected": {
+        "title": "Data we collect",
+        "items": [
+          "Identification & contact: first/last name, email, phone number.",
+          "Account data: identifiers, role, access logs, settings.",
+          "Operations data: addresses (club/network), member records, subscriptions, attendance, access control.",
+          "Technical data: basic usage logs, security logs, anti-abuse signals."
+        ]
+      },
+      "purposes": {
+        "title": "Why we use your data",
+        "items": [
+          "Create and manage your account, teams, and locations.",
+          "Operate the service (subscriptions, access, attendance, reporting).",
+          "Communicate with you (support, replies, service notifications).",
+          "Secure the platform (fraud/abuse prevention, auditing, traceability).",
+          "Improve the product (aggregated usage insights, service quality)."
+        ]
+      },
+      "legal": {
+        "title": "Legal basis & Morocco compliance",
+        "items": [
+          "Service delivery: processing needed to provide GymWatch.",
+          "Consent: where required (e.g., non-essential communications).",
+          "Legitimate interests: security, abuse prevention, service improvement.",
+          "Reference to Morocco’s personal data framework (Law 09-08) and CNDP requirements where applicable."
+        ]
+      },
+      "retention": {
+        "title": "Retention",
+        "body": "We keep data only as long as needed for the service, then delete/archive it according to legal obligations and security/audit needs."
+      },
+      "security": {
+        "title": "Security",
+        "body": "Encryption in transit, access controls, logging, backups, and organizational measures to reduce unauthorized access."
+      },
+      "rights": {
+        "title": "Your rights",
+        "items": [
+          "Access, correction, and updating of your data.",
+          "Objection or limitation in certain cases.",
+          "Deletion (subject to legal/contractual constraints).",
+          "Contact support for any privacy-related request."
+        ]
+      },
+      "contact": {
+        "title": "Contact us",
+        "body": "For privacy questions or requests, contact us by email or via the Contact page.",
+        "actions": {
+          "email": "Support email",
+          "contactPage": "Contact page"
+        }
+      },
+      "changes": {
+        "title": "Changes",
+        "body": "We may update this policy to reflect product changes or legal requirements. The latest version is published on this page.",
+        "lastUpdatedLabel": "Last updated:",
+        "lastUpdatedValue": "2025-12-14"
+      }
+    }
+  },
+    "ressources": {
+    "metadata": {
+      "title": "GymWatch Resources",
+      "description": "Guides and articles on gym management: retention, access control, membership automations and multi-site operations.",
+      "keywords": ["resources", "gym management", "access control", "fitness SaaS", "multi-location"]
+    },
+    "nav": {
+      "features": "Features",
+      "plans": "Pricing",
+      "faq": "FAQ",
+      "contact": "Contact"
+    },
+    "hero": {
+      "badge": "Resources",
+      "title": "GymWatch resources & guides",
+      "description": "Articles for gym owners and operators: access control, member retention, billing automation, and multi-site performance tracking.",
+      "primaryCta": "Request a demo"
+    },
+    "resourcesCta": {
+      "read": "Read"
+    },
+    "resources": [
+      {
+        "key": "qr",
+        "title": "How to set up reliable access control for multi-site gyms",
+        "description": "A checklist to secure entries with QR codes, badges and per-location rules—without hurting the member experience."
+      },
+      {
+        "key": "automations",
+        "title": "Reduce churn with automated follow-ups",
+        "description": "Email/SMS for renewals and failed payments: practical scenarios to keep memberships active."
+      },
+      {
+        "key": "kpi",
+        "title": "Track KPIs across a gym network",
+        "description": "Key metrics: revenue, attendance, margin—and how to monitor them in a gym SaaS."
+      }
+    ],
+    "bottom": {
+      "kicker": "Want to go further?",
+      "title": "Accelerate your network with GymWatch",
+      "description": "A gym management SaaS combining access control, subscriptions, reporting and automations for your clubs.",
+      "actions": {
+        "features": "View features",
+        "plans": "Compare plans"
+      }
+    }
+  },
+    "contact": {
+    "metadata": {
+      "title": "Contact & Support | GymWatch",
+      "description": "Contact GymWatch: support, onboarding, and multi-location rollout for your gym management platform.",
+      "keywords": ["GymWatch contact", "support", "onboarding", "multi-location", "gym software"]
+    },
+    "nav": {
+      "features": "Features",
+      "plans": "Plans",
+      "faq": "FAQ",
+      "contact": "Contact"
+    },
+    "hero": {
+      "badge": "Contact / Support",
+      "title": "Contact & support",
+      "description": "Need a complex multi-location rollout? Our team helps deploy GymWatch across your network: scoping, migration, training, and ongoing support."
+    },
+    "form": {
+      "title": "Write to us",
+      "description": "Reply within 24 business hours. We secure your data and communications.",
+      "fields": {
+        "name": { "label": "Full name", "placeholder": "Your name" },
+        "email": { "label": "Work email", "placeholder": "you@company.com" },
+        "company": { "label": "Company / network", "placeholder": "Gym or network name" },
+        "sites": { "label": "Number of locations", "placeholder": "e.g., 3 gyms" },
+        "message": {
+          "label": "Your needs",
+          "placeholder": "Describe your needs: access control, subscriptions, reporting, multi-location rollout…"
+        }
+      },
+      "actions": { "send": "Send", "emailDirect": "Email us directly" }
+    },
+    "side": {
+      "support": {
+        "title": "Dedicated support",
+        "description": "Onboarding and day-to-day assistance for your teams.",
+        "items": ["Support team available 8:00–19:00 CET", "Reply within 24 business hours", "Secured and audited data"]
+      },
+      "details": {
+        "title": "Details",
+        "description": "Reach out through the channel that fits you best.",
+        "address": "Address: Casablanca & remote — rollout across Morocco."
+      }
+    },
+    "bottom": {
+      "kicker": "Rollout",
+      "title": "Multi-location onboarding in a few days",
+      "description": "Member migration, access control setup, team training — we orchestrate the rollout so GymWatch goes live fast.",
+      "actions": { "primary": "Schedule a demo", "secondary": "View plans" }
+    }
+  },
+  "about": {
+    "metadata": {
+      "title": "About | GymWatch",
+      "description": "Discover GymWatch’s mission: optimize gym and multi-location network operations with reliability, security, and automation.",
+      "keywords": ["GymWatch", "gym SaaS", "multi-location gyms", "subscriptions", "access control"]
+    },
+    "nav": {
+      "features": "Features",
+      "plans": "Plans",
+      "faq": "FAQ",
+      "contact": "Contact"
+    },
+    "badge": "About",
+    "hero": {
+      "title": "About GymWatch",
+      "description": "We help gym networks manage members, subscriptions, and access control with a single reliable and secure platform.",
+      "actions": {
+        "requestDemo": "Request a demo",
+        "viewFeatures": "View features"
+      }
+    },
+    "cards": {
+      "mission": {
+        "title": "Mission",
+        "description": "Optimize gym and multi-location network management with a reliable, elegant SaaS."
+      },
+      "security": {
+        "title": "Reliability & security",
+        "description": "Encryption, backups, and granular roles to protect your data and access."
+      },
+      "vision": {
+        "title": "Vision",
+        "description": "Automate operations, reduce churn, and deliver a modern member experience."
+      }
+    },
+    "trajectory": {
+      "title": "Our journey"
+    },
+    "timeline": [
+      {
+        "title": "Launch",
+        "detail": "GymWatch started to simplify subscription management and access control."
+      },
+      {
+        "title": "Multi-site scale",
+        "detail": "Native support for multi-location networks with consolidated reporting and granular roles."
+      },
+      {
+        "title": "Automation",
+        "detail": "Reminders, billing, and API integrations to reduce manual work."
+      },
+      {
+        "title": "Vision",
+        "detail": "A premium, secure, always up-to-date gym management platform for your teams."
+      }
+    ],
+    "team": {
+      "kicker": "Our team",
+      "title": "Product, data, and operations experts",
+      "description": "We combine real-world gym operations experience with SaaS expertise to deliver a reliable, data-driven, and accessible platform.",
+      "bullets": ["Dedicated support and onboarding", "Continuous product improvements"],
+      "actions": {
+        "contact": "Talk to us",
+        "choosePlan": "Choose a plan"
+      }
+    }
+  },
+    "faqs": {
+    "metadata": {
+      "title": "FAQ | GymWatch",
+      "description": "Frequently asked questions about GymWatch: multi-site, subscriptions, access control, security and rollout.",
+      "keywords": ["GymWatch FAQ", "gym software", "access control", "subscriptions", "multi-site"]
+    },
+    "hero": {
+      "eyebrow": "FAQ",
+      "title": "Answers to common questions",
+      "subtitle": "Everything you need before getting started.",
+      "description": "Learn how GymWatch supports gyms and networks: subscriptions, payments, access control and reporting."
+    },
+    "accordion": {
+      "title": "Frequently asked questions",
+      "description": "Multi-site, analytics, access control and roadmap — it’s all here."
+    },
+    "items": [
+      {
+        "question": "What is GymWatch?",
+        "answer": "GymWatch is a web platform to run your gyms: subscriptions, payments, access control and reporting — all in real time from a browser."
+      },
+      {
+        "question": "Does GymWatch support multiple gyms or franchises?",
+        "answer": "Yes. The multi-site view lets you track each club (members, revenue, check-ins) and aggregate key metrics across the network."
+      },
+      {
+        "question": "Do I need to install software?",
+        "answer": "No. GymWatch is 100% web-based. QR codes and scanning work from a tablet or a connected smartphone."
+      },
+      {
+        "question": "How do upgrades from Basic to Pro / Enterprise work?",
+        "answer": "You can change plans anytime. Pro/Enterprise unlock QR tools, CSV/PDF exports, detailed analytics and advanced automation scenarios."
+      },
+      {
+        "question": "Can I start with one location and add more later?",
+        "answer": "Yes. Add new locations in a few clicks and link teams and members. Permissions and reports can be filtered per location."
+      },
+      {
+        "question": "How are data and security handled?",
+        "answer": "Data is encrypted in transit and backed up regularly. Access is tied to admin accounts with roles, plus audit logging and environment separation best practices."
+      }
+    ],
+    "cta": {
+      "kicker": "Support",
+      "title": "Need help with rollout?",
+      "description": "Talk to a GymWatch expert to scope multi-site setup and billing.",
+      "primaryCta": "Request a demo",
+      "secondaryCta": "Contact support"
+    }
+  },
+    "subscriptionPlans": {
+    "tiers": {
+      "basic": {
+        "name": "Basic",
+        "description": "Essential features to centralize your members",
+        "badges": ["Email support", "Expiry alerts"],
+        "features": [
+          "Member & subscription management",
+          "Expiration alerts and reminders",
+          "Essential analytics",
+          "Priority email support"
+        ]
+      },
+      "pro": {
+        "name": "Pro",
+        "description": "Automations, QR codes, and advanced exports",
+        "badges": ["QR codes", "Excel exports"],
+        "features": [
+          "Everything in Basic",
+          "QR-based access control",
+          "Real-time attendance tracking",
+          "Success/failure audio alerts",
+          "Excel exports for revenue & retention",
+          "Multi-club PDF/Excel exports"
+        ]
+      },
+      "enterprise": {
+        "name": "Enterprise",
+        "highlightLabel": "Enterprise",
+        "description": "Multi-site offering with advanced automations and an unlimited catalog",
+        "badges": ["Unlimited clubs", "Automations", "Classes & scheduling"],
+        "features": [
+          "Unlimited clubs and users",
+          "Advanced access control (QR, badge, member app)",
+          "Multi-site attendance tracking",
+          "Classes & scheduling (multi-team)",
+          "Full CSV/PDF exports",
+          "Detailed multi-site analytics",
+          "Marketing scenarios (emails/SMS) coming soon"
+        ]
+      }
+    }
+  },
+    "plans": {
+    "metadata": {
+      "title": "Plans & Pricing | GymWatch",
+      "description": "Compare GymWatch plans (monthly/annual), see what’s included, and get answers to common pricing questions.",
+      "keywords": ["gym pricing", "gym SaaS plans", "gym management subscription", "gym software pricing"]
+    },
+    "hero": {
+      "eyebrow": "Pricing",
+      "title": "Plans built for gym networks",
+      "subtitle": "Clear billing, premium features, guided rollout.",
+      "description": "Pick the plan that fits your club or multi-site network. Switch to annual to save and get priority onboarding.",
+      "primaryCta": "Request a demo",
+      "secondaryCta": "Talk to an expert"
+    },
+    "pricing": {
+      "monthly": "Monthly",
+      "annual": "Annual (-{discount}%)",
+      "perMonth": "/ month",
+      "recommended": "Recommended",
+      "start": "Get started",
+      "billingHintAnnual": "Billed {total} / year",
+      "billingHintMonthly": "Monthly billing, no commitment",
+      "saveAnnual": "Save {discount}% with annual"
+    },
+    "info": {
+      "allPlans": {
+        "title": "Included in every plan",
+        "description": "Support, security, and continuous updates for your clubs.",
+        "points": [
+          "Secure web access, regular backups, and data encryption.",
+          "Priority email support for HQ and club teams.",
+          "Continuous product improvements with no downtime."
+        ]
+      },
+      "multisite": {
+        "title": "Multi-site rollout",
+        "description": "Guided onboarding and migration for networks.",
+        "points": [
+          "Migration of members, subscriptions, and payment history.",
+          "Per-site permissions setup and front desk team training.",
+          "Dedicated support during launch phase."
+        ]
+      }
+    },
+    "faq": {
+      "kicker": "Pricing FAQ",
+      "title": "Questions about pricing",
+      "description": "Everything about billing, annual discounts, and multi-site deployment for your gym network.",
+      "viewAll": "View all FAQs",
+      "items": {
+        "annualBilling": {
+          "q": "How does annual billing work?",
+          "a": "Annual billing automatically applies a {discount}% discount and shows an equivalent monthly amount. The yearly invoice is issued in one payment."
+        },
+        "changePlan": {
+          "q": "Can we change plans later?",
+          "a": "Yes — you can upgrade from Basic to Pro or Enterprise anytime. New features unlock immediately."
+        },
+        "accessControl": {
+          "q": "Is access control included?",
+          "a": "Yes in Pro and Enterprise. You can manage permissions per club, track check-ins, and trigger real-time alerts."
+        },
+        "multiSiteHelp": {
+          "q": "Do you help with multi-site deployment?",
+          "a": "Yes — we support networks with data migration, access configuration, and local team training."
+        }
+      }
+    }
+  },
+    "features": {
+    "metadata": {
+      "title": "GymWatch Features",
+      "description": "Discover GymWatch, a gym SaaS: multi-club overview, access control, subscriptions, payments, and advanced reporting.",
+      "keywords": [
+        "gym management software",
+        "gym SaaS",
+        "access control",
+        "multi-club networks",
+        "subscription management"
+      ]
+    },
+    "nav": {
+      "features": "Features",
+      "plans": "Plans",
+      "faq": "FAQ",
+      "contact": "Contact"
+    },
+    "badge": "Features",
+    "hero": {
+      "title": "GymWatch Features",
+      "description": "A premium gym management platform for multi-club networks: access control, subscriptions, payments, and reporting in one unified interface.",
+      "actions": {
+        "comparePlans": "Compare plans",
+        "talkToExpert": "Talk to an expert"
+      }
+    },
+    "sections": {
+      "multi": {
+        "title": "Multi-club overview",
+        "description": "Monitor your clubs at a glance: attendance, revenue, NPS, and incidents by location for multi-site networks.",
+        "points": [
+          "Consolidated dashboards by club and network",
+          "Filter by location, team, or member segments",
+          "Real-time alerts for access or payment anomalies"
+        ]
+      },
+      "access": {
+        "title": "Access control & attendance tracking",
+        "description": "QR codes, badges, or turnstiles: validate check-ins in milliseconds with full audit logs.",
+        "points": [
+          "Permissions by club, time window, and subscription type",
+          "Instant logs and alerts on failures or fraud attempts",
+          "Traffic analytics to optimize staffing"
+        ]
+      },
+      "subscriptions": {
+        "title": "Subscriptions & payments",
+        "description": "Contracts, renewals, prorations, clean invoices. Automate billing without spreadsheets or double entry.",
+        "points": [
+          "Multi-method payments and white-label invoicing",
+          "Freeze, auto-renewals, and plan changes",
+          "Controlled discounts and coupons"
+        ]
+      },
+      "automations": {
+        "title": "Automations & follow-ups",
+        "description": "Reduce churn with email/SMS follow-ups for renewals, unpaid invoices, and denied access events.",
+        "points": [
+          "Ready-to-use renewal scenarios",
+          "Unpaid invoice follow-ups and recurring payment tracking",
+          "Internal notifications for front desk teams"
+        ]
+      },
+      "reporting": {
+        "title": "Reporting & dashboards",
+        "description": "Financial and operational KPIs for clubs and holding, exportable to CSV/PDF.",
+        "points": [
+          "Revenue, margin, churn, and attendance by location",
+          "Accounting exports for finance teams and franchisors",
+          "Secure report sharing for local managers"
+        ]
+      },
+      "security": {
+        "title": "Reliability, security & API",
+        "description": "Secure gym SaaS: encryption, backups, granular roles, and an open API.",
+        "points": [
+          "Roles and permissions by team and location",
+          "Activity logs for sensitive actions",
+          "API for CRM, marketing site, and turnstiles"
+        ]
+      }
+    },
+    "mini": {
+      "presence": {
+        "title": "Attendance tracking",
+        "description": "Access control and time-based attendance tracking to plan staffing more effectively.",
+        "points": [
+          "Real-time sync across all clubs.",
+          "Alerts on denied attempts and capacity limits.",
+          "Exports for audits and franchises."
+        ]
+      },
+      "finance": {
+        "title": "Financial automation",
+        "description": "Reduce unpaid invoices with automated follow-ups and clean invoicing.",
+        "points": [
+          "Configurable email/SMS reminders with traceable history.",
+          "White-label invoices aligned with local requirements.",
+          "Collections tracking by club and plan."
+        ]
+      },
+      "security": {
+        "title": "Security & API",
+        "description": "Protect your data and connect GymWatch to your existing tools.",
+        "points": [
+          "Encryption, regular backups, and activity logs.",
+          "Fine-grained permissions for each team and role.",
+          "Documented API for CRM, websites, or turnstiles."
+        ]
+      }
+    },
+    "cta": {
+      "kicker": "Ready to explore?",
+      "title": "Try GymWatch for your network",
+      "description": "An expert helps you scope subscriptions, access control, and multi-club reporting.",
+      "actions": {
+        "requestDemo": "Request a demo",
+        "viewPlans": "View plans"
+      }
+    }
   },
   "superAdminDemoRequestsPage": {
     "title": "Demo requests",

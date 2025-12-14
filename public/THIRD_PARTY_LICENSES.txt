@@ -1,0 +1,15 @@
+├─ MIT: 278
+├─ Apache-2.0: 28
+├─ ISC: 27
+├─ BSD-3-Clause: 8
+├─ BSD-2-Clause: 3
+├─ 0BSD: 2
+├─ Apache-2.0 AND LGPL-3.0-or-later: 1
+├─ Apache-2.0 AND MIT: 1
+├─ MPL-2.0: 1
+├─ Python-2.0: 1
+├─ CC-BY-4.0: 1
+├─ [1m[31mUNLICENSED[39m[22m: 1
+├─ (MIT AND Zlib): 1
+├─ (MIT OR CC0-1.0): 1
+└─ MIT AND ISC: 1

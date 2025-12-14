@@ -7,7 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint .",
-    "test": "ts-node --transpile-only tests/export-locale.test.ts"
+    "test": "ts-node --transpile-only tests/export-locale.test.ts",
+    "licenses:generate": "license-checker-rseidelsohn --production --summary --out ./public/THIRD_PARTY_LICENSES.txt"
   },
   "prisma": {
     "seed": "node prisma/seed.js"
@@ -88,6 +89,7 @@
     "@types/react-dom": "^19",
     "eslint": "^9.39.1",
     "eslint-config-next": "^15.5.6",
+    "license-checker-rseidelsohn": "^4.4.2",
     "postcss": "^8.5",
     "tailwindcss": "^4.1.9",
     "ts-node": "^10.9.2",

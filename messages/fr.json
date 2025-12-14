@@ -80,9 +80,9 @@
       "passwordMismatch": "Les mots de passe ne correspondent pas"
     },
     "maintenance": {
-      "title": "Nettoyage des logs d'acc?s",
-      "subtitle": "Supprimer les journaux d'acc?s plus anciens que {days} jours.",
-      "hint": "Seuls les logs de plus de {days} jours sont supprim?s. Les entr?es r?centes sont conserv?es.",
+      "title": "Nettoyage des logs d'accès",
+      "subtitle": "Supprimer les journaux d'accès plus anciens que {days} jours.",
+      "hint": "Seuls les logs de plus de {days} jours sont supprimés. Les entrées récentes sont conservées.",
       "button": "Purger les logs",
       "purging": "Purge en cours..."
     }

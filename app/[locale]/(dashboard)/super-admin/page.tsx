@@ -1,32 +1,16 @@
-'use client'
+"use client"
+import { useState } from "react"
+import Link from "next/link"
+import { toast } from "sonner"
+import { useLocale, useTranslations } from "next-intl"
+import { usePurgeAccessLogs, useSuperAdminStats } from "./hooks"
 
-import { useState } from 'react'
-import Link from 'next/link'
-import { toast } from 'sonner'
-import { useLocale, useTranslations } from 'next-intl'
-import { useSuperAdminStats } from './hooks'
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
+import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
+import { Skeleton } from "@/components/ui/skeleton"
 
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
-import { Skeleton } from '@/components/ui/skeleton'
-
-import {
-  Activity,
-  AlertTriangle,
-  Building2,
-  Gauge,
-  TrendingUp,
-  Users2,
-  Download,
-} from 'lucide-react'
+import { Activity, AlertTriangle, Building2, Gauge, TrendingUp, Users2, Download, Trash2 } from "lucide-react"
 
 import {
   CartesianGrid,
@@ -41,185 +25,186 @@ import {
   ResponsiveContainer,
   XAxis,
   YAxis,
-} from 'recharts'
+} from "recharts"
 
-import {
-  ChartContainer,
-  ChartTooltip,
-  ChartTooltipContent,
-  type ChartConfig,
-} from '@/components/ui/chart'
+import { ChartContainer, ChartTooltip, ChartTooltipContent, type ChartConfig } from "@/components/ui/chart"
 
-const STATUS_COLORS = ['var(--color-active)', 'var(--color-suspended)', 'var(--color-expired)'] as const
+const STATUS_COLORS = ["var(--color-active)", "var(--color-suspended)", "var(--color-expired)"] as const
 
-const STATUS_KEYS = ['ACTIVE', 'SUSPENDED', 'EXPIRED'] as const
+const STATUS_KEYS = ["ACTIVE", "SUSPENDED", "EXPIRED"] as const
 type StatusKey = (typeof STATUS_KEYS)[number]
 
 export default function SuperAdminOverviewPage() {
-  const t = useTranslations('superAdminOverview')
+  const t = useTranslations("superAdminOverview")
   const { data: stats, isLoading, isError } = useSuperAdminStats()
   const locale = useLocale()
-  const [downloading, setDownloading] = useState<'excel' | 'pdf' | null>(null)
+  const [downloading, setDownloading] = useState<"excel" | "pdf" | null>(null)
+  const purgeLogs = usePurgeAccessLogs()
+  const purgeRetentionDays = 30
 
-  const currencyFormatter = new Intl.NumberFormat(locale === 'ar' ? 'ar-MA' : locale === 'en' ? 'en-US' : 'fr-MA', {
-    style: 'currency',
-    currency: 'MAD',
+  const currencyFormatter = new Intl.NumberFormat(locale === "ar" ? "ar-MA" : locale === "en" ? "en-US" : "fr-MA", {
+    style: "currency",
+    currency: "MAD",
   })
 
   const STATUS_LABELS: Record<StatusKey, string> = {
-    ACTIVE: t('status.active'),
-    SUSPENDED: t('status.suspended'),
-    EXPIRED: t('status.expired'),
+    ACTIVE: t("status.active"),
+    SUSPENDED: t("status.suspended"),
+    EXPIRED: t("status.expired"),
   }
 
   const revenueChartConfig: ChartConfig = {
     revenue: {
-      label: t('charts.revenue.seriesLabel'),
+      label: t("charts.revenue.seriesLabel"),
       color: STATUS_COLORS[0],
     },
   }
 
   const statusChartConfig: ChartConfig = {
     value: {
-      label: t('charts.status.seriesLabel'),
+      label: t("charts.status.seriesLabel"),
     },
   }
 
   const radialStatusConfig: ChartConfig = {
-    Actives: { label: t('charts.radial.activeLabel'), color: 'var(--color-active)' },
-    Suspendues: { label: t('charts.radial.suspendedLabel'), color: 'var(--color-suspended)' },
-    Expirees: { label: t('charts.radial.expiredLabel'), color: 'var(--color-expired)' },
+    Actives: { label: t("charts.radial.activeLabel"), color: "var(--color-active)" },
+    Suspendues: { label: t("charts.radial.suspendedLabel"), color: "var(--color-suspended)" },
+    Expirees: { label: t("charts.radial.expiredLabel"), color: "var(--color-expired)" },
   }
 
-  const downloadReport = async (format: 'excel' | 'pdf') => {
+  const downloadReport = async (format: "excel" | "pdf") => {
     try {
       setDownloading(format)
 
       const endpoint =
-        format === 'excel'
+        format === "excel"
           ? `/api/super-admin/reports/excel?scope=global&locale=${locale}`
           : `/api/super-admin/reports/pdf?scope=global&locale=${locale}`
 
-      const response = await fetch(endpoint)
+      console.log("[EXPORT] endpoint:", endpoint)
+
+      const response = await fetch(endpoint, {
+        method: "GET",
+        credentials: "include",
+        cache: "no-store",
+      })
+
+      console.log("[EXPORT] status:", response.status)
+      console.log("[EXPORT] final url:", response.url)
+      console.log("[EXPORT] content-type:", response.headers.get("content-type"))
+      console.log("[EXPORT] content-length:", response.headers.get("content-length"))
+
+      // ✅ 204 => rien à télécharger
+      if (response.status === 204) {
+        throw new Error("Le serveur a renvoyé 204 (No Content). La route n'envoie aucun PDF.")
+      }
+
+      // ✅ Si erreur, lis le body UNE SEULE FOIS en texte
       if (!response.ok) {
-        const errorData = await response.text().catch(() => t('toasts.unknownError'))
-        throw new Error(errorData || `HTTP ${response.status}: ${t('toasts.exportFailed')}`)
+        const errText = await response.text().catch(() => "")
+        throw new Error(errText || `HTTP ${response.status}`)
       }
 
-      const contentType = response.headers.get('content-type')
-      const expectedType =
-        format === 'excel'
-          ? 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-          : 'application/pdf'
-
-      if (contentType && !contentType.includes(expectedType)) {
-        throw new Error(t('toasts.invalidFileType', { contentType: String(contentType) }))
-      }
-
+      // ✅ Body binaire
       const blob = await response.blob()
-      if (blob.size === 0) throw new Error(t('toasts.emptyFile'))
+      console.log("[EXPORT] blob type:", blob.type)
+      console.log("[EXPORT] blob size:", blob.size)
+
+      if (!blob.size) {
+        throw new Error("Fichier vide (blob size = 0).")
+      }
 
       const url = URL.createObjectURL(blob)
-      const a = document.createElement('a')
+      const a = document.createElement("a")
       a.href = url
-      a.download = `super-admin-global-${Date.now()}.${format === 'excel' ? 'xlsx' : 'pdf'}`
+      a.download = `super-admin-global-${Date.now()}.${format === "excel" ? "xlsx" : "pdf"}`
       document.body.appendChild(a)
       a.click()
-      document.body.removeChild(a)
+      a.remove()
       URL.revokeObjectURL(url)
 
-      toast.success(t('toasts.downloadSuccess', { format: format.toUpperCase() }))
+      toast.success(t("toasts.downloadSuccess", { format: format.toUpperCase() }))
     } catch (error) {
-      const message = error instanceof Error ? error.message : t('toasts.downloadError')
+      const message = error instanceof Error ? error.message : t("toasts.downloadError")
       toast.error(message)
-      console.error('[PDF/Excel Export Error]', error)
+      console.error("[PDF/Excel Export Error]", error)
     } finally {
       setDownloading(null)
     }
   }
 
-  if (isError) {
-    return (
-      <Card className="border-destructive/40">
-        <CardContent className="py-10 text-center text-destructive">
-          {t('errors.loadFailed')}
-        </CardContent>
-      </Card>
-    )
-  }
-
   if (isLoading || !stats) {
     return (
-      <div className="space-y-6">
+      <div className="space-y-8 animate-in fade-in duration-500">
         <div className="space-y-2">
-          <Skeleton className="h-8 w-56" />
-          <Skeleton className="h-4 w-72" />
+          <Skeleton className="h-9 w-64 rounded-xl" />
+          <Skeleton className="h-5 w-96 rounded-lg" />
         </div>
 
-        <Card className="border-border/70">
+        <Card className="border-border/60 bg-card/80 backdrop-blur-sm rounded-3xl shadow-lg">
           <CardHeader>
-            <Skeleton className="h-5 w-40" />
-            <Skeleton className="h-4 w-64" />
+            <Skeleton className="h-6 w-48 rounded-lg" />
+            <Skeleton className="h-4 w-80 rounded-lg" />
           </CardHeader>
           <CardContent className="flex flex-wrap gap-3">
-            <Skeleton className="h-10 w-40 rounded-full" />
-            <Skeleton className="h-10 w-40 rounded-full" />
+            <Skeleton className="h-10 w-44 rounded-xl" />
+            <Skeleton className="h-10 w-44 rounded-xl" />
           </CardContent>
         </Card>
 
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
           {Array.from({ length: 4 }).map((_, index) => (
-            <Card key={index} className="border-border/70 p-4">
-              <Skeleton className="h-4 w-24" />
-              <Skeleton className="mt-3 h-8 w-32" />
+            <Card key={index} className="border-border/60 bg-card/80 backdrop-blur-sm rounded-3xl shadow-md p-6">
+              <Skeleton className="h-4 w-32 rounded-lg" />
+              <Skeleton className="mt-4 h-10 w-24 rounded-xl" />
             </Card>
           ))}
         </div>
 
-        <div className="grid gap-4 lg:grid-cols-3">
-          <Card className="border-border/70 lg:col-span-2">
+        <div className="grid gap-6 lg:grid-cols-3">
+          <Card className="border-border/60 bg-card/80 backdrop-blur-sm rounded-3xl shadow-lg lg:col-span-2">
             <CardHeader className="pb-0">
-              <Skeleton className="h-5 w-40" />
-              <Skeleton className="h-4 w-52" />
+              <Skeleton className="h-6 w-48 rounded-lg" />
+              <Skeleton className="h-4 w-64 rounded-lg" />
             </CardHeader>
             <CardContent>
-              <Skeleton className="h-64 w-full rounded-2xl" />
+              <Skeleton className="h-80 w-full rounded-2xl" />
             </CardContent>
           </Card>
-          <Card className="border-border/70">
+          <Card className="border-border/60 bg-card/80 backdrop-blur-sm rounded-3xl shadow-lg">
             <CardHeader className="pb-0">
-              <Skeleton className="h-5 w-44" />
-              <Skeleton className="h-4 w-40" />
+              <Skeleton className="h-6 w-52 rounded-lg" />
+              <Skeleton className="h-4 w-48 rounded-lg" />
             </CardHeader>
             <CardContent>
-              <Skeleton className="h-64 w-full rounded-2xl" />
+              <Skeleton className="h-80 w-full rounded-2xl" />
             </CardContent>
           </Card>
         </div>
 
-        <div className="grid gap-4 lg:grid-cols-2">
-          <Card className="border-border/70">
+        <div className="grid gap-6 lg:grid-cols-2">
+          <Card className="border-border/60 bg-card/80 backdrop-blur-sm rounded-3xl shadow-lg">
             <CardHeader>
-              <Skeleton className="h-5 w-48" />
-              <Skeleton className="h-4 w-44" />
+              <Skeleton className="h-6 w-56 rounded-lg" />
+              <Skeleton className="h-4 w-52 rounded-lg" />
             </CardHeader>
             <CardContent>
-              <Skeleton className="h-56 w-full rounded-2xl" />
+              <Skeleton className="h-64 w-full rounded-2xl" />
             </CardContent>
           </Card>
-          <Card className="border-border/70">
+          <Card className="border-border/60 bg-card/80 backdrop-blur-sm rounded-3xl shadow-lg">
             <CardHeader className="flex items-center justify-between">
               <div className="space-y-2">
-                <Skeleton className="h-5 w-48" />
-                <Skeleton className="h-4 w-52" />
+                <Skeleton className="h-6 w-56 rounded-lg" />
+                <Skeleton className="h-4 w-64 rounded-lg" />
               </div>
-              <Skeleton className="h-5 w-5 rounded-full" />
+              <Skeleton className="h-6 w-6 rounded-full" />
             </CardHeader>
             <CardContent className="space-y-3">
               {Array.from({ length: 3 }).map((_, idx) => (
-                <div key={idx} className="flex items-center justify-between rounded-xl border border-border/50 p-3">
-                  <Skeleton className="h-4 w-40" />
-                  <Skeleton className="h-4 w-16" />
+                <div key={idx} className="flex items-center justify-between rounded-2xl border border-border/50 p-4">
+                  <Skeleton className="h-5 w-48 rounded-lg" />
+                  <Skeleton className="h-5 w-20 rounded-lg" />
                 </div>
               ))}
             </CardContent>
@@ -238,10 +223,10 @@ export default function SuperAdminOverviewPage() {
   const activeShare = stats.totalGyms ? Math.round((stats.activeGyms / stats.totalGyms) * 100) : 0
 
   const radialStatusData = [
-    { name: 'Actives', value: stats.activeGyms ?? 0, fill: STATUS_COLORS[0] },
-    { name: 'Suspendues', value: stats.suspendedGyms ?? 0, fill: STATUS_COLORS[1] },
+    { name: "Actives", value: stats.activeGyms ?? 0, fill: STATUS_COLORS[0] },
+    { name: "Suspendues", value: stats.suspendedGyms ?? 0, fill: STATUS_COLORS[1] },
     {
-      name: 'Expirees',
+      name: "Expirees",
       value: Math.max((stats.totalGyms ?? 0) - (stats.activeGyms ?? 0) - (stats.suspendedGyms ?? 0), 0),
       fill: STATUS_COLORS[2],
     },
@@ -250,9 +235,9 @@ export default function SuperAdminOverviewPage() {
   const revenueChartData = (stats.revenueTrend ?? []).map((point, index) => {
     const originalLabel = point.month ?? `M${index + 1}`
     const normalized = originalLabel
-      .normalize('NFD')
-      .replace(/\p{Diacritic}/gu, '')
-      .replace(/\./g, '')
+      .normalize("NFD")
+      .replace(/\p{Diacritic}/gu, "")
+      .replace(/\./g, "")
       .trim()
       .toUpperCase()
     const monthKey = normalized || `M${index + 1}`
@@ -266,88 +251,109 @@ export default function SuperAdminOverviewPage() {
   const monthLabelLookup = new Map(revenueChartData.map((entry) => [entry.month, entry.label]))
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-semibold">{t('header.title')}</h1>
-        <p className="text-muted-foreground">{t('header.subtitle')}</p>
+    <div className="space-y-8 animate-in fade-in duration-500">
+      <div className="space-y-2">
+        <h1 className="text-4xl font-bold tracking-tight bg-linear-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">
+          {t("header.title")}
+        </h1>
+        <p className="text-muted-foreground text-lg leading-relaxed">{t("header.subtitle")}</p>
       </div>
 
-      <Card className="border-border/70">
+      <Card className="border-border/60 bg-card/90 backdrop-blur-sm rounded-3xl shadow-lg transition-all duration-300 hover:shadow-xl">
         <CardHeader>
-          <CardTitle>{t('exports.title')}</CardTitle>
-          <CardDescription>{t('exports.subtitle')}</CardDescription>
+          <CardTitle className="text-xl">{t("exports.title")}</CardTitle>
+          <CardDescription className="text-base">{t("exports.subtitle")}</CardDescription>
         </CardHeader>
         <CardContent className="flex flex-wrap gap-3">
           <Button
             variant="outline"
-            onClick={() => downloadReport('excel')}
-            disabled={downloading === 'excel'}
-            className="gap-2"
+            onClick={() => downloadReport("excel")}
+            disabled={downloading === "excel"}
+            className="gap-2 rounded-xl border-border/60 transition-all duration-200 hover:border-primary/40 hover:bg-primary/5 hover:scale-105"
           >
             <Download size={16} />
-            {downloading === 'excel' ? t('exports.exporting') : t('exports.excel')}
+            {downloading === "excel" ? t("exports.exporting") : t("exports.excel")}
           </Button>
           <Button
             variant="outline"
-            onClick={() => downloadReport('pdf')}
-            disabled={downloading === 'pdf'}
-            className="gap-2"
+            onClick={() => downloadReport("pdf")}
+            disabled={downloading === "pdf"}
+            className="gap-2 rounded-xl border-border/60 transition-all duration-200 hover:border-primary/40 hover:bg-primary/5 hover:scale-105"
           >
             <Download size={16} />
-            {downloading === 'pdf' ? t('exports.exporting') : t('exports.pdf')}
+            {downloading === "pdf" ? t("exports.exporting") : t("exports.pdf")}
           </Button>
         </CardContent>
       </Card>
 
-      {/* KPI CARDS */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <Card className="border-border/70">
-          <CardHeader className="pb-2">
-            <CardDescription>{t('kpis.totalGyms')}</CardDescription>
-            <CardTitle className="flex items-center gap-2 text-3xl">
-              <Building2 className="h-6 w-6 text-primary" />
+      <Card className="border-border/60 bg-card/90 backdrop-blur-sm rounded-3xl shadow-lg transition-all duration-300 hover:shadow-xl">
+        <CardHeader>
+          <CardTitle className="text-xl">{t("maintenance.title")}</CardTitle>
+          <CardDescription className="text-base">
+            {t("maintenance.subtitle", { days: purgeRetentionDays })}
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="flex flex-wrap items-center justify-between gap-3">
+          <p className="text-sm text-muted-foreground">{t("maintenance.hint", { days: purgeRetentionDays })}</p>
+          <Button
+            variant="destructive"
+            onClick={() => purgeLogs.mutate()}
+            disabled={purgeLogs.isPending}
+            className="gap-2 rounded-xl shadow-sm"
+          >
+            <Trash2 size={16} />
+            {purgeLogs.isPending ? t("maintenance.purging") : t("maintenance.button")}
+          </Button>
+        </CardContent>
+      </Card>
+
+      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+        <Card className="group border-border/60 bg-card/90 backdrop-blur-sm rounded-3xl shadow-md transition-all duration-300 hover:shadow-xl hover:scale-105">
+          <CardHeader className="pb-3">
+            <CardDescription className="text-sm font-medium">{t("kpis.totalGyms")}</CardDescription>
+            <CardTitle className="flex items-center gap-3 text-4xl">
+              <Building2 className="h-7 w-7 text-primary transition-transform duration-300 group-hover:scale-110" />
               {stats.totalGyms}
             </CardTitle>
           </CardHeader>
         </Card>
 
-        <Card className="border-border/70">
-          <CardHeader className="pb-2">
-            <CardDescription>{t('kpis.activeSubscribers')}</CardDescription>
-            <CardTitle className="flex items-center gap-2 text-3xl">
-              <Users2 className="h-6 w-6 text-primary" />
+        <Card className="group border-border/60 bg-card/90 backdrop-blur-sm rounded-3xl shadow-md transition-all duration-300 hover:shadow-xl hover:scale-105">
+          <CardHeader className="pb-3">
+            <CardDescription className="text-sm font-medium">{t("kpis.activeSubscribers")}</CardDescription>
+            <CardTitle className="flex items-center gap-3 text-4xl">
+              <Users2 className="h-7 w-7 text-primary transition-transform duration-300 group-hover:scale-110" />
               {stats.totalSubscribers}
             </CardTitle>
           </CardHeader>
         </Card>
 
-        <Card className="border-border/70">
-          <CardHeader className="pb-2">
-            <CardDescription>{t('kpis.totalMembers')}</CardDescription>
-            <CardTitle className="flex items-center gap-2 text-3xl">
-              <Gauge className="h-6 w-6 text-primary" />
+        <Card className="group border-border/60 bg-card/90 backdrop-blur-sm rounded-3xl shadow-md transition-all duration-300 hover:shadow-xl hover:scale-105">
+          <CardHeader className="pb-3">
+            <CardDescription className="text-sm font-medium">{t("kpis.totalMembers")}</CardDescription>
+            <CardTitle className="flex items-center gap-3 text-4xl">
+              <Gauge className="h-7 w-7 text-primary transition-transform duration-300 group-hover:scale-110" />
               {stats.totalMembers}
             </CardTitle>
           </CardHeader>
         </Card>
 
-        <Card className="border-border/70">
-          <CardHeader className="pb-2">
-            <CardDescription>{t('kpis.monthlyRevenue')}</CardDescription>
-            <CardTitle className="flex items-center gap-2 text-3xl">
-              <Activity className="h-6 w-6 text-primary" />
-              {currencyFormatter.format(stats.monthlyRevenue)}
+        <Card className="group border-border/60 bg-card/90 backdrop-blur-sm rounded-3xl shadow-md transition-all duration-300 hover:shadow-xl hover:scale-105">
+          <CardHeader className="pb-3">
+            <CardDescription className="text-sm font-medium">{t("kpis.monthlyRevenue")}</CardDescription>
+            <CardTitle className="flex items-center gap-3 text-4xl">
+              <Activity className="h-7 w-7 text-primary transition-transform duration-300 group-hover:scale-110" />
+              <span className="text-2xl">{currencyFormatter.format(stats.monthlyRevenue)}</span>
             </CardTitle>
           </CardHeader>
         </Card>
       </div>
 
-      {/* LINE CHART */}
-      <div className="grid gap-4 md:grid-cols-1 lg:grid-cols-3">
-        <Card className="border-border/70 lg:col-span-2">
+      <div className="grid gap-6 md:grid-cols-1 lg:grid-cols-3">
+        <Card className="border-border/60 bg-card/90 backdrop-blur-sm rounded-3xl shadow-lg lg:col-span-2">
           <CardHeader className="pb-0">
-            <CardTitle>{t('charts.revenue.title')}</CardTitle>
-            <CardDescription>{t('charts.revenue.subtitle')}</CardDescription>
+            <CardTitle className="text-xl">{t("charts.revenue.title")}</CardTitle>
+            <CardDescription className="text-base">{t("charts.revenue.subtitle")}</CardDescription>
           </CardHeader>
           <CardContent>
             <ChartContainer config={revenueChartConfig}>
@@ -386,15 +392,14 @@ export default function SuperAdminOverviewPage() {
           </CardContent>
           <CardFooter className="text-sm text-muted-foreground">
             <TrendingUp className="mr-2 h-4 w-4 text-primary" />
-            {t('charts.revenue.footer')}
+            {t("charts.revenue.footer")}
           </CardFooter>
         </Card>
 
-        {/* PIE CHART */}
-        <Card className="border-border/70">
+        <Card className="border-border/60 bg-card/90 backdrop-blur-sm rounded-3xl shadow-lg">
           <CardHeader className="pb-0">
-            <CardTitle>{t('charts.status.title')}</CardTitle>
-            <CardDescription>{t('charts.status.subtitle')}</CardDescription>
+            <CardTitle className="text-xl">{t("charts.status.title")}</CardTitle>
+            <CardDescription className="text-base">{t("charts.status.subtitle")}</CardDescription>
           </CardHeader>
           <CardContent>
             <ChartContainer config={statusChartConfig}>
@@ -423,12 +428,11 @@ export default function SuperAdminOverviewPage() {
         </Card>
       </div>
 
-      {/* RADIAL + EXPIRING */}
-      <div className="grid gap-4 md:grid-cols-1 lg:grid-cols-2">
-        <Card className="flex flex-col border-border/70">
+      <div className="grid gap-6 md:grid-cols-1 lg:grid-cols-2">
+        <Card className="flex flex-col border-border/60 bg-card/90 backdrop-blur-sm rounded-3xl shadow-lg">
           <CardHeader className="items-center pb-0 text-center">
-            <CardTitle>{t('charts.radial.title')}</CardTitle>
-            <CardDescription>{t('charts.radial.subtitle')}</CardDescription>
+            <CardTitle className="text-xl">{t("charts.radial.title")}</CardTitle>
+            <CardDescription className="text-base">{t("charts.radial.subtitle")}</CardDescription>
           </CardHeader>
 
           <CardContent className="flex flex-1 items-center pb-0">
@@ -449,8 +453,10 @@ export default function SuperAdminOverviewPage() {
 
                 <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
                   <div className="text-3xl font-bold">{activeShare}%</div>
-                  <p className="text-sm text-muted-foreground">{t('charts.radial.centerActive')}</p>
-                  <p className="text-xs text-muted-foreground">{t('charts.radial.centerGyms', { count: stats.totalGyms })}</p>
+                  <p className="text-sm text-muted-foreground">{t("charts.radial.centerActive")}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {t("charts.radial.centerGyms", { count: stats.totalGyms })}
+                  </p>
                 </div>
               </div>
             </ChartContainer>
@@ -459,42 +465,48 @@ export default function SuperAdminOverviewPage() {
           <CardFooter className="flex-col gap-2 text-sm">
             <div className="flex items-center gap-2 leading-none font-medium">
               <TrendingUp className="h-4 w-4" />
-              {t('charts.radial.footerLine', { share: activeShare, total: stats.totalGyms })}
+              {t("charts.radial.footerLine", { share: activeShare, total: stats.totalGyms })}
             </div>
-            <div className="text-muted-foreground leading-none">{t('charts.radial.footerHint')}</div>
+            <div className="text-muted-foreground leading-none">{t("charts.radial.footerHint")}</div>
           </CardFooter>
         </Card>
 
-        {/* EXPIRING GYMS */}
-        <Card className="border-border/70">
+        <Card className="border-border/60 bg-card/90 backdrop-blur-sm rounded-3xl shadow-lg">
           <CardHeader className="flex flex-row items-center justify-between">
             <div>
-              <CardTitle>{t('expiring.title')}</CardTitle>
-              <CardDescription>{t('expiring.subtitle')}</CardDescription>
+              <CardTitle className="text-xl">{t("expiring.title")}</CardTitle>
+              <CardDescription className="text-base">{t("expiring.subtitle")}</CardDescription>
             </div>
-            <AlertTriangle className="h-5 w-5 text-amber-500" />
+            <AlertTriangle className="h-6 w-6 text-amber-500" />
           </CardHeader>
 
           <CardContent className="space-y-3">
             {stats.expiringGyms.length === 0 ? (
-              <p className="text-sm text-muted-foreground">{t('expiring.empty')}</p>
+              <p className="text-sm text-muted-foreground py-4">{t("expiring.empty")}</p>
             ) : (
               stats.expiringGyms.map((gym) => (
                 <div
                   key={gym.id}
-                  className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-border/60 p-3 transition hover:bg-muted/50"
+                  className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-border/60 bg-muted/30 p-4 transition-all duration-200 hover:bg-muted/50 hover:scale-[1.02]"
                 >
                   <div>
-                    <p className="font-medium">{gym.name}</p>
+                    <p className="font-semibold text-base">{gym.name}</p>
                     <p className="text-sm text-muted-foreground">
-                      {t('expiring.expiresInDays', { days: gym.daysRemaining })}
+                      {t("expiring.expiresInDays", { days: gym.daysRemaining })}
                     </p>
                   </div>
 
                   <div className="flex items-center gap-2">
-                    <Badge variant="outline">{STATUS_LABELS[gym.status as StatusKey] ?? gym.status}</Badge>
-                    <Button size="sm" variant="secondary" asChild>
-                      <Link href={`/super-admin/gyms?focus=${gym.id}`}>{t('expiring.inspect')}</Link>
+                    <Badge variant="outline" className="rounded-full">
+                      {STATUS_LABELS[gym.status as StatusKey] ?? gym.status}
+                    </Badge>
+                    <Button
+                      size="sm"
+                      variant="secondary"
+                      asChild
+                      className="rounded-xl transition-all duration-200 hover:scale-105"
+                    >
+                      <Link href={`/super-admin/gyms?focus=${gym.id}`}>{t("expiring.inspect")}</Link>
                     </Button>
                   </div>
                 </div>

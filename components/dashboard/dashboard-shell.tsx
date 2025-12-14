@@ -1,29 +1,24 @@
-'use client'
+"use client"
 
-import { ReactNode, useEffect, useMemo, useState } from 'react'
-import Image from 'next/image'
-import { useSession, signOut } from 'next-auth/react'
-import type { LucideIcon } from 'lucide-react'
-import { Check, ChevronRight, Globe2, LogOut, Menu, ShieldCheck, User, X } from 'lucide-react'
-import { toast } from 'sonner'
-import { useLocale, useTranslations } from 'next-intl'
+import { type ReactNode, useEffect, useMemo, useState } from "react"
+import Image from "next/image"
+import { useSession, signOut } from "next-auth/react"
+import type { LucideIcon } from "lucide-react"
+import { Check, Globe2, LogOut, Menu, ShieldCheck, User, X } from "lucide-react"
+import { toast } from "sonner"
+import { useLocale, useTranslations } from "next-intl"
 
-import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu'
-import { ThemeToggle } from '@/components/theme-toggle'
-import { Link, routing, usePathname, useRouter, type AppLocale } from '@/i18n/routing'
-import { cn } from '@/lib/utils'
+import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+import { ThemeToggle } from "@/components/theme-toggle"
+import { Link, routing, usePathname, useRouter, type AppLocale } from "@/i18n/routing"
+import { cn } from "@/lib/utils"
 
 export const UserRole = {
-  SUPER_ADMIN: 'SUPER_ADMIN',
-  GYM_OWNER: 'GYM_OWNER',
-  GYM_ADMIN: 'GYM_ADMIN',
+  SUPER_ADMIN: "SUPER_ADMIN",
+  GYM_OWNER: "GYM_OWNER",
+  GYM_ADMIN: "GYM_ADMIN",
 } as const
 
 export type UserRole = (typeof UserRole)[keyof typeof UserRole]
@@ -46,18 +41,18 @@ export function DashboardShell({
   children,
   navigationItems,
   allowedRoles,
-  fallbackRoute = '/login',
+  fallbackRoute = "/login",
   topSlot,
 }: DashboardShellProps) {
   const locale = useLocale() as AppLocale
-  const tShell = useTranslations('dashboard.shell')
-  const isRtl = locale === 'ar'
+  const tShell = useTranslations("dashboard.shell")
+  const isRtl = locale === "ar"
   const { data: session, status } = useSession()
   const router = useRouter()
   const pathname = usePathname()
   const normalizedPathname = useMemo(() => {
-    const localePattern = new RegExp(`^/(?:${routing.locales.join('|')})(?=/|$)`)
-    return (pathname?.replace(localePattern, '') || '/') || '/'
+    const localePattern = new RegExp(`^/(?:${routing.locales.join("|")})(?=/|$)`)
+    return pathname?.replace(localePattern, "") || "/" || "/"
   }, [pathname])
   const [sidebarOpen, setSidebarOpen] = useState(false)
 
@@ -71,7 +66,7 @@ export function DashboardShell({
     if (!session?.user) return false
     const userRole = session.user.role as UserRole
     if (userRole === UserRole.SUPER_ADMIN) return false
-    if (session.user.subscriptionStatus === 'EXPIRED' || session.user.subscriptionStatus === 'SUSPENDED') return true
+    if (session.user.subscriptionStatus === "EXPIRED" || session.user.subscriptionStatus === "SUSPENDED") return true
     const expiresAt = session.user.subscriptionExpiresAt
     if (!expiresAt) return false
     const parsed = new Date(expiresAt)
@@ -80,9 +75,9 @@ export function DashboardShell({
   }, [session?.user])
 
   useEffect(() => {
-    if (status === 'loading') return
-    if (status === 'unauthenticated' || !session?.user) {
-      router.replace('/login', { locale })
+    if (status === "loading") return
+    if (status === "unauthenticated" || !session?.user) {
+      router.replace("/login", { locale })
       return
     }
 
@@ -92,8 +87,8 @@ export function DashboardShell({
   }, [allowedRoles, fallbackRoute, isAllowed, locale, router, session?.user, status])
 
   useEffect(() => {
-    if (!subscriptionPastDue || status !== 'authenticated') return
-    toast.error(tShell('subscriptionExpired'))
+    if (!subscriptionPastDue || status !== "authenticated") return
+    toast.error(tShell("subscriptionExpired"))
     signOut({ callbackUrl: `/${locale}/login` })
   }, [locale, status, subscriptionPastDue, tShell])
 
@@ -101,7 +96,7 @@ export function DashboardShell({
     () =>
       routing.locales.map((code) => ({
         code,
-        label: code === 'fr' ? 'Français' : code === 'en' ? 'English' : 'العربية',
+        label: code === "fr" ? "Français" : code === "en" ? "English" : "العربية",
       })),
     [],
   )
@@ -110,15 +105,18 @@ export function DashboardShell({
 
   const handleLocaleChange = (targetLocale: AppLocale) => {
     if (targetLocale === locale) return
-    const targetPath = normalizedPathname || '/'
+    const targetPath = normalizedPathname || "/"
     router.replace(targetPath as any, { locale: targetLocale })
     router.refresh()
   }
 
-  if (status === 'loading') {
+  if (status === "loading") {
     return (
-      <div className="flex h-screen items-center justify-center">
-        <p className="text-lg font-semibold text-muted-foreground">{tShell('loading')}</p>
+      <div className="flex h-screen items-center justify-center bg-background">
+        <div className="flex flex-col items-center gap-4">
+          <div className="h-12 w-12 animate-spin rounded-full border-4 border-primary/20 border-t-primary" />
+          <p className="text-lg font-semibold text-muted-foreground">{tShell("loading")}</p>
+        </div>
       </div>
     )
   }
@@ -128,176 +126,174 @@ export function DashboardShell({
   }
 
   const roleLabels: Record<string, string> = {
-    SUPER_ADMIN: tShell('roles.superAdmin'),
-    ADMIN: tShell('roles.admin'),
-    OWNER: tShell('roles.owner'),
-    USER: tShell('roles.user'),
-    GYM_ADMIN: tShell('roles.admin'),
-    GYM_OWNER: tShell('roles.owner'),
+    SUPER_ADMIN: tShell("roles.superAdmin"),
+    ADMIN: tShell("roles.admin"),
+    OWNER: tShell("roles.owner"),
+    USER: tShell("roles.user"),
+    GYM_ADMIN: tShell("roles.admin"),
+    GYM_OWNER: tShell("roles.owner"),
   }
 
-  const userDisplayName = session.user.name || session.user.email || tShell('userFallback')
-  const userRole = roleLabels[session.user.role as string] || session.user.role || tShell('userFallback')
+  const userDisplayName = session.user.name || session.user.email || tShell("userFallback")
+  const userRole = roleLabels[session.user.role as string] || session.user.role || tShell("userFallback")
   const userInitial = userDisplayName.charAt(0).toUpperCase()
   const isDemoGym = Boolean((session.user as any).isDemo)
-  const planLabel = (session.user as any)?.subscriptionPlan ?? tShell('planLabel')
+  const planLabel = (session.user as any)?.subscriptionPlan ?? tShell("planLabel")
   const billingIntervalRaw = (session.user as any)?.billingInterval
   const billingInterval =
-    billingIntervalRaw === 'ANNUAL'
-      ? tShell('billing.annual')
-      : billingIntervalRaw === 'MONTHLY'
-        ? tShell('billing.monthly')
-        : tShell('billing.generic')
+    billingIntervalRaw === "ANNUAL"
+      ? tShell("billing.annual")
+      : billingIntervalRaw === "MONTHLY"
+        ? tShell("billing.monthly")
+        : tShell("billing.generic")
 
   return (
-    <div className={cn('relative flex min-h-screen bg-background text-foreground', isRtl && 'md:flex-row-reverse')}>
-      <div className="pointer-events-none fixed inset-0 -z-10 bg-[radial-gradient(circle_at_14%_18%,hsl(var(--primary)/0.12),transparent_28%),radial-gradient(circle_at_70%_10%,hsl(var(--muted-foreground)/0.06),transparent_24%)]" />
+    <div className={cn("relative flex min-h-screen bg-background text-foreground", isRtl && "md:flex-row-reverse")}>
+      <div className="pointer-events-none fixed inset-0 -z-10 bg-[radial-gradient(circle_at_14%_18%,hsl(var(--primary)/0.08),transparent_28%),radial-gradient(circle_at_70%_10%,hsl(var(--muted-foreground)/0.04),transparent_24%)]" />
 
       {sidebarOpen ? (
         <div
-          className="fixed inset-0 z-40 bg-background/70 backdrop-blur-sm md:hidden"
+          className="fixed inset-0 z-40 bg-background/80 backdrop-blur-sm md:hidden"
           onClick={() => setSidebarOpen(false)}
         />
       ) : null}
 
       <aside
         className={cn(
-          'fixed inset-y-0 z-50 h-full w-64 overflow-y-auto border-r border-border/60 bg-card/95 text-card-foreground shadow-xl backdrop-blur-xl transition-transform duration-300 md:translate-x-0',
-          isRtl ? 'right-0 left-auto border-l border-r-0' : 'left-0',
-          // hide native scrollbar in the whole aside
-          '[&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]',
-          sidebarOpen ? 'translate-x-0' : isRtl ? 'translate-x-full' : '-translate-x-full',
+          "fixed inset-y-0 z-50 flex h-full w-72 flex-col overflow-y-auto border-r border-border/60 bg-card/98 text-card-foreground shadow-2xl backdrop-blur-xl transition-transform duration-300 md:translate-x-0",
+          isRtl ? "right-0 left-auto border-l border-r-0" : "left-0",
+          "[&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]",
+          sidebarOpen ? "translate-x-0" : isRtl ? "translate-x-full" : "-translate-x-full",
         )}
       >
         <div className="flex h-full flex-col">
-          <div className="flex items-center justify-between border-b border-border/60 px-5 py-4">
+          <div className="flex items-center justify-between border-b border-border/60 px-6 py-5 bg-muted/30">
             <div className="flex items-center gap-3">
-              <Image src="/GymWatch.svg" alt="GymWatch" width={44} height={44} className="rounded-xl" priority />
+              <div className="rounded-xl bg-primary/10 p-2 ring-2 ring-primary/20">
+                <Image
+                  src="/GymWatch.svg"
+                  alt="GymWatch"
+                  width={32}
+                  height={32}
+                  priority
+                  className="dark:invert dark:brightness-200"
+                />
+              </div>
               <div className="leading-tight">
-                <p className="text-[11px] uppercase tracking-[0.26em] text-muted-foreground">GymWatch</p>
-                <p className="text-base font-semibold">{tShell('console')}</p>
+                <p className="text-[10px] font-semibold uppercase tracking-[0.28em] text-muted-foreground">GymWatch</p>
+                <p className="text-base font-bold">{tShell("console")}</p>
               </div>
             </div>
             <button
               onClick={() => setSidebarOpen(false)}
               className="rounded-lg border border-border/60 p-1.5 text-muted-foreground transition hover:bg-muted md:hidden"
-              aria-label={tShell('closeMenu')}
+              aria-label={tShell("closeMenu")}
             >
               <X size={18} />
             </button>
           </div>
 
-          {/* Sidebar scrollable area WITHOUT visible scrollbar */}
-          <div className="flex-1 overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
-            <div className="space-y-5 px-4 py-5">
-              <nav className="space-y-2">
-                {navigationItems.map((item) => {
-                  const Icon = item.icon
-                  const isActive = normalizedPathname === item.href || normalizedPathname.startsWith(`${item.href}/`)
-                  return (
-                    <Link
-                      key={item.href}
-                      href={item.href}
+          <div className="flex-1 overflow-y-auto px-4 py-6 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+            <nav className="space-y-2">
+              {navigationItems.map((item) => {
+                const Icon = item.icon
+                const isActive = normalizedPathname === item.href || normalizedPathname.startsWith(`${item.href}/`)
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    className={cn(
+                      "group flex items-center gap-3 rounded-xl px-4 py-3.5 text-sm font-semibold transition-all hover-lift",
+                      isActive
+                        ? "bg-primary/10 text-primary shadow-sm ring-1 ring-primary/20"
+                        : "text-muted-foreground hover:bg-muted/80 hover:text-foreground",
+                    )}
+                    onClick={() => setSidebarOpen(false)}
+                  >
+                    <div
                       className={cn(
-                        'group flex items-center gap-3 rounded-2xl border px-4 py-3 text-sm font-medium transition',
+                        "flex h-10 w-10 items-center justify-center rounded-lg transition-all",
                         isActive
-                          ? 'border-primary/40 bg-primary/5 text-foreground shadow-sm'
-                          : 'border-transparent text-muted-foreground hover:border-border/60 hover:bg-muted/60 hover:text-foreground',
+                          ? "bg-primary/15 text-primary ring-1 ring-primary/30"
+                          : "bg-muted/60 text-muted-foreground group-hover:bg-muted group-hover:text-foreground",
                       )}
-                      onClick={() => setSidebarOpen(false)}
                     >
-                      <div
-                        className={cn(
-                          'flex h-10 w-10 items-center justify-center rounded-xl border border-border/60 bg-muted/50 text-muted-foreground transition group-hover:border-primary/40 group-hover:text-primary',
-                          isActive && 'border-primary/40 bg-primary/10 text-primary',
-                        )}
-                      >
-                        <Icon size={18} />
-                      </div>
-                      <div className="flex-1">{item.label}</div>
-                      <ChevronRight
-                        size={16}
-                        className={cn(
-                          'text-muted-foreground transition',
-                          isActive ? 'translate-x-1 text-primary' : 'group-hover:translate-x-1',
-                        )}
-                      />
-                    </Link>
-                  )
-                })}
-              </nav>
-            </div>
+                      <Icon size={18} strokeWidth={2.5} />
+                    </div>
+                    <div className="flex-1 text-left">{item.label}</div>
+                    {isActive && <div className="h-2 w-2 rounded-full bg-primary shadow-sm shadow-primary/50" />}
+                  </Link>
+                )
+              })}
+            </nav>
           </div>
 
-          <div className="border-t border-border/60 px-4 py-4">
-            <div className="mb-3 flex items-center gap-3 rounded-2xl border border-border/60 bg-muted/50 px-3 py-2">
-              <Image src="/GymWatch.svg" alt="GymWatch" width={42} height={42} className="rounded-xl" />
-              <div className="flex-1">
-                <p className="text-sm font-semibold">{userDisplayName}</p>
+          <div className="border-t border-border/60 bg-muted/20 px-4 py-5">
+            <div className="mb-4 flex items-center gap-3 rounded-xl border border-border/60 bg-card/80 px-4 py-3 shadow-sm">
+              <div className="flex h-11 w-11 items-center justify-center rounded-full bg-primary/10 font-bold text-primary ring-2 ring-primary/20">
+                {userInitial}
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-semibold truncate">{userDisplayName}</p>
                 <p className="text-xs text-muted-foreground">{userRole}</p>
               </div>
               {isDemoGym ? (
-                <Badge variant="outline" className="rounded-full border-amber-200 bg-amber-50 text-amber-800">
-                  {tShell('demoBadge')}
+                <Badge variant="warning" className="shrink-0">
+                  {tShell("demoBadge")}
                 </Badge>
               ) : null}
             </div>
-            <div className="flex items-center justify-between">
-              <div className="flex flex-col gap-1 text-xs text-muted-foreground">
-                <span className="flex items-center gap-1.5 font-semibold text-foreground">
-                  <ShieldCheck size={14} /> {planLabel}
+            <div className="flex items-center justify-between gap-3">
+              <div className="flex flex-col gap-1.5">
+                <span className="flex items-center gap-2 text-xs font-semibold text-foreground">
+                  <ShieldCheck size={14} className="text-primary" /> {planLabel}
                 </span>
-                <span className="rounded-full bg-muted px-2 py-0.5 text-[11px] uppercase tracking-[0.22em]">
+                <Badge variant="outline" className="w-fit text-[10px] uppercase tracking-wider px-2 py-0.5">
                   {billingInterval}
-                </span>
+                </Badge>
               </div>
               <Button
                 variant="outline"
                 size="sm"
-                className="rounded-xl border-border/70 bg-background text-foreground hover:bg-muted"
+                className="rounded-lg border-border/70 bg-background text-foreground shadow-xs hover:bg-muted hover:shadow-sm"
                 onClick={() => signOut({ callbackUrl: `/${locale}/login` })}
               >
-                <LogOut size={16} className="mr-2" />
-                {tShell('exit')}
+                <LogOut size={16} />
               </Button>
             </div>
           </div>
         </div>
       </aside>
 
-      {/* main content, offset by sidebar width on md+ */}
       <div
-        className={cn(
-          'flex flex-1 flex-col overflow-hidden transition-all',
-          isRtl ? 'md:pr-64 md:pl-0' : 'md:pl-64',
-        )}
+        className={cn("flex flex-1 flex-col overflow-hidden transition-all", isRtl ? "md:pr-72 md:pl-0" : "md:pl-72")}
       >
-        <header className="sticky top-0 z-30 border-b border-border/60 bg-background/70 px-4 py-3 backdrop-blur-lg md:px-8">
-          <div className="flex items-center gap-3">
-            <Button
-              variant="outline"
-              size="icon"
-              className="rounded-xl border-border/60 bg-card text-muted-foreground hover:text-foreground md:hidden"
-              onClick={() => setSidebarOpen(!sidebarOpen)}
-              aria-label={tShell('openMenu')}
-            >
-              <Menu size={18} />
-            </Button>
+        <header className="sticky top-0 z-30 border-b border-border/60 bg-background/80 px-5 py-4 backdrop-blur-xl shadow-sm md:px-8">
+          <div className="flex items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <Button
+                variant="outline"
+                size="icon"
+                className="rounded-xl border-border/60 bg-card text-muted-foreground shadow-xs hover:text-foreground hover:shadow-sm md:hidden"
+                onClick={() => setSidebarOpen(!sidebarOpen)}
+                aria-label={tShell("openMenu")}
+              >
+                <Menu size={18} />
+              </Button>
 
-            <div className="ml-auto flex items-center gap-2 md:gap-3">
               <ThemeToggle />
 
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button
                     variant="outline"
-                    className="gap-2 rounded-xl border-border/60 bg-card px-3 text-sm font-semibold"
+                    className="gap-2 rounded-xl border-border/60 bg-card px-3 text-sm font-semibold shadow-xs hover:shadow-sm"
                   >
                     <Globe2 className="h-4 w-4" aria-hidden />
                     <span>{currentLanguage?.label ?? locale.toUpperCase()}</span>
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-48">
+                <DropdownMenuContent align="start" className="w-48">
                   {languageOptions.map((option) => (
                     <DropdownMenuItem
                       key={option.code}
@@ -310,7 +306,9 @@ export function DashboardShell({
                   ))}
                 </DropdownMenuContent>
               </DropdownMenu>
+            </div>
 
+            <div className="flex items-center gap-3">
               <div className="hidden flex-col items-end md:flex">
                 <p className="text-sm font-semibold text-foreground">{userDisplayName}</p>
                 <p className="text-xs text-muted-foreground">{userRole}</p>
@@ -320,15 +318,15 @@ export function DashboardShell({
                 <DropdownMenuTrigger asChild>
                   <Button
                     variant="outline"
-                    className="h-10 w-10 rounded-full border-border/70 bg-card text-card-foreground shadow-sm"
+                    className="h-11 w-11 rounded-full border-border/70 bg-card text-card-foreground shadow-sm hover:shadow-md"
                   >
-                    {userInitial}
+                    <span className="font-bold">{userInitial}</span>
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-56">
                   <div className="flex items-center gap-3 px-2 py-3 text-sm">
-                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10">
-                      <User size={16} className="text-primary" />
+                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 font-bold text-primary">
+                      <User size={18} />
                     </div>
                     <div className="flex flex-col gap-0.5">
                       <p className="font-semibold">{userDisplayName}</p>
@@ -338,7 +336,7 @@ export function DashboardShell({
                   <div className="border-t border-border/60" />
                   <DropdownMenuItem onClick={() => signOut({ callbackUrl: `/${locale}/login` })}>
                     <LogOut size={16} className="mr-2" />
-                    {tShell('signOut')}
+                    {tShell("signOut")}
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
@@ -346,10 +344,10 @@ export function DashboardShell({
           </div>
         </header>
 
-        <main className="flex-1 overflow-auto px-4 py-6 md:px-8">
-          <div className="w-full space-y-6">
+        <main className="flex-1 overflow-auto px-5 py-8 md:px-8">
+          <div className="mx-auto w-full max-w-7xl space-y-8">
             {topSlot ? (
-              <div className="rounded-2xl border border-border/50 bg-card/90 p-4 shadow-sm backdrop-blur-sm">
+              <div className="rounded-2xl border border-border/50 bg-card/95 p-5 shadow-sm backdrop-blur-sm">
                 {topSlot}
               </div>
             ) : null}

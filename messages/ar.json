@@ -501,6 +501,13 @@
       "pdf": "تقرير PDF",
       "exporting": "جاري التصدير..."
     },
+    "maintenance": {
+      "title": "تنظيف سجلات الدخول",
+      "subtitle": "حذف سجلات الدخول الأقدم من {days} يومًا.",
+      "hint": "سيتم حذف السجلات الأقدم من {days} يومًا فقط. السجلات الأحدث ستبقى كما هي.",
+      "button": "حذف السجلات",
+      "purging": "جارٍ الحذف..."
+    },
     "kpis": {
       "totalGyms": "إجمالي القاعات",
       "activeSubscribers": "المشتركون النشطون",
@@ -1811,61 +1818,93 @@
       }
     },
     "presence": {
-      "title": "متابعة الحضور",
-      "subtitle": "اعرض الزيارات حسب الفرع وتابع عدد الحضور يوميًا.",
+      "title": "تتبّع الحضور",
+      "subtitle": "اعرض الزيارات حسب الفرع وراقب الإشغال اليومي.",
       "locked": {
-        "title": "متابعة الحضور غير مفعّلة في هذه الخطة",
-        "description": "المتابعة اللحظية ومنحنيات الحضور متاحة ابتداءً من خطة Pro."
+        "title": "تتبّع الحضور غير متاح ضمن هذه الخطة",
+        "description": "الحضور المباشر ورسوم الحضور البيانية متاحة ابتداءً من خطة Pro."
       },
       "actions": {
         "refreshing": "جارٍ التحديث...",
         "refresh": "تحديث"
       },
       "manualCheckout": {
-        "trigger": "تسجيل خروج يدوي",
+        "trigger": "خروج يدوي",
         "title": "تسجيل خروج",
-        "description": "سجّل خروجًا يدويًا لزيارة جارية وعدّل وقت الخروج إذا لزم الأمر.",
+        "description": "سجّل خروجًا يدويًا لزيارة جارية مع إمكانية تعديل الوقت عند الحاجة.",
         "noOpenVisits": "لا توجد زيارات جارية.",
         "visitLabel": "زيارة جارية",
         "visitPlaceholder": "اختر زيارة",
         "checkoutDate": "تاريخ الخروج",
         "checkoutTime": "وقت الخروج",
-        "windowFrom": "بداية النطاق (اختياري)",
-        "windowTo": "نهاية النطاق (اختياري)",
-        "arrivalInfo": "تم تسجيل الوصول في {date} عند {time} - {variant}",
+        "windowFrom": "بداية النافذة (اختياري)",
+        "windowTo": "نهاية النافذة (اختياري)",
+        "arrivalInfo": "تم تسجيل الدخول بتاريخ {date} على الساعة {time} - {variant}",
         "cancel": "إلغاء",
-        "submit": "تسجيل الخروج",
-        "submitPending": "جارٍ التسجيل...",
+        "submit": "حفظ الخروج",
+        "submitPending": "جارٍ الحفظ...",
         "toasts": {
           "base": "تم تسجيل الخروج",
-          "member": " للعضو {memberName}",
-          "duration": " ({minutes} دقيقة)",
-          "limit": " - تم تجاوز الحد {limit} دقيقة",
-          "overstay": " - جلسة متجاوزة"
+          "member": "لـ {memberName}",
+          "duration": "({minutes} د)",
+          "limit": "تم تجاوز الحد {limit} د",
+          "overstay": "تجاوز مدة الجلسة"
         }
       },
       "summary": {
         "visits": "الزيارات",
         "unique": "زوار فريدون",
-        "present": "حاضرون",
-        "pendingCheckout": "خروج غير مسجَّل",
-        "averageDuration": "متوسط المدة"
+        "present": "بالداخل",
+        "pendingCheckout": "لم يتم مسح الخروج",
+        "avgDuration": "متوسط المدة"
+      },
+      "charts": {
+        "title": "نظرة عامة على الحضور"
+      },
+      "table": {
+        "title": "الزيارات الأخيرة",
+        "emptyTitle": "لا توجد زيارات وفق هذه الفلاتر",
+        "emptyBody": "غيّر الفترة من الفلاتر، أو قم بتسجيل زيارة جديدة من صفحة العضو.",
+        "maxDuration": "المدة القصوى: {minutes} د",
+        "timePlaceholder": "--",
+        "headers": {
+          "member": "العضو",
+          "location": "الفرع",
+          "date": "التاريخ",
+          "checkIn": "الدخول",
+          "checkOut": "الخروج",
+          "status": "الحالة",
+          "duration": "المدة"
+        },
+        "status": {
+          "ongoing": "جارية",
+          "completed": "منتهية",
+          "exceeded": "تم تجاوز المدة"
+        },
+        "limit": "الحد {limit} د",
+        "duration": {
+          "instant": "فوري",
+          "onlyMinutes": "{minutes} د",
+          "onlyHours": "{hours} س",
+          "hoursMinutes": "{hours} س {minutes} د"
+        }
       },
       "multiVariantLocked": {
-        "title": "تجميع الفروع مقفول",
-        "body": "الإحصائيات الموحّدة متاحة فقط في خطة Enterprise. اختر فرعًا أو",
+        "title": "تجميع الإحصاءات لعدة فروع غير متاح",
+        "body": "الإحصاءات المجمّعة متاحة فقط ضمن خطة Enterprise. اختر فرعًا أو",
         "upgrade": "قم بالترقية"
       },
       "recent": {
-        "title": "أحدث الزيارات"
+        "title": "الزيارات الأخيرة"
       },
       "errors": {
         "load": "تعذّر تحميل الزيارات",
         "checkout": "تعذّر تسجيل الخروج",
-        "noSelection": "يرجى اختيار زيارة جارية",
-        "unauthenticated": "الدخول مرفوض. يرجى تسجيل الدخول."
+        "noSelection": "اختر زيارة جارية",
+        "unauthenticated": "تم رفض الوصول. الرجاء تسجيل الدخول."
       }
-    },
+    }
+    ,
     "members": {
       "badge": {
         "errors": {

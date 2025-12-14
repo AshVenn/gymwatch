@@ -30,7 +30,7 @@
       "REFUSED": "Refused"
     },
     "searchPlaceholder": "Search by email or gym...",
-    "resultsCount": "{count} request(s) found",
+    "resultsCount": "{count, plural, one {# request found} other {# requests found}}",
     "table": {
       "gym": "Gym",
       "adminContact": "Admin contact",
@@ -707,6 +707,13 @@
       "excel": "Excel report",
       "pdf": "PDF report",
       "exporting": "Exporting..."
+    },
+    "maintenance": {
+      "title": "Access log cleanup",
+      "subtitle": "Remove access logs older than {days} days.",
+      "hint": "Only logs older than {days} days are deleted. Newer entries stay intact.",
+      "button": "Purge logs",
+      "purging": "Purging..."
     },
     "kpis": {
       "totalGyms": "Total gyms",
@@ -1820,62 +1827,94 @@
         }
       }
     },
-    "presence": {
-      "title": "Presence tracking",
-      "subtitle": "View visits by location and monitor daily occupancy.",
-      "locked": {
-        "title": "Presence tracking unavailable on this plan",
-        "description": "Live presence and attendance charts are available from the Pro plan."
-      },
-      "actions": {
-        "refreshing": "Refreshing...",
-        "refresh": "Refresh"
-      },
-      "manualCheckout": {
-        "trigger": "Manual checkout",
-        "title": "Mark a checkout",
-        "description": "Record a manual checkout for an ongoing visit and adjust the time if needed.",
-        "noOpenVisits": "No ongoing visits.",
-        "visitLabel": "Ongoing visit",
-        "visitPlaceholder": "Choose a visit",
-        "checkoutDate": "Checkout date",
-        "checkoutTime": "Checkout time",
-        "windowFrom": "Start window (optional)",
-        "windowTo": "End window (optional)",
-        "arrivalInfo": "Check-in recorded on {date} at {time} - {variant}",
-        "cancel": "Cancel",
-        "submit": "Save checkout",
-        "submitPending": "Saving...",
-        "toasts": {
-          "base": "Checkout recorded",
-          "member": " for {memberName}",
-          "duration": " ({minutes} min)",
-          "limit": " - limit {limit} min exceeded",
-          "overstay": " - session overstay"
+      "presence": {
+        "title": "Presence tracking",
+        "subtitle": "View visits by location and monitor daily occupancy.",
+        "locked": {
+          "title": "Presence tracking unavailable on this plan",
+          "description": "Live presence and attendance charts are available from the Pro plan."
+        },
+        "actions": {
+          "refreshing": "Refreshing...",
+          "refresh": "Refresh"
+        },
+        "manualCheckout": {
+          "trigger": "Manual checkout",
+          "title": "Mark a checkout",
+          "description": "Record a manual checkout for an ongoing visit and adjust the time if needed.",
+          "noOpenVisits": "No ongoing visits.",
+          "visitLabel": "Ongoing visit",
+          "visitPlaceholder": "Choose a visit",
+          "checkoutDate": "Checkout date",
+          "checkoutTime": "Checkout time",
+          "windowFrom": "Start window (optional)",
+          "windowTo": "End window (optional)",
+          "arrivalInfo": "Check-in recorded on {date} at {time} - {variant}",
+          "cancel": "Cancel",
+          "submit": "Save checkout",
+          "submitPending": "Saving...",
+          "toasts": {
+            "base": "Checkout recorded",
+            "member": "for {memberName}",
+            "duration": "({minutes} min)",
+            "limit": "limit {limit} min exceeded",
+            "overstay": "session overstay"
+          }
+        },
+        "summary": {
+          "visits": "Visits",
+          "unique": "Unique visitors",
+          "present": "Inside",
+          "pendingCheckout": "Checkout not scanned",
+          "avgDuration": "Average duration"
+        },
+        "charts": {
+          "title": "Attendance overview"
+        },
+        "table": {
+          "title": "Recent visits",
+          "emptyTitle": "No visits for these filters",
+          "emptyBody": "Use the filters to change the date range, or record a new visit from the member profile.",
+          "maxDuration": "Max duration: {minutes} min",
+          "timePlaceholder": "--",
+          "headers": {
+            "member": "Member",
+            "location": "Location",
+            "date": "Date",
+            "checkIn": "Check-in",
+            "checkOut": "Check-out",
+            "status": "Status",
+            "duration": "Duration"
+          },
+          "status": {
+            "ongoing": "Ongoing",
+            "completed": "Completed",
+            "exceeded": "Duration exceeded"
+          },
+          "limit": "Limit {limit} min",
+          "duration": {
+            "instant": "Instant",
+            "onlyMinutes": "{minutes} min",
+            "onlyHours": "{hours} h",
+            "hoursMinutes": "{hours} h {minutes} min"
+          }
+        },
+        "multiVariantLocked": {
+          "title": "Multi-location aggregation locked",
+          "body": "Consolidated stats are reserved for the Enterprise plan. Select a location or",
+          "upgrade": "upgrade"
+        },
+        "recent": {
+          "title": "Recent visits"
+        },
+        "errors": {
+          "load": "Unable to load visits",
+          "checkout": "Unable to register checkout",
+          "noSelection": "Select an ongoing visit",
+          "unauthenticated": "Access denied. Please sign in."
         }
-      },
-      "summary": {
-        "visits": "Visits",
-        "unique": "Unique visitors",
-        "present": "Inside",
-        "pendingCheckout": "Checkout not scanned",
-        "averageDuration": "Average duration"
-      },
-      "multiVariantLocked": {
-        "title": "Multi-location aggregation locked",
-        "body": "Consolidated stats are reserved for the Enterprise plan. Select a location or",
-        "upgrade": "upgrade"
-      },
-      "recent": {
-        "title": "Recent visits"
-      },
-      "errors": {
-        "load": "Unable to load visits",
-        "checkout": "Unable to register checkout",
-        "noSelection": "Select an ongoing visit",
-        "unauthenticated": "Access denied. Please sign in."
       }
-    },
+      ,
     "members": {
       "badge": {
         "errors": {

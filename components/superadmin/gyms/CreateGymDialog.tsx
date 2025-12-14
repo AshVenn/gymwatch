@@ -1,19 +1,19 @@
-'use client'
+"use client"
 
-import { useEffect, useMemo, useState } from 'react'
-import { Plus } from 'lucide-react'
-import { useForm } from 'react-hook-form'
-import { z } from 'zod'
-import { zodResolver } from '@hookform/resolvers/zod'
-import { useLocale, useTranslations } from 'next-intl'
+import { useEffect, useMemo, useState } from "react"
+import { Plus } from "lucide-react"
+import { useForm } from "react-hook-form"
+import { z } from "zod"
+import { zodResolver } from "@hookform/resolvers/zod"
+import { useLocale, useTranslations } from "next-intl"
 
 import {
   useCreateGym,
   usePlanSettings,
-  GymSubscriptionStatus,
-  GymPlanTier,
-  GymBillingInterval,
-} from '@/app/[locale]/(dashboard)/super-admin/hooks'
+  type GymSubscriptionStatus,
+  type GymPlanTier,
+  type GymBillingInterval,
+} from "@/app/[locale]/(dashboard)/super-admin/hooks"
 import {
   Dialog,
   DialogContent,
@@ -21,28 +21,14 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from '@/components/ui/dialog'
-import { Input } from '@/components/ui/input'
-import { Button } from '@/components/ui/button'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
-import {
-  Form,
-  FormControl,
-  FormDescription,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from '@/components/ui/form'
-import { PLAN_PRICING, getPlanFeatures } from '@/lib/subscription-plans'
-import { PlanModuleBadges } from './PlanModules'
-import { Badge } from '@/components/ui/badge'
+} from "@/components/ui/dialog"
+import { Input } from "@/components/ui/input"
+import { Button } from "@/components/ui/button"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
+import { PLAN_PRICING, getPlanFeatures } from "@/lib/subscription-plans"
+import { PlanModuleBadges } from "./PlanModules"
+import { Badge } from "@/components/ui/badge"
 
 type CreateGymValues = {
   name: string
@@ -51,13 +37,13 @@ type CreateGymValues = {
   address?: string
   city?: string
   country?: string
-  tier: 'BASIC' | 'PRO' | 'ENTERPRISE'
-  interval: 'MONTHLY' | 'ANNUAL'
-  status: 'ACTIVE' | 'SUSPENDED' | 'EXPIRED'
+  tier: "BASIC" | "PRO" | "ENTERPRISE"
+  interval: "MONTHLY" | "ANNUAL"
+  status: "ACTIVE" | "SUSPENDED" | "EXPIRED"
   expiresAt?: string
   grace: number
   maxAdmins: number
-  gymType: 'SINGLE' | 'MULTI'
+  gymType: "SINGLE" | "MULTI"
   variantNames?: string
   ownerEmail: string
   ownerPassword: string
@@ -66,28 +52,28 @@ type CreateGymValues = {
 }
 
 const defaultValues: CreateGymValues = {
-  name: '',
-  email: '',
-  phone: '',
-  address: '',
-  city: '',
-  country: '',
-  tier: 'BASIC',
-  interval: 'MONTHLY',
-  status: 'ACTIVE',
-  expiresAt: '',
+  name: "",
+  email: "",
+  phone: "",
+  address: "",
+  city: "",
+  country: "",
+  tier: "BASIC",
+  interval: "MONTHLY",
+  status: "ACTIVE",
+  expiresAt: "",
   grace: 5,
   maxAdmins: 3,
-  gymType: 'SINGLE',
-  variantNames: 'Principal',
-  ownerEmail: '',
-  ownerPassword: '',
-  ownerFirstName: '',
-  ownerLastName: '',
+  gymType: "SINGLE",
+  variantNames: "Principal",
+  ownerEmail: "",
+  ownerPassword: "",
+  ownerFirstName: "",
+  ownerLastName: "",
 }
 
 export function CreateGymDialog() {
-  const t = useTranslations('superAdminCreateGym')
+  const t = useTranslations("superAdminCreateGym")
   const locale = useLocale()
 
   const [open, setOpen] = useState(false)
@@ -96,37 +82,37 @@ export function CreateGymDialog() {
     () =>
       z
         .object({
-          name: z.string().min(2, t('validation.nameRequired')),
-          email: z.string().email(t('validation.invalidEmail')),
-          phone: z.string().min(6, t('validation.phoneRequired')),
+          name: z.string().min(2, t("validation.nameRequired")),
+          email: z.string().email(t("validation.invalidEmail")),
+          phone: z.string().min(6, t("validation.phoneRequired")),
           address: z.string().optional(),
           city: z.string().optional(),
           country: z.string().optional(),
-          tier: z.enum(['BASIC', 'PRO', 'ENTERPRISE']),
-          interval: z.enum(['MONTHLY', 'ANNUAL']),
-          status: z.enum(['ACTIVE', 'SUSPENDED', 'EXPIRED']),
+          tier: z.enum(["BASIC", "PRO", "ENTERPRISE"]),
+          interval: z.enum(["MONTHLY", "ANNUAL"]),
+          status: z.enum(["ACTIVE", "SUSPENDED", "EXPIRED"]),
           expiresAt: z.string().optional(),
           grace: z.coerce.number().min(0).max(30),
-          maxAdmins: z.coerce.number().min(1, t('validation.minAdmins')),
-          gymType: z.enum(['SINGLE', 'MULTI']),
+          maxAdmins: z.coerce.number().min(1, t("validation.minAdmins")),
+          gymType: z.enum(["SINGLE", "MULTI"]),
           variantNames: z.string().optional(),
-          ownerEmail: z.string().email(t('validation.invalidEmail')),
-          ownerPassword: z.string().min(8, t('validation.min8')),
+          ownerEmail: z.string().email(t("validation.invalidEmail")),
+          ownerPassword: z.string().min(8, t("validation.min8")),
           ownerFirstName: z.string().optional(),
           ownerLastName: z.string().optional(),
         })
         .superRefine((values, ctx) => {
-          if (values.gymType === 'MULTI') {
-            const variants = (values.variantNames ?? '')
-              .split(',')
+          if (values.gymType === "MULTI") {
+            const variants = (values.variantNames ?? "")
+              .split(",")
               .map((name) => name.trim())
               .filter(Boolean)
 
             if (!variants.length) {
               ctx.addIssue({
-                code: 'custom',
-                path: ['variantNames'],
-                message: t('validation.atLeastOneVariant'),
+                code: "custom",
+                path: ["variantNames"],
+                message: t("validation.atLeastOneVariant"),
               })
             }
           }
@@ -142,35 +128,35 @@ export function CreateGymDialog() {
   const createGym = useCreateGym()
   const planSettings = usePlanSettings()
 
-  const selectedTier = form.watch('tier') as GymPlanTier
-  const selectedInterval = form.watch('interval') as GymBillingInterval
-  const gymType = form.watch('gymType') as 'SINGLE' | 'MULTI'
-  const variantNamesValue = form.watch('variantNames') ?? ''
-  const gymNameValue = form.watch('name')
+  const selectedTier = form.watch("tier") as GymPlanTier
+  const selectedInterval = form.watch("interval") as GymBillingInterval
+  const gymType = form.watch("gymType") as "SINGLE" | "MULTI"
+  const variantNamesValue = form.watch("variantNames") ?? ""
+  const gymNameValue = form.watch("name")
 
   const pricingTable = planSettings.data?.pricing ?? PLAN_PRICING
   const estimatedPrice = pricingTable[selectedTier][selectedInterval]
   const selectedFeatures = useMemo(() => getPlanFeatures(selectedTier), [selectedTier])
 
   const parsedVariants = useMemo(() => {
-    if (gymType === 'SINGLE') {
-      const base = (gymNameValue || '').trim() || t('defaults.singleVariantFallback')
+    if (gymType === "SINGLE") {
+      const base = (gymNameValue || "").trim() || t("defaults.singleVariantFallback")
       return [{ name: base, isDefault: true }]
     }
 
     const names = variantNamesValue
-      .split(',')
+      .split(",")
       .map((name) => name.trim())
       .filter(Boolean)
 
-    const base = names.length ? names : [t('defaults.multiVariantFallback')]
+    const base = names.length ? names : [t("defaults.multiVariantFallback")]
     return base.map((name, index) => ({ name, isDefault: index === 0 }))
   }, [gymNameValue, gymType, t, variantNamesValue])
 
-  const currencyLocale = locale === 'ar' ? 'ar-MA' : locale === 'en' ? 'en-US' : 'fr-MA'
+  const currencyLocale = locale === "ar" ? "ar-MA" : locale === "en" ? "en-US" : "fr-MA"
   const estimatedPriceLabel = estimatedPrice.toLocaleString(currencyLocale, {
-    style: 'currency',
-    currency: 'MAD',
+    style: "currency",
+    currency: "MAD",
     maximumFractionDigits: 0,
   })
 
@@ -182,16 +168,17 @@ export function CreateGymDialog() {
 
   const onSubmit = (values: CreateGymValues) => {
     const variantList =
-      values.gymType === 'MULTI'
-        ? (values.variantNames ?? '')
-            .split(',')
+      values.gymType === "MULTI"
+        ? (values.variantNames ?? "")
+            .split(",")
             .map((name) => name.trim())
             .filter(Boolean)
             .map((name, index) => ({ name, isDefault: index === 0 }))
-        : [{ name: values.name?.trim() || t('defaults.singleVariantFallback'), isDefault: true }]
+        : [{ name: values.name?.trim() || t("defaults.singleVariantFallback"), isDefault: true }]
 
-    const safeVariants =
-      variantList.length ? variantList : [{ name: t('defaults.singleVariantFallback'), isDefault: true }]
+    const safeVariants = variantList.length
+      ? variantList
+      : [{ name: t("defaults.singleVariantFallback"), isDefault: true }]
 
     createGym.mutate(
       {
@@ -211,7 +198,7 @@ export function CreateGymDialog() {
         owner: {
           email: values.ownerEmail,
           password: values.ownerPassword,
-          firstName: values.ownerFirstName || t('defaults.ownerFirstName'),
+          firstName: values.ownerFirstName || t("defaults.ownerFirstName"),
           lastName: values.ownerLastName || values.name,
         },
       },
@@ -227,15 +214,15 @@ export function CreateGymDialog() {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button className="gap-2">
-          <Plus className="h-4 w-4" /> {t('actions.addGym')}
+        <Button className="gap-2 rounded-xl shadow-sm hover:shadow-md transition-all">
+          <Plus className="h-4 w-4" /> {t("actions.addGym")}
         </Button>
       </DialogTrigger>
 
-      <DialogContent className="max-w-md sm:max-w-lg md:max-w-3xl w-[95vw] max-h-[90vh] overflow-y-auto space-y-6 rounded-2xl px-4 py-6 sm:px-8">
-        <DialogHeader>
-          <DialogTitle>{t('title')}</DialogTitle>
-          <DialogDescription>{t('description')}</DialogDescription>
+      <DialogContent className="max-w-md sm:max-w-lg md:max-w-3xl w-[95vw] max-h-[90vh] overflow-y-auto space-y-6 rounded-3xl border-border/70 px-4 py-6 sm:px-8">
+        <DialogHeader className="space-y-3">
+          <DialogTitle className="text-2xl font-bold">{t("title")}</DialogTitle>
+          <DialogDescription className="text-base">{t("description")}</DialogDescription>
         </DialogHeader>
 
         <Form {...form}>
@@ -246,9 +233,9 @@ export function CreateGymDialog() {
                 name="name"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>{t('fields.name')}</FormLabel>
+                    <FormLabel className="text-sm font-semibold">{t("fields.name")}</FormLabel>
                     <FormControl>
-                      <Input {...field} />
+                      <Input {...field} className="rounded-xl border-border/70" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -260,9 +247,9 @@ export function CreateGymDialog() {
                 name="email"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>{t('fields.email')}</FormLabel>
+                    <FormLabel className="text-sm font-semibold">{t("fields.email")}</FormLabel>
                     <FormControl>
-                      <Input type="email" {...field} />
+                      <Input type="email" {...field} className="rounded-xl border-border/70" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -275,9 +262,9 @@ export function CreateGymDialog() {
               name="phone"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>{t('fields.phone')}</FormLabel>
+                  <FormLabel className="text-sm font-semibold">{t("fields.phone")}</FormLabel>
                   <FormControl>
-                    <Input {...field} />
+                    <Input {...field} className="rounded-xl border-border/70" />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -289,9 +276,9 @@ export function CreateGymDialog() {
               name="address"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>{t('fields.address')}</FormLabel>
+                  <FormLabel className="text-sm font-semibold">{t("fields.address")}</FormLabel>
                   <FormControl>
-                    <Input {...field} />
+                    <Input {...field} className="rounded-xl border-border/70" />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -304,9 +291,9 @@ export function CreateGymDialog() {
                 name="city"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>{t('fields.city')}</FormLabel>
+                    <FormLabel className="text-sm font-semibold">{t("fields.city")}</FormLabel>
                     <FormControl>
-                      <Input {...field} />
+                      <Input {...field} className="rounded-xl border-border/70" />
                     </FormControl>
                   </FormItem>
                 )}
@@ -317,9 +304,9 @@ export function CreateGymDialog() {
                 name="country"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>{t('fields.country')}</FormLabel>
+                    <FormLabel className="text-sm font-semibold">{t("fields.country")}</FormLabel>
                     <FormControl>
-                      <Input {...field} />
+                      <Input {...field} className="rounded-xl border-border/70" />
                     </FormControl>
                   </FormItem>
                 )}
@@ -332,56 +319,64 @@ export function CreateGymDialog() {
                 name="gymType"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>{t('fields.gymType')}</FormLabel>
+                    <FormLabel className="text-sm font-semibold">{t("fields.gymType")}</FormLabel>
                     <Select onValueChange={field.onChange} value={field.value}>
                       <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder={t('placeholders.chooseType')} />
+                        <SelectTrigger className="rounded-xl border-border/70">
+                          <SelectValue placeholder={t("placeholders.chooseType")} />
                         </SelectTrigger>
                       </FormControl>
-                      <SelectContent>
-                        <SelectItem value="SINGLE">{t('gymTypes.single')}</SelectItem>
-                        <SelectItem value="MULTI">{t('gymTypes.multi')}</SelectItem>
+                      <SelectContent className="rounded-xl">
+                        <SelectItem value="SINGLE">{t("gymTypes.single")}</SelectItem>
+                        <SelectItem value="MULTI">{t("gymTypes.multi")}</SelectItem>
                       </SelectContent>
                     </Select>
 
-                    <FormDescription>{t('hints.gymType')}</FormDescription>
+                    <FormDescription className="text-xs">{t("hints.gymType")}</FormDescription>
                   </FormItem>
                 )}
               />
 
-              <div className="rounded-xl border border-dashed border-border/60 bg-muted/20 p-4">
-                <p className="text-sm font-semibold">{t('variants.previewTitle')}</p>
+              <div className="rounded-2xl border border-dashed border-border/60 bg-linear-to-brm-muted/40 to-muted/20 p-4 shadow-sm">
+                <p className="text-sm font-semibold text-foreground">{t("variants.previewTitle")}</p>
                 <div className="mt-2 flex flex-wrap gap-2">
                   {parsedVariants.map((variant) => (
-                    <Badge key={variant.name} variant={variant.isDefault ? 'secondary' : 'outline'}>
-                      {variant.name} {variant.isDefault ? `(${t('labels.default')})` : ''}
+                    <Badge
+                      key={variant.name}
+                      variant={variant.isDefault ? "secondary" : "outline"}
+                      className="rounded-full border-border/60"
+                    >
+                      {variant.name} {variant.isDefault ? `(${t("labels.default")})` : ""}
                     </Badge>
                   ))}
                 </div>
-                <p className="mt-2 text-xs text-muted-foreground">{t('variants.firstDefaultHint')}</p>
+                <p className="mt-2 text-xs text-muted-foreground">{t("variants.firstDefaultHint")}</p>
               </div>
             </div>
 
-            {gymType === 'MULTI' ? (
+            {gymType === "MULTI" ? (
               <FormField
                 control={form.control}
                 name="variantNames"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>{t('fields.variantNames')}</FormLabel>
+                    <FormLabel className="text-sm font-semibold">{t("fields.variantNames")}</FormLabel>
                     <FormControl>
-                      <Input {...field} placeholder={t('placeholders.variantNames')} />
+                      <Input
+                        {...field}
+                        placeholder={t("placeholders.variantNames")}
+                        className="rounded-xl border-border/70"
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
             ) : (
-              <div className="rounded-xl border border-border/60 bg-muted/20 p-4">
-                <p className="text-sm font-semibold">{t('variants.singleTitle')}</p>
+              <div className="rounded-2xl border border-border/60 bg-muted/20 p-4 shadow-sm">
+                <p className="text-sm font-semibold">{t("variants.singleTitle")}</p>
                 <p className="text-xs text-muted-foreground">
-                  {t('variants.singleHint', { name: parsedVariants[0]?.name ?? '-' })}
+                  {t("variants.singleHint", { name: parsedVariants[0]?.name ?? "-" })}
                 </p>
               </div>
             )}
@@ -392,17 +387,17 @@ export function CreateGymDialog() {
                 name="tier"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>{t('fields.plan')}</FormLabel>
+                    <FormLabel className="text-sm font-semibold">{t("fields.plan")}</FormLabel>
                     <Select onValueChange={field.onChange} value={field.value}>
                       <FormControl>
-                        <SelectTrigger>
+                        <SelectTrigger className="rounded-xl border-border/70">
                           <SelectValue />
                         </SelectTrigger>
                       </FormControl>
-                      <SelectContent>
-                        <SelectItem value="BASIC">{t('plans.basic')}</SelectItem>
-                        <SelectItem value="PRO">{t('plans.pro')}</SelectItem>
-                        <SelectItem value="ENTERPRISE">{t('plans.enterprise')}</SelectItem>
+                      <SelectContent className="rounded-xl">
+                        <SelectItem value="BASIC">{t("plans.basic")}</SelectItem>
+                        <SelectItem value="PRO">{t("plans.pro")}</SelectItem>
+                        <SelectItem value="ENTERPRISE">{t("plans.enterprise")}</SelectItem>
                       </SelectContent>
                     </Select>
                   </FormItem>
@@ -414,21 +409,21 @@ export function CreateGymDialog() {
                 name="interval"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>{t('fields.billing')}</FormLabel>
+                    <FormLabel className="text-sm font-semibold">{t("fields.billing")}</FormLabel>
                     <Select onValueChange={field.onChange} value={field.value}>
                       <FormControl>
-                        <SelectTrigger>
+                        <SelectTrigger className="rounded-xl border-border/70">
                           <SelectValue />
                         </SelectTrigger>
                       </FormControl>
-                      <SelectContent>
-                        <SelectItem value="MONTHLY">{t('labels.monthly')}</SelectItem>
-                        <SelectItem value="ANNUAL">{t('labels.annual')}</SelectItem>
+                      <SelectContent className="rounded-xl">
+                        <SelectItem value="MONTHLY">{t("labels.monthly")}</SelectItem>
+                        <SelectItem value="ANNUAL">{t("labels.annual")}</SelectItem>
                       </SelectContent>
                     </Select>
 
-                    <FormDescription>
-                      {t('hints.estimatedPrice', { price: estimatedPriceLabel })}
+                    <FormDescription className="text-xs">
+                      {t("hints.estimatedPrice", { price: estimatedPriceLabel })}
                     </FormDescription>
                   </FormItem>
                 )}
@@ -439,17 +434,17 @@ export function CreateGymDialog() {
                 name="status"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>{t('fields.status')}</FormLabel>
+                    <FormLabel className="text-sm font-semibold">{t("fields.status")}</FormLabel>
                     <Select onValueChange={field.onChange} value={field.value}>
                       <FormControl>
-                        <SelectTrigger>
+                        <SelectTrigger className="rounded-xl border-border/70">
                           <SelectValue />
                         </SelectTrigger>
                       </FormControl>
-                      <SelectContent>
-                        <SelectItem value="ACTIVE">{t('statuses.active')}</SelectItem>
-                        <SelectItem value="SUSPENDED">{t('statuses.suspended')}</SelectItem>
-                        <SelectItem value="EXPIRED">{t('statuses.expired')}</SelectItem>
+                      <SelectContent className="rounded-xl">
+                        <SelectItem value="ACTIVE">{t("statuses.active")}</SelectItem>
+                        <SelectItem value="SUSPENDED">{t("statuses.suspended")}</SelectItem>
+                        <SelectItem value="EXPIRED">{t("statuses.expired")}</SelectItem>
                       </SelectContent>
                     </Select>
                   </FormItem>
@@ -457,11 +452,11 @@ export function CreateGymDialog() {
               />
             </div>
 
-            <div className="rounded-xl border border-border/60 bg-muted/20 p-4">
+            <div className="rounded-2xl border border-border/60 bg-linear-to-br from-primary/5 via-primary/3 to-background p-4 shadow-sm">
               <div className="flex flex-wrap items-center justify-between gap-2 text-sm">
-                <p className="font-semibold">{t('modules.title', { tier: selectedTier })}</p>
-                <span className="text-xs text-muted-foreground">
-                  {t('modules.estimate', { price: estimatedPriceLabel })}
+                <p className="font-semibold">{t("modules.title", { tier: selectedTier })}</p>
+                <span className="rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold text-primary">
+                  {t("modules.estimate", { price: estimatedPriceLabel })}
                 </span>
               </div>
               <PlanModuleBadges features={selectedFeatures} />
@@ -473,13 +468,14 @@ export function CreateGymDialog() {
                 name="expiresAt"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>{t('fields.expiresAt')}</FormLabel>
+                    <FormLabel className="text-sm font-semibold">{t("fields.expiresAt")}</FormLabel>
                     <FormControl>
                       <Input
                         type="date"
-                        value={field.value || ''}
+                        value={field.value || ""}
                         onChange={(e) => field.onChange(e.target.value)}
-                        placeholder={t('placeholders.chooseDate')}
+                        placeholder={t("placeholders.chooseDate")}
+                        className="rounded-xl border-border/70"
                       />
                     </FormControl>
                   </FormItem>
@@ -491,9 +487,9 @@ export function CreateGymDialog() {
                 name="grace"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>{t('fields.graceDays')}</FormLabel>
+                    <FormLabel className="text-sm font-semibold">{t("fields.graceDays")}</FormLabel>
                     <FormControl>
-                      <Input type="number" {...field} />
+                      <Input type="number" {...field} className="rounded-xl border-border/70" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -505,9 +501,9 @@ export function CreateGymDialog() {
                 name="maxAdmins"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>{t('fields.maxAdmins')}</FormLabel>
+                    <FormLabel className="text-sm font-semibold">{t("fields.maxAdmins")}</FormLabel>
                     <FormControl>
-                      <Input type="number" {...field} />
+                      <Input type="number" {...field} className="rounded-xl border-border/70" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -521,9 +517,9 @@ export function CreateGymDialog() {
                 name="ownerEmail"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>{t('fields.ownerEmail')}</FormLabel>
+                    <FormLabel className="text-sm font-semibold">{t("fields.ownerEmail")}</FormLabel>
                     <FormControl>
-                      <Input type="email" {...field} />
+                      <Input type="email" {...field} className="rounded-xl border-border/70" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -535,9 +531,9 @@ export function CreateGymDialog() {
                 name="ownerPassword"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>{t('fields.ownerPassword')}</FormLabel>
+                    <FormLabel className="text-sm font-semibold">{t("fields.ownerPassword")}</FormLabel>
                     <FormControl>
-                      <Input type="password" {...field} />
+                      <Input type="password" {...field} className="rounded-xl border-border/70" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -551,9 +547,9 @@ export function CreateGymDialog() {
                 name="ownerFirstName"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>{t('fields.ownerFirstName')}</FormLabel>
+                    <FormLabel className="text-sm font-semibold">{t("fields.ownerFirstName")}</FormLabel>
                     <FormControl>
-                      <Input {...field} />
+                      <Input {...field} className="rounded-xl border-border/70" />
                     </FormControl>
                   </FormItem>
                 )}
@@ -564,17 +560,21 @@ export function CreateGymDialog() {
                 name="ownerLastName"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>{t('fields.ownerLastName')}</FormLabel>
+                    <FormLabel className="text-sm font-semibold">{t("fields.ownerLastName")}</FormLabel>
                     <FormControl>
-                      <Input {...field} />
+                      <Input {...field} className="rounded-xl border-border/70" />
                     </FormControl>
                   </FormItem>
                 )}
               />
             </div>
 
-            <Button type="submit" className="w-full" disabled={createGym.isPending}>
-              {createGym.isPending ? t('actions.creating') : t('actions.create')}
+            <Button
+              type="submit"
+              className="w-full rounded-xl shadow-md hover:shadow-lg transition-all"
+              disabled={createGym.isPending}
+            >
+              {createGym.isPending ? t("actions.creating") : t("actions.create")}
             </Button>
           </form>
         </Form>

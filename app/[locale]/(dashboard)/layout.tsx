@@ -1,13 +1,15 @@
-import type { ReactNode } from 'react'
+// app/[locale]/(dashboard)/layout.tsx
+import type { ReactNode } from "react"
 
-import { NextIntlClientProvider } from 'next-intl'
-import { notFound } from 'next/navigation'
+import { NextIntlClientProvider } from "next-intl"
+import { notFound } from "next/navigation"
 
-import { routing, type AppLocale } from '@/i18n/routing'
+import { routing, type AppLocale } from "@/i18n/routing"
 
 type DashboardGroupLayoutProps = {
   children: ReactNode
-  params: { locale: string }
+  // ✅ params is async in your Next.js build
+  params: Promise<{ locale: string }>
 }
 
 function resolveLocale(rawLocale: string): AppLocale | null {
@@ -16,16 +18,20 @@ function resolveLocale(rawLocale: string): AppLocale | null {
     : null
 }
 
-export default async function DashboardGroupLayout({ children, params }: DashboardGroupLayoutProps) {
-  const locale = resolveLocale(params.locale)
-  if (!locale) {
-    notFound()
-  }
+export default async function DashboardGroupLayout({
+  children,
+  params,
+}: DashboardGroupLayoutProps) {
+  // ✅ await params first
+  const { locale: paramLocale } = await params
+
+  const locale = resolveLocale(paramLocale)
+  if (!locale) notFound()
 
   const messages = (await import(`@/messages/${locale}.json`)).default
 
   return (
-    <NextIntlClientProvider key={locale} locale={locale} messages={messages}>
+    <NextIntlClientProvider locale={locale} messages={messages}>
       {children}
     </NextIntlClientProvider>
   )

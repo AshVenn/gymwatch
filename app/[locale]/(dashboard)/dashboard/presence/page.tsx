@@ -1,23 +1,24 @@
-'use client'
+"use client"
 
-import Link from 'next/link'
-import { useEffect, useMemo, useState } from 'react'
-import { useSession } from 'next-auth/react'
-import { useMutation, useQuery } from '@tanstack/react-query'
-import { Activity, AlertTriangle, Clock3, LogOut, RefreshCw, Users } from 'lucide-react'
-import { useLocale, useTranslations } from 'next-intl'
+import Link from "next/link"
+import { useEffect, useMemo, useState } from "react"
+import { useSession } from "next-auth/react"
+import { useMutation, useQuery } from "@tanstack/react-query"
+import { Activity, AlertTriangle, Clock3, LogOut, RefreshCw, Users } from "lucide-react"
+import { useLocale, useTranslations } from "next-intl"
+import { toast } from "sonner"
 
-import { usePlanFeatures } from '@/app/hooks/use-plan-features'
-import { useVariantOptions } from '@/app/hooks/use-variants'
-import { VisitCharts } from '@/components/dashboard/visits/charts'
-import { VisitFilters } from '@/components/dashboard/visits/filters'
-import { VisitTable } from '@/components/dashboard/visits/visit-table'
-import { usePagination } from '@/components/dashboard/pagination-controls'
-import { VariantSelector } from '@/components/dashboard/variant-selector'
-import { buildFeatureAccessItems, LockedFeatureState } from '@/components/dashboard/feature-access-grid'
-import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { usePlanFeatures } from "@/app/hooks/use-plan-features"
+import { useVariantOptions } from "@/app/hooks/use-variants"
+import { VisitCharts } from "@/components/dashboard/visits/charts"
+import { VisitFilters } from "@/components/dashboard/visits/filters"
+import { VisitTable } from "@/components/dashboard/visits/visit-table"
+import { usePagination } from "@/components/dashboard/pagination-controls"
+import { VariantSelector } from "@/components/dashboard/variant-selector"
+import { buildFeatureAccessItems, LockedFeatureState } from "@/components/dashboard/feature-access-grid"
+import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import {
   Dialog,
   DialogContent,
@@ -26,20 +27,13 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from '@/components/ui/dialog'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
-import { Skeleton } from '@/components/ui/skeleton'
-import { toast } from 'sonner'
+} from "@/components/ui/dialog"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Skeleton } from "@/components/ui/skeleton"
 
-type VisitView = 'day' | 'period'
+type VisitView = "day" | "period"
 
 type VisitAnalyticsResponse = {
   visits: Array<{
@@ -86,11 +80,12 @@ const defaultSummary = {
 }
 
 export default function PresencePage() {
-  const t = useTranslations('dashboard.presence')
-  const tFeatureAccess = useTranslations('dashboard.featureAccess')
+  const t = useTranslations("dashboard.presence")
+  const tFeatureAccess = useTranslations("dashboard.featureAccess")
   const locale = useLocale()
   const { data: session, status } = useSession()
   const { tier, hasAccessControl, hasPresence, hasCourses, hasExcelReports, hasMultiLocations } = usePlanFeatures()
+
   const {
     variants,
     selectedVariant,
@@ -100,6 +95,14 @@ export default function PresencePage() {
     defaultVariantId,
     isLoading: variantsLoading,
   } = useVariantOptions({ allowAll: hasMultiLocations })
+
+  // Fix Translate mismatch (kept exactly as you had it)
+  type FeatureTranslate = Parameters<typeof buildFeatureAccessItems>[0]["t"]
+  const tFeatureAccessStrict = useMemo<FeatureTranslate>(
+    () => ((key: string, values?: Record<string, unknown>) => tFeatureAccess(key as any, values as any)) as any,
+    [tFeatureAccess],
+  )
+
   const isMultiVariantGym = variants.length > 1
   const allowAllVariants = hasMultiLocations || !isMultiVariantGym
   const multiVariantLocked = isMultiVariantGym && !hasMultiLocations
@@ -107,18 +110,21 @@ export default function PresencePage() {
   const todayStr = formatInputDate(new Date())
   const lastWeekStr = formatInputDate(new Date(Date.now() - 6 * 24 * 60 * 60 * 1000))
 
-  const [view, setView] = useState<VisitView>('day')
+  const [view, setView] = useState<VisitView>("day")
   const [selectedDate, setSelectedDate] = useState<string>(todayStr)
   const [from, setFrom] = useState<string>(lastWeekStr)
   const [to, setTo] = useState<string>(todayStr)
-  const [search, setSearch] = useState<string>('')
+  const [search, setSearch] = useState<string>("")
+
   const [checkoutDialogOpen, setCheckoutDialogOpen] = useState(false)
-  const [checkoutVisitId, setCheckoutVisitId] = useState<string>('')
+  const [checkoutVisitId, setCheckoutVisitId] = useState<string>("")
   const [checkoutDate, setCheckoutDate] = useState<string>(todayStr)
   const [checkoutTime, setCheckoutTime] = useState<string>(formatTimeInput(new Date()))
-  const [checkoutWindowStart, setCheckoutWindowStart] = useState<string>('')
-  const [checkoutWindowEnd, setCheckoutWindowEnd] = useState<string>('')
-  const planLabel = tier === 'ENTERPRISE' ? 'Enterprise' : tier === 'PRO' ? 'Pro' : 'Basic'
+  const [checkoutWindowStart, setCheckoutWindowStart] = useState<string>("")
+  const [checkoutWindowEnd, setCheckoutWindowEnd] = useState<string>("")
+
+  const planLabel = tier === "ENTERPRISE" ? "Enterprise" : tier === "PRO" ? "Pro" : "Basic"
+
   const featureItems = useMemo(
     () =>
       buildFeatureAccessItems({
@@ -126,15 +132,15 @@ export default function PresencePage() {
         hasPresence,
         hasCourses,
         hasExcelReports,
-        t: tFeatureAccess,
+        t: tFeatureAccessStrict,
       }),
-    [hasAccessControl, hasCourses, hasExcelReports, hasPresence, tFeatureAccess],
+    [hasAccessControl, hasCourses, hasExcelReports, hasPresence, tFeatureAccessStrict],
   )
 
   useEffect(() => {
-    if (!allowAllVariants && selectedVariant === 'all') {
-      const fallback = lockedVariantId ?? defaultVariantId ?? variants[0]?.id ?? 'all'
-      if (fallback && fallback !== 'all') {
+    if (!allowAllVariants && selectedVariant === "all") {
+      const fallback = lockedVariantId ?? defaultVariantId ?? variants[0]?.id ?? "all"
+      if (fallback && fallback !== "all") {
         setSelectedVariant(fallback)
       }
     }
@@ -143,33 +149,33 @@ export default function PresencePage() {
   const variantFilter =
     isGymAdmin && lockedVariantId
       ? lockedVariantId
-      : selectedVariant && selectedVariant !== 'all'
+      : selectedVariant && selectedVariant !== "all"
         ? selectedVariant
         : allowAllVariants
           ? null
-          : defaultVariantId ?? variants[0]?.id ?? null
+          : (defaultVariantId ?? variants[0]?.id ?? null)
 
   const visitsQuery = useQuery<VisitAnalyticsResponse>({
-    queryKey: ['visits', session?.user?.gymId, variantFilter, view, selectedDate, from, to, search],
-    enabled: status === 'authenticated' && hasPresence && !variantsLoading,
+    queryKey: ["visits", session?.user?.gymId, variantFilter, view, selectedDate, from, to, search],
+    enabled: status === "authenticated" && hasPresence && !variantsLoading,
     queryFn: async () => {
       const params = new URLSearchParams()
-      params.set('view', view)
-      if (variantFilter) params.set('variantId', variantFilter)
-      if (search.trim()) params.set('q', search.trim())
-      if (view === 'day') {
-        params.set('date', selectedDate)
+      params.set("view", view)
+      if (variantFilter) params.set("variantId", variantFilter)
+      if (search.trim()) params.set("q", search.trim())
+
+      if (view === "day") {
+        params.set("date", selectedDate)
       } else {
-        if (from) params.set('from', from)
-        if (to) params.set('to', to)
+        if (from) params.set("from", from)
+        if (to) params.set("to", to)
       }
-      params.set('limit', '180')
+
+      params.set("limit", "180")
 
       const response = await fetch(`/api/gym-team/visits?${params.toString()}`)
       const body = await response.json().catch(() => ({}))
-      if (!response.ok) {
-        throw new Error(body.error || t('errors.load'))
-      }
+      if (!response.ok) throw new Error(body.error || t("errors.load"))
       return body as VisitAnalyticsResponse
     },
   })
@@ -185,34 +191,38 @@ export default function PresencePage() {
       })),
     [visitsQuery.data?.visits],
   )
+
   const openVisits = useMemo(() => parsedVisits.filter((visit) => !visit.checkOut), [parsedVisits])
   const summary = visitsQuery.data?.summary ?? defaultSummary
   const charts = visitsQuery.data?.charts ?? { byHour: [], byDay: [], byVariant: [] }
+
   const selectedOpenVisit = useMemo(
     () => openVisits.find((visit) => visit.id === checkoutVisitId) ?? null,
     [checkoutVisitId, openVisits],
   )
+
   const dateFormatter = useMemo(
     () =>
-      new Intl.DateTimeFormat(locale === 'en' ? 'en-US' : locale === 'ar' ? 'ar' : 'fr-FR', {
-        day: '2-digit',
-        month: '2-digit',
-        year: 'numeric',
+      new Intl.DateTimeFormat(locale === "en" ? "en-US" : locale === "ar" ? "ar" : "fr-FR", {
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric",
       }),
     [locale],
   )
+
   const timeFormatter = useMemo(
     () =>
-      new Intl.DateTimeFormat(locale === 'en' ? 'en-US' : locale === 'ar' ? 'ar' : 'fr-FR', {
-        hour: '2-digit',
-        minute: '2-digit',
+      new Intl.DateTimeFormat(locale === "en" ? "en-US" : locale === "ar" ? "ar" : "fr-FR", {
+        hour: "2-digit",
+        minute: "2-digit",
       }),
     [locale],
   )
 
   useEffect(() => {
     if (openVisits.length === 0) {
-      setCheckoutVisitId('')
+      setCheckoutVisitId("")
       return
     }
     const currentSelected = openVisits.find((visit) => visit.id === checkoutVisitId)
@@ -223,14 +233,9 @@ export default function PresencePage() {
 
   const checkoutMutation = useMutation({
     mutationFn: async () => {
-      if (!checkoutVisitId) {
-        throw new Error(t('errors.noSelection'))
-      }
+      if (!checkoutVisitId) throw new Error(t("errors.noSelection"))
 
-      const payload: Record<string, any> = {
-        direction: 'OUT',
-        visitId: checkoutVisitId,
-      }
+      const payload: Record<string, any> = { direction: "OUT", visitId: checkoutVisitId }
 
       const checkoutAtIso = buildDateTimeString(checkoutDate, checkoutTime)
       const windowFromIso = checkoutWindowStart ? buildDateTimeString(checkoutDate, checkoutWindowStart) : null
@@ -240,88 +245,122 @@ export default function PresencePage() {
       if (windowFromIso) payload.rangeFrom = windowFromIso
       if (windowToIso) payload.rangeTo = windowToIso
 
-      const response = await fetch('/api/gym-team/visits', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+      const response = await fetch("/api/gym-team/visits", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       })
+
       const body = await response.json().catch(() => ({}))
-      if (!response.ok) {
-        throw new Error(body.error || t('errors.checkout'))
+      if (!response.ok) throw new Error(body.error || t("errors.checkout"))
+
+      return body as {
+        memberName?: string
+        isOverMaxDuration?: boolean
+        sessionLimitMinutes?: number | null
+        durationMinutes?: number
       }
-      return body as { memberName?: string; isOverMaxDuration?: boolean; sessionLimitMinutes?: number | null; durationMinutes?: number }
     },
     onSuccess: (data) => {
-      const segments = [t('manualCheckout.toasts.base')]
-      if (data?.memberName) {
-        segments.push(t('manualCheckout.toasts.member', { memberName: data.memberName }))
-      }
-      if (typeof data?.durationMinutes === 'number') {
-        segments.push(t('manualCheckout.toasts.duration', { minutes: data.durationMinutes }))
-      }
+      const segments: string[] = [t("manualCheckout.toasts.base")]
+
+      if (data?.memberName) segments.push(t("manualCheckout.toasts.member", { memberName: data.memberName }))
+      if (typeof data?.durationMinutes === "number")
+        segments.push(t("manualCheckout.toasts.duration", { minutes: data.durationMinutes }))
+
       if (data?.isOverMaxDuration) {
-        const limitLabel =
-          typeof data.sessionLimitMinutes === 'number'
-            ? t('manualCheckout.toasts.limit', { limit: data.sessionLimitMinutes })
-            : t('manualCheckout.toasts.overstay')
-        segments.push(limitLabel)
+        segments.push(
+          typeof data.sessionLimitMinutes === "number"
+            ? t("manualCheckout.toasts.limit", { limit: data.sessionLimitMinutes })
+            : t("manualCheckout.toasts.overstay"),
+        )
       }
-      const message = segments.join('')
+
+      const message = segments.filter(Boolean).join(" ")
       const notify = data?.isOverMaxDuration ? toast.warning : toast.success
       notify(message)
+
       setCheckoutDialogOpen(false)
       visitsQuery.refetch()
     },
     onError: (error) => {
-      const message = error instanceof Error ? error.message : t('errors.checkout')
+      const message = error instanceof Error ? error.message : t("errors.checkout")
       toast.error(message)
     },
   })
 
-
   const resetFilters = () => {
-    setView('day')
+    setView("day")
     setSelectedDate(todayStr)
     setFrom(lastWeekStr)
     setTo(todayStr)
-    setSearch('')
+    setSearch("")
   }
 
   const visitPagination = usePagination(parsedVisits, 12)
 
-  if (status === 'loading' || variantsLoading) {
+  const visitTablePagination = useMemo(
+    () => ({
+      page: visitPagination.page,
+      pageCount: visitPagination.pageCount,
+      pageSize: visitPagination.pageSize,
+      totalItems: parsedVisits.length,
+      onPageChange: visitPagination.setPage,
+    }),
+    [
+      parsedVisits.length,
+      visitPagination.page,
+      visitPagination.pageCount,
+      visitPagination.pageSize,
+      visitPagination.setPage,
+    ],
+  )
+
+  if (status === "loading" || variantsLoading) {
     return (
-      <div className="space-y-4">
-        <Skeleton className="h-10 w-64" />
-        <Skeleton className="h-24 w-full" />
-        <Skeleton className="h-80 w-full" />
+      <div className="space-y-4 animate-in fade-in duration-500">
+        <div className="flex items-center justify-between">
+          <Skeleton className="h-9 w-48 rounded-2xl" />
+          <Skeleton className="h-10 w-32 rounded-2xl" />
+        </div>
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <div key={i} className="space-y-3 rounded-2xl border border-border/60 bg-card/60 p-4 animate-pulse">
+              <Skeleton className="h-4 w-24 rounded-full" />
+              <Skeleton className="h-8 w-32 rounded-lg" />
+            </div>
+          ))}
+        </div>
+        <div className="rounded-3xl border border-border/60 bg-card/80 p-6">
+          <Skeleton className="h-80 w-full rounded-2xl" />
+        </div>
       </div>
     )
   }
 
-  if (status === 'unauthenticated') {
-    return <div className="text-red-500 font-medium">{t('errors.unauthenticated')}</div>
+  if (status === "unauthenticated") {
+    return <div className="text-red-500 font-medium">{t("errors.unauthenticated")}</div>
   }
 
   if (!hasPresence) {
     return (
       <LockedFeatureState
-        title={t('locked.title')}
-        description={t('locked.description')}
+        title={t("locked.title")}
+        description={t("locked.description")}
         planLabel={planLabel}
         items={featureItems}
       />
     )
   }
 
-
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-700">
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold">{t('title')}</h1>
-          <p className="text-muted-foreground">{t('subtitle')}</p>
+          <h1 className="text-3xl font-bold tracking-tight">{t("title")}</h1>
+          <p className="mt-1 text-sm leading-relaxed text-muted-foreground">{t("subtitle")}</p>
         </div>
+
         <div className="flex items-center gap-3">
           <VariantSelector
             variants={variants}
@@ -332,38 +371,40 @@ export default function PresencePage() {
             loading={variantsLoading}
             allowAll={allowAllVariants}
           />
+
           <Dialog open={checkoutDialogOpen} onOpenChange={setCheckoutDialogOpen}>
             <DialogTrigger asChild>
               <Button
                 variant="outline"
                 onClick={() => setCheckoutDialogOpen(true)}
                 disabled={!openVisits.length}
-                className="border-border/70"
+                className="rounded-2xl border-border/60 transition-all hover:scale-105"
               >
                 <LogOut className="mr-2 h-4 w-4" />
-                {t('manualCheckout.trigger')}
+                {t("manualCheckout.trigger")}
               </Button>
             </DialogTrigger>
+
             <DialogContent className="sm:max-w-lg">
               <DialogHeader>
-                <DialogTitle>{t('manualCheckout.title')}</DialogTitle>
-                <DialogDescription>{t('manualCheckout.description')}</DialogDescription>
+                <DialogTitle>{t("manualCheckout.title")}</DialogTitle>
+                <DialogDescription>{t("manualCheckout.description")}</DialogDescription>
               </DialogHeader>
+
               {openVisits.length === 0 ? (
-                <p className="text-sm text-muted-foreground">{t('manualCheckout.noOpenVisits')}</p>
+                <p className="text-sm text-muted-foreground">{t("manualCheckout.noOpenVisits")}</p>
               ) : (
                 <div className="space-y-4 py-2">
                   <div className="space-y-2">
-                    <Label htmlFor="visit-select">{t('manualCheckout.visitLabel')}</Label>
+                    <Label htmlFor="visit-select">{t("manualCheckout.visitLabel")}</Label>
                     <Select value={checkoutVisitId} onValueChange={setCheckoutVisitId}>
                       <SelectTrigger id="visit-select">
-                        <SelectValue placeholder={t('manualCheckout.visitPlaceholder')} />
+                        <SelectValue placeholder={t("manualCheckout.visitPlaceholder")} />
                       </SelectTrigger>
                       <SelectContent>
                         {openVisits.map((visit) => (
                           <SelectItem key={visit.id} value={visit.id}>
-                            {visit.memberName} · {visit.checkIn.toLocaleDateString('fr-FR')}{' '}
-                            {visit.checkIn.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })} ·{' '}
+                            {visit.memberName} · {dateFormatter.format(visit.checkIn)} {timeFormatter.format(visit.checkIn)} ·{" "}
                             {visit.variantName}
                           </SelectItem>
                         ))}
@@ -373,7 +414,7 @@ export default function PresencePage() {
 
                   <div className="grid grid-cols-2 gap-3">
                     <div className="space-y-2">
-                      <Label htmlFor="checkout-date">{t('manualCheckout.checkoutDate')}</Label>
+                      <Label htmlFor="checkout-date">{t("manualCheckout.checkoutDate")}</Label>
                       <Input
                         id="checkout-date"
                         type="date"
@@ -382,7 +423,7 @@ export default function PresencePage() {
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="checkout-time">{t('manualCheckout.checkoutTime')}</Label>
+                      <Label htmlFor="checkout-time">{t("manualCheckout.checkoutTime")}</Label>
                       <Input
                         id="checkout-time"
                         type="time"
@@ -394,7 +435,7 @@ export default function PresencePage() {
 
                   <div className="grid grid-cols-2 gap-3">
                     <div className="space-y-2">
-                      <Label htmlFor="window-from">{t('manualCheckout.windowFrom')}</Label>
+                      <Label htmlFor="window-from">{t("manualCheckout.windowFrom")}</Label>
                       <Input
                         id="window-from"
                         type="time"
@@ -404,7 +445,7 @@ export default function PresencePage() {
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="window-to">{t('manualCheckout.windowTo')}</Label>
+                      <Label htmlFor="window-to">{t("manualCheckout.windowTo")}</Label>
                       <Input
                         id="window-to"
                         type="time"
@@ -417,7 +458,7 @@ export default function PresencePage() {
 
                   {selectedOpenVisit ? (
                     <div className="rounded-lg border border-border/60 bg-muted/40 px-3 py-2 text-xs text-muted-foreground">
-                      {t('manualCheckout.arrivalInfo', {
+                      {t("manualCheckout.arrivalInfo", {
                         date: dateFormatter.format(selectedOpenVisit.checkIn),
                         time: timeFormatter.format(selectedOpenVisit.checkIn),
                         variant: selectedOpenVisit.variantName,
@@ -426,44 +467,42 @@ export default function PresencePage() {
                   ) : null}
                 </div>
               )}
+
               <DialogFooter className="mt-2">
-                <Button
-                  variant="outline"
-                  onClick={() => setCheckoutDialogOpen(false)}
-                  className="border-border/70"
-                >
-                  {t('manualCheckout.cancel')}
+                <Button variant="outline" onClick={() => setCheckoutDialogOpen(false)} className="border-border/70">
+                  {t("manualCheckout.cancel")}
                 </Button>
                 <Button
                   onClick={() => checkoutMutation.mutate()}
                   disabled={!openVisits.length || checkoutMutation.isPending}
                 >
-                  {checkoutMutation.isPending ? t('manualCheckout.submitPending') : t('manualCheckout.submit')}
+                  {checkoutMutation.isPending ? t("manualCheckout.submitPending") : t("manualCheckout.submit")}
                 </Button>
               </DialogFooter>
             </DialogContent>
           </Dialog>
+
           <Button
             variant="outline"
             onClick={() => visitsQuery.refetch()}
             disabled={visitsQuery.isFetching}
-            className="border-border/70"
+            className="rounded-2xl border-border/60 transition-all hover:scale-105"
           >
-            <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
-            {visitsQuery.isFetching ? t('actions.refreshing') : t('actions.refresh')}
+            <RefreshCw className={`mr-2 h-4 w-4 ${visitsQuery.isFetching ? "animate-spin" : ""}`} />
+            {visitsQuery.isFetching ? t("actions.refreshing") : t("actions.refresh")}
           </Button>
         </div>
       </div>
 
       {multiVariantLocked ? (
-        <div className="flex items-start gap-3 rounded-xl border border-amber-200/70 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+        <div className="flex items-start gap-3 rounded-2xl border border-amber-200/70 bg-amber-50/80 px-4 py-3 text-sm text-amber-900 shadow-sm">
           <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-600" />
           <div className="space-y-1">
-            <p className="font-semibold">{t('multiVariantLocked.title')}</p>
+            <p className="font-semibold">{t("multiVariantLocked.title")}</p>
             <p>
-              {t('multiVariantLocked.body')}{' '}
+              {t("multiVariantLocked.body")}{" "}
               <Link href="/dashboard/settings" className="font-semibold text-amber-900 underline">
-                {t('multiVariantLocked.upgrade')}
+                {t("multiVariantLocked.upgrade")}
               </Link>
               .
             </p>
@@ -479,9 +518,8 @@ export default function PresencePage() {
         search={search}
         onViewChange={(next) => {
           setView(next)
-          if (next === 'day') {
-            setSelectedDate(todayStr)
-          } else {
+          if (next === "day") setSelectedDate(todayStr)
+          else {
             setFrom(lastWeekStr)
             setTo(todayStr)
           }
@@ -496,84 +534,66 @@ export default function PresencePage() {
       />
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <Card>
+        <Card className="overflow-hidden rounded-2xl border border-border/60 bg-card/90 shadow-sm backdrop-blur-sm transition-all hover:-translate-y-1 hover:shadow-md">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm text-muted-foreground">{t('summary.visits')}</CardTitle>
+            <CardTitle className="text-sm text-muted-foreground">{t("summary.visits")}</CardTitle>
           </CardHeader>
           <CardContent className="flex items-center gap-2 text-2xl font-semibold">
             <Activity className="h-5 w-5 text-primary" />
             {summary.total.toLocaleString()}
           </CardContent>
         </Card>
-        <Card>
+
+        <Card className="overflow-hidden rounded-2xl border border-border/60 bg-card/90 shadow-sm backdrop-blur-sm transition-all hover:-translate-y-1 hover:shadow-md">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm text-muted-foreground">{t('summary.unique')}</CardTitle>
+            <CardTitle className="text-sm text-muted-foreground">{t("summary.unique")}</CardTitle>
           </CardHeader>
           <CardContent className="flex items-center gap-2 text-2xl font-semibold">
             <Users className="h-5 w-5 text-primary" />
             {summary.uniqueMembers.toLocaleString()}
           </CardContent>
         </Card>
-        <Card>
+
+        <Card className="overflow-hidden rounded-2xl border border-border/60 bg-card/90 shadow-sm backdrop-blur-sm transition-all hover:-translate-y-1 hover:shadow-md">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm text-muted-foreground">{t('summary.present')}</CardTitle>
+            <CardTitle className="text-sm text-muted-foreground">{t("summary.present")}</CardTitle>
           </CardHeader>
           <CardContent className="flex items-center gap-2 text-2xl font-semibold">
-            <Badge variant="secondary" className="bg-emerald-50 text-emerald-700">
+            <Badge variant="secondary" className="rounded-full bg-emerald-50 text-emerald-700">
               {summary.currentInside.toLocaleString()}
             </Badge>
-            <span className="text-sm text-muted-foreground">{t('summary.pendingCheckout')}</span>
+            <span className="text-sm text-muted-foreground">{t("summary.pendingCheckout")}</span>
           </CardContent>
         </Card>
-        <Card>
+
+        <Card className="overflow-hidden rounded-2xl border border-border/60 bg-card/90 shadow-sm backdrop-blur-sm transition-all hover:-translate-y-1 hover:shadow-md">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm text-muted-foreground">{t('summary.averageDuration')}</CardTitle>
+            <CardTitle className="text-sm text-muted-foreground">{t("summary.avgDuration")}</CardTitle>
           </CardHeader>
           <CardContent className="flex items-center gap-2 text-2xl font-semibold">
             <Clock3 className="h-5 w-5 text-primary" />
-            {summary.averageDurationMinutes} min
+            {summary.averageDurationMinutes.toFixed(0)} min
           </CardContent>
         </Card>
       </div>
 
-      {visitsQuery.isError ? (
-        <div className="flex items-center gap-2 rounded-lg border border-destructive/40 bg-destructive/10 p-4 text-sm text-destructive">
-          {t('errors.load')}
-        </div>
-      ) : null}
+      <Card className="overflow-hidden rounded-3xl border border-border/60 bg-card/90 shadow-md backdrop-blur-sm">
+        <CardHeader>
+          <CardTitle>{t("charts.title")}</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <VisitCharts byHour={charts.byHour} byDay={charts.byDay} byVariant={charts.byVariant} view={view} />
+        </CardContent>
+      </Card>
 
-      <VisitCharts
-        view={view}
-        byHour={charts.byHour}
-        byDay={charts.byDay}
-        byVariant={charts.byVariant}
-        loading={visitsQuery.isLoading}
-      />
-
-      {visitsQuery.isLoading ? (
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle>{t('recent.title')}</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <Skeleton className="h-10 w-full" />
-            <Skeleton className="h-10 w-full" />
-            <Skeleton className="h-10 w-full" />
-          </CardContent>
-        </Card>
-      ) : (
-        <VisitTable
-          visits={visitPagination.data}
-          maxSessionMinutes={visitsQuery.data?.maxSessionMinutes ?? null}
-          pagination={{
-            page: visitPagination.page,
-            pageCount: visitPagination.pageCount,
-            pageSize: visitPagination.pageSize,
-            totalItems: parsedVisits.length,
-            onPageChange: visitPagination.setPage,
-          }}
-        />
-      )}
+      <Card className="overflow-hidden rounded-3xl border border-border/60 bg-card/90 shadow-md backdrop-blur-sm">
+        <CardHeader>
+          <CardTitle>{t("table.title")}</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <VisitTable visits={visitPagination.data} pagination={visitTablePagination} />
+        </CardContent>
+      </Card>
     </div>
   )
 }

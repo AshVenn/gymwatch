@@ -1,37 +1,27 @@
-'use client'
+"use client"
 
-import Link from 'next/link'
-import { useRouter } from 'next/navigation'
-import { useEffect, useMemo, useState } from 'react'
-import { useSession } from 'next-auth/react'
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { CalendarRange, Clock, Eye, MoreVertical, Pencil, Plus, Trash2 } from 'lucide-react'
-import { toast } from 'sonner'
-import { useTranslations, useLocale } from 'next-intl'
+import Link from "next/link"
+import { useRouter } from "next/navigation"
+import { useEffect, useMemo, useState } from "react"
+import { useSession } from "next-auth/react"
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
+import { CalendarRange, Clock, Eye, MoreVertical, Pencil, Plus, Trash2 } from "lucide-react"
+import { toast } from "sonner"
+import { useTranslations, useLocale } from "next-intl"
 
-import { Button } from '@/components/ui/button'
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog'
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu'
-import { Badge } from '@/components/ui/badge'
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
-import { Skeleton } from '@/components/ui/skeleton'
-import { ClassForm, ClassFormValues } from '@/components/dashboard/classes/class-form'
-import { WeekCalendar } from '@/components/dashboard/classes/week-calendar'
-import { buildFeatureAccessItems, LockedFeatureState } from '@/components/dashboard/feature-access-grid'
-import { PaginationControls, usePagination } from '@/components/dashboard/pagination-controls'
-import { VariantSelector } from '@/components/dashboard/variant-selector'
-import { useVariantOptions } from '@/app/hooks/use-variants'
-import { usePlanFeatures } from '@/app/hooks/use-plan-features'
+import { Button } from "@/components/ui/button"
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+import { Badge } from "@/components/ui/badge"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { Skeleton } from "@/components/ui/skeleton"
+import { ClassForm, type ClassFormValues } from "@/components/dashboard/classes/class-form"
+import { WeekCalendar } from "@/components/dashboard/classes/week-calendar"
+import { buildFeatureAccessItems, LockedFeatureState } from "@/components/dashboard/feature-access-grid"
+import { PaginationControls, usePagination } from "@/components/dashboard/pagination-controls"
+import { VariantSelector } from "@/components/dashboard/variant-selector"
+import { useVariantOptions } from "@/app/hooks/use-variants"
+import { usePlanFeatures } from "@/app/hooks/use-plan-features"
 
 type ClassSession = {
   id: string
@@ -66,8 +56,8 @@ const endOfWeek = (value: Date) => {
 
 const toDateInput = (date: Date) => {
   const year = date.getFullYear()
-  const month = String(date.getMonth() + 1).padStart(2, '0')
-  const day = String(date.getDate()).padStart(2, '0')
+  const month = String(date.getMonth() + 1).padStart(2, "0")
+  const day = String(date.getDate()).padStart(2, "0")
   return `${year}-${month}-${day}`
 }
 
@@ -82,9 +72,9 @@ export default function ClassesPage() {
   const router = useRouter()
   const queryClient = useQueryClient()
   const { tier, hasAccessControl, hasPresence, hasCourses, hasExcelReports } = usePlanFeatures()
-  const t = useTranslations('dashboard.classes')
-  const tNav = useTranslations('dashboard.nav')
-  const tFeatureAccess = useTranslations('dashboard.featureAccess')
+  const t = useTranslations("dashboard.classes")
+  const tNav = useTranslations("dashboard.nav")
+  const tFeatureAccess = useTranslations("dashboard.featureAccess")
   const locale = useLocale()
 
   const [weekStart, setWeekStart] = useState<Date>(startOfWeek(new Date()))
@@ -101,11 +91,17 @@ export default function ClassesPage() {
   } = useVariantOptions()
 
   const gymId = session?.user?.gymId ?? null
-  const variantFilter = selectedVariant === 'all' ? null : selectedVariant
+  const variantFilter = selectedVariant === "all" ? null : selectedVariant
 
-  const planLabelKey =
-    tier === 'ENTERPRISE' ? 'enterprise' : tier === 'PRO' ? 'pro' : 'basic'
+  const planLabelKey = tier === "ENTERPRISE" ? "enterprise" : tier === "PRO" ? "pro" : "basic"
   const planLabel = t(`planLabel.${planLabelKey}`)
+
+  // ✅ Correct adapter: match the exact `Translate` signature expected by buildFeatureAccessItems
+  const translateFeatureAccess = useMemo(() => {
+    type Translate = Parameters<typeof buildFeatureAccessItems>[0]["t"]
+    const fn: Translate = (key, values) => tFeatureAccess(key as any, values as any)
+    return fn
+  }, [tFeatureAccess])
 
   const featureItems = useMemo(
     () =>
@@ -114,23 +110,23 @@ export default function ClassesPage() {
         hasPresence,
         hasCourses,
         hasExcelReports,
-        t: tFeatureAccess,
+        t: translateFeatureAccess,
       }),
-    [hasAccessControl, hasCourses, hasExcelReports, hasPresence, tFeatureAccess],
+    [hasAccessControl, hasCourses, hasExcelReports, hasPresence, translateFeatureAccess],
   )
 
   const [dialogOpen, setDialogOpen] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
   const [formValues, setFormValues] = useState<ClassFormValues>({
-    title: '',
-    coach: '',
-    room: '',
-    capacity: '10',
+    title: "",
+    coach: "",
+    room: "",
+    capacity: "10",
     date: toDateInput(new Date()),
-    startTime: '09:00',
-    endTime: '10:00',
+    startTime: "09:00",
+    endTime: "10:00",
     waitlist: true,
-    gymVariantId: '',
+    gymVariantId: "",
   })
 
   useEffect(() => {
@@ -139,7 +135,7 @@ export default function ClassesPage() {
       setFormValues((prev) => ({ ...prev, gymVariantId: lockedVariantId }))
       return
     }
-    if (selectedVariant && selectedVariant !== 'all') {
+    if (selectedVariant && selectedVariant !== "all") {
       setFormValues((prev) => ({ ...prev, gymVariantId: selectedVariant }))
     } else if (defaultVariantId) {
       setFormValues((prev) => ({ ...prev, gymVariantId: defaultVariantId }))
@@ -147,25 +143,25 @@ export default function ClassesPage() {
   }, [defaultVariantId, editingId, isGymAdmin, lockedVariantId, selectedVariant])
 
   const classQueryKey = useMemo(
-    () => ['classes', gymId, variantFilter, weekStart.toISOString()] as const,
+    () => ["classes", gymId, variantFilter, weekStart.toISOString()] as const,
     [gymId, variantFilter, weekStart],
   )
 
   const classesQuery = useQuery<ClassSession[]>({
     queryKey: classQueryKey,
-    enabled: status === 'authenticated' && Boolean(gymId) && hasCourses,
+    enabled: status === "authenticated" && Boolean(gymId) && hasCourses,
     queryFn: async () => {
       const params = new URLSearchParams({
         from: weekStart.toISOString(),
         to: weekEnd.toISOString(),
       })
       if (variantFilter) {
-        params.set('variantId', variantFilter)
+        params.set("variantId", variantFilter)
       }
       const response = await fetch(`/api/gym-team/classes?${params.toString()}`)
       const data = await response.json().catch(() => ({}))
       if (!response.ok) {
-        throw new Error(data.error || t('errors.load'))
+        throw new Error(data.error || t("errors.load"))
       }
       return Array.isArray(data) ? data : []
     },
@@ -178,18 +174,15 @@ export default function ClassesPage() {
     mutationFn: async () => {
       const startAt = combineDateTime(formValues.date, formValues.startTime)
       const endAt = combineDateTime(formValues.date, formValues.endTime)
-      if (!startAt || !endAt) {
-        throw new Error(t('validation.dateTime'))
-      }
+      if (!startAt || !endAt) throw new Error(t("validation.dateTime"))
+
       const variantId = isGymAdmin
         ? lockedVariantId
         : formValues.gymVariantId ||
-          (selectedVariant !== 'all' ? selectedVariant : defaultVariantId) ||
+          (selectedVariant !== "all" ? selectedVariant : defaultVariantId) ||
           variants[0]?.id
 
-      if (!variantId) {
-        throw new Error(t('validation.variantRequired'))
-      }
+      if (!variantId) throw new Error(t("validation.variantRequired"))
 
       const payload = {
         title: formValues.title,
@@ -202,18 +195,16 @@ export default function ClassesPage() {
         waitlist: formValues.waitlist,
       }
 
-      const method = editingId ? 'PUT' : 'POST'
-      const url = editingId ? `/api/gym-team/classes/${editingId}` : '/api/gym-team/classes'
+      const method = editingId ? "PUT" : "POST"
+      const url = editingId ? `/api/gym-team/classes/${editingId}` : "/api/gym-team/classes"
 
       const response = await fetch(url, {
         method,
-        headers: { 'Content-Type': 'application/json' },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       })
       const data = await response.json().catch(() => ({}))
-      if (!response.ok) {
-        throw new Error(data.error || t('errors.save'))
-      }
+      if (!response.ok) throw new Error(data.error || t("errors.save"))
       return data
     },
     onSuccess: () => {
@@ -222,56 +213,52 @@ export default function ClassesPage() {
       setEditingId(null)
       setFormValues((prev) => ({
         ...prev,
-        title: '',
-        coach: '',
-        room: '',
-        capacity: '10',
-        startTime: '09:00',
-        endTime: '10:00',
+        title: "",
+        coach: "",
+        room: "",
+        capacity: "10",
+        startTime: "09:00",
+        endTime: "10:00",
       }))
-      toast.success(t('toasts.saved'))
+      toast.success(t("toasts.saved"))
     },
     onError: (error) => {
-      const message = error instanceof Error ? error.message : t('errors.save')
-      toast.error(message)
+      toast.error(error instanceof Error ? error.message : t("errors.save"))
     },
   })
 
   const deleteClass = useMutation({
     mutationFn: async (classId: string) => {
-      const response = await fetch(`/api/gym-team/classes/${classId}`, { method: 'DELETE' })
+      const response = await fetch(`/api/gym-team/classes/${classId}`, { method: "DELETE" })
       const data = await response.json().catch(() => ({}))
-      if (!response.ok) {
-        throw new Error(data.error || t('errors.delete'))
-      }
+      if (!response.ok) throw new Error(data.error || t("errors.delete"))
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: classQueryKey })
-      toast.success(t('toasts.deleted'))
+      toast.success(t("toasts.deleted"))
     },
     onError: (error) => {
-      const message = error instanceof Error ? error.message : t('errors.delete')
-      toast.error(message)
+      toast.error(error instanceof Error ? error.message : t("errors.delete"))
     },
   })
 
   const openCreate = () => {
     setEditingId(null)
     setFormValues({
-      title: '',
-      coach: '',
-      room: '',
-      capacity: '10',
+      title: "",
+      coach: "",
+      room: "",
+      capacity: "10",
       date: toDateInput(weekStart),
-      startTime: '09:00',
-      endTime: '10:00',
+      startTime: "09:00",
+      endTime: "10:00",
       waitlist: true,
       gymVariantId:
-        (selectedVariant !== 'all' ? selectedVariant : '') ||
+        (selectedVariant !== "all" ? selectedVariant : "") ||
         lockedVariantId ||
         defaultVariantId ||
         variants[0]?.id ||
-        '',
+        "",
     })
     setDialogOpen(true)
   }
@@ -280,13 +267,13 @@ export default function ClassesPage() {
     const start = new Date(course.startAt)
     const end = new Date(course.endAt)
     const toTimeInput = (value: Date) =>
-      `${String(value.getHours()).padStart(2, '0')}:${String(value.getMinutes()).padStart(2, '0')}`
+      `${String(value.getHours()).padStart(2, "0")}:${String(value.getMinutes()).padStart(2, "0")}`
 
     setEditingId(course.id)
     setFormValues({
       title: course.title,
-      coach: course.coach ?? '',
-      room: course.room ?? '',
+      coach: course.coach ?? "",
+      room: course.room ?? "",
       capacity: String(course.capacity),
       date: toDateInput(start),
       startTime: toTimeInput(start),
@@ -298,43 +285,34 @@ export default function ClassesPage() {
   }
 
   const weekLabel = useMemo(() => {
-    const format = (date: Date) =>
-      date.toLocaleDateString(locale, { day: '2-digit', month: '2-digit' })
+    const format = (date: Date) => date.toLocaleDateString(locale, { day: "2-digit", month: "2-digit" })
     return `${format(weekStart)} → ${format(weekEnd)}`
   }, [locale, weekEnd, weekStart])
 
   const renderContent = () => {
-    if (status === 'loading' || variantsLoading) {
+    if (status === "loading" || variantsLoading) {
       return (
-        <div className="space-y-4">
-          <Skeleton className="h-8 w-48" />
-          <Skeleton className="h-10 w-full" />
-          <Skeleton className="h-64 w-full" />
+        <div className="space-y-4 animate-in fade-in duration-500">
+          <div className="flex items-center justify-between">
+            <Skeleton className="h-9 w-48 rounded-2xl" />
+            <Skeleton className="h-10 w-32 rounded-2xl" />
+          </div>
+          <div className="rounded-3xl border border-border/60 bg-card/80 p-6 space-y-4">
+            <Skeleton className="h-64 w-full rounded-2xl" />
+            <Skeleton className="h-96 w-full rounded-2xl" />
+          </div>
         </div>
       )
     }
 
-    if (status === 'unauthenticated') {
-      return (
-        <div className="text-red-500 font-medium">
-          {t('page.unauthenticated')}
-        </div>
-      )
-    }
-
-    if (!gymId) {
-      return (
-        <div className="text-red-500 font-medium">
-          {t('page.noGym')}
-        </div>
-      )
-    }
+    if (status === "unauthenticated") return <div className="text-red-500 font-medium">{t("page.unauthenticated")}</div>
+    if (!gymId) return <div className="text-red-500 font-medium">{t("page.noGym")}</div>
 
     if (!hasCourses) {
       return (
         <LockedFeatureState
-          title={t('locked.title')}
-          description={t('locked.description')}
+          title={t("locked.title")}
+          description={t("locked.description")}
           planLabel={planLabel}
           items={featureItems}
         />
@@ -342,13 +320,11 @@ export default function ClassesPage() {
     }
 
     return (
-      <div className="space-y-6">
+      <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-700">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
-            <h1 className="text-3xl font-bold">{tNav('classes')}</h1>
-            <p className="text-muted-foreground">
-              {t('page.subtitle')}
-            </p>
+            <h1 className="text-3xl font-bold tracking-tight">{tNav("classes")}</h1>
+            <p className="mt-1 text-sm leading-relaxed text-muted-foreground">{t("page.subtitle")}</p>
           </div>
           <div className="flex flex-wrap items-center gap-3">
             <VariantSelector
@@ -359,117 +335,79 @@ export default function ClassesPage() {
               lockedVariantId={lockedVariantId}
               loading={variantsLoading}
             />
-            <div className="flex items-center gap-2 rounded-xl border border-border/70 bg-card px-3 py-2">
+            <div className="flex items-center gap-2 rounded-xl border border-border/60 bg-card/90 px-3 py-2 shadow-sm backdrop-blur-sm">
               <CalendarRange size={16} />
               <span className="text-sm font-medium">{weekLabel}</span>
               <div className="flex items-center gap-1">
                 <Button
                   variant="ghost"
                   size="sm"
-                  onClick={() =>
-                    setWeekStart(
-                      (prev) =>
-                        new Date(prev.getTime() - 7 * 24 * 60 * 60 * 1000),
-                    )
-                  }
+                  onClick={() => setWeekStart((prev) => new Date(prev.getTime() - 7 * 24 * 60 * 60 * 1000))}
                 >
-                  {t('week.prev')}
+                  {t("week.prev")}
                 </Button>
                 <Button
                   variant="ghost"
                   size="sm"
-                  onClick={() =>
-                    setWeekStart(
-                      (prev) =>
-                        new Date(prev.getTime() + 7 * 24 * 60 * 60 * 1000),
-                    )
-                  }
+                  onClick={() => setWeekStart((prev) => new Date(prev.getTime() + 7 * 24 * 60 * 60 * 1000))}
                 >
-                  {t('week.next')}
+                  {t("week.next")}
                 </Button>
               </div>
             </div>
-            <Button onClick={openCreate}>
+            <Button onClick={openCreate} className="rounded-2xl shadow-md transition-all hover:scale-105">
               <Plus className="mr-2 h-4 w-4" />
-              {t('actions.new')}
+              {t("actions.new")}
             </Button>
           </div>
         </div>
 
         {classesQuery.isError ? (
-          <div className="rounded-xl border border-destructive/40 bg-destructive/10 p-4 text-destructive">
-            {t('errors.load')}
-          </div>
+          <div className="rounded-xl border border-destructive/40 bg-destructive/10 p-4 text-destructive">{t("errors.load")}</div>
         ) : (
           <>
-            <WeekCalendar
-              weekStart={weekStart}
-              sessions={classes}
-              onSelect={(id) => router.push(`/dashboard/classes/${id}`)}
-            />
+            <WeekCalendar weekStart={weekStart} sessions={classes} onSelect={(id) => router.push(`/dashboard/classes/${id}`)} />
 
-            <div className="rounded-2xl border border-border/70 bg-card/80">
+            <div className="rounded-3xl border border-border/60 bg-card/90 shadow-md backdrop-blur-sm overflow-hidden">
               <Table>
                 <TableHeader>
-                  <TableRow className="bg-muted/40 text-muted-foreground">
-                    <TableHead>{t('table.columns.title')}</TableHead>
-                    <TableHead>{t('table.columns.coach')}</TableHead>
-                    <TableHead>{t('table.columns.room')}</TableHead>
-                    <TableHead>{t('table.columns.schedule')}</TableHead>
-                    <TableHead>{t('table.columns.variant')}</TableHead>
-                    <TableHead>{t('table.columns.capacity')}</TableHead>
-                    <TableHead className="text-right">
-                      {t('table.columns.actions')}
-                    </TableHead>
+                  <TableRow className="border-b border-border/60 bg-muted/30">
+                    <TableHead>{t("table.columns.title")}</TableHead>
+                    <TableHead>{t("table.columns.coach")}</TableHead>
+                    <TableHead>{t("table.columns.room")}</TableHead>
+                    <TableHead>{t("table.columns.schedule")}</TableHead>
+                    <TableHead>{t("table.columns.variant")}</TableHead>
+                    <TableHead>{t("table.columns.capacity")}</TableHead>
+                    <TableHead className="text-right">{t("table.columns.actions")}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {classesPagination.data.map((course) => {
                     const start = new Date(course.startAt)
                     const end = new Date(course.endAt)
-                    const timeRange = `${start.toLocaleTimeString(locale, {
-                      hour: '2-digit',
-                      minute: '2-digit',
-                    })} - ${end.toLocaleTimeString(locale, {
-                      hour: '2-digit',
-                      minute: '2-digit',
-                    })}`
+                    const timeRange = `${start.toLocaleTimeString(locale, { hour: "2-digit", minute: "2-digit" })} - ${end.toLocaleTimeString(locale, { hour: "2-digit", minute: "2-digit" })}`
                     const confirmed = course.confirmedCount ?? 0
                     const waitlist = course.waitlistCount ?? 0
 
                     return (
                       <TableRow key={course.id}>
-                        <TableCell className="font-semibold">
-                          {course.title}
-                        </TableCell>
-                        <TableCell>{course.coach || '-'}</TableCell>
-                        <TableCell>{course.room || '-'}</TableCell>
+                        <TableCell className="font-semibold">{course.title}</TableCell>
+                        <TableCell>{course.coach || "-"}</TableCell>
+                        <TableCell>{course.room || "-"}</TableCell>
                         <TableCell>
                           <div className="flex items-center gap-2 text-sm text-muted-foreground">
                             <Clock size={14} />
-                            <span>
-                              {start.toLocaleDateString(locale)}
-                            </span>
+                            <span>{start.toLocaleDateString(locale)}</span>
                             <span>{timeRange}</span>
                           </div>
                         </TableCell>
+                        <TableCell>{course.gymVariant?.name ?? "-"}</TableCell>
                         <TableCell>
-                          {course.gymVariant?.name ?? '-'}
-                        </TableCell>
-                        <TableCell>
-                          <Badge
-                            variant={
-                              confirmed >= course.capacity
-                                ? 'destructive'
-                                : 'secondary'
-                            }
-                          >
+                          <Badge variant={confirmed >= course.capacity ? "destructive" : "secondary"}>
                             {confirmed}/{course.capacity}
                           </Badge>
                           {waitlist > 0 ? (
-                            <span className="ml-2 text-xs text-muted-foreground">
-                              {t('table.waitlist', { count: waitlist })}
-                            </span>
+                            <span className="ml-2 text-xs text-muted-foreground">{t("table.waitlist", { count: waitlist })}</span>
                           ) : null}
                         </TableCell>
                         <TableCell className="text-right">
@@ -481,30 +419,23 @@ export default function ClassesPage() {
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
                               <DropdownMenuItem asChild>
-                                <Link
-                                  href={`/dashboard/classes/${course.id}`}
-                                  className="flex items-center"
-                                >
+                                <Link href={`/dashboard/classes/${course.id}`} className="flex items-center">
                                   <Eye className="mr-2 h-4 w-4" />
-                                  {t('table.details')}
+                                  {t("table.details")}
                                 </Link>
                               </DropdownMenuItem>
-                              <DropdownMenuItem
-                                onSelect={() => openEdit(course)}
-                              >
+                              <DropdownMenuItem onSelect={() => openEdit(course)}>
                                 <Pencil className="mr-2 h-4 w-4" />
-                                {t('table.edit')}
+                                {t("table.edit")}
                               </DropdownMenuItem>
                               <DropdownMenuItem
                                 className="text-destructive"
                                 onSelect={() => {
-                                  if (window.confirm(t('table.confirmDelete'))) {
-                                    deleteClass.mutate(course.id)
-                                  }
+                                  if (window.confirm(t("table.confirmDelete"))) deleteClass.mutate(course.id)
                                 }}
                               >
                                 <Trash2 className="mr-2 h-4 w-4" />
-                                {t('table.delete')}
+                                {t("table.delete")}
                               </DropdownMenuItem>
                             </DropdownMenuContent>
                           </DropdownMenu>
@@ -514,11 +445,9 @@ export default function ClassesPage() {
                   })}
                 </TableBody>
               </Table>
-              {classes.length === 0 ? (
-                <p className="px-4 py-6 text-sm text-muted-foreground">
-                  {t('table.emptyWeek')}
-                </p>
-              ) : null}
+
+              {classes.length === 0 ? <p className="px-4 py-6 text-sm text-muted-foreground">{t("table.emptyWeek")}</p> : null}
+
               <PaginationControls
                 page={classesPagination.page}
                 pageCount={classesPagination.pageCount}
@@ -533,9 +462,7 @@ export default function ClassesPage() {
         <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
           <DialogContent className="max-w-2xl w-[95vw]">
             <DialogHeader>
-              <DialogTitle>
-                {editingId ? t('dialog.editTitle') : t('dialog.addTitle')}
-              </DialogTitle>
+              <DialogTitle>{editingId ? t("dialog.editTitle") : t("dialog.addTitle")}</DialogTitle>
             </DialogHeader>
             <div className="space-y-4">
               <ClassForm
@@ -547,16 +474,12 @@ export default function ClassesPage() {
                 defaultVariantId={defaultVariantId}
                 disabled={saveClass.isPending}
               />
-              <Button
-                onClick={() => saveClass.mutate()}
-                disabled={saveClass.isPending}
-                className="w-full"
-              >
+              <Button onClick={() => saveClass.mutate()} disabled={saveClass.isPending} className="w-full">
                 {saveClass.isPending
-                  ? t('dialog.submitPending')
+                  ? t("dialog.submitPending")
                   : editingId
-                  ? t('dialog.submitUpdate')
-                  : t('dialog.submitCreate')}
+                    ? t("dialog.submitUpdate")
+                    : t("dialog.submitCreate")}
               </Button>
             </div>
           </DialogContent>

@@ -1,12 +1,8 @@
 "use client"
 
-import {
-  CircleCheckIcon,
-  InfoIcon,
-  Loader2Icon,
-  OctagonXIcon,
-  TriangleAlertIcon,
-} from "lucide-react"
+import type React from "react"
+
+import { CircleCheckIcon, InfoIcon, Loader2Icon, OctagonXIcon, TriangleAlertIcon } from "lucide-react"
 import { useTheme } from "next-themes"
 import { Toaster as Sonner, type ToasterProps } from "sonner"
 
@@ -17,27 +13,32 @@ const Toaster = ({ ...props }: ToasterProps) => {
     <Sonner
       theme={theme as ToasterProps["theme"]}
       className="toaster group"
+      position="top-right"
       icons={{
-        success: <CircleCheckIcon className="size-4" />,
-        info: <InfoIcon className="size-4" />,
-        warning: <TriangleAlertIcon className="size-4" />,
-        error: <OctagonXIcon className="size-4" />,
-        loading: <Loader2Icon className="size-4 animate-spin" />,
+        success: <CircleCheckIcon className="size-5" />,
+        info: <InfoIcon className="size-5" />,
+        warning: <TriangleAlertIcon className="size-5" />,
+        error: <OctagonXIcon className="size-5" />,
+        loading: <Loader2Icon className="size-5 animate-spin" />,
       }}
       toastOptions={{
         classNames: {
-          success: "bg-primary text-primary-foreground border-primary",
-          info: "bg-blue-500 text-white border-blue-500",
-          warning: "bg-yellow-500 text-white border-yellow-500",
-          error: "bg-destructive text-destructive-foreground border-destructive",
+          toast: "rounded-xl border-2 shadow-lg backdrop-blur-sm",
+          title: "font-semibold text-sm",
+          description: "text-sm",
+          success: "bg-emerald-500 text-white border-emerald-600",
+          info: "bg-blue-500 text-white border-blue-600",
+          warning: "bg-amber-500 text-white border-amber-600",
+          error: "bg-red-500 text-white border-red-600",
+          loading: "bg-card text-card-foreground border-border",
         },
       }}
       style={
         {
-          "--normal-bg": "var(--popover)",
-          "--normal-text": "var(--popover-foreground)",
-          "--normal-border": "var(--border)",
-          "--border-radius": "var(--radius)",
+          "--normal-bg": "oklch(var(--card))",
+          "--normal-text": "oklch(var(--card-foreground))",
+          "--normal-border": "oklch(var(--border))",
+          "--border-radius": "0.75rem",
         } as React.CSSProperties
       }
       {...props}

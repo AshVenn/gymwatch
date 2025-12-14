@@ -1,28 +1,29 @@
-'use client'
+"use client"
 
-import { useMemo, useState } from 'react'
-import { useTranslations } from 'next-intl'
-import type { GymPlanTier, GymSubscriptionStatus } from '../hooks'
+import { useMemo, useState } from "react"
+import { useTranslations } from "next-intl"
+import type { GymPlanTier, GymSubscriptionStatus } from "../hooks"
 
-import { useSuperAdminGyms } from '../hooks'
-import { GymSummaryCards } from '@/components/superadmin/gyms/GymSummaryCards'
-import { GymFilters } from '@/components/superadmin/gyms/GymFilters'
-import { GymsTable, type GymAction } from '@/components/superadmin/gyms/GymsTable'
-import { GymDetailDialog } from '@/components/superadmin/gyms/GymDetailDialog/GymDetailDialog'
-import { CreateGymDialog } from '@/components/superadmin/gyms/CreateGymDialog'
-import { GymActionSheet } from '@/components/superadmin/gyms/GymActionSheet'
-import { EditGymDialog } from '@/components/superadmin/gyms/EditGymDialog'
-import { DeleteGymDialog } from '@/components/superadmin/gyms/DeleteGymDialog'
-import { usePagination } from '@/components/dashboard/pagination-controls'
-import { Skeleton } from '@/components/ui/skeleton'
+import { useSuperAdminGyms } from "../hooks"
+import { GymSummaryCards } from "@/components/superadmin/gyms/GymSummaryCards"
+import { GymFilters } from "@/components/superadmin/gyms/GymFilters"
+import { GymsTable, type GymAction } from "@/components/superadmin/gyms/GymsTable"
+import { GymDetailDialog } from "@/components/superadmin/gyms/GymDetailDialog/GymDetailDialog"
+import { CreateGymDialog } from "@/components/superadmin/gyms/CreateGymDialog"
+import { GymActionSheet } from "@/components/superadmin/gyms/GymActionSheet"
+import { EditGymDialog } from "@/components/superadmin/gyms/EditGymDialog"
+import { DeleteGymDialog } from "@/components/superadmin/gyms/DeleteGymDialog"
+import { usePagination } from "@/components/dashboard/pagination-controls"
+import { Skeleton } from "@/components/ui/skeleton"
+import { Card, CardContent, CardHeader } from "@/components/ui/card"
 
 export default function SuperAdminGymsPage() {
-  const t = useTranslations('superAdminGyms')
+  const t = useTranslations("superAdminGyms")
 
   const { data: gyms = [], isLoading } = useSuperAdminGyms()
-  const [searchTerm, setSearchTerm] = useState('')
-  const [statusFilter, setStatusFilter] = useState<'ALL' | GymSubscriptionStatus>('ALL')
-  const [planFilter, setPlanFilter] = useState<'ALL' | GymPlanTier>('ALL')
+  const [searchTerm, setSearchTerm] = useState("")
+  const [statusFilter, setStatusFilter] = useState<"ALL" | GymSubscriptionStatus>("ALL")
+  const [planFilter, setPlanFilter] = useState<"ALL" | GymPlanTier>("ALL")
   const [currentAction, setCurrentAction] = useState<{ gymId: string | null; type: GymAction | null }>({
     gymId: null,
     type: null,
@@ -37,8 +38,8 @@ export default function SuperAdminGymsPage() {
         gym.email.toLowerCase().includes(query) ||
         gym.owner?.email?.toLowerCase().includes(query)
 
-      const matchesStatus = statusFilter === 'ALL' ? true : gym.subscriptionStatus === statusFilter
-      const matchesPlan = planFilter === 'ALL' ? true : gym.subscriptionPlan === planFilter
+      const matchesStatus = statusFilter === "ALL" ? true : gym.subscriptionStatus === statusFilter
+      const matchesPlan = planFilter === "ALL" ? true : gym.subscriptionPlan === planFilter
 
       return matchesSearch && matchesStatus && matchesPlan
     })
@@ -56,23 +57,29 @@ export default function SuperAdminGymsPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8 animate-in fade-in duration-500">
       <div className="flex flex-wrap items-center justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-semibold">{t('header.title')}</h1>
-          <p className="text-muted-foreground">{t('header.subtitle')}</p>
+        <div className="space-y-2">
+          <h1 className="text-4xl font-bold tracking-tight bg-linear-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">
+            {t("header.title")}
+          </h1>
+          <p className="text-muted-foreground text-lg leading-relaxed">{t("header.subtitle")}</p>
         </div>
         <CreateGymDialog />
       </div>
 
       {isLoading ? (
-        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+        <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-4 animate-in fade-in duration-300">
           {Array.from({ length: 4 }).map((_, idx) => (
-            <div key={idx} className="rounded-2xl border border-border/70 bg-card p-4">
-              <Skeleton className="h-4 w-24" />
-              <Skeleton className="mt-3 h-8 w-28" />
-              <Skeleton className="mt-2 h-3 w-32" />
-            </div>
+            <Card key={idx} className="border-border/60 bg-card/90 shadow-md backdrop-blur-sm rounded-3xl">
+              <CardHeader className="pb-3">
+                <Skeleton className="h-5 w-32 rounded-lg" />
+              </CardHeader>
+              <CardContent>
+                <Skeleton className="h-10 w-28 rounded-xl" />
+                <Skeleton className="mt-3 h-4 w-36 rounded-lg" />
+              </CardContent>
+            </Card>
           ))}
         </div>
       ) : (
@@ -101,25 +108,25 @@ export default function SuperAdminGymsPage() {
         onAction={handleAction}
       />
 
-      <GymDetailDialog gymId={currentAction.type === 'overview' ? currentAction.gymId : null} onClose={closeAction} />
+      <GymDetailDialog gymId={currentAction.type === "overview" ? currentAction.gymId : null} onClose={closeAction} />
 
       <GymActionSheet
         gymId={
-          currentAction.type && ['team', 'plans', 'subscription'].includes(currentAction.type)
+          currentAction.type && ["team", "plans", "subscription"].includes(currentAction.type)
             ? currentAction.gymId
             : null
         }
         type={
-          currentAction.type && ['team', 'plans', 'subscription'].includes(currentAction.type)
-            ? (currentAction.type as 'team' | 'plans' | 'subscription')
+          currentAction.type && ["team", "plans", "subscription"].includes(currentAction.type)
+            ? (currentAction.type as "team" | "plans" | "subscription")
             : null
         }
         onClose={closeAction}
       />
 
-      <EditGymDialog gymId={currentAction.type === 'edit' ? currentAction.gymId : null} onClose={closeAction} />
+      <EditGymDialog gymId={currentAction.type === "edit" ? currentAction.gymId : null} onClose={closeAction} />
 
-      <DeleteGymDialog gym={currentAction.type === 'delete' ? selectedGym : null} onClose={closeAction} />
+      <DeleteGymDialog gym={currentAction.type === "delete" ? selectedGym : null} onClose={closeAction} />
     </div>
   )
 }

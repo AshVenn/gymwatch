@@ -1,27 +1,42 @@
-'use client'
+"use client"
 
-import { useSession } from 'next-auth/react'
-import { useMemo, useState, useEffect } from 'react'
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { useLocale, useTranslations } from 'next-intl'
-import { AlertTriangle, MoreVertical, RotateCcw, Trash2, CheckCircle2, FileText, Printer } from 'lucide-react'
-import { toast } from 'sonner'
+import { useSession } from "next-auth/react"
+import { useMemo, useState, useEffect } from "react"
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
+import { useLocale, useTranslations } from "next-intl"
+import { AlertTriangle, MoreVertical, RotateCcw, Trash2, CheckCircle2, FileText, Printer } from "lucide-react"
+import { toast } from "sonner"
+import { Skeleton } from "@/components/ui/skeleton"
 
-import { cn } from '@/lib/utils'
-import { Button } from '@/components/ui/button'
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
-import { Badge } from '@/components/ui/badge'
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from '@/components/ui/dialog'
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { PaginationControls, usePagination } from '@/components/dashboard/pagination-controls'
-import { SubscriptionSummary, type SubscriptionSummaryMetrics } from '@/components/dashboard/subscriptions/subscription-summary'
-import { SubscriptionFilters, type SortOption, type QuickFilter } from '@/components/dashboard/subscriptions/subscription-filters'
-import { Switch } from '@/components/ui/switch'
-import { useVariantOptions } from '@/app/hooks/use-variants'
-import { VariantSelector } from '@/components/dashboard/variant-selector'
+import { cn } from "@/lib/utils"
+import { Button } from "@/components/ui/button"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { Badge } from "@/components/ui/badge"
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+  DialogDescription,
+} from "@/components/ui/dialog"
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { PaginationControls, usePagination } from "@/components/dashboard/pagination-controls"
+import {
+  SubscriptionSummary,
+  type SubscriptionSummaryMetrics,
+} from "@/components/dashboard/subscriptions/subscription-summary"
+import {
+  SubscriptionFilters,
+  type SortOption,
+  type QuickFilter,
+} from "@/components/dashboard/subscriptions/subscription-filters"
+import { Switch } from "@/components/ui/switch"
+import { useVariantOptions } from "@/app/hooks/use-variants"
+import { VariantSelector } from "@/components/dashboard/variant-selector"
 
 interface Subscription {
   id: string
@@ -32,7 +47,7 @@ interface Subscription {
   startDate: string
   endDate: string
   daysLeft: number
-  status: 'ACTIVE' | 'EXPIRES_TODAY' | 'EXPIRED'
+  status: "ACTIVE" | "EXPIRES_TODAY" | "EXPIRED"
   pricePaid: number
   gymVariantId?: string
   planVisitsPerDay?: number | null
@@ -50,69 +65,82 @@ interface Plan {
   gymVariant?: { id: string; name: string; slug: string; isDefault?: boolean }
 }
 
-type StatusCounterKey = Subscription['status'] | 'ALL'
+type StatusCounterKey = Subscription["status"] | "ALL"
 
 // NOTE: if you want locale-aware formatting later, use useLocale() from next-intl.
-const dateFormatter = new Intl.DateTimeFormat('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' })
-const currencyFormatter = new Intl.NumberFormat('fr-MA', { style: 'currency', currency: 'MAD', maximumFractionDigits: 0 })
+const dateFormatter = new Intl.DateTimeFormat("fr-FR", { day: "2-digit", month: "short", year: "numeric" })
+const currencyFormatter = new Intl.NumberFormat("fr-MA", {
+  style: "currency",
+  currency: "MAD",
+  maximumFractionDigits: 0,
+})
 
 export default function SubscriptionsPage() {
-  const t = useTranslations('dashOwAdSubscriptions')
+  const t = useTranslations("dashOwAdSubscriptions")
   const locale = useLocale()
 
   const { data: session } = useSession()
   const queryClient = useQueryClient()
 
-  const [searchTerm, setSearchTerm] = useState('')
-  const [filterStatus, setFilterStatus] = useState<string>('ALL')
-  const [sortBy, setSortBy] = useState<SortOption>('NEXT_EXPIRY')
+  const [searchTerm, setSearchTerm] = useState("")
+  const [filterStatus, setFilterStatus] = useState<string>("ALL")
+  const [sortBy, setSortBy] = useState<SortOption>("NEXT_EXPIRY")
   const [renewingId, setRenewingId] = useState<string | null>(null)
   const [renewalForm, setRenewalForm] = useState<{ planId: string; startDate: string; createPayment: boolean }>({
-    planId: '',
-    startDate: new Date().toISOString().split('T')[0],
+    planId: "",
+    startDate: new Date().toISOString().split("T")[0],
     createPayment: true,
   })
 
   const [visitDialogOpen, setVisitDialogOpen] = useState(false)
-  const [visitSearch, setVisitSearch] = useState('')
+  const [visitSearch, setVisitSearch] = useState("")
   const [visitLoading, setVisitLoading] = useState<string | null>(null)
   const [invoiceLoadingId, setInvoiceLoadingId] = useState<string | null>(null)
 
-  const { variants, selectedVariant, setSelectedVariant, isGymAdmin, lockedVariantId, isLoading: variantsLoading } =
-    useVariantOptions()
+  const {
+    variants,
+    selectedVariant,
+    setSelectedVariant,
+    isGymAdmin,
+    lockedVariantId,
+    isLoading: variantsLoading,
+  } = useVariantOptions()
 
   const gymId = session?.user?.gymId
-  const variantFilter = selectedVariant === 'all' ? null : selectedVariant
+  const variantFilter = selectedVariant === "all" ? null : selectedVariant
 
   const subscriptionQueryKey = useMemo(
-    () => ['subscriptions', gymId, { searchTerm, filterStatus, variantFilter }] as const,
-    [filterStatus, gymId, searchTerm, variantFilter]
+    () => ["subscriptions", gymId, { searchTerm, filterStatus, variantFilter }] as const,
+    [filterStatus, gymId, searchTerm, variantFilter],
   )
-  const plansQueryKey = useMemo(() => ['plans', gymId, variantFilter] as const, [gymId, variantFilter])
+  const plansQueryKey = useMemo(() => ["plans", gymId, variantFilter] as const, [gymId, variantFilter])
 
-  // quick filters translated
   const statusQuickFilters: QuickFilter[] = useMemo(
     () => [
-      { label: t('quickFilters.all'), value: 'ALL', count: 0 },
-      { label: t('quickFilters.active'), value: 'ACTIVE', count: 0 },
-      { label: t('quickFilters.expiresToday'), value: 'EXPIRES_TODAY', count: 0 },
-      { label: t('quickFilters.expired'), value: 'EXPIRED', count: 0 },
+      { label: t("quickFilters.all"), value: "ALL", count: 0 },
+      { label: t("quickFilters.active"), value: "ACTIVE", count: 0 },
+      { label: t("quickFilters.expiresToday"), value: "EXPIRES_TODAY", count: 0 },
+      { label: t("quickFilters.expired"), value: "EXPIRED", count: 0 },
     ],
-    [t]
+    [t],
   )
 
-  const { data: subscriptions = [], isLoading, isError } = useQuery<Subscription[]>({
+  const {
+    data: subscriptions = [],
+    isLoading,
+    isError,
+  } = useQuery<Subscription[]>({
     queryKey: subscriptionQueryKey,
     enabled: Boolean(gymId),
     queryFn: async () => {
       const params = new URLSearchParams()
-      if (searchTerm) params.append('search', searchTerm)
-      const normalizedStatus = filterStatus === 'ALL' ? '' : filterStatus
-      if (normalizedStatus) params.append('status', normalizedStatus)
-      if (variantFilter) params.append('variantId', variantFilter)
+      if (searchTerm) params.append("search", searchTerm)
+      const normalizedStatus = filterStatus === "ALL" ? "" : filterStatus
+      if (normalizedStatus) params.append("status", normalizedStatus)
+      if (variantFilter) params.append("variantId", variantFilter)
 
       const response = await fetch(`/api/gym-team/subscriptions?${params.toString()}`)
-      if (!response.ok) throw new Error(t('errors.loadSubscriptions'))
+      if (!response.ok) throw new Error(t("errors.loadSubscriptions"))
 
       const data = await response.json()
       return Array.isArray(data) ? data : []
@@ -124,12 +152,10 @@ export default function SubscriptionsPage() {
     enabled: Boolean(gymId),
     queryFn: async () => {
       const params = new URLSearchParams()
-      if (variantFilter) params.set('variantId', variantFilter)
+      if (variantFilter) params.set("variantId", variantFilter)
 
-      const response = await fetch(
-        `/api/gym-team/plans${params.toString() ? `?${params.toString()}` : ''}`,
-      )
-      if (!response.ok) throw new Error(t('errors.loadPlans'))
+      const response = await fetch(`/api/gym-team/plans${params.toString() ? `?${params.toString()}` : ""}`)
+      if (!response.ok) throw new Error(t("errors.loadPlans"))
 
       const data = await response.json()
       return Array.isArray(data) ? data : []
@@ -142,55 +168,55 @@ export default function SubscriptionsPage() {
   }, [plans, variantFilter])
 
   useEffect(() => {
-    setRenewalForm((prev) => ({ ...prev, planId: '' }))
+    setRenewalForm((prev) => ({ ...prev, planId: "" }))
   }, [variantFilter])
 
   const deleteSubscriptionMutation = useMutation({
     mutationFn: async (subscriptionId: string) => {
       const response = await fetch(`/api/gym-team/subscriptions/${subscriptionId}`, {
-        method: 'DELETE',
+        method: "DELETE",
       })
       const data = await response.json().catch(() => ({}))
 
-      if (!response.ok) throw new Error((data as any).error || t('errors.deleteFailed'))
+      if (!response.ok) throw new Error((data as any).error || t("errors.deleteFailed"))
       return data
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: subscriptionQueryKey })
-      toast.success(t('toasts.deleted'))
+      toast.success(t("toasts.deleted"))
     },
     onError: (err) => {
-      const message = err instanceof Error ? err.message : t('errors.deleteFailed')
+      const message = err instanceof Error ? err.message : t("errors.deleteFailed")
       toast.error(message)
     },
   })
 
   const renewSubscriptionMutation = useMutation({
     mutationFn: async () => {
-      if (!renewingId) throw new Error(t('errors.noSubscriptionSelected'))
+      if (!renewingId) throw new Error(t("errors.noSubscriptionSelected"))
 
       const response = await fetch(`/api/gym-team/subscriptions/${renewingId}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           planId: renewalForm.planId,
-          startDate: renewalForm.startDate || new Date().toISOString().split('T')[0],
+          startDate: renewalForm.startDate || new Date().toISOString().split("T")[0],
           createPayment: renewalForm.createPayment,
         }),
       })
 
       const data = await response.json().catch(() => ({}))
-      if (!response.ok) throw new Error((data as any).error || t('errors.renewFailed'))
+      if (!response.ok) throw new Error((data as any).error || t("errors.renewFailed"))
       return data
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: subscriptionQueryKey })
       setRenewingId(null)
-      setRenewalForm({ planId: '', startDate: new Date().toISOString().split('T')[0], createPayment: true })
-      toast.success(t('toasts.updated'))
+      setRenewalForm({ planId: "", startDate: new Date().toISOString().split("T")[0], createPayment: true })
+      toast.success(t("toasts.updated"))
     },
     onError: (err) => {
-      const message = err instanceof Error ? err.message : t('errors.renewFailed')
+      const message = err instanceof Error ? err.message : t("errors.renewFailed")
       toast.error(message)
     },
   })
@@ -208,8 +234,8 @@ export default function SubscriptionsPage() {
 
     list.forEach((sub) => {
       revenue += sub.pricePaid ?? 0
-      if (sub.status === 'ACTIVE') active += 1
-      if (sub.status === 'EXPIRED') expired += 1
+      if (sub.status === "ACTIVE") active += 1
+      if (sub.status === "EXPIRED") expired += 1
       if (sub.daysLeft >= 0 && sub.daysLeft <= 5) expiringSoon += 1
     })
 
@@ -234,11 +260,11 @@ export default function SubscriptionsPage() {
 
   const quickFilters: QuickFilter[] = statusQuickFilters.map((filter) => ({
     ...filter,
-    count: filter.value === 'ALL' ? statusCounters.ALL : statusCounters[filter.value as Subscription['status']] ?? 0,
+    count: filter.value === "ALL" ? statusCounters.ALL : (statusCounters[filter.value as Subscription["status"]] ?? 0),
   }))
 
   const filteredSubscriptions = useMemo(() => {
-    const normalizedStatus = filterStatus === 'ALL' ? undefined : filterStatus
+    const normalizedStatus = filterStatus === "ALL" ? undefined : filterStatus
     const normalizedSearch = searchTerm.trim().toLowerCase()
 
     const matches = (value?: string | null) => !normalizedSearch || value?.toLowerCase().includes(normalizedSearch)
@@ -256,9 +282,9 @@ export default function SubscriptionsPage() {
 
     return list.sort((a, b) => {
       switch (sortBy) {
-        case 'PRICE_DESC':
+        case "PRICE_DESC":
           return (b.pricePaid ?? 0) - (a.pricePaid ?? 0)
-        case 'RECENT_START':
+        case "RECENT_START":
           return getTime(b.startDate) - getTime(a.startDate)
         default:
           return getTime(a.endDate) - getTime(b.endDate)
@@ -286,36 +312,34 @@ export default function SubscriptionsPage() {
 
   const describePlan = (visits?: number | null, session?: number | null) => {
     const parts: string[] = []
-    if (typeof visits === 'number') {
-      parts.push(visits < 0 ? t('table.unlimitedVisits') : t('table.visitsPerDay', { count: visits }))
+    if (typeof visits === "number") {
+      parts.push(visits < 0 ? t("table.unlimitedVisits") : t("table.visitsPerDay", { count: visits }))
     }
-    if (typeof session === 'number' && session > 0) {
-      parts.push(t('table.sessionLimit', { count: session }))
+    if (typeof session === "number" && session > 0) {
+      parts.push(t("table.sessionLimit", { count: session }))
     }
-    return parts.join(' · ')
+    return parts.join(" · ")
   }
 
   const handleDeleteSubscription = (subscriptionId: string) => {
     if (!subscriptionId) return
-    if (confirm(t('confirm.delete'))) {
+    if (confirm(t("confirm.delete"))) {
       deleteSubscriptionMutation.mutate(subscriptionId)
     }
   }
 
-  const downloadInvoice = async (subscriptionId: string, mode: 'download' | 'print' = 'download') => {
+  const downloadInvoice = async (subscriptionId: string, mode: "download" | "print" = "download") => {
     if (!subscriptionId) return
     try {
       setInvoiceLoadingId(subscriptionId)
-      const response = await fetch(
-        `/api/gym-team/subscriptions/${subscriptionId}/invoice?locale=${locale}`,
-      )
+      const response = await fetch(`/api/gym-team/subscriptions/${subscriptionId}/invoice?locale=${locale}`)
       if (!response.ok) {
-        const detail = await response.text().catch(() => '')
-        throw new Error(detail || t('errors.invoiceFailed'))
+        const detail = await response.text().catch(() => "")
+        throw new Error(detail || t("errors.invoiceFailed"))
       }
       const blob = await response.blob()
       const url = URL.createObjectURL(blob)
-      if (mode === 'print') {
+      if (mode === "print") {
         const printWindow = window.open(url)
         if (printWindow) {
           printWindow.onload = () => {
@@ -324,14 +348,14 @@ export default function SubscriptionsPage() {
           }
         }
       } else {
-        const anchor = document.createElement('a')
+        const anchor = document.createElement("a")
         anchor.href = url
         anchor.download = `subscription-${subscriptionId}.pdf`
         anchor.click()
       }
       setTimeout(() => URL.revokeObjectURL(url), 1000)
     } catch (error) {
-      const message = error instanceof Error ? error.message : t('errors.invoiceFailed')
+      const message = error instanceof Error ? error.message : t("errors.invoiceFailed")
       toast.error(message)
     } finally {
       setInvoiceLoadingId(null)
@@ -340,11 +364,11 @@ export default function SubscriptionsPage() {
 
   const handleRenewalSubmit = () => {
     if (!renewalForm.planId) {
-      toast.error(t('toasts.selectPlan'))
+      toast.error(t("toasts.selectPlan"))
       return
     }
     if (!renewalForm.startDate) {
-      toast.error(t('toasts.selectStartDate'))
+      toast.error(t("toasts.selectStartDate"))
       return
     }
     renewSubscriptionMutation.mutate()
@@ -355,59 +379,60 @@ export default function SubscriptionsPage() {
     try {
       setVisitLoading(memberId)
 
-      const response = await fetch('/api/gym-team/visits', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+      const response = await fetch("/api/gym-team/visits", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ memberId, markVisit: true }),
       })
 
       const data = await response.json().catch(() => ({}))
-      if (!response.ok) throw new Error((data as any).error || t('errors.markVisitFailed'))
+      if (!response.ok) throw new Error((data as any).error || t("errors.markVisitFailed"))
 
-      const fullName = (data as any).memberName || t('labels.memberFallback')
+      const fullName = (data as any).memberName || t("labels.memberFallback")
 
-      const visitLimit = typeof (data as any).visitLimit === 'number' ? (data as any).visitLimit : null
-      const visitsToday = typeof (data as any).visitsToday === 'number' ? (data as any).visitsToday : null
+      const visitLimit = typeof (data as any).visitLimit === "number" ? (data as any).visitLimit : null
+      const visitsToday = typeof (data as any).visitsToday === "number" ? (data as any).visitsToday : null
 
       const overDailyLimit =
-        typeof (data as any).overDailyLimit === 'boolean'
+        typeof (data as any).overDailyLimit === "boolean"
           ? (data as any).overDailyLimit
           : visitLimit !== null && visitLimit > 0 && visitsToday !== null
             ? visitsToday >= visitLimit
             : false
 
-      const visitsRemaining = typeof (data as any).visitsRemaining === 'number' ? Math.max((data as any).visitsRemaining, 0) : null
-      const limitState = ((data as any).limitState as string) ?? 'OK'
-      const limitWarning = limitState === 'WARNING'
-      const blocked = limitState === 'BLOCKED' || overDailyLimit
+      const visitsRemaining =
+        typeof (data as any).visitsRemaining === "number" ? Math.max((data as any).visitsRemaining, 0) : null
+      const limitState = ((data as any).limitState as string) ?? "OK"
+      const limitWarning = limitState === "WARNING"
+      const blocked = limitState === "BLOCKED" || overDailyLimit
 
       if (!(data as any).active) {
-        toast.error(t('toasts.inactiveOrExpired'))
+        toast.error(t("toasts.inactiveOrExpired"))
       } else if (blocked) {
-        toast.error(t('toasts.dailyLimitReached', { name: fullName }))
+        toast.error(t("toasts.dailyLimitReached", { name: fullName }))
       } else if (limitWarning) {
         const remaining =
           visitsRemaining !== null
             ? visitsRemaining === 1
-              ? t('labels.remainingVisitsOne')
-              : t('labels.remainingVisitsMany', { count: visitsRemaining })
-            : ''
-        toast.warning(t('toasts.lastVisitWarning', { name: fullName, remaining }))
+              ? t("labels.remainingVisitsOne")
+              : t("labels.remainingVisitsMany", { count: visitsRemaining })
+            : ""
+        toast.warning(t("toasts.lastVisitWarning", { name: fullName, remaining }))
       } else {
         const remaining =
           visitsRemaining !== null
             ? visitsRemaining === 1
-              ? t('labels.remainingShortOne')
-              : t('labels.remainingShortMany', { count: visitsRemaining })
-            : ''
+              ? t("labels.remainingShortOne")
+              : t("labels.remainingShortMany", { count: visitsRemaining })
+            : ""
         toast.success(
-          t('toasts.markedPresent', { name: fullName, count: (data as any).todayVisitorCount ?? 0, remaining })
+          t("toasts.markedPresent", { name: fullName, count: (data as any).todayVisitorCount ?? 0, remaining }),
         )
       }
 
       setVisitDialogOpen(false)
     } catch (error) {
-      const message = error instanceof Error ? error.message : t('errors.markVisitFailed')
+      const message = error instanceof Error ? error.message : t("errors.markVisitFailed")
       toast.error(message)
     } finally {
       setVisitLoading(null)
@@ -415,27 +440,27 @@ export default function SubscriptionsPage() {
   }
 
   const safeDate = (value: string | null | undefined) => {
-    if (!value) return '-'
+    if (!value) return "-"
     const parsed = new Date(value)
-    if (Number.isNaN(parsed.getTime())) return '-'
+    if (Number.isNaN(parsed.getTime())) return "-"
     return dateFormatter.format(parsed)
   }
 
-  const getStatusBadge = (status: Subscription['status']) => {
-    const base = 'border border-border/60 text-xs font-semibold uppercase tracking-wider'
+  const getStatusBadge = (status: Subscription["status"]) => {
+    const base = "border border-border/60 text-xs font-semibold uppercase tracking-wider"
 
-    if (status === 'ACTIVE') {
-      return <Badge className={cn(base, 'bg-primary/10 text-primary')}>{t('status.active')}</Badge>
+    if (status === "ACTIVE") {
+      return <Badge className={cn(base, "bg-primary/10 text-primary")}>{t("status.active")}</Badge>
     }
-    if (status === 'EXPIRES_TODAY') {
+    if (status === "EXPIRES_TODAY") {
       return (
-        <Badge className={cn(base, 'bg-amber-100 text-amber-900 dark:bg-amber-500/20 dark:text-amber-50')}>
-          {t('status.expiresToday')}
+        <Badge className={cn(base, "bg-amber-100 text-amber-900 dark:bg-amber-500/20 dark:text-amber-50")}>
+          {t("status.expiresToday")}
         </Badge>
       )
     }
-    if (status === 'EXPIRED') {
-      return <Badge className={cn(base, 'bg-destructive/20 text-destructive')}>{t('status.expired')}</Badge>
+    if (status === "EXPIRED") {
+      return <Badge className={cn(base, "bg-destructive/20 text-destructive")}>{t("status.expired")}</Badge>
     }
 
     return <Badge className={base}>{status}</Badge>
@@ -453,20 +478,25 @@ export default function SubscriptionsPage() {
 
   if (isLoading || variantsLoading) {
     return (
-      <div className="space-y-6">
-        <div className="h-56 animate-pulse rounded-3xl bg-muted/40" />
-        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-          {Array.from({ length: 4 }).map((_, index) => (
-            <div key={index} className="h-32 animate-pulse rounded-2xl bg-muted/30" />
-          ))}
+      <div className="space-y-6 animate-in fade-in duration-500">
+        <div className="h-64 animate-pulse rounded-3xl border border-border/60 bg-linear-to-br from-primary/5 to-background p-6 shadow-sm">
+          <Skeleton className="h-6 w-48 rounded-lg" />
+          <div className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+            {Array.from({ length: 4 }).map((_, i) => (
+              <div key={i} className="space-y-2 rounded-2xl bg-card/60 p-4">
+                <Skeleton className="h-4 w-24 rounded-full" />
+                <Skeleton className="h-8 w-32 rounded-lg" />
+              </div>
+            ))}
+          </div>
         </div>
-        <div className="h-[420px] animate-pulse rounded-3xl bg-muted/30" />
+        <div className="h-[420px] animate-pulse rounded-3xl border border-border/60 bg-card/60" />
       </div>
     )
   }
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
       <div className="flex justify-end">
         <VariantSelector
           variants={variants}
@@ -478,11 +508,14 @@ export default function SubscriptionsPage() {
         />
       </div>
 
-      <SubscriptionSummary metrics={summaryMetrics} />
+        <div className="rounded-3xl border border-border/60 bg-card/90 shadow-md backdrop-blur-sm">
+        <SubscriptionSummary metrics={summaryMetrics} />
+      </div>
+
 
       {isError && (
         <div className="flex items-center gap-3 rounded-2xl border border-destructive/40 bg-destructive/5 p-4 text-destructive">
-          {t('errors.loadSubscriptionsInline')}
+          {t("errors.loadSubscriptionsInline")}
         </div>
       )}
 
@@ -502,26 +535,26 @@ export default function SubscriptionsPage() {
           <DialogTrigger asChild>
             <Button variant="outline" onClick={() => setVisitDialogOpen(true)}>
               <CheckCircle2 className="mr-2" size={16} />
-              {t('visit.button')}
+              {t("visit.button")}
             </Button>
           </DialogTrigger>
 
           <DialogContent className="w-[95vw] max-w-md sm:max-w-lg">
             <DialogHeader>
-              <DialogTitle>{t('visit.dialogTitle')}</DialogTitle>
-              <DialogDescription>{t('visit.dialogDesc')}</DialogDescription>
+              <DialogTitle>{t("visit.dialogTitle")}</DialogTitle>
+              <DialogDescription>{t("visit.dialogDesc")}</DialogDescription>
             </DialogHeader>
 
             <div className="space-y-3">
               <Input
-                placeholder={t('visit.searchPlaceholder')}
+                placeholder={t("visit.searchPlaceholder")}
                 value={visitSearch}
                 onChange={(e) => setVisitSearch(e.target.value)}
               />
 
               <div className="max-h-72 space-y-2 overflow-y-auto">
                 {visitableMembers.length === 0 ? (
-                  <p className="text-sm text-muted-foreground">{t('visit.noneFound')}</p>
+                  <p className="text-sm text-muted-foreground">{t("visit.noneFound")}</p>
                 ) : (
                   visitableMembers.map((sub) => (
                     <div
@@ -531,7 +564,7 @@ export default function SubscriptionsPage() {
                       <div>
                         <p className="font-semibold">{sub.memberName}</p>
                         <p className="text-xs text-muted-foreground">
-                          {t('visit.endLine', { date: safeDate(sub.endDate), daysLeft: sub.daysLeft })}
+                          {t("visit.endLine", { date: safeDate(sub.endDate), daysLeft: sub.daysLeft })}
                         </p>
                       </div>
                       <Button
@@ -540,7 +573,7 @@ export default function SubscriptionsPage() {
                         disabled={visitLoading === sub.memberId}
                         onClick={() => markVisit(sub.memberId)}
                       >
-                        {visitLoading === sub.memberId ? t('visit.saving') : t('visit.validate')}
+                        {visitLoading === sub.memberId ? t("visit.saving") : t("visit.validate")}
                       </Button>
                     </div>
                   ))
@@ -551,34 +584,34 @@ export default function SubscriptionsPage() {
         </Dialog>
       </div>
 
-      <div className="overflow-hidden rounded-3xl border border-border/70 bg-card shadow-sm">
+      <div className="overflow-hidden rounded-3xl border border-border/60 bg-card/90 shadow-md backdrop-blur-sm">
         {subscriptionPagination.data.length ? (
           <>
             <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border/60 px-6 py-4 text-sm text-muted-foreground">
               <span>
-                {t('table.found', {
+                {t("table.found", {
                   count: filteredSubscriptions.length,
-                  plural: filteredSubscriptions.length > 1 ? 's' : '',
-                  plural2: filteredSubscriptions.length > 1 ? 's' : '',
+                  plural: filteredSubscriptions.length > 1 ? "s" : "",
+                  plural2: filteredSubscriptions.length > 1 ? "s" : "",
                 })}
               </span>
               <span className="text-xs uppercase tracking-[0.3em] text-muted-foreground">
-                {t('table.page', { page: subscriptionPagination.page, pageCount: subscriptionPagination.pageCount })}
+                {t("table.page", { page: subscriptionPagination.page, pageCount: subscriptionPagination.pageCount })}
               </span>
             </div>
 
             <Table>
               <TableHeader>
                 <TableRow className="text-muted-foreground">
-                  <TableHead>{t('table.member')}</TableHead>
-                  <TableHead>{t('table.plan')}</TableHead>
-                  <TableHead>{t('table.start')}</TableHead>
-                  <TableHead>{t('table.end')}</TableHead>
-                  <TableHead>{t('table.remaining')}</TableHead>
-                  <TableHead className="text-right">{t('table.amount')}</TableHead>
-                  <TableHead>{t('table.status')}</TableHead>
-                  <TableHead>{t('table.variant')}</TableHead>
-                  <TableHead className="text-right">{t('table.actions')}</TableHead>
+                  <TableHead>{t("table.member")}</TableHead>
+                  <TableHead>{t("table.plan")}</TableHead>
+                  <TableHead>{t("table.start")}</TableHead>
+                  <TableHead>{t("table.end")}</TableHead>
+                  <TableHead>{t("table.remaining")}</TableHead>
+                  <TableHead className="text-right">{t("table.amount")}</TableHead>
+                  <TableHead>{t("table.status")}</TableHead>
+                  <TableHead>{t("table.variant")}</TableHead>
+                  <TableHead className="text-right">{t("table.actions")}</TableHead>
                 </TableRow>
               </TableHeader>
 
@@ -587,21 +620,23 @@ export default function SubscriptionsPage() {
                   <TableRow
                     key={sub.id}
                     className={cn(
-                      'border-border/60 text-foreground transition-colors hover:bg-muted/40',
-                      sub.status === 'EXPIRED' && 'bg-destructive/10',
-                      sub.status === 'EXPIRES_TODAY' && 'bg-amber-100/30 dark:bg-amber-500/10'
+                      "border-border/60 text-foreground transition-colors hover:bg-muted/40",
+                      sub.status === "EXPIRED" && "bg-destructive/10",
+                      sub.status === "EXPIRES_TODAY" && "bg-amber-100/30 dark:bg-amber-500/10",
                     )}
                   >
                     <TableCell className="font-semibold">
-                      <div>{sub.memberName ?? '-'}</div>
-                      <div className="text-xs text-muted-foreground">{t('table.idPrefix', { id: sub.id.slice(0, 8) })}</div>
+                      <div>{sub.memberName ?? "-"}</div>
+                      <div className="text-xs text-muted-foreground">
+                        {t("table.idPrefix", { id: sub.id.slice(0, 8) })}
+                      </div>
                     </TableCell>
 
                     <TableCell>
-                      <div className="font-medium">{sub.planName ?? '-'}</div>
+                      <div className="font-medium">{sub.planName ?? "-"}</div>
                       <div className="text-xs text-muted-foreground">
                         {describePlan(sub.planVisitsPerDay ?? null, sub.planMaxSessionMinutes ?? null) ||
-                          t('table.visitsFallback')}
+                          t("table.visitsFallback")}
                       </div>
                     </TableCell>
                     <TableCell>{safeDate(sub.startDate)}</TableCell>
@@ -610,28 +645,28 @@ export default function SubscriptionsPage() {
                     <TableCell>
                       <span
                         className={cn(
-                          'text-sm font-semibold',
+                          "text-sm font-semibold",
                           sub.daysLeft < 0
-                            ? 'text-destructive'
+                            ? "text-destructive"
                             : sub.daysLeft <= 5
-                              ? 'text-amber-600 dark:text-amber-300'
-                              : 'text-primary'
+                              ? "text-amber-600 dark:text-amber-300"
+                              : "text-primary",
                         )}
                       >
                         {sub.daysLeft < 0
-                          ? t('table.late', { count: Math.abs(sub.daysLeft) })
-                          : t('table.left', { count: sub.daysLeft })}
+                          ? t("table.late", { count: Math.abs(sub.daysLeft) })
+                          : t("table.left", { count: sub.daysLeft })}
                       </span>
                     </TableCell>
 
                     <TableCell className="text-right font-semibold">
-                      {sub.pricePaid ? currencyFormatter.format(sub.pricePaid) : '-'}
+                      {sub.pricePaid ? currencyFormatter.format(sub.pricePaid) : "-"}
                     </TableCell>
 
                     <TableCell>{getStatusBadge(sub.status)}</TableCell>
 
                     <TableCell>
-                      {sub.gymVariantId ? (variants.find((v) => v.id === sub.gymVariantId)?.name ?? '-') : '-'}
+                      {sub.gymVariantId ? (variants.find((v) => v.id === sub.gymVariantId)?.name ?? "-") : "-"}
                     </TableCell>
 
                     <TableCell className="text-right">
@@ -642,7 +677,10 @@ export default function SubscriptionsPage() {
                           </Button>
                         </DropdownMenuTrigger>
 
-                        <DropdownMenuContent align="end" className="w-48 border border-border/60 bg-card text-foreground">
+                        <DropdownMenuContent
+                          align="end"
+                          className="w-48 border border-border/60 bg-card text-foreground"
+                        >
                           <DropdownMenuItem
                             onSelect={(event) => {
                               event.preventDefault()
@@ -650,63 +688,64 @@ export default function SubscriptionsPage() {
                             }}
                           >
                             <CheckCircle2 className="mr-2" size={16} />
-                            {t('actions.markVisit')}
+                            {t("actions.markVisit")}
                           </DropdownMenuItem>
 
                           <DropdownMenuItem
                             disabled={invoiceLoadingId === sub.id}
                             onSelect={(event) => {
                               event.preventDefault()
-                              downloadInvoice(sub.id, 'download')
+                              downloadInvoice(sub.id, "download")
                             }}
                           >
                             <FileText className="mr-2" size={16} />
-                            {invoiceLoadingId === sub.id
-                              ? t('actions.loadingInvoice')
-                              : t('actions.downloadInvoice')}
+                            {invoiceLoadingId === sub.id ? t("actions.loadingInvoice") : t("actions.downloadInvoice")}
                           </DropdownMenuItem>
                           <DropdownMenuItem
                             disabled={invoiceLoadingId === sub.id}
                             onSelect={(event) => {
                               event.preventDefault()
-                              downloadInvoice(sub.id, 'print')
+                              downloadInvoice(sub.id, "print")
                             }}
                           >
                             <Printer className="mr-2" size={16} />
-                            {t('actions.printInvoice')}
+                            {t("actions.printInvoice")}
                           </DropdownMenuItem>
 
-                            <Dialog open={renewingId === sub.id} onOpenChange={(open) => !open && setRenewingId(null)}>
-                              <DialogTrigger asChild>
-                                <DropdownMenuItem
-                                  onSelect={(event) => {
-                                    event.preventDefault()
-                                    setRenewingId(sub.id)
-                                    setRenewalForm({
-                                      planId: '',
-                                      startDate: new Date().toISOString().split('T')[0],
-                                      createPayment: true,
-                                    })
-                                  }}
-                                >
-                                  <RotateCcw className="mr-2" size={16} />
-                                  {t('actions.editRenew')}
-                                </DropdownMenuItem>
-                              </DialogTrigger>
+                          <Dialog open={renewingId === sub.id} onOpenChange={(open) => !open && setRenewingId(null)}>
+                            <DialogTrigger asChild>
+                              <DropdownMenuItem
+                                onSelect={(event) => {
+                                  event.preventDefault()
+                                  setRenewingId(sub.id)
+                                  setRenewalForm({
+                                    planId: "",
+                                    startDate: new Date().toISOString().split("T")[0],
+                                    createPayment: true,
+                                  })
+                                }}
+                              >
+                                <RotateCcw className="mr-2" size={16} />
+                                {t("actions.editRenew")}
+                              </DropdownMenuItem>
+                            </DialogTrigger>
 
                             <DialogContent className="border-border/60 bg-card text-foreground">
                               <DialogHeader>
-                                <DialogTitle>{t('renew.title')}</DialogTitle>
+                                <DialogTitle>{t("renew.title")}</DialogTitle>
                               </DialogHeader>
 
                               <div className="space-y-4">
                                 <div>
                                   <Label htmlFor="renew-plan" className="text-foreground">
-                                    {t('renew.planLabel')}
+                                    {t("renew.planLabel")}
                                   </Label>
-                                  <Select value={renewalForm.planId} onValueChange={(value) => setRenewalForm({ ...renewalForm, planId: value })}>
+                                  <Select
+                                    value={renewalForm.planId}
+                                    onValueChange={(value) => setRenewalForm({ ...renewalForm, planId: value })}
+                                  >
                                     <SelectTrigger id="renew-plan" className="mt-1">
-                                      <SelectValue placeholder={t('renew.planPlaceholder')} />
+                                      <SelectValue placeholder={t("renew.planPlaceholder")} />
                                     </SelectTrigger>
                                     <SelectContent>
                                       {availablePlans.map((plan) => (
@@ -715,7 +754,7 @@ export default function SubscriptionsPage() {
                                             <span className="font-medium">{plan.name}</span>
                                             <span className="text-xs text-muted-foreground">
                                               {describePlan(plan.visitsPerDay ?? null, plan.maxSessionMinutes ?? null) ||
-                                                t('table.visitsFallback')}
+                                                t("table.visitsFallback")}
                                             </span>
                                           </div>
                                         </SelectItem>
@@ -725,7 +764,7 @@ export default function SubscriptionsPage() {
                                 </div>
 
                                 <div className="space-y-2">
-                                  <Label className="text-foreground">{t('renew.startDateLabel')}</Label>
+                                  <Label className="text-foreground">{t("renew.startDateLabel")}</Label>
                                   <Input
                                     type="date"
                                     value={renewalForm.startDate}
@@ -733,15 +772,15 @@ export default function SubscriptionsPage() {
                                   />
                                   {endPreview && (
                                     <p className="text-xs text-muted-foreground">
-                                      {t('renew.endPreview', { date: dateFormatter.format(endPreview) })}
+                                      {t("renew.endPreview", { date: dateFormatter.format(endPreview) })}
                                     </p>
                                   )}
                                 </div>
 
                                 <div className="flex items-center justify-between rounded-md border border-border/60 p-3">
                                   <div className="space-y-0.5">
-                                    <p className="text-sm font-medium">{t('renew.createPaymentTitle')}</p>
-                                    <p className="text-xs text-muted-foreground">{t('renew.createPaymentDesc')}</p>
+                                    <p className="text-sm font-medium">{t("renew.createPaymentTitle")}</p>
+                                    <p className="text-xs text-muted-foreground">{t("renew.createPaymentDesc")}</p>
                                   </div>
                                   <Switch
                                     checked={renewalForm.createPayment}
@@ -749,16 +788,23 @@ export default function SubscriptionsPage() {
                                   />
                                 </div>
 
-                                <Button className="w-full" onClick={handleRenewalSubmit} disabled={renewSubscriptionMutation.isPending}>
-                                  {renewSubscriptionMutation.isPending ? t('renew.saving') : t('renew.save')}
+                                <Button
+                                  className="w-full"
+                                  onClick={handleRenewalSubmit}
+                                  disabled={renewSubscriptionMutation.isPending}
+                                >
+                                  {renewSubscriptionMutation.isPending ? t("renew.saving") : t("renew.save")}
                                 </Button>
                               </div>
                             </DialogContent>
                           </Dialog>
 
-                          <DropdownMenuItem onClick={() => handleDeleteSubscription(sub.id)} className="text-destructive focus:bg-destructive/10">
+                          <DropdownMenuItem
+                            onClick={() => handleDeleteSubscription(sub.id)}
+                            className="text-destructive focus:bg-destructive/10"
+                          >
                             <Trash2 className="mr-2" size={16} />
-                            {t('actions.delete')}
+                            {t("actions.delete")}
                           </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
@@ -781,10 +827,10 @@ export default function SubscriptionsPage() {
         ) : (
           <div className="flex flex-col items-center justify-center gap-3 px-10 py-24 text-center text-muted-foreground">
             <AlertTriangle className="h-10 w-10 text-primary" />
-            <p className="text-lg font-semibold">{t('empty.title')}</p>
-            <p className="text-sm text-muted-foreground">{t('empty.desc')}</p>
-            <Button variant="outline" onClick={() => setFilterStatus('ALL')}>
-              {t('empty.reset')}
+            <p className="text-lg font-semibold">{t("empty.title")}</p>
+            <p className="text-sm text-muted-foreground">{t("empty.desc")}</p>
+            <Button variant="outline" onClick={() => setFilterStatus("ALL")}>
+              {t("empty.reset")}
             </Button>
           </div>
         )}

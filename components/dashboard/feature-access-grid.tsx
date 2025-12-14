@@ -19,7 +19,7 @@ export type FeatureAccessItem = {
   icon: LucideIcon
 }
 
-type Translate = (key: string, values?: Record<string, unknown>) => string
+type Translate = (key: string, values?: Record<string, string | number | Date | boolean | null>) => string
 
 interface FeatureAccessGridProps {
   items: FeatureAccessItem[]

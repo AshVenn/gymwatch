@@ -1,5 +1,5 @@
-import type { Metadata } from 'next'
-import Image from 'next/image'
+import type { Metadata } from "next"
+import Image from "next/image"
 import {
   ArrowRight,
   BarChart3,
@@ -15,20 +15,21 @@ import {
   Sparkles,
   Users,
   Workflow,
-} from 'lucide-react'
+} from "lucide-react"
 
-import { MarketingNavbar } from '@/components/marketing/navbar'
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion'
-import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { routing, type AppLocale, Link } from '@/i18n/routing'
-import { buildMarketingMetadata } from '@/lib/marketing-content'
-import { DEFAULT_ANNUAL_DISCOUNT, getPlanCatalogAsList } from '@/lib/subscription-plans'
-import { cn } from '@/lib/utils'
-import { getTranslations } from 'next-intl/server'
+import { MarketingNavbar } from "@/components/marketing/navbar"
+import { MarketingFooter } from "@/components/marketing/footer"
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
+import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { routing, type AppLocale, Link } from "@/i18n/routing"
+import { buildMarketingMetadata } from "@/lib/marketing-content"
+import { DEFAULT_ANNUAL_DISCOUNT, getPlanCatalogAsList } from "@/lib/subscription-plans"
+import { cn } from "@/lib/utils"
+import { getTranslations } from "next-intl/server"
 
 type HomePageProps = {
-  params: { locale: string }
+  params: Promise<{ locale: string }>
 }
 
 // Static params per locale
@@ -37,93 +38,103 @@ export function generateStaticParams() {
 }
 
 export async function generateMetadata({ params }: HomePageProps): Promise<Metadata> {
-  const locale = routing.locales.includes(params.locale as AppLocale)
-    ? (params.locale as AppLocale)
-    : routing.defaultLocale
+  const { locale: rawLocale } = await params
+  const locale = routing.locales.includes(rawLocale as AppLocale) ? (rawLocale as AppLocale) : routing.defaultLocale
 
-  return buildMarketingMetadata('home', locale)
+  return buildMarketingMetadata("home", locale)
 }
 
 export default async function Home({ params }: HomePageProps) {
-  const locale = routing.locales.includes(params.locale as AppLocale)
-    ? (params.locale as AppLocale)
-    : routing.defaultLocale
+  const { locale: rawLocale } = await params
+  const locale = routing.locales.includes(rawLocale as AppLocale) ? (rawLocale as AppLocale) : routing.defaultLocale
 
-  // const isRTL = locale === 'ar' // Unused variable removed for cleanliness
-
-  const t = await getTranslations({ locale, namespace: 'marketing.home' })
+  const t = await getTranslations({ locale, namespace: "marketing.home" })
 
   const heroCopy = {
-    eyebrow: t('hero.eyebrow'),
-    title: t('hero.title'),
-    subtitle: t('hero.subtitle'),
-    description: t('hero.description'),
-    primaryCta: t('hero.primaryCta'),
-    secondaryCta: t('hero.secondaryCta'),
-    dashboardTitle: t('hero.dashboard.title'),
-    dashboardDescription: t('hero.dashboard.description'),
-    chipAccess: t('hero.dashboard.chips.access'),
-    chipKpi: t('hero.dashboard.chips.kpi'),
-    // UPDATED: Changed from payments to analytics
-    chipAnalytics: t('hero.dashboard.chips.analytics'),
+    eyebrow: t("hero.eyebrow"),
+    title: t("hero.title"),
+    subtitle: t("hero.subtitle"),
+    description: t("hero.description"),
+    primaryCta: t("hero.primaryCta"),
+    secondaryCta: t("hero.secondaryCta"),
+    dashboardTitle: t("hero.dashboard.title"),
+    dashboardDescription: t("hero.dashboard.description"),
+    chipAccess: t("hero.dashboard.chips.access"),
+    chipKpi: t("hero.dashboard.chips.kpi"),
+    chipAnalytics: t("hero.dashboard.chips.analytics"),
   }
 
   const planCatalog = getPlanCatalogAsList()
-  const priceFormatter = new Intl.NumberFormat(
-    locale === 'fr' ? 'fr-MA' : locale === 'ar' ? 'ar-MA' : 'en-US',
-    { style: 'currency', currency: 'MAD' },
-  )
+  const priceFormatter = new Intl.NumberFormat(locale === "fr" ? "fr-MA" : locale === "ar" ? "ar-MA" : "en-US", {
+    style: "currency",
+    currency: "MAD",
+  })
 
   const stats = [
-    { value: t('stats.clubs.value'), label: t('stats.clubs.label'), detail: t('stats.clubs.detail') },
-    { value: t('stats.members.value'), label: t('stats.members.label'), detail: t('stats.members.detail') },
-    { value: t('stats.satisfaction.value'), label: t('stats.satisfaction.label'), detail: t('stats.satisfaction.detail') },
+    { value: t("stats.clubs.value"), label: t("stats.clubs.label"), detail: t("stats.clubs.detail") },
+    { value: t("stats.members.value"), label: t("stats.members.label"), detail: t("stats.members.detail") },
+    {
+      value: t("stats.satisfaction.value"),
+      label: t("stats.satisfaction.label"),
+      detail: t("stats.satisfaction.detail"),
+    },
   ]
 
   const pillars = [
-    { title: t('pillars.multiSite.title'), description: t('pillars.multiSite.body'), icon: Building2 },
-    { title: t('pillars.accessControl.title'), description: t('pillars.accessControl.body'), icon: ShieldCheck },
-    { title: t('pillars.billing.title'), description: t('pillars.billing.body'), icon: CreditCard },
+    { title: t("pillars.multiSite.title"), description: t("pillars.multiSite.body"), icon: Building2 },
+    { title: t("pillars.accessControl.title"), description: t("pillars.accessControl.body"), icon: ShieldCheck },
+    { title: t("pillars.billing.title"), description: t("pillars.billing.body"), icon: CreditCard },
   ]
 
   const featureCards = [
-    // UPDATED: Icon represents analytics now
-    { title: t('features.directorView.title'), description: t('features.directorView.body'), icon: BarChart3 },
-    { title: t('features.access.title'), description: t('features.access.body'), icon: QrCode },
-    { title: t('features.automation.title'), description: t('features.automation.body'), icon: Bell },
-    { title: t('features.subscriptions.title'), description: t('features.subscriptions.body'), icon: Workflow },
-    { title: t('features.teams.title'), description: t('features.teams.body'), icon: Users },
-    { title: t('features.reporting.title'), description: t('features.reporting.body'), icon: LayoutDashboard },
-    { title: t('features.security.title'), description: t('features.security.body'), icon: ShieldCheck },
-    { title: t('features.api.title'), description: t('features.api.body'), icon: Globe2 },
+    { title: t("features.directorView.title"), description: t("features.directorView.body"), icon: BarChart3 },
+    { title: t("features.access.title"), description: t("features.access.body"), icon: QrCode },
+    { title: t("features.automation.title"), description: t("features.automation.body"), icon: Bell },
+    { title: t("features.subscriptions.title"), description: t("features.subscriptions.body"), icon: Workflow },
+    { title: t("features.teams.title"), description: t("features.teams.body"), icon: Users },
+    { title: t("features.reporting.title"), description: t("features.reporting.body"), icon: LayoutDashboard },
+    { title: t("features.security.title"), description: t("features.security.body"), icon: ShieldCheck },
+    { title: t("features.api.title"), description: t("features.api.body"), icon: Globe2 },
   ]
 
   const testimonials = [
-    { quote: t('testimonials.amine.quote'), author: t('testimonials.amine.author'), role: t('testimonials.amine.role') },
-    { quote: t('testimonials.sarah.quote'), author: t('testimonials.sarah.author'), role: t('testimonials.sarah.role') },
-    { quote: t('testimonials.youssef.quote'), author: t('testimonials.youssef.author'), role: t('testimonials.youssef.role') },
+    {
+      quote: t("testimonials.amine.quote"),
+      author: t("testimonials.amine.author"),
+      role: t("testimonials.amine.role"),
+    },
+    {
+      quote: t("testimonials.sarah.quote"),
+      author: t("testimonials.sarah.author"),
+      role: t("testimonials.sarah.role"),
+    },
+    {
+      quote: t("testimonials.youssef.quote"),
+      author: t("testimonials.youssef.author"),
+      role: t("testimonials.youssef.role"),
+    },
   ]
 
   const faqItems = [
-    { question: t('faq.q1.question'), answer: t('faq.q1.answer') },
-    { question: t('faq.q2.question'), answer: t('faq.q2.answer') },
-    { question: t('faq.q3.question'), answer: t('faq.q3.answer') },
-    { question: t('faq.q4.question'), answer: t('faq.q4.answer') },
-    { question: t('faq.q5.question'), answer: t('faq.q5.answer') },
+    { question: t("faq.q1.question"), answer: t("faq.q1.answer") },
+    { question: t("faq.q2.question"), answer: t("faq.q2.answer") },
+    { question: t("faq.q3.question"), answer: t("faq.q3.answer") },
+    { question: t("faq.q4.question"), answer: t("faq.q4.answer") },
+    { question: t("faq.q5.question"), answer: t("faq.q5.answer") },
   ]
 
-  const renderPlanCards = (mode: 'monthly' | 'annual') =>
+  const renderPlanCards = (mode: "monthly" | "annual") =>
     planCatalog.map((plan, index) => {
       const annualTotal = plan.annualPrice ?? plan.monthlyPrice * 12
       const annualMonthly = Math.round((annualTotal / 12) * 100) / 100
-      const price = mode === 'annual' ? annualMonthly : plan.monthlyPrice
+      const price = mode === "annual" ? annualMonthly : plan.monthlyPrice
 
       const billingHint =
-        mode === 'annual'
-          ? t('plans.billing.annualHint', { amount: priceFormatter.format(annualTotal) })
-          : t('plans.billing.monthlyHint')
+        mode === "annual"
+          ? t("plans.billing.annualHint", { amount: priceFormatter.format(annualTotal) })
+          : t("plans.billing.monthlyHint")
 
-      const tierKey = plan.tier.toLowerCase() as 'basic' | 'pro' | 'enterprise'
+      const tierKey = plan.tier.toLowerCase() as "basic" | "pro" | "enterprise"
       const planName = t(`plans.catalog.${tierKey}.name`)
       const planDescription = t(`plans.catalog.${tierKey}.description`)
       const badges = (t.raw(`plans.catalog.${tierKey}.badges`) ?? []) as string[]
@@ -133,14 +144,14 @@ export default async function Home({ params }: HomePageProps) {
         <Card
           key={`${plan.tier}-${mode}`}
           className={cn(
-            'relative overflow-hidden border transition-all duration-300 hover:-translate-y-1 hover:shadow-xl animate-slide-up',
-            plan.highlight ? 'border-primary/60 bg-primary/5' : 'border-border/70 bg-background/80',
+            "relative overflow-hidden border transition-all duration-300 hover:-translate-y-1 hover:shadow-xl animate-slide-up",
+            plan.highlight ? "border-primary/60 bg-primary/5" : "border-border/70 bg-background/80",
           )}
           style={{ animationDelay: `${0.08 + index * 0.05}s` }}
         >
           {plan.highlight && (
             <span className="absolute right-4 top-4 rounded-full bg-primary px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-primary-foreground shadow-md">
-              {t('plans.recommended')}
+              {t("plans.recommended")}
             </span>
           )}
           <CardHeader className="space-y-3">
@@ -148,12 +159,12 @@ export default async function Home({ params }: HomePageProps) {
             <CardDescription>{planDescription}</CardDescription>
             <div className="flex items-baseline gap-2">
               <span className="text-4xl font-bold text-foreground">{priceFormatter.format(price)}</span>
-              <span className="text-sm text-muted-foreground">{t('plans.billing.perMonth')}</span>
+              <span className="text-sm text-muted-foreground">{t("plans.billing.perMonth")}</span>
             </div>
             <p className="text-sm text-muted-foreground">{billingHint}</p>
-            {mode === 'annual' && (
+            {mode === "annual" && (
               <p className="text-xs font-semibold text-primary">
-                {t('plans.billing.annualSave', { discount: DEFAULT_ANNUAL_DISCOUNT })}
+                {t("plans.billing.annualSave", { discount: DEFAULT_ANNUAL_DISCOUNT })}
               </p>
             )}
           </CardHeader>
@@ -174,9 +185,8 @@ export default async function Home({ params }: HomePageProps) {
                 <span>{feature}</span>
               </div>
             ))}
-            <Button asChild variant={plan.highlight ? 'default' : 'outline'} className="mt-2 w-full">
-              {/* FIXED: Removed localizedHref, used relative path */}
-              <Link href="/request-demo">{t('plans.cta')}</Link>
+            <Button asChild variant={plan.highlight ? "default" : "outline"} className="mt-2 w-full">
+              <Link href="/request-demo">{t("plans.cta")}</Link>
             </Button>
           </CardContent>
         </Card>
@@ -185,152 +195,120 @@ export default async function Home({ params }: HomePageProps) {
 
   return (
     <div className="relative min-h-screen overflow-hidden bg-background text-foreground">
-      {/* Global bg glows - Tailwind V4 bg-linear syntax */}
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_20%_10%,rgba(59,130,246,0.12),transparent_30%),radial-gradient(circle_at_80%_0%,rgba(37,99,235,0.12),transparent_32%),radial-gradient(circle_at_70%_60%,rgba(14,165,233,0.1),transparent_30%)]" />
+      <div className="pointer-events-none fixed inset-0 z-0 bg-[radial-gradient(circle_at_20%_10%,rgba(59,130,246,0.08),transparent_40%),radial-gradient(circle_at_80%_5%,rgba(37,99,235,0.08),transparent_35%),radial-gradient(circle_at_70%_70%,rgba(14,165,233,0.06),transparent_40%)]" />
 
       <MarketingNavbar />
 
-      <main className="relative mx-auto flex max-w-6xl flex-col gap-20 px-4 pb-16 pt-10 md:pt-16">
+      <main className="relative z-10 mx-auto flex max-w-6xl flex-col gap-20 px-4 pb-16 pt-10 md:pt-16">
         <header
           id="hero"
           className={cn(
-            'relative overflow-hidden rounded-4xl border border-border/50 bg-card/80 px-6 py-14 shadow-xl backdrop-blur md:px-16',
-            locale === 'ar' ? 'rtl text-right' : 'ltr text-left',
+            "relative overflow-hidden rounded-3xl border border-border/40 bg-card/90 px-6 py-14 shadow-xl backdrop-blur-sm md:px-16",
+            locale === "ar" ? "rtl text-right" : "ltr text-left",
           )}
         >
-          {/* Floating orbs */}
-          <div className="floating-orb-primary -left-10 -top-20" />
-          <div className="floating-orb-secondary -right-20 top-[20%]" />
-          <div className="floating-orb-tertiary left-[10%] -bottom-20" />
+          <div className="floating-orb-primary -left-16 -top-24" />
+          <div className="floating-orb-secondary -right-24 top-[15%]" />
+          <div className="floating-orb-tertiary left-[8%] -bottom-24" />
 
           <div className="relative grid items-center gap-12 lg:grid-cols-2">
-            {/* TEXT SIDE */}
             <div className="space-y-6 animate-fade-in">
-              <p className="inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-4 py-2 text-xs font-semibold uppercase tracking-[0.3em] text-primary">
+              <p className="inline-flex items-center gap-2 rounded-full border border-primary/40 bg-primary/10 px-4 py-2 text-xs font-semibold uppercase tracking-[0.3em] text-primary shadow-sm">
                 <Sparkles className="h-4 w-4" aria-hidden />
                 {heroCopy.eyebrow}
               </p>
 
-              <h1 className="text-balance text-5xl font-bold leading-tight md:text-6xl">
+              <h1 className="text-balance text-5xl font-bold leading-[1.1] tracking-tight md:text-6xl">
                 {heroCopy.title}
               </h1>
 
-              <p className="max-w-xl text-lg font-medium text-primary">
-                {heroCopy.subtitle}
-              </p>
+              <p className="max-w-xl text-lg font-semibold text-primary">{heroCopy.subtitle}</p>
 
-              {/* shorter description */}
-              <p className="max-w-xl text-sm md:text-base text-muted-foreground">
+              <p className="max-w-xl text-sm leading-relaxed text-muted-foreground md:text-base">
                 {heroCopy.description}
               </p>
 
-              <div
-                className={cn(
-                  'flex flex-wrap gap-3 pt-2',
-                  locale === 'ar' ? 'justify-end' : 'justify-start',
-                )}
-              >
-          <Button
-            asChild
-            size="lg"
-            className="group transition-transform hover:scale-[1.02] hover:shadow-lg"
-          >
-            <Link href="/request-demo">
-              <span className="inline-flex items-center gap-2">
-                {heroCopy.primaryCta}
-                <ArrowRight
-                  className={cn(
-                    'h-4 w-4 transition-transform group-hover:translate-x-1',
-                    locale === 'ar' && 'rotate-180',
-                  )}
-                  aria-hidden
-                />
-              </span>
-            </Link>
-          </Button>
-
+              <div className={cn("flex flex-wrap gap-3 pt-2", locale === "ar" ? "justify-end" : "justify-start")}>
+                <Button
+                  asChild
+                  size="lg"
+                  className="group transition-all duration-300 hover:scale-[1.02] hover:shadow-lg"
+                >
+                  <Link href="/request-demo">
+                    <span className="inline-flex items-center gap-2">
+                      {heroCopy.primaryCta}
+                      <ArrowRight
+                        className={cn(
+                          "h-4 w-4 transition-transform duration-300 group-hover:translate-x-1",
+                          locale === "ar" && "rotate-180 group-hover:-translate-x-1",
+                        )}
+                        aria-hidden
+                      />
+                    </span>
+                  </Link>
+                </Button>
 
                 <Button
                   asChild
                   size="lg"
                   variant="outline"
-                  className="transition hover:bg-primary/10"
+                  className="transition-all duration-300 hover:bg-primary/5 bg-transparent"
                 >
-                  {/* FIXED: Removed localizedHref */}
                   <Link href="/login">{heroCopy.secondaryCta}</Link>
                 </Button>
               </div>
 
-              <div className="grid gap-6 border-t border-border/30 pt-6 sm:grid-cols-3">
+              <div className="grid gap-6 border-t border-border/40 pt-6 sm:grid-cols-3">
                 {stats.map((item, index) => (
                   <div
                     key={item.label}
-                    className="animate-slide-up"
+                    className="animate-slide-up space-y-1"
                     style={{ animationDelay: `${0.05 * (index + 1)}s` }}
                   >
-                    <p className="text-3xl font-bold text-foreground">{item.value}</p>
-                    <p className="text-sm text-muted-foreground">{item.label}</p>
-                    <p className="text-xs text-muted-foreground/80">{item.detail}</p>
+                    <p className="text-3xl font-bold tracking-tight text-foreground">{item.value}</p>
+                    <p className="text-sm font-medium text-muted-foreground">{item.label}</p>
+                    <p className="text-xs text-muted-foreground/70">{item.detail}</p>
                   </div>
                 ))}
               </div>
             </div>
 
-            {/* VISUAL SIDE – no card, parallax-y hover */}
-            <div className="relative animate-fade-in" style={{ animationDelay: '0.15s' }}>
+            <div className="relative animate-fade-in" style={{ animationDelay: "0.15s" }}>
               <div className="perspective mx-auto flex w-full max-w-xl items-center justify-center">
-                {/* UPDATED: 
-                  - Added 'group' to container 
-                  - Added 'group-hover:scale-105' to image for the "get big" effect 
-                  - Used your 'hover-lift' class from CSS
-                */}
-                <div className="relative w-full hover-lift group">
+                <div className="group relative w-full hover-lift">
                   <Image
                     src="/featured-plateforme.png"
-                    alt={t('hero.dashboard.imageAlt')}
+                    alt={t("hero.dashboard.imageAlt")}
                     width={1200}
                     height={900}
                     priority
-                    className="h-auto w-full rounded-3xl object-contain shadow-2xl transition-transform duration-700 ease-out group-hover:scale-105"
+                    className="h-auto w-full rounded-2xl border border-border/40 object-contain shadow-2xl ring-1 ring-black/5 transition-all duration-700 ease-out group-hover:scale-[1.02] group-hover:shadow-3xl dark:ring-white/5"
                   />
 
-                  {/* shine sweep */}
-                  <div className="pointer-events-none absolute inset-0 rounded-3xl bg-linear-to-tr from-transparent via-white/10 to-transparent opacity-40 animate-shine" />
+                  <div className="pointer-events-none absolute inset-0 rounded-2xl bg-linear-to-tr from-transparent via-white/5 to-transparent opacity-0 transition-opacity duration-700 group-hover:opacity-100" />
 
-                  {/* floating chips */}
-                  <div
-                    className={cn(
-                      'absolute top-4',
-                      locale === 'ar' ? '-right-6' : '-left-6',
-                      'animate-float-left',
-                    )}
-                  >
-                    <div className="rounded-full bg-primary/90 px-3 py-1 text-xs font-semibold text-primary-foreground shadow-lg backdrop-blur-sm">
+                  <div className={cn("absolute top-4", locale === "ar" ? "-right-6" : "-left-6", "animate-float-left")}>
+                    <div className="rounded-full border border-primary/20 bg-primary/95 px-3 py-1.5 text-xs font-semibold text-primary-foreground shadow-lg backdrop-blur-sm">
                       {heroCopy.chipAccess}
                     </div>
                   </div>
 
                   <div
-                    className={cn(
-                      'absolute top-1/3',
-                      locale === 'ar' ? '-left-8' : '-right-8',
-                      'animate-float-right',
-                    )}
+                    className={cn("absolute top-1/3", locale === "ar" ? "-left-8" : "-right-8", "animate-float-right")}
                   >
-                    <div className="rounded-full bg-primary/90 px-3 py-1 text-xs font-semibold text-primary-foreground shadow-lg backdrop-blur-sm">
+                    <div className="rounded-full border border-primary/20 bg-primary/95 px-3 py-1.5 text-xs font-semibold text-primary-foreground shadow-lg backdrop-blur-sm">
                       {heroCopy.chipKpi}
                     </div>
                   </div>
 
                   <div
                     className={cn(
-                      'absolute top-1/2 -translate-y-1/2',
-                      locale === 'ar' ? '-left-12' : '-right-12',
-                      'animate-float-up',
+                      "absolute top-1/2 -translate-y-1/2",
+                      locale === "ar" ? "-left-12" : "-right-12",
+                      "animate-float-up",
                     )}
                   >
-                    <div className="rounded-full bg-primary/90 px-3 py-1 text-xs font-semibold text-primary-foreground shadow-lg backdrop-blur-sm">
-                      {/* UPDATED: Displays 'Analytiques avancées' (mapped from translations) */}
+                    <div className="rounded-full border border-primary/20 bg-primary/95 px-3 py-1.5 text-xs font-semibold text-primary-foreground shadow-lg backdrop-blur-sm">
                       {heroCopy.chipAnalytics}
                     </div>
                   </div>
@@ -340,18 +318,17 @@ export default async function Home({ params }: HomePageProps) {
           </div>
         </header>
 
-        {/* SECTION: WHY */}
-        <section id="pourquoi" className="space-y-6 animate-fade-in" style={{ animationDelay: '0.05s' }}>
+        <section id="pourquoi" className="space-y-6 animate-fade-in" style={{ animationDelay: "0.05s" }}>
           <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
             <div className="space-y-2">
               <p className="text-xs font-semibold uppercase tracking-[0.3em] text-primary">
-                {t('sections.why.eyebrow')}
+                {t("sections.why.eyebrow")}
               </p>
-              <h2 className="text-3xl font-bold">{t('sections.why.title')}</h2>
-              <p className="max-w-2xl text-muted-foreground">{t('sections.why.description')}</p>
+              <h2 className="text-3xl font-bold tracking-tight">{t("sections.why.title")}</h2>
+              <p className="max-w-2xl leading-relaxed text-muted-foreground">{t("sections.why.description")}</p>
             </div>
-            <Button asChild variant="ghost" className="text-primary underline-offset-4 hover:underline">
-              <Link href="/features">{t('sections.why.cta')}</Link>
+            <Button asChild variant="ghost" className="text-primary transition-all hover:underline underline-offset-4">
+              <Link href="/features">{t("sections.why.cta")}</Link>
             </Button>
           </div>
 
@@ -361,16 +338,15 @@ export default async function Home({ params }: HomePageProps) {
               return (
                 <Card
                   key={pillar.title}
-                  className="group relative overflow-hidden border border-border/70 bg-background/70 transition-all duration-300 hover:-translate-y-1 hover:border-primary/50 hover:shadow-lg animate-slide-up"
+                  className="group relative overflow-hidden border border-border/60 bg-card/90 transition-all duration-300 hover:-translate-y-1 hover:border-primary/40 hover:shadow-lg animate-slide-up"
                   style={{ animationDelay: `${0.05 + index * 0.05}s` }}
                 >
-                  {/* Tailwind V4 bg-linear syntax */}
-                  <div className="absolute inset-0 bg-linear-to-br from-primary/5 via-transparent to-transparent opacity-0 transition-opacity group-hover:opacity-100" />
+                  <div className="absolute inset-0 bg-linear-to-br from-primary/5 via-transparent to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
                   <CardHeader className="relative space-y-3">
-                    <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 text-primary">
+                    <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 text-primary ring-1 ring-primary/20 transition-transform duration-300 group-hover:scale-110">
                       <Icon className="h-6 w-6" aria-hidden />
                     </div>
-                    <CardTitle className="text-xl transition-colors group-hover:text-primary">
+                    <CardTitle className="text-xl transition-colors duration-300 group-hover:text-primary">
                       {pillar.title}
                     </CardTitle>
                     <CardDescription className="leading-relaxed">{pillar.description}</CardDescription>
@@ -381,18 +357,17 @@ export default async function Home({ params }: HomePageProps) {
           </div>
         </section>
 
-        {/* SECTION: FEATURES */}
-        <section id="features" className="space-y-6 animate-fade-in" style={{ animationDelay: '0.1s' }}>
+        <section id="features" className="space-y-6 animate-fade-in" style={{ animationDelay: "0.1s" }}>
           <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
             <div className="space-y-2">
               <p className="text-xs font-semibold uppercase tracking-[0.3em] text-primary">
-                {t('sections.features.eyebrow')}
+                {t("sections.features.eyebrow")}
               </p>
-              <h2 className="text-3xl font-bold">{t('sections.features.title')}</h2>
-              <p className="max-w-2xl text-muted-foreground">{t('sections.features.description')}</p>
+              <h2 className="text-3xl font-bold">{t("sections.features.title")}</h2>
+              <p className="max-w-2xl text-muted-foreground">{t("sections.features.description")}</p>
             </div>
-            <Button asChild variant="outline" className="rounded-full">
-              <Link href="/features">{t('sections.features.cta')}</Link>
+            <Button asChild variant="outline" className="rounded-full bg-transparent">
+              <Link href="/features">{t("sections.features.cta")}</Link>
             </Button>
           </div>
 
@@ -422,7 +397,6 @@ export default async function Home({ params }: HomePageProps) {
           </div>
         </section>
 
-        {/* SECTION: PLANS */}
         <section
           id="plans"
           className="relative overflow-hidden rounded-3xl border border-border/60 bg-card/70 px-6 py-12 shadow-lg backdrop-blur"
@@ -431,11 +405,11 @@ export default async function Home({ params }: HomePageProps) {
           <div className="floating-orb-secondary left-[8%] bottom-[-120px] opacity-20" />
           <div className="relative space-y-3 text-center">
             <p className="text-xs font-semibold uppercase tracking-[0.3em] text-primary">
-              {t('sections.plans.eyebrow')}
+              {t("sections.plans.eyebrow")}
             </p>
-            <h2 className="text-3xl font-bold">{t('sections.plans.title')}</h2>
+            <h2 className="text-3xl font-bold">{t("sections.plans.title")}</h2>
             <p className="mx-auto max-w-2xl text-muted-foreground">
-              {t('sections.plans.description', { discount: DEFAULT_ANNUAL_DISCOUNT })}
+              {t("sections.plans.description", { discount: DEFAULT_ANNUAL_DISCOUNT })}
             </p>
           </div>
 
@@ -454,33 +428,32 @@ export default async function Home({ params }: HomePageProps) {
                 htmlFor="billing-monthly"
                 className="flex-1 cursor-pointer rounded-full px-3 py-2 text-center text-sm font-semibold text-muted-foreground transition peer-checked/billing-monthly:bg-primary peer-checked/billing-monthly:text-primary-foreground peer-checked/billing-monthly:shadow-md"
               >
-                {t('plans.toggle.monthly')}
+                {t("plans.toggle.monthly")}
               </label>
               <label
                 htmlFor="billing-annual"
                 className="flex-1 cursor-pointer rounded-full px-3 py-2 text-center text-sm font-semibold text-muted-foreground transition peer-checked/billing-annual:bg-primary peer-checked/billing-annual:text-primary-foreground peer-checked/billing-annual:shadow-md"
               >
-                {t('plans.toggle.annual', { discount: DEFAULT_ANNUAL_DISCOUNT })}
+                {t("plans.toggle.annual", { discount: DEFAULT_ANNUAL_DISCOUNT })}
               </label>
             </div>
 
             <div className="grid gap-6 md:grid-cols-3 peer-checked/billing-annual:hidden">
-              {renderPlanCards('monthly')}
+              {renderPlanCards("monthly")}
             </div>
             <div className="hidden gap-6 md:grid-cols-3 peer-checked/billing-annual:grid peer-checked/billing-monthly:hidden">
-              {renderPlanCards('annual')}
+              {renderPlanCards("annual")}
             </div>
           </div>
         </section>
 
-        {/* SECTION: TESTIMONIALS */}
-        <section id="temoignages" className="space-y-6 animate-fade-in" style={{ animationDelay: '0.1s' }}>
+        <section id="temoignages" className="space-y-6 animate-fade-in" style={{ animationDelay: "0.1s" }}>
           <div className="flex flex-col gap-2">
             <p className="text-xs font-semibold uppercase tracking-[0.3em] text-primary">
-              {t('sections.testimonials.eyebrow')}
+              {t("sections.testimonials.eyebrow")}
             </p>
-            <h2 className="text-3xl font-bold">{t('sections.testimonials.title')}</h2>
-            <p className="max-w-2xl text-muted-foreground">{t('sections.testimonials.description')}</p>
+            <h2 className="text-3xl font-bold">{t("sections.testimonials.title")}</h2>
+            <p className="max-w-2xl text-muted-foreground">{t("sections.testimonials.description")}</p>
           </div>
           <div className="grid gap-6 md:grid-cols-3">
             {testimonials.map((item, index) => (
@@ -506,18 +479,17 @@ export default async function Home({ params }: HomePageProps) {
           </div>
         </section>
 
-        {/* SECTION: FAQ */}
-        <section id="faq" className="space-y-6 animate-fade-in" style={{ animationDelay: '0.12s' }}>
+        <section id="faq" className="space-y-6 animate-fade-in" style={{ animationDelay: "0.12s" }}>
           <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
             <div className="space-y-2">
               <p className="text-xs font-semibold uppercase tracking-[0.3em] text-primary">
-                {t('sections.faq.eyebrow')}
+                {t("sections.faq.eyebrow")}
               </p>
-              <h2 className="text-3xl font-bold">{t('sections.faq.title')}</h2>
-              <p className="max-w-2xl text-muted-foreground">{t('sections.faq.description')}</p>
+              <h2 className="text-3xl font-bold">{t("sections.faq.title")}</h2>
+              <p className="max-w-2xl text-muted-foreground">{t("sections.faq.description")}</p>
             </div>
             <Button asChild variant="ghost" className="text-primary underline-offset-4 hover:underline">
-              <Link href="/faqs">{t('sections.faq.cta')}</Link>
+              <Link href="/faqs">{t("sections.faq.cta")}</Link>
             </Button>
           </div>
           <Card className="border border-border/60 bg-card/80 shadow-lg backdrop-blur">
@@ -542,32 +514,28 @@ export default async function Home({ params }: HomePageProps) {
           </Card>
         </section>
 
-        {/* SECTION: CONTACT */}
         <section
           id="contact"
           className="relative overflow-hidden rounded-3xl border border-border/60 bg-linear-to-br from-card via-card/80 to-card/60 px-8 py-12 shadow-lg animate-fade-in"
-          style={{ animationDelay: '0.14s' }}
+          style={{ animationDelay: "0.14s" }}
         >
           <div className="floating-orb-secondary right-[-60px] -top-20 opacity-25" />
           <div className="floating-orb-tertiary -left-10 -bottom-20 opacity-20" />
           <div className="relative flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
             <div className="space-y-3">
               <p className="text-xs font-semibold uppercase tracking-[0.3em] text-primary">
-                {t('sections.contact.eyebrow')}
+                {t("sections.contact.eyebrow")}
               </p>
-              <h2 className="text-3xl font-bold">{t('sections.contact.title')}</h2>
-              <p className="max-w-2xl text-muted-foreground">{t('sections.contact.description')}</p>
+              <h2 className="text-3xl font-bold">{t("sections.contact.title")}</h2>
+              <p className="max-w-2xl text-muted-foreground">{t("sections.contact.description")}</p>
               <div className="flex flex-wrap gap-3">
                 <Button asChild className="transition hover:scale-[1.02] hover:shadow-lg">
-                  <Link href="/request-demo">{t('sections.contact.primaryCta')}</Link>
+                  <Link href="/request-demo">{t("sections.contact.primaryCta")}</Link>
                 </Button>
                 <Button asChild variant="secondary" className="transition hover:scale-[1.02] hover:shadow-lg">
-                    <a
-                      href="mailto:hello@gymwatch.ma"
-                      className="font-semibold text-primary hover:underline"
-                    >
-                    {t('sections.contact.secondaryCta')}
-                    </a>
+                  <a href="mailto:hello@gymwatch.ma" className="font-semibold text-primary hover:underline">
+                    {t("sections.contact.secondaryCta")}
+                  </a>
                 </Button>
               </div>
             </div>
@@ -577,31 +545,26 @@ export default async function Home({ params }: HomePageProps) {
                   <Headphones className="h-5 w-5" aria-hidden />
                 </div>
                 <div>
-                  <p className="text-sm font-semibold text-foreground">
-                    {t('sections.contact.supportTitle')}
-                  </p>
-                  <p className="text-sm text-muted-foreground">
-                    {t('sections.contact.supportSubtitle')}
-                  </p>
+                  <p className="text-sm font-semibold text-foreground">{t("sections.contact.supportTitle")}</p>
+                  <p className="text-sm text-muted-foreground">{t("sections.contact.supportSubtitle")}</p>
                 </div>
               </div>
               <div className="mt-4 space-y-2 text-sm text-muted-foreground">
                 <p>
-                  {t('sections.contact.emailLabel')}{' '}
-                  <a
-                    href="mailto:hello@gymwatch.ma"
-                    className="font-semibold text-primary hover:underline"
-                  >
+                  {t("sections.contact.emailLabel")}{" "}
+                  <a href="mailto:hello@gymwatch.ma" className="font-semibold text-primary hover:underline">
                     hello@gymwatch.ma
                   </a>
                 </p>
-                <p>{t('sections.contact.availability')}</p>
-                <p>{t('sections.contact.deployment')}</p>
+                <p>{t("sections.contact.availability")}</p>
+                <p>{t("sections.contact.deployment")}</p>
               </div>
             </div>
           </div>
         </section>
       </main>
+
+      <MarketingFooter />
     </div>
   )
 }

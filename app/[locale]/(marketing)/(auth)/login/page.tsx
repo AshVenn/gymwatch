@@ -2,7 +2,7 @@ import type { AppLocale } from '@/i18n/routing'
 import { NextIntlClientProvider } from 'next-intl'
 import { notFound } from 'next/navigation'
 
-import { LoginClient } from './login-client'
+import { LoginClient } from '../../../../../components/auth/login-client'
 import { routing } from '@/i18n/routing'
 
 type LoginPageProps = {

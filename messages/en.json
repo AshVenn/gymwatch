@@ -15,6 +15,83 @@
     "twitterTitle": "GymWatch - Gym management solution",
     "twitterDescription": "Automate subscriptions, streamline operations, and empower your members with GymWatch."
   },
+  "requestDemoHome": {
+    "metadata": {
+      "title": "Request a Demo | GymWatch",
+      "description": "Schedule a personalized GymWatch demo. Submit your request and receive a preconfigured test workspace.",
+      "keywords": ["GymWatch", "demo", "request demo", "gym software", "membership management", "QR access"]
+    },
+    "hero": {
+      "badge": "Demo request",
+      "trustChip": "Quick reply",
+      "title": "Schedule your tailored demo",
+      "subtitle": "Share a few details so we can prepare your test workspace. We review the request and then send you access."
+    },
+    "left": {
+      "title": "What you get",
+      "description": "A preconfigured demo instance based on your context (plan, location, team) so you can test GymWatch in real conditions.",
+      "cards": {
+        "verify": {
+          "title": "Manual review",
+          "desc": "Each request is reviewed by an admin to prevent duplicates and abuse."
+        },
+        "invite": {
+          "title": "Admin account",
+          "desc": "We set up the primary admin access using your details."
+        },
+        "local": {
+          "title": "Local settings",
+          "desc": "Address, city, and country to adapt the experience (formats, labels, context)."
+        },
+        "speed": {
+          "title": "Fast setup",
+          "desc": "Your demo can be provisioned quickly depending on review and workload."
+        }
+      },
+      "hint": {
+        "title": "Tip",
+        "desc": "Add a message with your needs (multi-sites, QR, exports, classes…) so we can prepare the best configuration."
+      }
+    },
+    "plans": {
+      "basic": { "title": "Basic", "desc": "Essential management" },
+      "pro": { "title": "Pro", "desc": "QR codes, exports" },
+      "enterprise": { "title": "Enterprise", "desc": "Multi-site, classes" }
+    },
+    "form": {
+      "title": "Request a demo",
+      "description": "Fill in the key details to create your test instance.",
+      "sideHint": "Demo access can be activated after review.",
+      "disclaimer": "By submitting this form, you agree to be contacted regarding your demo request.",
+      "actions": {
+        "submit": "Submit my request",
+        "sending": "Sending…"
+      },
+      "fields": {
+        "gymName": { "label": "Gym name", "placeholder": "e.g. FitZone Casablanca" },
+        "gymEmail": { "label": "Gym email", "placeholder": "contact@gym.com" },
+        "phone": { "label": "Phone", "placeholder": "+212…" },
+        "address": { "label": "Address", "placeholder": "Street…" },
+        "city": { "label": "City", "placeholder": "Casablanca" },
+        "country": { "label": "Country", "placeholder": "Morocco" },
+        "adminFirstName": { "label": "Admin first name", "placeholder": "Sanae" },
+        "adminLastName": { "label": "Admin last name", "placeholder": "Belkadi" },
+        "adminEmail": { "label": "Primary admin email", "placeholder": "admin@gym.com" },
+        "plan": { "label": "Desired plan", "placeholder": "Select a plan" },
+        "message": { "label": "Context or special needs", "placeholder": "Multi-site? QR? Exports? Classes? Goals…" }
+      }
+    },
+    "toast": {
+      "success": "Request sent. We’ll get back to you very soon.",
+      "errorFallback": "Unable to send your request."
+    },
+    "validation": {
+      "required": "Required field",
+      "email": "Invalid email",
+      "phone": "Invalid phone number",
+      "messageMax": "Message is too long"
+    }
+  },
   "footer": {
       "brand": {
         "description": "The all-in-one platform to run your gym with clarity and simplicity."

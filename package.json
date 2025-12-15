@@ -50,6 +50,7 @@
     "@tanstack/react-query-devtools": "^5.90.2",
     "@vercel/analytics": "1.3.1",
     "@yudiel/react-qr-scanner": "^2.0.14",
+    "arabic-persian-reshaper": "^1.0.1",
     "autoprefixer": "^10.4.20",
     "bcrypt": "^6.0.0",
     "bcryptjs": "3.0.3",

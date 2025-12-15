@@ -14,6 +14,83 @@
     "openGraphImageAlt": "Motif abstrait GymWatch",
     "twitterTitle": "GymWatch - La solution de gestion des salles de sport",
     "twitterDescription": "Automatisez vos abonnements, simplifiez vos opérations et inspirez vos membres avec GymWatch."
+  },  
+  "requestDemoHome": {
+    "metadata": {
+      "title": "Demander une démo | GymWatch",
+      "description": "Planifiez une démonstration personnalisée de GymWatch. Envoyez votre demande et recevez un espace de test préconfiguré.",
+      "keywords": ["GymWatch", "démo", "demande de démo", "logiciel salle de sport", "gestion abonnement", "QR code"]
+    },
+    "hero": {
+      "badge": "Demande de démo",
+      "trustChip": "Réponse rapide",
+      "title": "Planifiez votre démo sur-mesure",
+      "subtitle": "Donnez-nous quelques informations pour préparer votre espace de test. Nous validons la demande puis vous envoyons les accès."
+    },
+    "left": {
+      "title": "Ce que vous obtenez",
+      "description": "Une instance de démonstration préconfigurée selon votre contexte (plan, localisation, équipe) pour tester GymWatch dans des conditions réelles.",
+      "cards": {
+        "verify": {
+          "title": "Validation manuelle",
+          "desc": "Chaque demande est vérifiée par un administrateur pour éviter les doublons et les abus."
+        },
+        "invite": {
+          "title": "Compte administrateur",
+          "desc": "Nous configurons un accès administrateur principal avec vos informations."
+        },
+        "local": {
+          "title": "Paramètres locaux",
+          "desc": "Adresse, ville et pays pour adapter l’expérience (format, libellés, contexte)."
+        },
+        "speed": {
+          "title": "Mise en place rapide",
+          "desc": "Votre démo peut être provisionnée rapidement selon la charge et la validation."
+        }
+      },
+      "hint": {
+        "title": "Astuce",
+        "desc": "Ajoutez un message avec vos besoins (multi-sites, QR, exports, cours…) pour qu’on prépare la meilleure configuration."
+      }
+    },
+    "plans": {
+      "basic": { "title": "Basic", "desc": "Gestion essentielle" },
+      "pro": { "title": "Pro", "desc": "QR codes, exports" },
+      "enterprise": { "title": "Enterprise", "desc": "Multi-sites, cours" }
+    },
+    "form": {
+      "title": "Demander une démo",
+      "description": "Remplissez les informations clés pour créer votre instance de test.",
+      "sideHint": "Un accès démo peut être activé après validation.",
+      "disclaimer": "En envoyant ce formulaire, vous acceptez d’être contacté au sujet de votre demande de démo.",
+      "actions": {
+        "submit": "Envoyer ma demande",
+        "sending": "Envoi en cours…"
+      },
+      "fields": {
+        "gymName": { "label": "Nom de la salle", "placeholder": "Ex : FitZone Casablanca" },
+        "gymEmail": { "label": "Email de la salle", "placeholder": "contact@salle.ma" },
+        "phone": { "label": "Téléphone", "placeholder": "+212…" },
+        "address": { "label": "Adresse", "placeholder": "Avenue…" },
+        "city": { "label": "Ville", "placeholder": "Casablanca" },
+        "country": { "label": "Pays", "placeholder": "Maroc" },
+        "adminFirstName": { "label": "Prénom (admin)", "placeholder": "Sanae" },
+        "adminLastName": { "label": "Nom (admin)", "placeholder": "Belkadi" },
+        "adminEmail": { "label": "Email administrateur principal", "placeholder": "admin@salle.ma" },
+        "plan": { "label": "Plan souhaité", "placeholder": "Choisir un plan" },
+        "message": { "label": "Contexte ou besoins particuliers", "placeholder": "Multi-sites ? QR ? Exports ? Cours ? Objectifs…" }
+      }
+    },
+    "toast": {
+      "success": "Demande envoyée. Nous revenons vers vous très vite.",
+      "errorFallback": "Impossible d’envoyer votre demande."
+    },
+    "validation": {
+      "required": "Champ requis",
+      "email": "Email invalide",
+      "phone": "Numéro invalide",
+      "messageMax": "Message trop long"
+    }
   },
       "footer": {
       "brand": {

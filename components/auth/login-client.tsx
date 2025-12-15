@@ -12,7 +12,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { MarketingNavbar } from '@/components/marketing/navbar'
 import { useRouter, Link, type AppLocale } from '@/i18n/routing'
 import { cn } from '@/lib/utils'
 
@@ -95,7 +94,6 @@ function LoginClientContent({ localeFromServer }: LoginClientProps) {
       className="flex min-h-screen flex-col bg-background"
       dir={isRTL ? 'rtl' : 'ltr'}
     >
-      <MarketingNavbar />
       <div className="relative flex flex-1 items-center justify-center overflow-hidden p-4">
         <div className="pointer-events-none absolute inset-0 overflow-hidden">
           <motion.div
@@ -291,7 +289,7 @@ export function LoginClient(props: LoginClientProps) {
     <Suspense
       fallback={
         <div className="flex min-h-screen items-center justify-center">
-          Chargement...
+            ...
         </div>
       }
     >

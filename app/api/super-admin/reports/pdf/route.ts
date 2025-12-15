@@ -6,14 +6,11 @@ import { PDFDocument, rgb } from "pdf-lib"
 import fontkit from "@pdf-lib/fontkit"
 import { promises as fs } from "fs"
 import path from "path"
+import reshaper from "arabic-persian-reshaper"
 
 import { authOptions } from "@/lib/auth-middleware"
 import { prisma } from "@/lib/prisma"
-import {
-  formatExportCurrency,
-  formatExportDate,
-  resolveExportLocale,
-} from "@/lib/export-locale"
+import { formatExportCurrency, formatExportDate, resolveExportLocale } from "@/lib/export-locale"
 
 export const runtime = "nodejs"
 export const dynamic = "force-dynamic"
@@ -95,10 +92,12 @@ const labels = {
 type ExportLocale = keyof typeof labels
 
 // -------------------------
-// Text utils
+// Shared text + RTL helpers
 // -------------------------
 function safeText(v: unknown) {
   return String(v ?? "")
+    // arrow becomes □ in some fonts
+    .replace(/→/g, "-")
     // NBSP / narrow NBSP -> normal spaces
     .replace(/\u00A0/g, " ")
     .replace(/\u202F/g, " ")
@@ -107,24 +106,180 @@ function safeText(v: unknown) {
     .trim()
 }
 
-function toPdfText(raw: string, locale: ExportLocale) {
-  const clean = safeText(raw)
-  if (!clean) return ""
-  if (locale !== "ar") return clean
+type Run = { kind: "rtl" | "ltr"; text: string }
 
-  // Keep Arabic content untouched while avoiding hidden characters
-  const graphemes =
-    typeof Intl !== "undefined" && Intl.Segmenter
-      ? [...new Intl.Segmenter("ar", { granularity: "grapheme" }).segment(clean)].map(
-          (segment: any) => segment.segment
-        )
-      : Array.from(clean)
+function isRtlChar(ch: string) {
+  return /[\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF\uFB50-\uFDFF\uFE70-\uFEFF]/.test(ch)
+}
 
-  return graphemes.join("")
+function tokenizeRuns(input: string): Run[] {
+  const clean = safeText(input)
+  if (!clean) return []
+
+  const runs: Run[] = []
+  let cur = ""
+  let curKind: Run["kind"] | null = null
+
+  const push = () => {
+    if (!cur) return
+    runs.push({ kind: curKind ?? "ltr", text: cur })
+    cur = ""
+  }
+
+  for (const ch of clean) {
+    const kind: Run["kind"] = isRtlChar(ch) ? "rtl" : "ltr"
+
+    // keep spaces with surrounding LTR to avoid ugly splits
+    if (ch === " ") {
+      if (curKind === null) {
+        curKind = "ltr"
+        cur = " "
+        continue
+      }
+      cur += " "
+      continue
+    }
+
+    if (curKind === null) {
+      curKind = kind
+      cur = ch
+      continue
+    }
+
+    if (kind === curKind) cur += ch
+    else {
+      push()
+      curKind = kind
+      cur = ch
+    }
+  }
+
+  push()
+  return runs
+}
+
+function shapeArabic(text: string) {
+  return (reshaper as any).ArabicShaper.convertArabic(text) as string
+}
+
+function measureRunWidth(run: Run, latinFont: any, arabicFont: any, size: number) {
+  if (run.kind === "rtl") {
+    const shaped = shapeArabic(run.text)
+    let w = 0
+    for (const ch of shaped) w += arabicFont.widthOfTextAtSize(ch, size)
+    return w
+  }
+  return latinFont.widthOfTextAtSize(run.text, size)
+}
+
+function wrapRunsByWidth(runs: Run[], maxWidth: number, latinFont: any, arabicFont: any, size: number) {
+  const lines: Run[][] = []
+  let line: Run[] = []
+  let lineW = 0
+
+  const pushLine = () => {
+    if (line.length) lines.push(line)
+    line = []
+    lineW = 0
+  }
+
+  for (const run of runs) {
+    const w = measureRunWidth(run, latinFont, arabicFont, size)
+
+    if (lineW + w <= maxWidth || line.length === 0) {
+      line.push(run)
+      lineW += w
+      continue
+    }
+
+    pushLine()
+    line.push(run)
+    lineW = w
+  }
+
+  pushLine()
+  return lines
+}
+
+function drawRtlMixed(
+  page: any,
+  text: string,
+  xRight: number,
+  y: number,
+  latinFont: any,
+  arabicFont: any,
+  size: number,
+  color: any,
+  maxWidth: number,
+  lineHeight: number,
+) {
+  const runs = tokenizeRuns(text)
+  const lines = wrapRunsByWidth(runs, maxWidth, latinFont, arabicFont, size)
+
+  lines.forEach((lineRuns, i) => {
+    let x = xRight
+    const yy = y - i * lineHeight
+
+    for (const run of lineRuns) {
+      if (run.kind === "rtl") {
+        const shaped = shapeArabic(run.text)
+        for (const ch of shaped) {
+          const cw = arabicFont.widthOfTextAtSize(ch, size)
+          x -= cw
+          page.drawText(ch, { x, y: yy, size, font: arabicFont, color })
+        }
+      } else {
+        const w = latinFont.widthOfTextAtSize(run.text, size)
+        x -= w
+        page.drawText(run.text, { x, y: yy, size, font: latinFont, color })
+      }
+    }
+  })
+
+  return lines.length
+}
+
+function drawLtrWrapped(
+  page: any,
+  text: string,
+  x: number,
+  y: number,
+  latinFont: any,
+  size: number,
+  color: any,
+  maxWidth: number,
+  lineHeight: number,
+) {
+  const clean = safeText(text)
+  if (!clean) return 0
+
+  const words = clean.split(/\s+/).filter(Boolean)
+  const lines: string[] = []
+  let line = ""
+
+  const fits = (t: string) => latinFont.widthOfTextAtSize(t, size) <= maxWidth
+
+  for (const word of words) {
+    const test = line ? `${line} ${word}` : word
+    if (fits(test)) {
+      line = test
+      continue
+    }
+    if (line) lines.push(line)
+    line = word
+  }
+  if (line) lines.push(line)
+  if (!lines.length) lines.push("--")
+
+  lines.forEach((ln, i) => {
+    page.drawText(ln, { x, y: y - i * lineHeight, size, font: latinFont, color })
+  })
+
+  return lines.length
 }
 
 // -------------------------
-// Font loading (app/fonts)
+// Shared font loader (app/fonts)
 // -------------------------
 const FONT_FILES = {
   ar: "NotoSansArabic-Regular.ttf",
@@ -133,27 +288,39 @@ const FONT_FILES = {
 
 const FONT_CACHE: Partial<Record<keyof typeof FONT_FILES, Uint8Array>> = {}
 
-async function loadFontBytes(locale: ExportLocale) {
-  const key = locale === "ar" ? "ar" : "default"
-  if (FONT_CACHE[key]) return FONT_CACHE[key]!
-
-  const fileName = FONT_FILES[key]
+async function loadFontBytes(kind: keyof typeof FONT_FILES) {
+  if (FONT_CACHE[kind]) return FONT_CACHE[kind]!
+  const fileName = FONT_FILES[kind]
   const fontPath = path.join(process.cwd(), "app", "fonts", fileName)
   const bytes = await fs.readFile(fontPath)
-  FONT_CACHE[key] = bytes
+  FONT_CACHE[kind] = bytes
   return bytes
 }
 
+async function loadFonts(pdf: PDFDocument, locale: ExportLocale) {
+  const latinBytes = await loadFontBytes("default")
+  const latin = await pdf.embedFont(latinBytes, { subset: true })
+
+  let arabic = latin
+  if (locale === "ar") {
+    const arBytes = await loadFontBytes("ar")
+    arabic = await pdf.embedFont(arBytes, { subset: true })
+  }
+  return { latin, arabic }
+}
+
 // -------------------------
-// Drawer (RTL-aware using widthOfTextAtSize)
+// Drawer (same for all PDFs)
 // -------------------------
-function createDrawer(pdf: PDFDocument, font: any, bold: any, locale: ExportLocale) {
+function createDrawer(pdf: PDFDocument, locale: ExportLocale, latinFont: any, arabicFont: any) {
   let page = pdf.addPage([595, 842])
   let cursorY = 792
 
   const MARGIN_LEFT = 48
   const MARGIN_RIGHT = 48
   const VALUE_COL_X = 280
+  const LINE_H = 16
+  const TITLE_LINE_H = 20
 
   const ensureSpace = (needed: number) => {
     if (cursorY - needed < 60) {
@@ -163,79 +330,110 @@ function createDrawer(pdf: PDFDocument, font: any, bold: any, locale: ExportLoca
   }
 
   const drawTitle = (text: string) => {
-    ensureSpace(32)
+    ensureSpace(34)
     const { width } = page.getSize()
     const size = 18
+    const t = safeText(text)
 
-    const t = toPdfText(text, locale)
-    const w = bold.widthOfTextAtSize(t, size)
-    const x = locale === "ar" ? width - MARGIN_RIGHT - w : MARGIN_LEFT
+    if (locale === "ar") {
+      const maxW = width - MARGIN_LEFT - MARGIN_RIGHT
+      drawRtlMixed(
+        page,
+        t,
+        width - MARGIN_RIGHT,
+        cursorY,
+        latinFont,
+        arabicFont,
+        size,
+        rgb(0.14, 0.22, 0.36),
+        maxW,
+        TITLE_LINE_H,
+      )
+    } else {
+      page.drawText(t, {
+        x: MARGIN_LEFT,
+        y: cursorY,
+        size,
+        font: latinFont,
+        color: rgb(0.14, 0.22, 0.36),
+      })
+    }
 
-    page.drawText(t, {
-      x,
-      y: cursorY,
-      size,
-      font: bold,
-      color: rgb(0.14, 0.22, 0.36),
-    })
     cursorY -= 26
   }
 
   const drawLine = (label: string, value: string) => {
-    ensureSpace(20)
+    ensureSpace(22)
     const { width } = page.getSize()
     const size = 12
+    const l = safeText(label)
+    const v = safeText(value)
 
-    const l = toPdfText(label, locale)
-    const v = toPdfText(value, locale)
-
-    // measure using the actual font used for each part
-    const lw = bold.widthOfTextAtSize(l, size)
-    const vw = bold.widthOfTextAtSize(v, size)
-
-    // For Arabic: put label on the RIGHT, value on the LEFT column (still right-aligned inside its column)
     if (locale === "ar") {
-      const labelX = width - MARGIN_RIGHT - lw
-
-      // left column for value: end at VALUE_COL_X, right-align inside it
+      const labelMax = 230
       const valueRightEdge = VALUE_COL_X
-      const valueX = Math.max(MARGIN_LEFT, valueRightEdge - vw)
+      const valueMax = valueRightEdge - MARGIN_LEFT
 
-      page.drawText(l, {
-        x: labelX,
-        y: cursorY,
+      const lLines = drawRtlMixed(
+        page,
+        l,
+        width - MARGIN_RIGHT,
+        cursorY,
+        latinFont,
+        arabicFont,
         size,
-        font: bold,
-        color: rgb(0.18, 0.18, 0.18),
-      })
-      page.drawText(v, {
-        x: valueX,
-        y: cursorY,
+        rgb(0.18, 0.18, 0.18),
+        labelMax,
+        LINE_H,
+      )
+
+      const vLines = drawRtlMixed(
+        page,
+        v,
+        valueRightEdge,
+        cursorY,
+        latinFont,
+        arabicFont,
         size,
-        font: bold,
-        color: rgb(0.1, 0.1, 0.1),
-      })
+        rgb(0.1, 0.1, 0.1),
+        valueMax,
+        LINE_H,
+      )
+
+      cursorY -= Math.max(lLines, vLines) * LINE_H
     } else {
+      // label left, value right aligned in right side
       const labelX = MARGIN_LEFT
-      const valueX = width - MARGIN_RIGHT - vw
+      const valueX = 300
+      const labelMax = 240
+      const valueMax = width - MARGIN_RIGHT - valueX
 
-      page.drawText(l, {
-        x: labelX,
-        y: cursorY,
+      const lLines = drawLtrWrapped(
+        page,
+        l,
+        labelX,
+        cursorY,
+        latinFont,
         size,
-        font: bold,
-        color: rgb(0.18, 0.18, 0.18),
-      })
-      page.drawText(v, {
-        x: valueX,
-        y: cursorY,
+        rgb(0.18, 0.18, 0.18),
+        labelMax,
+        LINE_H,
+      )
+
+      const vLines = drawLtrWrapped(
+        page,
+        v,
+        valueX,
+        cursorY,
+        latinFont,
         size,
-        font: bold,
-        color: rgb(0.1, 0.1, 0.1),
-      })
+        rgb(0.1, 0.1, 0.1),
+        valueMax,
+        LINE_H,
+      )
+
+      cursorY -= Math.max(lLines, vLines) * LINE_H
     }
-
-    cursorY -= 16
   }
 
   const gap = (value = 12) => {
@@ -268,29 +466,28 @@ export async function GET(request: NextRequest) {
     const locale = resolveExportLocale(request.nextUrl.searchParams.get("locale")) as ExportLocale
     const wording = labels[locale]
 
+    // For AR: keep values (numbers/dates) in EN, labels stay Arabic
+    const valueLocale: ExportLocale = locale === "ar" ? "en" : locale
+
     const pdf = await PDFDocument.create()
     pdf.registerFontkit(fontkit)
 
-    const fontBytes = await loadFontBytes(locale)
-
-    const font = await pdf.embedFont(fontBytes, { subset: true })
-    const bold = font // pas de bold séparé -> on réutilise
-
-    const drawer = createDrawer(pdf, font, bold, locale)
+    const { latin, arabic } = await loadFonts(pdf, locale)
+    const drawer = createDrawer(pdf, locale, latin, arabic)
 
     const currency = (value: number | null | undefined) =>
-      safeText(formatExportCurrency(value ?? 0, locale, "MAD"))
+      safeText(formatExportCurrency(value ?? 0, valueLocale, "MAD"))
 
     // Header
     drawer.drawTitle(wording.titleGlobal)
     drawer.drawLine(
       wording.generatedAt,
       safeText(
-        formatExportDate(new Date(), locale, {
+        formatExportDate(new Date(), valueLocale, {
           dateStyle: "medium",
           timeStyle: "short",
-        })
-      )
+        }),
+      ),
     )
     drawer.gap(10)
 
@@ -306,11 +503,11 @@ export async function GET(request: NextRequest) {
       drawer.drawLine(wording.activeGyms, `${gyms.length}`)
       drawer.drawLine(
         wording.activeSubscriptions,
-        `${gyms.reduce((sum, gym) => sum + gym._count.subscriptions, 0)}`
+        `${gyms.reduce((sum, gym) => sum + gym._count.subscriptions, 0)}`,
       )
       drawer.drawLine(
         wording.totalMembers,
-        `${gyms.reduce((sum, gym) => sum + gym._count.members, 0)}`
+        `${gyms.reduce((sum, gym) => sum + gym._count.members, 0)}`,
       )
       drawer.drawLine(wording.cumulativeRevenue, currency(payments._sum.amount ?? 0))
       drawer.gap(12)
@@ -328,10 +525,7 @@ export async function GET(request: NextRequest) {
       revenueByGym.forEach((entry, index) => {
         const gym = lookup.get(entry.gymId)
         if (!gym) return
-        drawer.drawLine(
-          `${index + 1}. ${gym.name}`,
-          `${gym.subscriptionPlan} - ${currency(entry._sum.amount ?? 0)}`
-        )
+        drawer.drawLine(`${index + 1}. ${gym.name}`, `${gym.subscriptionPlan} - ${currency(entry._sum.amount ?? 0)}`)
       })
     } else if (scope === "gym" && gymId) {
       const gym = await prisma.gym.findUnique({
@@ -374,8 +568,8 @@ export async function GET(request: NextRequest) {
         drawer.drawLine(
           `${sub.member.firstName} ${sub.member.lastName}`,
           `${sub.plan?.name ?? "Plan"} - ${wording.endsAt} ${safeText(
-            formatExportDate(sub.endDate, locale, { dateStyle: "medium" })
-          )}`
+            formatExportDate(sub.endDate, valueLocale, { dateStyle: "medium" }),
+          )}`,
         )
       })
     } else {
@@ -383,8 +577,6 @@ export async function GET(request: NextRequest) {
     }
 
     const pdfBytes = await pdf.save()
-    console.log("[PDF] bytes length =", pdfBytes.length)
-
     const filename = `super-admin-${scope}-${Date.now()}.pdf`
     const body = Buffer.from(pdfBytes)
 
@@ -404,7 +596,7 @@ export async function GET(request: NextRequest) {
         error: "PDF Generation Failed",
         message: err instanceof Error ? err.message : String(err),
       },
-      { status: 500 }
+      { status: 500 },
     )
   }
 }

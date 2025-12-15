@@ -3,7 +3,6 @@ import { Cookie, ShieldCheck, Settings2, Info, ExternalLink } from "lucide-react
 import { getTranslations, setRequestLocale } from "next-intl/server"
 
 import { type AppLocale, Link } from "@/i18n/routing"
-import { MarketingNavbar } from "@/components/marketing/navbar"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 
@@ -35,8 +34,6 @@ export default async function CookiesPage({ params }: CookiesPageProps) {
 
   return (
     <div className="min-h-screen bg-background text-foreground">
-      <MarketingNavbar />
-
       <main className="mx-auto flex max-w-5xl flex-col gap-10 px-4 pb-16 pt-12">
         {/* Hero */}
         <section className="space-y-4 text-center animate-fade-in">

@@ -199,8 +199,6 @@ export default async function Home({ params }: HomePageProps) {
     <div className="relative min-h-screen overflow-hidden bg-background text-foreground">
       <div className="pointer-events-none fixed inset-0 z-0 bg-[radial-gradient(circle_at_20%_10%,rgba(59,130,246,0.08),transparent_40%),radial-gradient(circle_at_80%_5%,rgba(37,99,235,0.08),transparent_35%),radial-gradient(circle_at_70%_70%,rgba(14,165,233,0.06),transparent_40%)]" />
 
-      <MarketingNavbar />
-
       <main className="relative z-10 mx-auto flex max-w-6xl flex-col gap-20 px-4 pb-16 pt-10 md:pt-16">
         <header
           id="hero"

@@ -3,7 +3,6 @@ import { ArrowUpRight, BarChart3, Bell, BookOpen, QrCode } from "lucide-react"
 import { getTranslations, setRequestLocale } from "next-intl/server"
 
 import { Link, type AppLocale } from "@/i18n/routing"
-import { MarketingNavbar } from "@/components/marketing/navbar"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 
@@ -38,32 +37,24 @@ export default async function RessourcesPage({ params }: RessourcesPageProps) {
 
   const t = await getTranslations({ locale, namespace: "ressources" })
 
-  // Typed routes for MarketingNavbar
-  type MarketingNavbarProps = React.ComponentProps<typeof MarketingNavbar>
-  const navLinks: MarketingNavbarProps["links"] = [
-    { label: t("nav.features"), href: "/features" },
-    { label: t("nav.plans"), href: "/plans" },
-    { label: t("nav.faq"), href: "/faqs" },
-    { label: t("nav.contact"), href: "/contact" },
-  ]
-
-  const resources = (t.raw("resources") as Array<{
-    key: ResourceKey
-    title: string
-    description: string
-  }>) ?? []
+  const resources =
+    (t.raw("resources") as Array<{
+      key: ResourceKey
+      title: string
+      description: string
+    }>) ?? []
 
   return (
     <div className="min-h-screen bg-background text-foreground">
-      <MarketingNavbar links={navLinks} />
-
       <main className="mx-auto flex max-w-5xl flex-col gap-10 px-4 pb-16 pt-12">
         <section className="space-y-4 animate-fade-in">
           <p className="inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-4 py-1 text-[0.7rem] font-semibold uppercase tracking-[0.3em] text-primary">
             {t("hero.badge")}
           </p>
+
           <h1 className="text-balance text-4xl font-bold md:text-5xl">{t("hero.title")}</h1>
           <p className="max-w-3xl text-lg text-muted-foreground">{t("hero.description")}</p>
+
           <Button asChild className="hover:shadow-lg">
             <Link href="/request-demo">{t("hero.primaryCta")}</Link>
           </Button>

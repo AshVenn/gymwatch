@@ -2,7 +2,6 @@ import type { Metadata } from "next"
 import { getTranslations, setRequestLocale } from "next-intl/server"
 
 import { Link, type AppLocale } from "@/i18n/routing"
-import { MarketingNavbar } from "@/components/marketing/navbar"
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -38,7 +37,6 @@ export default async function FaqPage({ params }: FaqPageProps) {
 
   return (
     <div className="min-h-screen bg-background text-foreground">
-      <MarketingNavbar />
 
       <main className="mx-auto flex max-w-5xl flex-col gap-10 px-4 py-12">
         {/* Hero */}

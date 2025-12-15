@@ -3,18 +3,17 @@ import { Clock3, Headphones, Mail, Phone, Send, ShieldCheck } from "lucide-react
 import { getTranslations, setRequestLocale } from "next-intl/server"
 
 import { Link, type AppLocale } from "@/i18n/routing"
-import { MarketingNavbar } from "@/components/marketing/navbar"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { cn } from "@/lib/utils"
 
 type ContactPageProps = {
   params: Promise<{ locale: AppLocale }>
 }
 
 function normalizePhoneForTel(value: string) {
-  // keep + and digits only -> good for tel:
   const trimmed = (value || "").trim()
   const normalized = trimmed.replace(/[^\d+]/g, "")
   return normalized || "+212000000000"
@@ -39,27 +38,19 @@ export default async function ContactPage({ params }: ContactPageProps) {
 
   const t = await getTranslations({ locale, namespace: "contact" })
 
-  // ✅ Env-driven contact info (safe fallbacks)
-  const supportEmail = process.env.SUPPORT_EMAIL || "contact@gymwatch.ma"
-  const supportPhoneRaw = process.env.SUPPORT_PHONE || "+212 (0)6 12 34 56 78"
+  const supportEmail =
+    process.env.SUPPORT_EMAIL || process.env.NEXT_PUBLIC_SUPPORT_EMAIL || "contact@gymwatch.ma"
+  const supportPhoneRaw =
+    process.env.SUPPORT_PHONE || process.env.NEXT_PUBLIC_SUPPORT_PHONE || "+212 (0)6 12 34 56 78"
 
   const supportMailto = `mailto:${supportEmail}`
   const supportTel = `tel:${normalizePhoneForTel(supportPhoneRaw)}`
 
-  // Typed routes for MarketingNavbar (avoid `string` href)
-  type MarketingNavbarProps = React.ComponentProps<typeof MarketingNavbar>
-  const navLinks: MarketingNavbarProps["links"] = [
-    { label: t("nav.features"), href: "/features" },
-    { label: t("nav.plans"), href: "/plans" },
-    { label: t("nav.faq"), href: "/faqs" },
-    { label: t("nav.contact"), href: "/contact" },
-  ]
+  const dirClass = locale === "ar" ? "rtl text-right" : "ltr text-left"
 
   return (
-    <div className="relative min-h-screen overflow-hidden bg-background text-foreground">
+    <div className={cn("relative min-h-screen overflow-hidden bg-background text-foreground", dirClass)}>
       <div className="pointer-events-none fixed inset-0 z-0 bg-[radial-gradient(circle_at_30%_20%,rgba(59,130,246,0.06),transparent_50%),radial-gradient(circle_at_70%_80%,rgba(37,99,235,0.06),transparent_50%)]" />
-
-      <MarketingNavbar links={navLinks} />
 
       <main className="relative z-10 mx-auto flex max-w-5xl flex-col gap-10 px-4 pb-16 pt-12">
         {/* Hero */}
@@ -67,11 +58,15 @@ export default async function ContactPage({ params }: ContactPageProps) {
           <p className="inline-flex items-center gap-2 rounded-full border border-primary/40 bg-primary/10 px-4 py-1.5 text-[0.7rem] font-semibold uppercase tracking-[0.3em] text-primary shadow-sm">
             {t("hero.badge")}
           </p>
+
           <h1 className="text-balance text-4xl font-bold tracking-tight md:text-5xl">{t("hero.title")}</h1>
           <p className="max-w-3xl text-lg leading-relaxed text-muted-foreground">{t("hero.description")}</p>
         </section>
 
-        <section className="grid gap-8 lg:grid-cols-[1.1fr_0.9fr] animate-fade-in" style={{ animationDelay: "0.05s" }}>
+        <section
+          className="grid gap-8 lg:grid-cols-[1.1fr_0.9fr] animate-fade-in"
+          style={{ animationDelay: "0.05s" }}
+        >
           {/* Form */}
           <Card className="border border-border/50 bg-card/90 shadow-lg backdrop-blur-sm">
             <CardHeader>
@@ -80,7 +75,9 @@ export default async function ContactPage({ params }: ContactPageProps) {
             </CardHeader>
 
             <CardContent>
-              <form className="space-y-4" action={supportMailto} method="post">
+              {/* NOTE: mailto form submissions are unreliable across browsers.
+                  Keep form for UI + add "Email direct" as the reliable path. */}
+              <form className="space-y-4">
                 <div className="grid gap-4 md:grid-cols-2">
                   <div className="space-y-2">
                     <Label htmlFor="nom">{t("form.fields.name.label")}</Label>
@@ -89,6 +86,7 @@ export default async function ContactPage({ params }: ContactPageProps) {
                       name="nom"
                       placeholder={t("form.fields.name.placeholder")}
                       className="transition-all duration-200 focus:shadow-sm"
+                      autoComplete="name"
                     />
                   </div>
 
@@ -100,6 +98,7 @@ export default async function ContactPage({ params }: ContactPageProps) {
                       type="email"
                       placeholder={t("form.fields.email.placeholder")}
                       className="transition-all duration-200 focus:shadow-sm"
+                      autoComplete="email"
                     />
                   </div>
                 </div>
@@ -112,6 +111,7 @@ export default async function ContactPage({ params }: ContactPageProps) {
                       name="societe"
                       placeholder={t("form.fields.company.placeholder")}
                       className="transition-all duration-200 focus:shadow-sm"
+                      autoComplete="organization"
                     />
                   </div>
 
@@ -138,17 +138,17 @@ export default async function ContactPage({ params }: ContactPageProps) {
                 </div>
 
                 <div className="flex flex-wrap gap-3">
+                  {/* UI submit button (no backend wiring here) */}
                   <Button type="submit" className="gap-2 transition-all duration-300 hover:scale-[1.02] hover:shadow-lg">
                     {t("form.actions.send")}
                     <Send className="h-4 w-4" aria-hidden />
                   </Button>
 
-                  {/* ✅ typed Link can't handle mailto */}
                   <Button
                     asChild
                     type="button"
                     variant="outline"
-                    className="gap-2 transition-all duration-300 hover:bg-primary/5 bg-transparent"
+                    className="gap-2 bg-transparent transition-all duration-300 hover:bg-primary/5"
                   >
                     <a href={supportMailto}>
                       {t("form.actions.emailDirect")}
@@ -226,7 +226,7 @@ export default async function ContactPage({ params }: ContactPageProps) {
               <Button asChild className="transition-all duration-300 hover:scale-[1.02] hover:shadow-lg">
                 <Link href="/request-demo">{t("bottom.actions.primary")}</Link>
               </Button>
-              <Button asChild variant="outline" className="transition-all duration-300 hover:bg-primary/5 bg-transparent">
+              <Button asChild variant="outline" className="bg-transparent transition-all duration-300 hover:bg-primary/5">
                 <Link href="/plans">{t("bottom.actions.secondary")}</Link>
               </Button>
             </div>

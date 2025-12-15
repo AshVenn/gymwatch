@@ -1,9 +1,6 @@
 import type { Metadata } from "next"
 import { ShieldCheck, Database, Clock3, Lock, UserCheck, Mail, Phone, MapPin } from "lucide-react"
 import { getTranslations, setRequestLocale } from "next-intl/server"
-
-import { MarketingNavbar } from "@/components/marketing/navbar"
-
 import { Link, type AppLocale } from "@/i18n/routing"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -51,9 +48,6 @@ export default async function PrivacyPage({ params }: PrivacyPageProps) {
   return (
     <div className={cn("relative min-h-screen overflow-hidden bg-background text-foreground", dirClass)}>
       <div className="pointer-events-none fixed inset-0 z-0 bg-[radial-gradient(circle_at_30%_20%,rgba(59,130,246,0.06),transparent_50%),radial-gradient(circle_at_70%_80%,rgba(37,99,235,0.06),transparent_50%)]" />
-
-      <MarketingNavbar />
-
       <main className="relative z-10 mx-auto flex max-w-5xl flex-col gap-10 px-4 pb-16 pt-12">
         {/* Hero */}
         <section className="space-y-4 animate-fade-in">

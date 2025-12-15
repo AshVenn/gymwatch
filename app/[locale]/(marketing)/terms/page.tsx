@@ -1,8 +1,6 @@
 import type { Metadata } from "next"
 import { getTranslations, setRequestLocale } from "next-intl/server"
-
 import { Link, type AppLocale } from "@/i18n/routing"
-import { MarketingNavbar } from "@/components/marketing/navbar"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 
@@ -33,7 +31,6 @@ export default async function TermsPage({ params }: TermsPageProps) {
 
   return (
     <div className="min-h-screen bg-background text-foreground">
-      <MarketingNavbar />
 
       <main className="mx-auto flex max-w-5xl flex-col gap-8 px-4 pb-16 pt-12">
         <section className="space-y-3 animate-fade-in">

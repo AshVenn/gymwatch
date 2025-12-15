@@ -1,15 +1,22 @@
 import type { ReactNode } from "react"
+import type { AppLocale } from "@/i18n/routing"
+import { MarketingNavbar } from "@/components/marketing/navbar"
 import { MarketingFooter } from "@/components/marketing/footer"
 
-type MarketingLayoutProps = {
+export default async function MarketingLayout({
+  children,
+  params,
+}: {
   children: ReactNode
-}
+  params: Promise<{ locale: AppLocale }>
+}) {
+  const { locale } = await params
 
-export default function MarketingLayout({ children }: MarketingLayoutProps) {
   return (
-    <div className="flex min-h-screen flex-col">
-      <main className="flex-1">{children}</main>
-      <MarketingFooter />
-    </div>
+    <>
+      <MarketingNavbar />
+      <main>{children}</main>
+      <MarketingFooter locale={locale} />
+    </>
   )
 }

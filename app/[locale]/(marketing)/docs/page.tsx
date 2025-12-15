@@ -1,8 +1,6 @@
 import type { Metadata } from "next"
 import { BookOpen, ShieldCheck, Users, QrCode, Wrench, ArrowRight, Mail } from "lucide-react"
 import { getTranslations, setRequestLocale } from "next-intl/server"
-
-import { MarketingNavbar } from "@/components/marketing/navbar"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
@@ -64,7 +62,6 @@ export default async function DocsPage({ params }: DocsPageProps) {
 
   return (
     <div className="min-h-screen bg-background text-foreground">
-      <MarketingNavbar />
 
       <main className="mx-auto flex max-w-5xl flex-col gap-10 px-4 pb-16 pt-12">
         {/* Hero */}

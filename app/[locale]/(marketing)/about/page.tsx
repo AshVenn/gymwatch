@@ -3,7 +3,6 @@ import { CheckCircle2, Compass, ShieldCheck, Sparkles, Users } from "lucide-reac
 import { getTranslations, setRequestLocale } from "next-intl/server"
 
 import { Link, type AppLocale } from "@/i18n/routing"
-import { MarketingNavbar } from "@/components/marketing/navbar"
 import { Button } from "@/components/ui/button"
 import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 
@@ -44,8 +43,6 @@ export default async function AboutPage({ params }: AboutPageProps) {
   return (
     <div className="relative min-h-screen overflow-hidden bg-background text-foreground">
       <div className="pointer-events-none fixed inset-0 z-0 bg-[radial-gradient(circle_at_30%_20%,rgba(59,130,246,0.06),transparent_50%),radial-gradient(circle_at_70%_80%,rgba(37,99,235,0.06),transparent_50%)]" />
-
-      <MarketingNavbar links={navLinks} />
 
       <main className="relative z-10 mx-auto flex max-w-5xl flex-col gap-10 px-4 pb-16 pt-12">
         {/* Hero */}

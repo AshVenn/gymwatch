@@ -14,7 +14,6 @@ import { Link, routing, usePathname, useRouter, type AppLocale } from "@/i18n/ro
 import { getMarketingCopy, getMarketingNavLinks } from "@/lib/marketing-content"
 import { cn } from "@/lib/utils"
 
-// Infer the correct href type from next-intl's Link
 type LinkHref = ComponentProps<typeof Link>["href"]
 
 type NavLink = {
@@ -42,13 +41,6 @@ function hrefKey(href: LinkHref) {
   }
 }
 
-function hrefPath(href: LinkHref) {
-  if (typeof href === "string") return href
-  // next-intl typed href objects usually have pathname
-  // fallback to stringified
-  return (href as any)?.pathname ?? hrefKey(href)
-}
-
 export function MarketingNavbar({ links = [], className }: MarketingNavbarProps) {
   const router = useRouter()
   const pathname = usePathname()
@@ -60,29 +52,66 @@ export function MarketingNavbar({ links = [], className }: MarketingNavbarProps)
 
   const localeCopy = getMarketingCopy(locale)
 
+  const stripLocale = (path: string) => {
+    const raw = path || "/"
+    return routing.locales.reduce((current, code) => {
+      const prefix = `/${code}`
+      if (current === prefix) return "/"
+      if (current.startsWith(`${prefix}/`)) return current.slice(prefix.length) || "/"
+      return current
+    }, raw)
+  }
+
+  const cleanPath = useMemo(() => stripLocale(pathname || "/") || "/", [pathname])
+
+  // ✅ Always pages, never anchors
   const computedLinks: NavLink[] = useMemo(() => {
-    const useHomeAnchors = pathname === "/"
+    const normalizeHref = (href: LinkHref): LinkHref => {
+      if (typeof href !== "string") return href
+      const lower = href.toLowerCase()
+
+      // anchors -> pages
+      if (lower.includes("#faq") || lower.includes("#faqs")) return "/faqs"
+      if (lower.includes("#contact")) return "/contact"
+      if (lower.includes("#plans") || lower.includes("#pricing")) return "/plans"
+      if (lower.includes("#features")) return "/features"
+
+      if (lower === "#faq" || lower === "#faqs") return "/faqs"
+      if (lower === "#contact") return "/contact"
+      if (lower === "#plans" || lower === "#pricing") return "/plans"
+      if (lower === "#features") return "/features"
+
+      return href
+    }
 
     const base = links.length
       ? links
-      : (getMarketingNavLinks(locale, { useHomeAnchors }) as NavLink[])
+      : (getMarketingNavLinks(locale, { useHomeAnchors: false }) as NavLink[])
 
-    const allowed = new Set([
-      "/features",
-      "/plans",
-      "/faqs",
-      "/contact",
-      "/#features",
-      "/#plans",
-      "/#contact",
-    ])
+    const normalized = base.map((item) => ({ ...item, href: normalizeHref(item.href) }))
 
-    const filtered = base.filter((item) => allowed.has(hrefPath(item.href)))
+    // ✅ Force-add Plans + FAQ (even if not returned by your content function)
+    const forced: NavLink[] = [
+      { label: localeCopy.nav?.plans ?? (locale === "ar" ? "الخطط" : locale === "en" ? "Pricing" : "Plans"), href: "/plans" },
+      { label: localeCopy.nav?.faqs ?? (locale === "ar" ? "الأسئلة الشائعة" : locale === "en" ? "FAQ" : "FAQ"), href: "/faqs" },
+    ]
 
-    const map = new Map<string, NavLink>()
-    for (const item of filtered) map.set(hrefKey(item.href), item)
-    return Array.from(map.values())
-  }, [links, locale, pathname])
+    // ✅ Keep only what you want in navbar
+    const allowed = new Set<string>(["/features", "/plans", "/faqs", "/contact"])
+
+    const merged = [...normalized, ...forced].filter((item) => typeof item.href === "string" && allowed.has(item.href))
+
+    // ✅ De-dupe by href (so /plans and /faqs won't appear twice)
+    const byHref = new Map<string, NavLink>()
+    for (const item of merged) {
+      const key = item.href as string
+      if (!byHref.has(key)) byHref.set(key, item)
+    }
+
+    // ✅ Optional: order
+    const order = ["/features", "/plans", "/faqs", "/contact"]
+    return order.map((h) => byHref.get(h)).filter(Boolean) as NavLink[]
+  }, [links, locale, localeCopy])
 
   const localeOptions = useMemo(
     () =>
@@ -103,7 +132,6 @@ export function MarketingNavbar({ links = [], className }: MarketingNavbarProps)
         menuLabel: "Menu",
       }
     }
-
     if (locale === "ar") {
       return {
         login: "تسجيل الدخول",
@@ -113,7 +141,6 @@ export function MarketingNavbar({ links = [], className }: MarketingNavbarProps)
         menuLabel: "القائمة",
       }
     }
-
     return {
       login: "Se connecter",
       requestDemo: localeCopy.hero.home.primaryCta,
@@ -136,26 +163,11 @@ export function MarketingNavbar({ links = [], className }: MarketingNavbarProps)
   }, [])
 
   const isAuthPage =
-    pathname === "/login" || pathname === "/register" || (pathname ? pathname.startsWith("/request-demo") : false)
-
-  const stripLocale = (path: string) => {
-    const raw = path || "/"
-    return routing.locales.reduce((current, code) => {
-      const prefix = `/${code}`
-      if (current === prefix) return "/"
-      if (current.startsWith(`${prefix}/`)) return current.slice(prefix.length) || "/"
-      return current
-    }, raw)
-  }
+    cleanPath === "/login" || cleanPath === "/register" || (cleanPath ? cleanPath.startsWith("/request-demo") : false)
 
   const handleLocaleChange = (targetLocale: AppLocale) => {
     if (targetLocale === locale) return
-
-    const rawPath = pathname || "/"
-    const cleanPath = stripLocale(rawPath) || "/"
-
     setMenuOpen(false)
-
     startTransition(() => {
       router.replace({ pathname: cleanPath as any }, { locale: targetLocale })
       router.refresh()
@@ -193,11 +205,10 @@ export function MarketingNavbar({ links = [], className }: MarketingNavbarProps)
           </div>
         </Link>
 
-        {/* Desktop links (minimal) */}
         <nav className="hidden items-center gap-6 text-sm font-medium text-muted-foreground md:flex">
           {computedLinks.map((link) => (
             <Link
-              key={hrefKey(link.href)}
+              key={`${hrefKey(link.href)}|${link.label}`}
               href={link.href}
               className="group relative py-2 transition-colors hover:text-foreground"
             >
@@ -207,7 +218,6 @@ export function MarketingNavbar({ links = [], className }: MarketingNavbarProps)
           ))}
         </nav>
 
-        {/* Desktop actions */}
         <div className="hidden items-center gap-2 md:flex">
           <ThemeToggle />
 
@@ -245,13 +255,11 @@ export function MarketingNavbar({ links = [], className }: MarketingNavbarProps)
                   className="gap-2 rounded-xl border-border/70 bg-card/50 px-3 transition-all hover:border-primary/40 hover:bg-card hover:shadow-md"
                 >
                   <User className="h-4 w-4" />
-                  <span className="max-w-[140px] truncate text-sm font-semibold">
-                    {session.user.email ?? "Account"}
-                  </span>
+                  <span className="max-w-[140px] truncate text-sm font-semibold">{session.user.email ?? "Account"}</span>
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-52 rounded-xl border-border/70">
-                <DropdownMenuItem onClick={() => router.push(dashboardRoute)} className="rounded-lg transition-colors">
+                <DropdownMenuItem onClick={() => router.push(dashboardRoute as any)} className="rounded-lg transition-colors">
                   <LayoutDashboard className="mr-2 h-4 w-4" />
                   {authCopy.dashboard}
                 </DropdownMenuItem>
@@ -288,33 +296,19 @@ export function MarketingNavbar({ links = [], className }: MarketingNavbarProps)
           )}
         </div>
 
-        {/* Mobile actions */}
         <div className="flex items-center gap-2 md:hidden">
           <ThemeToggle />
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => setMenuOpen(true)}
-            aria-label="Open menu"
-            className="rounded-xl"
-          >
+          <Button variant="ghost" size="icon" onClick={() => setMenuOpen(true)} aria-label="Open menu" className="rounded-xl">
             <Menu className="h-5 w-5" />
           </Button>
         </div>
       </div>
 
-      {/* Mobile menu */}
       {menuOpen && (
         <div className="animate-in slide-in-from-top-2 border-t border-border/60 bg-background/95 backdrop-blur-xl md:hidden">
           <div className="flex items-center justify-between px-4 py-3">
             <p className="text-sm font-semibold">{authCopy.menuLabel}</p>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => setMenuOpen(false)}
-              aria-label="Close menu"
-              className="rounded-xl"
-            >
+            <Button variant="ghost" size="icon" onClick={() => setMenuOpen(false)} aria-label="Close menu" className="rounded-xl">
               <X className="h-5 w-5" />
             </Button>
           </div>
@@ -322,16 +316,15 @@ export function MarketingNavbar({ links = [], className }: MarketingNavbarProps)
           <div className="space-y-2 px-4 pb-4">
             {computedLinks.map((link) => (
               <Link
-                key={hrefKey(link.href)}
+                key={`${hrefKey(link.href)}|${link.label}`}
                 href={link.href}
-                className="block rounded-xl border border-border/60 px-4 py-2.5 text-sm font-medium transition-all hover:border-primary/40 hover:bg-primary/10"
                 onClick={() => setMenuOpen(false)}
+                className="block rounded-xl border border-border/60 px-4 py-2.5 text-sm font-medium transition-all hover:border-primary/40 hover:bg-primary/10"
               >
                 {link.label}
               </Link>
             ))}
 
-            {/* locale switch (simple) */}
             <div className="flex items-center justify-between rounded-xl border border-border/60 px-4 py-2.5">
               <div className="flex items-center gap-2 text-sm font-medium">
                 <Globe2 className="h-4 w-4" aria-hidden />
@@ -358,11 +351,7 @@ export function MarketingNavbar({ links = [], className }: MarketingNavbarProps)
                 <Button className="w-full rounded-xl transition hover:scale-105" onClick={() => router.push("/request-demo")}>
                   {authCopy.requestDemo}
                 </Button>
-                <Button
-                  variant="ghost"
-                  className="w-full rounded-xl transition hover:text-primary"
-                  onClick={() => router.push("/login")}
-                >
+                <Button variant="ghost" className="w-full rounded-xl transition hover:text-primary" onClick={() => router.push("/login")}>
                   {authCopy.login}
                 </Button>
               </>
@@ -371,7 +360,7 @@ export function MarketingNavbar({ links = [], className }: MarketingNavbarProps)
                 <Button
                   className="w-full rounded-xl transition hover:scale-105"
                   onClick={() => {
-                    router.push(dashboardRoute)
+                    router.push(dashboardRoute as any)
                     setMenuOpen(false)
                   }}
                 >

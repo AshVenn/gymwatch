@@ -1,10 +1,13 @@
 import type { Metadata } from "next"
 import { BookOpen, ShieldCheck, Users, QrCode, Wrench, ArrowRight, Mail } from "lucide-react"
 import { getTranslations, setRequestLocale } from "next-intl/server"
+
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
 import { Link, type AppLocale } from "@/i18n/routing"
+
+import { CometCardsCarousel, type CometCarouselItem } from "@/components/home/carousel"
 
 type DocsPageProps = {
   params: Promise<{ locale: AppLocale }>
@@ -28,7 +31,7 @@ export default async function DocsPage({ params }: DocsPageProps) {
 
   const t = await getTranslations({ locale, namespace: "docs" })
 
-  const supportEmail = process.env.SUPPORT_EMAIL || "hello@gymwatch.ma"
+  const supportEmail = process.env.SUPPORT_EMAIL || "contact@gymwatch.ma"
   const supportMailto = `mailto:${supportEmail}`
 
   const sections = [
@@ -60,9 +63,69 @@ export default async function DocsPage({ params }: DocsPageProps) {
 
   const faq = t.raw("faq.items") as { q: string; a: string }[]
 
+  // Carousel: representative images only (NO links)
+  const carouselItems: CometCarouselItem[] = [
+    {
+      kicker: t("carousel.kickers.overview"),
+      title: t("carousel.items.dashboard.title"),
+      description: t("carousel.items.dashboard.description"),
+      imageSrc: "/docs/dashboard.png",
+      imageAlt: t("carousel.items.dashboard.alt"),
+    },
+    {
+      kicker: t("carousel.kickers.management"),
+      title: t("carousel.items.members.title"),
+      description: t("carousel.items.members.description"),
+      imageSrc: "/docs/members.png",
+      imageAlt: t("carousel.items.members.alt"),
+    },
+    {
+      kicker: t("carousel.kickers.security"),
+      title: t("carousel.items.accessLogs.title"),
+      description: t("carousel.items.accessLogs.description"),
+      imageSrc: "/docs/access-logs.png",
+      imageAlt: t("carousel.items.accessLogs.alt"),
+    },
+    {
+      kicker: t("carousel.kickers.tracking"),
+      title: t("carousel.items.presence.title"),
+      description: t("carousel.items.presence.description"),
+      imageSrc: "/docs/presence.png",
+      imageAlt: t("carousel.items.presence.alt"),
+    },
+    {
+      kicker: t("carousel.kickers.planning"),
+      title: t("carousel.items.classes.title"),
+      description: t("carousel.items.classes.description"),
+      imageSrc: "/docs/classes.png",
+      imageAlt: t("carousel.items.classes.alt"),
+    },
+    {
+      kicker: t("carousel.kickers.billing"),
+      title: t("carousel.items.subscriptions.title"),
+      description: t("carousel.items.subscriptions.description"),
+      imageSrc: "/docs/subscriptions.png",
+      imageAlt: t("carousel.items.subscriptions.alt"),
+    },
+    {
+      kicker: t("carousel.kickers.offers"),
+      title: t("carousel.items.plans.title"),
+      description: t("carousel.items.plans.description"),
+      imageSrc: "/docs/plans.png",
+      imageAlt: t("carousel.items.plans.alt"),
+    },
+  ]
+
+  const carouselLabels = {
+    eyebrow: t("carousel.eyebrow"),
+    prevAriaLabel: t("carousel.controls.prev"),
+    nextAriaLabel: t("carousel.controls.next"),
+    modalAriaLabel: t("carousel.modal.aria"),
+    closeAriaLabel: t("carousel.modal.close"),
+  }
+
   return (
     <div className="min-h-screen bg-background text-foreground">
-
       <main className="mx-auto flex max-w-5xl flex-col gap-10 px-4 pb-16 pt-12">
         {/* Hero */}
         <section className="space-y-4 animate-fade-in">
@@ -97,6 +160,17 @@ export default async function DocsPage({ params }: DocsPageProps) {
               </a>
             </Button>
           </div>
+        </section>
+
+        {/* Carousel */}
+        <section className="space-y-3 animate-fade-in" style={{ animationDelay: "0.04s" }}>
+          <div className="space-y-2">
+            <p className="text-xs font-semibold uppercase tracking-[0.3em] text-primary">{t("carousel.sectionEyebrow")}</p>
+            <h2 className="text-3xl font-bold tracking-tight">{t("carousel.sectionTitle")}</h2>
+            <p className="max-w-2xl text-muted-foreground">{t("carousel.sectionDescription")}</p>
+          </div>
+
+          <CometCardsCarousel items={carouselItems} labels={carouselLabels} ariaLabel={t("carousel.aria")} />
         </section>
 
         {/* Cards */}
@@ -186,5 +260,5 @@ export default async function DocsPage({ params }: DocsPageProps) {
         </section>
       </main>
     </div>
-    )
+  )
 }

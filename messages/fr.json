@@ -209,25 +209,86 @@
   "docs": {
     "metadata": {
       "title": "Documentation | GymWatch",
-      "description": "Guides pour déployer GymWatch : multi-salles, rôles, contrôle d’accès, sécurité et dépannage.",
-      "keywords": ["documentation", "GymWatch", "contrôle d’accès", "multi-salles", "support"]
+      "description": "Guides pour déployer GymWatch : multi-sites, rôles, contrôle d’accès, sécurité et dépannage.",
+      "keywords": ["documentation", "GymWatch", "contrôle d’accès", "multi-sites", "support"]
     },
     "hero": {
       "badge": "Documentation",
       "title": "Documentation GymWatch",
-      "description": "Guides courts et pratiques pour déployer GymWatch, configurer vos sites, gérer les rôles et sécuriser votre contrôle d’accès.",
-      "primaryCta": "Demander une démo",
+      "description": "Des guides courts et pratiques pour déployer GymWatch, configurer vos clubs, gérer les rôles et sécuriser le contrôle d’accès.",
+      "primaryCta": "Réserver une démo",
       "secondaryCta": "Contacter le support",
-      "emailCta": "Écrire par email"
+      "emailCta": "Email support"
+    },
+    "carousel": {
+      "sectionEyebrow": "Visite guidée",
+      "sectionTitle": "Un aperçu rapide de la console",
+      "sectionDescription": "Captures des zones principales de GymWatch. Cliquez sur une carte pour zoomer.",
+      "eyebrow": "Captures",
+      "aria": "Carrousel de captures d’écran GymWatch",
+      "controls": {
+        "prev": "Précédent",
+        "next": "Suivant"
+      },
+      "modal": {
+        "aria": "Aperçu de la capture",
+        "close": "Fermer"
+      },
+      "kickers": {
+        "overview": "Vue",
+        "management": "Gestion",
+        "security": "Sécurité",
+        "tracking": "Suivi",
+        "planning": "Planning",
+        "billing": "Abonnements",
+        "offers": "Offres"
+      },
+      "items": {
+        "dashboard": {
+          "title": "Tableau de bord",
+          "description": "KPIs en direct, tendances et exports rapides.",
+          "alt": "Capture du tableau de bord GymWatch"
+        },
+        "members": {
+          "title": "Membres",
+          "description": "Gestion des membres, variantes et onboarding.",
+          "alt": "Capture de la page Membres GymWatch"
+        },
+        "accessLogs": {
+          "title": "Journaux d’accès",
+          "description": "Historique des entrées/sorties, alertes et traçabilité.",
+          "alt": "Capture des journaux d’accès GymWatch"
+        },
+        "presence": {
+          "title": "Présence",
+          "description": "Insights de fréquentation avec filtres et sessions récentes.",
+          "alt": "Capture de la page Présence GymWatch"
+        },
+        "classes": {
+          "title": "Cours",
+          "description": "Planification, coachs et suivi du planning.",
+          "alt": "Capture de la page Cours GymWatch"
+        },
+        "subscriptions": {
+          "title": "Abonnements",
+          "description": "Statuts, échéances et visibilité des renouvellements.",
+          "alt": "Capture de la page Abonnements GymWatch"
+        },
+        "plans": {
+          "title": "Plans",
+          "description": "Prix, durée, limites et règles par variante.",
+          "alt": "Capture de la page Plans GymWatch"
+        }
+      }
     },
     "sections": {
       "gettingStarted": {
         "title": "Démarrage rapide",
-        "description": "Les étapes essentielles pour être opérationnel.",
+        "description": "L’essentiel pour démarrer vite.",
         "bullets": [
-          "Créer votre première salle (site) et vos variantes",
-          "Importer/ajouter des membres et définir les plans",
-          "Activer les règles d’accès (QR / badge) par site"
+          "Créer votre premier club et ses variantes",
+          "Ajouter/importer les membres et définir les plans",
+          "Activer les règles d’accès (QR / badge) par club"
         ]
       },
       "roles": {
@@ -236,59 +297,59 @@
         "bullets": [
           "Owner/Admin : configuration, plans, équipes",
           "Staff : check-in / check-out, suivi de présence",
-          "Règles granulaires par site (multi-salles)"
+          "Règles granulaires par club (multi-sites)"
         ]
       },
       "access": {
         "title": "Contrôle d’accès",
         "description": "QR, badge, et règles de session.",
         "bullets": [
-          "Validation d’entrée et sortie (manuel ou QR)",
+          "Entrée/sortie manuelle ou via QR",
           "Limites : visites/jour, durée max de session",
-          "Journalisation : historique et audit"
+          "Logs d’audit : historique et traçabilité"
         ]
       },
       "security": {
         "title": "Sécurité & données",
         "description": "Bonnes pratiques et conformité.",
         "bullets": [
-          "Accès par rôles, logs, traçabilité",
+          "Accès basé rôles, logs, traçabilité",
           "Sauvegardes et hygiène des comptes",
-          "Gestion des données : emails, téléphone, adresses"
+          "Gestion des données : emails, téléphones, adresses"
         ]
       }
     },
     "faq": {
       "eyebrow": "Aide",
       "title": "Questions fréquentes",
-      "description": "Les réponses rapides aux questions qu’on reçoit le plus souvent.",
+      "description": "Réponses rapides aux questions les plus courantes.",
       "items": [
         {
-          "q": "Comment déployer GymWatch sur plusieurs salles ?",
-          "a": "Créez un site par salle, puis assignez variantes, plans et règles d’accès. Les rôles permettent de limiter les accès par équipe/site."
+          "q": "Comment déployer GymWatch sur plusieurs clubs ?",
+          "a": "Créez un club par site, puis assignez variantes, plans et règles d’accès. Les rôles limitent l’accès par équipe/site."
         },
         {
-          "q": "Le contrôle d’accès peut être manuel ?",
-          "a": "Oui. Vous pouvez enregistrer entrée/sortie manuellement (et ensuite ajouter QR/badge si besoin)."
+          "q": "Le contrôle d’accès peut-il être manuel ?",
+          "a": "Oui. Vous pouvez enregistrer les entrées/sorties manuellement, puis ajouter QR/badges plus tard si besoin."
         },
         {
-          "q": "Où configurer la durée maximale d’une session ?",
-          "a": "Dans les réglages (par variante et/ou plan selon votre modèle). Cela permet de détecter les sessions dépassées."
+          "q": "Où définir une durée maximale de session ?",
+          "a": "Dans les paramètres (par variante et/ou plan selon votre modèle). Cela aide à détecter les dépassements."
         },
         {
           "q": "Quelles données sont collectées ?",
-          "a": "GymWatch peut stocker des informations comme email, téléphone et adresse selon votre configuration. Pas de paiements si vous ne les activez pas."
+          "a": "GymWatch peut stocker des données comme email, téléphone et adresse selon votre configuration. Aucun paiement si vous ne l’activez pas."
         },
         {
           "q": "Comment contacter le support ?",
-          "a": "Utilisez la page Contact ou envoyez un email au support. Réponse sous 24h ouvrées."
+          "a": "Utilisez la page Contact ou envoyez un email au support. Réponse sous 1 jour ouvré."
         }
       ]
     },
     "bottom": {
-      "kicker": "Besoin d’un accompagnement ?",
-      "title": "Onboarding & déploiement multi-salles",
-      "description": "On vous aide à cadrer, paramétrer et lancer GymWatch pour votre réseau.",
+      "kicker": "Besoin d’aide ?",
+      "title": "Onboarding & déploiement multi-sites",
+      "description": "On vous aide à cadrer, configurer et lancer GymWatch pour votre réseau.",
       "primary": "Planifier une démo",
       "secondary": "Voir les fonctionnalités"
     }

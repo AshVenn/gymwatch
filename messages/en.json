@@ -206,8 +206,7 @@
       }
     }
   }
-,
-    "docs": {
+,  "docs": {
     "metadata": {
       "title": "Documentation | GymWatch",
       "description": "Guides to deploy GymWatch: multi-location setup, roles, access control, security and troubleshooting.",
@@ -220,6 +219,67 @@
       "primaryCta": "Book a demo",
       "secondaryCta": "Contact support",
       "emailCta": "Email support"
+    },
+    "carousel": {
+      "sectionEyebrow": "Product tour",
+      "sectionTitle": "A quick look at the console",
+      "sectionDescription": "Screenshots of the main areas of GymWatch. Click any card to zoom.",
+      "eyebrow": "Screens",
+      "aria": "GymWatch console screenshots carousel",
+      "controls": {
+        "prev": "Previous",
+        "next": "Next"
+      },
+      "modal": {
+        "aria": "Screenshot preview",
+        "close": "Close"
+      },
+      "kickers": {
+        "overview": "Overview",
+        "management": "Management",
+        "security": "Security",
+        "tracking": "Tracking",
+        "planning": "Planning",
+        "billing": "Billing",
+        "offers": "Offers"
+      },
+      "items": {
+        "dashboard": {
+          "title": "Dashboard",
+          "description": "Live KPIs, trends, and quick exports.",
+          "alt": "GymWatch dashboard screenshot"
+        },
+        "members": {
+          "title": "Members",
+          "description": "Manage members, variants, and onboarding flows.",
+          "alt": "GymWatch members screenshot"
+        },
+        "accessLogs": {
+          "title": "Access logs",
+          "description": "Entries/exits history, alerts, and traceability.",
+          "alt": "GymWatch access logs screenshot"
+        },
+        "presence": {
+          "title": "Presence",
+          "description": "Attendance insights with filters and recent sessions.",
+          "alt": "GymWatch presence screenshot"
+        },
+        "classes": {
+          "title": "Classes",
+          "description": "Plan sessions, manage coaches, and track schedules.",
+          "alt": "GymWatch classes screenshot"
+        },
+        "subscriptions": {
+          "title": "Subscriptions",
+          "description": "Statuses, expirations, and renewal visibility.",
+          "alt": "GymWatch subscriptions screenshot"
+        },
+        "plans": {
+          "title": "Plans",
+          "description": "Pricing, duration, limits, and variant rules.",
+          "alt": "GymWatch plans screenshot"
+        }
+      }
     },
     "sections": {
       "gettingStarted": {
@@ -293,7 +353,8 @@
       "primary": "Schedule a demo",
       "secondary": "View features"
     }
-  },
+  }
+,
     "licenses": {
     "metadata": {
       "title": "Open-source licenses | GymWatch",

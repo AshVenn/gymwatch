@@ -84,31 +84,29 @@ export function MarketingNavbar({ links = [], className }: MarketingNavbarProps)
       return href
     }
 
-    const base = links.length
-      ? links
-      : (getMarketingNavLinks(locale, { useHomeAnchors: false }) as NavLink[])
+    const base = links.length ? links : (getMarketingNavLinks(locale, { useHomeAnchors: false }) as NavLink[])
 
     const normalized = base.map((item) => ({ ...item, href: normalizeHref(item.href) }))
 
-    // ✅ Force-add Plans + FAQ (even if not returned by your content function)
+    // ✅ Force-add Plans + FAQ
     const forced: NavLink[] = [
-      { label: localeCopy.nav?.plans ?? (locale === "ar" ? "الخطط" : locale === "en" ? "Pricing" : "Plans"), href: "/plans" },
+      {
+        label: localeCopy.nav?.plans ?? (locale === "ar" ? "الخطط" : locale === "en" ? "Pricing" : "Plans"),
+        href: "/plans",
+      },
       { label: localeCopy.nav?.faqs ?? (locale === "ar" ? "الأسئلة الشائعة" : locale === "en" ? "FAQ" : "FAQ"), href: "/faqs" },
     ]
 
-    // ✅ Keep only what you want in navbar
     const allowed = new Set<string>(["/features", "/plans", "/faqs", "/contact"])
 
     const merged = [...normalized, ...forced].filter((item) => typeof item.href === "string" && allowed.has(item.href))
 
-    // ✅ De-dupe by href (so /plans and /faqs won't appear twice)
     const byHref = new Map<string, NavLink>()
     for (const item of merged) {
       const key = item.href as string
       if (!byHref.has(key)) byHref.set(key, item)
     }
 
-    // ✅ Optional: order
     const order = ["/features", "/plans", "/faqs", "/contact"]
     return order.map((h) => byHref.get(h)).filter(Boolean) as NavLink[]
   }, [links, locale, localeCopy])
@@ -197,11 +195,15 @@ export function MarketingNavbar({ links = [], className }: MarketingNavbarProps)
               className="transition-transform duration-500 group-hover:scale-110 group-hover:rotate-3 dark:invert dark:brightness-200"
             />
           </div>
-          <div className="hidden sm:block">
+
+          {/* ✅ Keep text visible on mobile (with safe truncation) */}
+          <div className="min-w-0">
             <p className="text-[11px] uppercase tracking-[0.3em] text-muted-foreground transition-colors group-hover:text-primary">
               GymWatch
             </p>
-            <p className="text-sm font-semibold transition-colors group-hover:text-primary">{localeCopy.brandTagline}</p>
+            <p className="truncate text-sm font-semibold transition-colors group-hover:text-primary">
+              {localeCopy.brandTagline}
+            </p>
           </div>
         </Link>
 
@@ -255,7 +257,7 @@ export function MarketingNavbar({ links = [], className }: MarketingNavbarProps)
                   className="gap-2 rounded-xl border-border/70 bg-card/50 px-3 transition-all hover:border-primary/40 hover:bg-card hover:shadow-md"
                 >
                   <User className="h-4 w-4" />
-                  <span className="max-w-[140px] truncate text-sm font-semibold">{session.user.email ?? "Account"}</span>
+                  <span className="max-w-35 truncate text-sm font-semibold">{session.user.email ?? "Account"}</span>
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-52 rounded-xl border-border/70">
@@ -351,7 +353,11 @@ export function MarketingNavbar({ links = [], className }: MarketingNavbarProps)
                 <Button className="w-full rounded-xl transition hover:scale-105" onClick={() => router.push("/request-demo")}>
                   {authCopy.requestDemo}
                 </Button>
-                <Button variant="ghost" className="w-full rounded-xl transition hover:text-primary" onClick={() => router.push("/login")}>
+                <Button
+                  variant="ghost"
+                  className="w-full rounded-xl transition hover:text-primary"
+                  onClick={() => router.push("/login")}
+                >
                   {authCopy.login}
                 </Button>
               </>

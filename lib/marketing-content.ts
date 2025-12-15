@@ -25,11 +25,14 @@ type MarketingCopy = {
   nav: {
     features: string
     plans: string
+    docs: string
     faqs: string
     ressources: string
     about: string
     contact: string
   }
+
+
   seo: Record<MarketingPage, SeoEntry>
   hero: Record<MarketingPage, HeroEntry>
 }
@@ -43,6 +46,7 @@ const marketingCopy: Record<AppLocale, MarketingCopy> = {
     nav: {
       features: "Fonctionnalités",
       plans: "Plans",
+      docs: "Docs",
       faqs: "FAQ",
       ressources: "Ressources",
       about: "À propos",
@@ -145,6 +149,7 @@ const marketingCopy: Record<AppLocale, MarketingCopy> = {
     nav: {
       features: "Features",
       plans: "Pricing",
+      docs: "Docs",
       faqs: "FAQ",
       ressources: "Resources",
       about: "About",
@@ -240,6 +245,7 @@ const marketingCopy: Record<AppLocale, MarketingCopy> = {
     nav: {
       features: "الميزات",
       plans: "الأسعار",
+      docs: "التوثيق",
       faqs: "الأسئلة الشائعة",
       ressources: "الموارد",
       about: "من نحن",

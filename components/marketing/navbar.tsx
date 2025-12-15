@@ -88,16 +88,38 @@ export function MarketingNavbar({ links = [], className }: MarketingNavbarProps)
 
     const normalized = base.map((item) => ({ ...item, href: normalizeHref(item.href) }))
 
-    // ✅ Force-add Plans + FAQ
     const forced: NavLink[] = [
+      {
+        label: localeCopy.nav?.features ?? (locale === "ar" ? "الميزات" : locale === "en" ? "Features" : "Fonctionnalités"),
+        href: "/features",
+      },
       {
         label: localeCopy.nav?.plans ?? (locale === "ar" ? "الخطط" : locale === "en" ? "Pricing" : "Plans"),
         href: "/plans",
       },
-      { label: localeCopy.nav?.faqs ?? (locale === "ar" ? "الأسئلة الشائعة" : locale === "en" ? "FAQ" : "FAQ"), href: "/faqs" },
+      {
+        label: localeCopy.nav?.docs ?? (locale === "ar" ? "التوثيق" : locale === "en" ? "Docs" : "Documentation"),
+        href: "/docs",
+      },
+      {
+        label: localeCopy.nav?.faqs ?? (locale === "ar" ? "الأسئلة الشائعة" : locale === "en" ? "FAQ" : "FAQ"),
+        href: "/faqs",
+      },
+      {
+        label: localeCopy.nav?.contact ?? (locale === "ar" ? "تواصل" : locale === "en" ? "Contact" : "Contact"),
+        href: "/contact",
+      },
     ]
 
-    const allowed = new Set<string>(["/features", "/plans", "/faqs", "/contact"])
+
+    const allowed = new Set<string>([
+      "/features",
+      "/plans",
+      "/docs",
+      "/faqs",
+      "/contact",
+    ])
+
 
     const merged = [...normalized, ...forced].filter((item) => typeof item.href === "string" && allowed.has(item.href))
 
@@ -107,7 +129,7 @@ export function MarketingNavbar({ links = [], className }: MarketingNavbarProps)
       if (!byHref.has(key)) byHref.set(key, item)
     }
 
-    const order = ["/features", "/plans", "/faqs", "/contact"]
+    const order = ["/features", "/plans", "/docs", "/faqs", "/contact"]
     return order.map((h) => byHref.get(h)).filter(Boolean) as NavLink[]
   }, [links, locale, localeCopy])
 

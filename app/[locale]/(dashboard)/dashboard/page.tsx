@@ -563,7 +563,7 @@ export default function DashboardPage() {
 
           <CardContent className="flex flex-1 items-center pb-0">
             <ChartContainer config={memberRadialConfig} className="mx-auto w-full max-w-[320px]">
-              <div className="relative h-[260px]">
+              <div className="relative h-65">
                 <ResponsiveContainer width="100%" height="100%">
                   <RadialBarChart
                     data={memberRadialData}

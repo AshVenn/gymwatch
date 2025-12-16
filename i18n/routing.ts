@@ -1,39 +1,44 @@
-import {createNavigation} from 'next-intl/navigation'
-import {defineRouting} from 'next-intl/routing'
+import { createNavigation } from "next-intl/navigation"
+import { defineRouting } from "next-intl/routing"
 
 export const routing = defineRouting({
-  locales: ['en', 'fr', 'ar'] as const,
-  defaultLocale: 'fr',
-  localePrefix: 'always',
+  locales: ["en", "fr", "ar"] as const,
+  defaultLocale: "fr",
+  localePrefix: "always",
   pathnames: {
-    '/': '/',
-    '/about': '/about',
-    '/contact': '/contact',
-    '/features': '/features',
+    "/": "/",
+    "/about": "/about",
+    "/contact": "/contact",
+    "/features": "/features",
     "/cookies": "/cookies",
     "/privacy": "/privacy",
-    '/licenses': '/licenses',
-    '/docs': '/docs',
-    '/terms':'/terms',
-    '/plans': {
-      en: '/pricing',
-      fr: '/plans',
-      ar: '/plans',
+    "/licenses": "/licenses",
+    "/docs": "/docs",
+    "/terms": "/terms",
+
+    "/plans": {
+      en: "/pricing",
+      fr: "/plans",
+      ar: "/plans",
     },
-    '/faqs': {
-      en: '/faq',
-      fr: '/faq',
-      ar: '/faq',
+    "/faqs": {
+      en: "/faq",
+      fr: "/faq",
+      ar: "/faq",
     },
-    '/ressources': '/ressources',
-    '/login': '/login',
-    '/register': '/register',
-    '/request-demo': '/request-demo',
-    '/dashboard': '/dashboard',
-    '/admin': '/admin',
-    '/super-admin': '/super-admin',
+
+    "/ressources": "/ressources",
+    "/login": "/login",
+    "/register": "/register",
+    "/request-demo": "/request-demo",
+    "/dashboard": "/dashboard",
+
+    "/admin": "/admin",
+    "/super-admin": "/super-admin",
   },
 })
 
-export const {Link, redirect, usePathname, useRouter, getPathname} = createNavigation(routing)
+export const { Link, redirect, usePathname, useRouter, getPathname } =
+  createNavigation(routing)
+
 export type AppLocale = (typeof routing.locales)[number]

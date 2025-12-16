@@ -21,13 +21,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const tFeatureAccess = useTranslations('dashboard.featureAccess')
   const { tier, hasAccessControl, hasPresence, hasCourses, hasExcelReports } = usePlanFeatures()
   const planLabel = tier === 'ENTERPRISE' ? 'Enterprise' : tier === 'PRO' ? 'Pro' : 'Basic'
-  const featureCards = buildFeatureAccessItems({
-    hasAccessControl,
-    hasPresence,
-    hasCourses,
-    hasExcelReports,
-    t: tFeatureAccess,
-  })
+
   const navigationItems: NavigationItem[] = [
     { href: '/dashboard', label: tNav('dashboard'), icon: LayoutGrid },
     { href: '/dashboard/members', label: tNav('members'), icon: Users },
@@ -47,7 +41,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       topSlot={
         <div className="space-y-4">
           <SubscriptionBanner />
-          <FeatureAccessGrid items={featureCards} planLabel={planLabel} />
         </div>
       }
     >

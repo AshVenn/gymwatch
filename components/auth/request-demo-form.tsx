@@ -422,7 +422,7 @@ export default function RequestDemoForm({ locale, copy }: { locale: AppLocale; c
                         <FormControl>
                           <textarea
                             required
-                            className="min-h-[120px] w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-xs outline-none transition-all duration-200 focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] placeholder:text-muted-foreground"
+                            className="min-h-30 w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-xs outline-none transition-all duration-200 focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] placeholder:text-muted-foreground"
                             placeholder={copy.form.fields.message.placeholder}
                             {...field}
                           />

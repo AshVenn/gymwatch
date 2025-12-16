@@ -10,9 +10,20 @@ import { useLocale, useTranslations } from "next-intl"
 
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 import { ThemeToggle } from "@/components/theme-toggle"
-import { Link, routing, usePathname, useRouter, type AppLocale } from "@/i18n/routing"
+import {
+  Link,
+  routing,
+  usePathname,
+  useRouter,
+  type AppLocale,
+} from "@/i18n/routing"
 import { cn } from "@/lib/utils"
 
 export const UserRole = {
@@ -47,13 +58,16 @@ export function DashboardShell({
   const locale = useLocale() as AppLocale
   const tShell = useTranslations("dashboard.shell")
   const isRtl = locale === "ar"
+
   const { data: session, status } = useSession()
   const router = useRouter()
   const pathname = usePathname()
+
   const normalizedPathname = useMemo(() => {
     const localePattern = new RegExp(`^/(?:${routing.locales.join("|")})(?=/|$)`)
-    return pathname?.replace(localePattern, "") || "/" || "/"
+    return pathname?.replace(localePattern, "") || "/"
   }, [pathname])
+
   const [sidebarOpen, setSidebarOpen] = useState(false)
 
   const isAllowed = useMemo(() => {
@@ -66,7 +80,11 @@ export function DashboardShell({
     if (!session?.user) return false
     const userRole = session.user.role as UserRole
     if (userRole === UserRole.SUPER_ADMIN) return false
-    if (session.user.subscriptionStatus === "EXPIRED" || session.user.subscriptionStatus === "SUSPENDED") return true
+    if (
+      session.user.subscriptionStatus === "EXPIRED" ||
+      session.user.subscriptionStatus === "SUSPENDED"
+    )
+      return true
     const expiresAt = session.user.subscriptionExpiresAt
     if (!expiresAt) return false
     const parsed = new Date(expiresAt)
@@ -76,13 +94,14 @@ export function DashboardShell({
 
   useEffect(() => {
     if (status === "loading") return
+
     if (status === "unauthenticated" || !session?.user) {
-      router.replace("/login", { locale })
+      router.replace("/login" as any, { locale })
       return
     }
 
     if (allowedRoles?.length && !isAllowed) {
-      router.replace(fallbackRoute, { locale })
+      router.replace((fallbackRoute || "/login") as any, { locale })
     }
   }, [allowedRoles, fallbackRoute, isAllowed, locale, router, session?.user, status])
 
@@ -115,7 +134,9 @@ export function DashboardShell({
       <div className="flex h-screen items-center justify-center bg-background">
         <div className="flex flex-col items-center gap-4">
           <div className="h-12 w-12 animate-spin rounded-full border-4 border-primary/20 border-t-primary" />
-          <p className="text-lg font-semibold text-muted-foreground">{tShell("loading")}</p>
+          <p className="text-lg font-semibold text-muted-foreground">
+            {tShell("loading")}
+          </p>
         </div>
       </div>
     )
@@ -134,8 +155,12 @@ export function DashboardShell({
     GYM_OWNER: tShell("roles.owner"),
   }
 
-  const userDisplayName = session.user.name || session.user.email || tShell("userFallback")
-  const userRole = roleLabels[session.user.role as string] || session.user.role || tShell("userFallback")
+  const userDisplayName =
+    session.user.name || session.user.email || tShell("userFallback")
+  const userRole =
+    roleLabels[session.user.role as string] ||
+    session.user.role ||
+    tShell("userFallback")
   const userInitial = userDisplayName.charAt(0).toUpperCase()
   const isDemoGym = Boolean((session.user as any).isDemo)
   const planLabel = (session.user as any)?.subscriptionPlan ?? tShell("planLabel")
@@ -151,12 +176,12 @@ export function DashboardShell({
     <div className={cn("relative flex min-h-screen bg-background text-foreground", isRtl && "md:flex-row-reverse")}>
       <div className="pointer-events-none fixed inset-0 -z-10 bg-[radial-gradient(circle_at_14%_18%,hsl(var(--primary)/0.08),transparent_28%),radial-gradient(circle_at_70%_10%,hsl(var(--muted-foreground)/0.04),transparent_24%)]" />
 
-      {sidebarOpen ? (
+      {sidebarOpen && (
         <div
           className="fixed inset-0 z-40 bg-background/80 backdrop-blur-sm md:hidden"
           onClick={() => setSidebarOpen(false)}
         />
-      ) : null}
+      )}
 
       <aside
         className={cn(
@@ -180,7 +205,9 @@ export function DashboardShell({
                 />
               </div>
               <div className="leading-tight">
-                <p className="text-[10px] font-semibold uppercase tracking-[0.28em] text-muted-foreground">GymWatch</p>
+                <p className="text-[10px] font-semibold uppercase tracking-[0.28em] text-muted-foreground">
+                  GymWatch
+                </p>
                 <p className="text-base font-bold">{tShell("console")}</p>
               </div>
             </div>
@@ -197,7 +224,9 @@ export function DashboardShell({
             <nav className="space-y-2">
               {navigationItems.map((item) => {
                 const Icon = item.icon
-                const isActive = normalizedPathname === item.href || normalizedPathname.startsWith(`${item.href}/`)
+                const isActive =
+                  normalizedPathname === item.href ||
+                  normalizedPathname.startsWith(`${item.href}/`)
                 return (
                   <Link
                     key={item.href}
@@ -221,7 +250,9 @@ export function DashboardShell({
                       <Icon size={18} strokeWidth={2.5} />
                     </div>
                     <div className="flex-1 text-left">{item.label}</div>
-                    {isActive && <div className="h-2 w-2 rounded-full bg-primary shadow-sm shadow-primary/50" />}
+                    {isActive && (
+                      <div className="h-2 w-2 rounded-full bg-primary shadow-sm shadow-primary/50" />
+                    )}
                   </Link>
                 )
               })}
@@ -237,11 +268,11 @@ export function DashboardShell({
                 <p className="text-sm font-semibold truncate">{userDisplayName}</p>
                 <p className="text-xs text-muted-foreground">{userRole}</p>
               </div>
-              {isDemoGym ? (
+              {isDemoGym && (
                 <Badge variant="warning" className="shrink-0">
                   {tShell("demoBadge")}
                 </Badge>
-              ) : null}
+              )}
             </div>
             <div className="flex items-center justify-between gap-3">
               <div className="flex flex-col gap-1.5">
@@ -289,7 +320,7 @@ export function DashboardShell({
                     variant="outline"
                     className="gap-2 rounded-xl border-border/60 bg-card px-3 text-sm font-semibold shadow-xs hover:shadow-sm"
                   >
-                    <Globe2 className="h-4 w-4" aria-hidden />
+                    <Globe2 className="h-4 w-4" />
                     <span>{currentLanguage?.label ?? locale.toUpperCase()}</span>
                   </Button>
                 </DropdownMenuTrigger>
@@ -301,7 +332,9 @@ export function DashboardShell({
                       onClick={() => handleLocaleChange(option.code)}
                     >
                       <span>{option.label}</span>
-                      {option.code === locale && <Check className="h-4 w-4 text-primary" aria-hidden />}
+                      {option.code === locale && (
+                        <Check className="h-4 w-4 text-primary" />
+                      )}
                     </DropdownMenuItem>
                   ))}
                 </DropdownMenuContent>

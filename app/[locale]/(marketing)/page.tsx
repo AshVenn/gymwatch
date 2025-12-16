@@ -1,115 +1,113 @@
+// app/[locale]/(marketing)/page.tsx
 import type { Metadata } from "next"
 import Image from "next/image"
 import {
   ArrowRight,
-  BarChart3,
-  Bell,
-  Building2,
-  CheckCircle2,
-  CreditCard,
-  Globe2,
   Headphones,
-  LayoutDashboard,
-  QrCode,
-  ShieldCheck,
   Sparkles,
+  Building2,
+  QrCode,
+  CreditCard,
+  BarChart3,
+  ShieldCheck,
   Users,
+  FileDown,
   Workflow,
+  PlugZap,
 } from "lucide-react"
 
-import { MarketingNavbar } from "@/components/marketing/navbar"
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { routing, type AppLocale, Link } from "@/i18n/routing"
+import { Link, type AppLocale } from "@/i18n/routing"
 import { buildMarketingMetadata } from "@/lib/marketing-content"
-import { DEFAULT_ANNUAL_DISCOUNT, getPlanCatalogAsList } from "@/lib/subscription-plans"
+import { DEFAULT_ANNUAL_DISCOUNT, getPlanCatalogAsList, getPlanCatalogAsListLocalized } from "@/lib/subscription-plans"
 import { cn } from "@/lib/utils"
-import { getTranslations } from "next-intl/server"
+import { getTranslations, setRequestLocale } from "next-intl/server"
+
+import { PlanCard } from "../../../components/pricing/plan-card"
 
 type HomePageProps = {
   params: Promise<{ locale: string }>
 }
 
+type StatItem = { value: string; label: string; detail: string }
+type PillarItem = { title: string; description: string; icon: React.ElementType }
+type FeatureItem = { title: string; description: string; icon: React.ElementType }
+type TestimonialItem = { quote: string; author: string; role: string }
+type FaqItem = { question: string; answer: string }
+
+function roundPrice(raw: number): number {
+  if (raw >= 100) return Math.round(raw / 10) * 10
+  if (raw >= 10) return Math.round(raw / 5) * 5
+  return Math.round(raw)
+}
+
 // Static params per locale
 export function generateStaticParams() {
-  return routing.locales.map((locale) => ({ locale }))
+  return ["fr", "ar", "en"].map((locale) => ({ locale }))
 }
 
 export async function generateMetadata({ params }: HomePageProps): Promise<Metadata> {
-  const { locale: rawLocale } = await params
-  const locale = routing.locales.includes(rawLocale as AppLocale) ? (rawLocale as AppLocale) : routing.defaultLocale
+  const { locale } = await params
+  setRequestLocale(locale)
 
-  return buildMarketingMetadata("home", locale)
+  return buildMarketingMetadata("home", locale as AppLocale)
 }
 
-export default async function Home({ params }: HomePageProps) {
-  const { locale: rawLocale } = await params
-  const locale = routing.locales.includes(rawLocale as AppLocale) ? (rawLocale as AppLocale) : routing.defaultLocale
+export default async function HomePage({ params }: HomePageProps) {
+    const { locale } = await params
+      setRequestLocale(locale)
 
+  // IMPORTANT:
+  // This file expects translations under namespace: "marketing.home"
+  // (so your JSON should have: { "marketing": { "home": { ... }}} )
   const t = await getTranslations({ locale, namespace: "marketing.home" })
 
-  const supportEmail = process.env.SUPPORT_EMAIL || "contact@gymwatch.ma"
-  const supportHref = `mailto:${supportEmail}`
-
-  const heroCopy = {
-    eyebrow: t("hero.eyebrow"),
-    title: t("hero.title"),
-    subtitle: t("hero.subtitle"),
-    description: t("hero.description"),
-    primaryCta: t("hero.primaryCta"),
-    secondaryCta: t("hero.secondaryCta"),
-    dashboardTitle: t("hero.dashboard.title"),
-    dashboardDescription: t("hero.dashboard.description"),
-    chipAccess: t("hero.dashboard.chips.access"),
-    chipKpi: t("hero.dashboard.chips.kpi"),
-    chipAnalytics: t("hero.dashboard.chips.analytics"),
+  let planCatalog = getPlanCatalogAsList()
+  try {
+    const tCatalog = await getTranslations({ locale, namespace: "subscriptionPlans" })
+    planCatalog = getPlanCatalogAsListLocalized(tCatalog)
+  } catch {
+    // fallback to default FR catalog
   }
 
-  const planCatalog = getPlanCatalogAsList()
-  const priceFormatter = new Intl.NumberFormat(locale === "fr" ? "fr-MA" : locale === "ar" ? "ar-MA" : "en-US", {
+  const currencyFormatter = new Intl.NumberFormat(
+  locale === "fr" ? "fr-MA" : locale === "ar" ? "ar-MA" : "en-US",
+  {
     style: "currency",
     currency: "MAD",
-  })
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
+  },
+)
 
-  const stats = [
+  const stats: StatItem[] = [
     { value: t("stats.clubs.value"), label: t("stats.clubs.label"), detail: t("stats.clubs.detail") },
     { value: t("stats.members.value"), label: t("stats.members.label"), detail: t("stats.members.detail") },
-    {
-      value: t("stats.satisfaction.value"),
-      label: t("stats.satisfaction.label"),
-      detail: t("stats.satisfaction.detail"),
-    },
+    { value: t("stats.satisfaction.value"), label: t("stats.satisfaction.label"), detail: t("stats.satisfaction.detail") },
   ]
 
-  const pillars = [
+  const pillars: PillarItem[] = [
     { title: t("pillars.multiSite.title"), description: t("pillars.multiSite.body"), icon: Building2 },
-    { title: t("pillars.accessControl.title"), description: t("pillars.accessControl.body"), icon: ShieldCheck },
+    { title: t("pillars.accessControl.title"), description: t("pillars.accessControl.body"), icon: QrCode },
     { title: t("pillars.billing.title"), description: t("pillars.billing.body"), icon: CreditCard },
   ]
 
-  const featureCards = [
+  const features: FeatureItem[] = [
     { title: t("features.directorView.title"), description: t("features.directorView.body"), icon: BarChart3 },
     { title: t("features.access.title"), description: t("features.access.body"), icon: QrCode },
-    { title: t("features.automation.title"), description: t("features.automation.body"), icon: Bell },
-    { title: t("features.subscriptions.title"), description: t("features.subscriptions.body"), icon: Workflow },
+    { title: t("features.automation.title"), description: t("features.automation.body"), icon: Workflow },
+    { title: t("features.subscriptions.title"), description: t("features.subscriptions.body"), icon: CreditCard },
     { title: t("features.teams.title"), description: t("features.teams.body"), icon: Users },
-    { title: t("features.reporting.title"), description: t("features.reporting.body"), icon: LayoutDashboard },
+    { title: t("features.reporting.title"), description: t("features.reporting.body"), icon: FileDown },
     { title: t("features.security.title"), description: t("features.security.body"), icon: ShieldCheck },
-    { title: t("features.api.title"), description: t("features.api.body"), icon: Globe2 },
+    { title: t("features.api.title"), description: t("features.api.body"), icon: PlugZap },
   ]
 
-  const testimonials = [
-    {
-      quote: t("testimonials.amine.quote"),
-      author: t("testimonials.amine.author"),
-      role: t("testimonials.amine.role"),
-    },
-    {
-      quote: t("testimonials.sarah.quote"),
-      author: t("testimonials.sarah.author"),
-      role: t("testimonials.sarah.role"),
-    },
+  const testimonials: TestimonialItem[] = [
+    { quote: t("testimonials.amine.quote"), author: t("testimonials.amine.author"), role: t("testimonials.amine.role") },
+    { quote: t("testimonials.sarah.quote"), author: t("testimonials.sarah.author"), role: t("testimonials.sarah.role") },
     {
       quote: t("testimonials.youssef.quote"),
       author: t("testimonials.youssef.author"),
@@ -117,7 +115,7 @@ export default async function Home({ params }: HomePageProps) {
     },
   ]
 
-  const faqItems = [
+  const faq: FaqItem[] = [
     { question: t("faq.q1.question"), answer: t("faq.q1.answer") },
     { question: t("faq.q2.question"), answer: t("faq.q2.answer") },
     { question: t("faq.q3.question"), answer: t("faq.q3.answer") },
@@ -128,115 +126,88 @@ export default async function Home({ params }: HomePageProps) {
   const renderPlanCards = (mode: "monthly" | "annual") =>
     planCatalog.map((plan, index) => {
       const annualTotal = plan.annualPrice ?? plan.monthlyPrice * 12
-      const annualMonthly = Math.round((annualTotal / 12) * 100) / 100
-      const price = mode === "annual" ? annualMonthly : plan.monthlyPrice
+      const annualMonthly = annualTotal / 12
+      const rawPrice = mode === "annual" ? annualMonthly : plan.monthlyPrice
+      const price = roundPrice(rawPrice)
 
       const billingHint =
         mode === "annual"
-          ? t("plans.billing.annualHint", { amount: priceFormatter.format(annualTotal) })
+          ? t("plans.billing.annualHint", { amount: currencyFormatter.format(roundPrice(annualTotal)) })
           : t("plans.billing.monthlyHint")
 
       const tierKey = plan.tier.toLowerCase() as "basic" | "pro" | "enterprise"
       const planName = t(`plans.catalog.${tierKey}.name`)
       const planDescription = t(`plans.catalog.${tierKey}.description`)
       const badges = (t.raw(`plans.catalog.${tierKey}.badges`) ?? []) as string[]
-      const features = (t.raw(`plans.catalog.${tierKey}.features`) ?? []) as string[]
+      const planFeatures = (t.raw(`plans.catalog.${tierKey}.features`) ?? []) as string[]
 
       return (
-        <Card
+        <PlanCard
           key={`${plan.tier}-${mode}`}
-          className={cn(
-            "relative overflow-hidden border transition-all duration-300 hover:-translate-y-1 hover:shadow-xl animate-slide-up",
-            plan.highlight ? "border-primary/60 bg-primary/5" : "border-border/70 bg-background/80",
-          )}
-          style={{ animationDelay: `${0.08 + index * 0.05}s` }}
-        >
-          {plan.highlight && (
-            <span className="absolute right-4 top-4 rounded-full bg-primary px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-primary-foreground shadow-md">
-              {t("plans.recommended")}
-            </span>
-          )}
-          <CardHeader className="space-y-3">
-            <CardTitle className="text-2xl">{planName}</CardTitle>
-            <CardDescription>{planDescription}</CardDescription>
-            <div className="flex items-baseline gap-2">
-              <span className="text-4xl font-bold text-foreground">{priceFormatter.format(price)}</span>
-              <span className="text-sm text-muted-foreground">{t("plans.billing.perMonth")}</span>
-            </div>
-            <p className="text-sm text-muted-foreground">{billingHint}</p>
-            {mode === "annual" && (
-              <p className="text-xs font-semibold text-primary">
-                {t("plans.billing.annualSave", { discount: DEFAULT_ANNUAL_DISCOUNT })}
-              </p>
-            )}
-          </CardHeader>
-          <CardContent className="space-y-3 text-sm">
-            <div className="flex flex-wrap gap-2">
-              {badges.map((badge) => (
-                <span
-                  key={badge}
-                  className="rounded-full border border-border/70 bg-primary/5 px-2 py-1 text-[12px] font-semibold text-primary"
-                >
-                  {badge}
-                </span>
-              ))}
-            </div>
-            {features.map((feature) => (
-              <div key={feature} className="flex items-center gap-2 text-muted-foreground">
-                <CheckCircle2 className="h-4 w-4 text-primary" aria-hidden />
-                <span>{feature}</span>
-              </div>
-            ))}
-            <Button asChild variant={plan.highlight ? "default" : "outline"} className="mt-2 w-full">
-              <Link href="/request-demo">{t("plans.cta")}</Link>
-            </Button>
-          </CardContent>
-        </Card>
+          tier={tierKey}
+          planName={planName}
+          description={planDescription}
+          price={price}
+          priceLabel={currencyFormatter.format(price)}
+          billingHint={billingHint}
+          badges={badges}
+          features={planFeatures}
+          ctaLabel={t("plans.cta")}
+          ctaHref="/request-demo"
+          isHighlighted={plan.highlight}
+          highlightLabel={plan.highlight ? t("plans.recommended") : undefined}
+          showAnnualSavings={mode === "annual"}
+          annualSavingsText={
+            mode === "annual" ? t("plans.billing.annualSave", { discount: DEFAULT_ANNUAL_DISCOUNT }) : undefined
+          }
+          perMonthLabel={t("plans.billing.perMonth")}
+          animationDelay={`${0.08 + index * 0.05}s`}
+        />
       )
     })
 
   return (
     <div className="relative min-h-screen overflow-hidden bg-background text-foreground">
-      <div className="pointer-events-none fixed inset-0 z-0 bg-[radial-gradient(circle_at_20%_10%,rgba(59,130,246,0.08),transparent_40%),radial-gradient(circle_at_80%_5%,rgba(37,99,235,0.08),transparent_35%),radial-gradient(circle_at_70%_70%,rgba(14,165,233,0.06),transparent_40%)]" />
+      <div className="pointer-events-none fixed inset-0 z-0">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_25%_15%,rgba(59,130,246,0.12),transparent_45%),radial-gradient(circle_at_75%_10%,rgba(99,102,241,0.10),transparent_40%),radial-gradient(circle_at_65%_75%,rgba(14,165,233,0.11),transparent_50%)] animate-pulse-slow" />
+        <div className="absolute top-0 left-1/4 h-96 w-96 rounded-full bg-primary/5 blur-3xl animate-float-slow" />
+        <div className="absolute bottom-0 right-1/4 h-96 w-96 rounded-full bg-indigo-500/5 blur-3xl animate-float-slow-reverse" />
+      </div>
 
       <main className="relative z-10 mx-auto flex max-w-6xl flex-col gap-20 px-4 pb-16 pt-10 md:pt-16">
         <header
           id="hero"
           className={cn(
-            "relative overflow-hidden rounded-3xl border border-border/40 bg-card/90 px-6 py-14 shadow-xl backdrop-blur-sm md:px-16",
+            "relative overflow-hidden rounded-3xl border border-border/50 bg-card/95 px-6 py-14 shadow-2xl backdrop-blur-md md:px-16",
             locale === "ar" ? "rtl text-right" : "ltr text-left",
           )}
         >
-          <div className="floating-orb-primary -left-16 -top-24" />
-          <div className="floating-orb-secondary -right-24 top-[15%]" />
-          <div className="floating-orb-tertiary left-[8%] -bottom-24" />
+          <div className="floating-orb-primary -left-16 -top-24 opacity-90" />
+          <div className="floating-orb-secondary -right-24 top-[15%] opacity-80" />
+          <div className="floating-orb-tertiary left-[8%] -bottom-24 opacity-75" />
 
           <div className="relative grid items-center gap-12 lg:grid-cols-2">
             <div className="space-y-6 animate-fade-in">
               <p className="inline-flex items-center gap-2 rounded-full border border-primary/40 bg-primary/10 px-4 py-2 text-xs font-semibold uppercase tracking-[0.3em] text-primary shadow-sm">
                 <Sparkles className="h-4 w-4" aria-hidden />
-                {heroCopy.eyebrow}
+                {t("hero.eyebrow")}
               </p>
 
               <h1 className="text-balance text-5xl font-bold leading-[1.1] tracking-tight md:text-6xl">
-                {heroCopy.title}
+                {t("hero.title")}
               </h1>
 
-              <p className="max-w-xl text-lg font-semibold text-primary">{heroCopy.subtitle}</p>
+              <p className="max-w-xl text-lg font-semibold text-primary">{t("hero.subtitle")}</p>
 
               <p className="max-w-xl text-sm leading-relaxed text-muted-foreground md:text-base">
-                {heroCopy.description}
+                {t("hero.description")}
               </p>
 
               <div className={cn("flex flex-wrap gap-3 pt-2", locale === "ar" ? "justify-end" : "justify-start")}>
-                <Button
-                  asChild
-                  size="lg"
-                  className="group transition-all duration-300 hover:scale-[1.02] hover:shadow-lg"
-                >
+                <Button asChild size="lg" className="group transition-all duration-300 hover:scale-105 hover:shadow-lg">
                   <Link href="/request-demo">
                     <span className="inline-flex items-center gap-2">
-                      {heroCopy.primaryCta}
+                      {t("hero.primaryCta")}
                       <ArrowRight
                         className={cn(
                           "h-4 w-4 transition-transform duration-300 group-hover:translate-x-1",
@@ -252,16 +223,16 @@ export default async function Home({ params }: HomePageProps) {
                   asChild
                   size="lg"
                   variant="outline"
-                  className="transition-all duration-300 hover:bg-primary/5 bg-transparent"
+                  className="bg-transparent transition-all duration-300 hover:border-primary/30 hover:bg-primary/5"
                 >
-                  <Link href="/login">{heroCopy.secondaryCta}</Link>
+                  <Link href="/login">{t("hero.secondaryCta")}</Link>
                 </Button>
               </div>
 
               <div className="grid gap-6 border-t border-border/40 pt-6 sm:grid-cols-3">
                 {stats.map((item, index) => (
                   <div
-                    key={item.label}
+                    key={`${item.label}-${index}`}
                     className="animate-slide-up space-y-1"
                     style={{ animationDelay: `${0.05 * (index + 1)}s` }}
                   >
@@ -282,34 +253,44 @@ export default async function Home({ params }: HomePageProps) {
                     width={1200}
                     height={900}
                     priority
-                    className="h-auto w-full rounded-2xl border border-border/40 object-contain shadow-2xl ring-1 ring-black/5 transition-all duration-700 ease-out group-hover:scale-[1.02] group-hover:shadow-3xl dark:ring-white/5"
+                    className="h-auto w-full rounded-2xl border border-border/50 object-contain shadow-2xl ring-1 ring-black/5 transition-all duration-700 ease-out group-hover:scale-[1.03] group-hover:shadow-3xl dark:ring-white/5"
                   />
 
                   <div className="pointer-events-none absolute inset-0 rounded-2xl bg-linear-to-tr from-transparent via-white/5 to-transparent opacity-0 transition-opacity duration-700 group-hover:opacity-100" />
 
-                  <div className={cn("absolute top-4", locale === "ar" ? "-right-6" : "-left-6", "animate-float-left")}>
-                    <div className="rounded-full border border-primary/20 bg-primary/95 px-3 py-1.5 text-xs font-semibold text-primary-foreground shadow-lg backdrop-blur-sm">
-                      {heroCopy.chipAccess}
+                  <div
+                    className={cn(
+                      "absolute top-3 md:top-4",
+                      locale === "ar" ? "-right-4 md:-right-6" : "-left-4 md:-left-6",
+                      "animate-float-left",
+                    )}
+                  >
+                    <div className="rounded-full border border-primary/20 bg-primary/95 px-2 py-1 text-[10px] font-semibold text-primary-foreground shadow-lg backdrop-blur-sm md:px-3 md:py-1.5 md:text-xs">
+                      {t("hero.dashboard.chips.access")}
                     </div>
                   </div>
 
                   <div
-                    className={cn("absolute top-1/3", locale === "ar" ? "-left-8" : "-right-8", "animate-float-right")}
+                    className={cn(
+                      "absolute top-1/3",
+                      locale === "ar" ? "-left-6 md:-left-8" : "-right-6 md:-right-8",
+                      "animate-float-right",
+                    )}
                   >
-                    <div className="rounded-full border border-primary/20 bg-primary/95 px-3 py-1.5 text-xs font-semibold text-primary-foreground shadow-lg backdrop-blur-sm">
-                      {heroCopy.chipKpi}
+                    <div className="rounded-full border border-primary/20 bg-primary/95 px-2 py-1 text-[10px] font-semibold text-primary-foreground shadow-lg backdrop-blur-sm md:px-3 md:py-1.5 md:text-xs">
+                      {t("hero.dashboard.chips.kpi")}
                     </div>
                   </div>
 
                   <div
                     className={cn(
                       "absolute top-1/2 -translate-y-1/2",
-                      locale === "ar" ? "-left-12" : "-right-12",
+                      locale === "ar" ? "-left-8 md:-left-12" : "-right-8 md:-right-12",
                       "animate-float-up",
                     )}
                   >
-                    <div className="rounded-full border border-primary/20 bg-primary/95 px-3 py-1.5 text-xs font-semibold text-primary-foreground shadow-lg backdrop-blur-sm">
-                      {heroCopy.chipAnalytics}
+                    <div className="rounded-full border border-primary/20 bg-primary/95 px-2 py-1 text-[10px] font-semibold text-primary-foreground shadow-lg backdrop-blur-sm md:px-3 md:py-1.5 md:text-xs">
+                      {t("hero.dashboard.chips.analytics")}
                     </div>
                   </div>
                 </div>
@@ -321,13 +302,11 @@ export default async function Home({ params }: HomePageProps) {
         <section id="pourquoi" className="space-y-6 animate-fade-in" style={{ animationDelay: "0.05s" }}>
           <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
             <div className="space-y-2">
-              <p className="text-xs font-semibold uppercase tracking-[0.3em] text-primary">
-                {t("sections.why.eyebrow")}
-              </p>
+              <p className="text-xs font-semibold uppercase tracking-[0.3em] text-primary">{t("sections.why.eyebrow")}</p>
               <h2 className="text-3xl font-bold tracking-tight">{t("sections.why.title")}</h2>
               <p className="max-w-2xl leading-relaxed text-muted-foreground">{t("sections.why.description")}</p>
             </div>
-            <Button asChild variant="ghost" className="text-primary transition-all hover:underline underline-offset-4">
+            <Button asChild variant="ghost" className="text-primary underline-offset-4 transition-all hover:underline">
               <Link href="/features">{t("sections.why.cta")}</Link>
             </Button>
           </div>
@@ -337,8 +316,8 @@ export default async function Home({ params }: HomePageProps) {
               const Icon = pillar.icon
               return (
                 <Card
-                  key={pillar.title}
-                  className="group relative overflow-hidden border border-border/60 bg-card/90 transition-all duration-300 hover:-translate-y-1 hover:border-primary/40 hover:shadow-lg animate-slide-up"
+                  key={`${pillar.title}-${index}`}
+                  className="group relative overflow-hidden border border-border/60 bg-card/95 transition-all duration-300 hover:-translate-y-2 hover:border-primary/40 hover:shadow-xl animate-slide-up"
                   style={{ animationDelay: `${0.05 + index * 0.05}s` }}
                 >
                   <div className="absolute inset-0 bg-linear-to-br from-primary/5 via-transparent to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
@@ -372,17 +351,17 @@ export default async function Home({ params }: HomePageProps) {
           </div>
 
           <div className="grid gap-4 md:grid-cols-2">
-            {featureCards.map((feature, index) => {
+            {features.map((feature, index) => {
               const Icon = feature.icon
               return (
                 <Card
-                  key={feature.title}
-                  className="group flex h-full flex-col justify-between border border-border/60 bg-card/70 transition-all duration-300 hover:-translate-y-1 hover:border-primary/50 hover:shadow-lg animate-slide-up"
+                  key={`${feature.title}-${index}`}
+                  className="group flex h-full flex-col justify-between border border-border/60 bg-card/90 transition-all duration-300 hover:-translate-y-2 hover:border-primary/50 hover:shadow-xl animate-slide-up"
                   style={{ animationDelay: `${0.05 + index * 0.04}s` }}
                 >
                   <CardHeader className="space-y-3">
                     <div className="flex items-center gap-3">
-                      <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 text-primary transition group-hover:scale-105 group-hover:bg-primary/15">
+                      <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary transition group-hover:scale-105 group-hover:bg-primary/15">
                         <Icon className="h-5 w-5" aria-hidden />
                       </span>
                       <CardTitle className="text-xl transition-colors group-hover:text-primary">
@@ -401,12 +380,11 @@ export default async function Home({ params }: HomePageProps) {
           id="plans"
           className="relative overflow-hidden rounded-3xl border border-border/60 bg-card/70 px-6 py-12 shadow-lg backdrop-blur"
         >
-          <div className="floating-orb-primary right-[12%] top-[-140px] opacity-30" />
-          <div className="floating-orb-secondary left-[8%] bottom-[-120px] opacity-20" />
+          <div className="floating-orb-primary right-[12%] -top-35 opacity-30" />
+          <div className="floating-orb-secondary left-[8%] -bottom-30 opacity-20" />
+
           <div className="relative space-y-3 text-center">
-            <p className="text-xs font-semibold uppercase tracking-[0.3em] text-primary">
-              {t("sections.plans.eyebrow")}
-            </p>
+            <p className="text-xs font-semibold uppercase tracking-[0.3em] text-primary">{t("sections.plans.eyebrow")}</p>
             <h2 className="text-3xl font-bold">{t("sections.plans.title")}</h2>
             <p className="mx-auto max-w-2xl text-muted-foreground">
               {t("sections.plans.description", { discount: DEFAULT_ANNUAL_DISCOUNT })}
@@ -416,32 +394,36 @@ export default async function Home({ params }: HomePageProps) {
           <div className="relative mt-8 space-y-8">
             <input
               type="radio"
+              name="billing-mode"
               id="billing-monthly"
-              name="billing"
+              value="monthly"
               defaultChecked
               className="peer/billing-monthly sr-only"
             />
-            <input type="radio" id="billing-annual" name="billing" className="peer/billing-annual sr-only" />
+            <input type="radio" name="billing-mode" id="billing-annual" value="annual" className="peer/billing-annual sr-only" />
 
-            <div className="mx-auto flex w-full max-w-md items-center justify-center gap-2 rounded-full border border-border/60 bg-background/80 p-1 shadow-sm backdrop-blur">
+            <div className="inline-flex items-center gap-1 rounded-full bg-muted p-1.5 shadow-inner">
               <label
                 htmlFor="billing-monthly"
-                className="flex-1 cursor-pointer rounded-full px-3 py-2 text-center text-sm font-semibold text-muted-foreground transition peer-checked/billing-monthly:bg-primary peer-checked/billing-monthly:text-primary-foreground peer-checked/billing-monthly:shadow-md"
+                className="cursor-pointer rounded-full px-6 py-2.5 text-sm font-semibold transition-all
+                peer-checked/billing-monthly:bg-primary peer-checked/billing-monthly:text-primary-foreground peer-checked/billing-monthly:shadow-md
+                text-muted-foreground hover:text-foreground"
               >
                 {t("plans.toggle.monthly")}
               </label>
+
               <label
                 htmlFor="billing-annual"
-                className="flex-1 cursor-pointer rounded-full px-3 py-2 text-center text-sm font-semibold text-muted-foreground transition peer-checked/billing-annual:bg-primary peer-checked/billing-annual:text-primary-foreground peer-checked/billing-annual:shadow-md"
+                className="flex cursor-pointer items-center gap-2 rounded-full px-6 py-2.5 text-sm font-semibold transition-all
+                peer-checked/billing-annual:bg-primary peer-checked/billing-annual:text-primary-foreground peer-checked/billing-annual:shadow-md
+                text-muted-foreground hover:text-foreground"
               >
                 {t("plans.toggle.annual", { discount: DEFAULT_ANNUAL_DISCOUNT })}
               </label>
             </div>
 
-            <div className="grid gap-6 md:grid-cols-3 peer-checked/billing-annual:hidden">
-              {renderPlanCards("monthly")}
-            </div>
-            <div className="hidden gap-6 md:grid-cols-3 peer-checked/billing-annual:grid peer-checked/billing-monthly:hidden">
+            <div className="grid gap-6 md:grid-cols-3 peer-checked/billing-monthly:hidden">{renderPlanCards("monthly")}</div>
+            <div className="hidden gap-6 md:grid-cols-3 peer-checked/billing-monthly:grid peer-checked/billing-annual:hidden">
               {renderPlanCards("annual")}
             </div>
           </div>
@@ -449,16 +431,15 @@ export default async function Home({ params }: HomePageProps) {
 
         <section id="temoignages" className="space-y-6 animate-fade-in" style={{ animationDelay: "0.1s" }}>
           <div className="flex flex-col gap-2">
-            <p className="text-xs font-semibold uppercase tracking-[0.3em] text-primary">
-              {t("sections.testimonials.eyebrow")}
-            </p>
+            <p className="text-xs font-semibold uppercase tracking-[0.3em] text-primary">{t("sections.testimonials.eyebrow")}</p>
             <h2 className="text-3xl font-bold">{t("sections.testimonials.title")}</h2>
             <p className="max-w-2xl text-muted-foreground">{t("sections.testimonials.description")}</p>
           </div>
+
           <div className="grid gap-6 md:grid-cols-3">
             {testimonials.map((item, index) => (
               <Card
-                key={item.author}
+                key={`${item.author}-${index}`}
                 className="relative h-full border border-border/70 bg-card/70 transition duration-300 hover:-translate-y-1 hover:border-primary/50 hover:shadow-lg animate-slide-up"
                 style={{ animationDelay: `${0.04 + index * 0.06}s` }}
               >
@@ -482,9 +463,7 @@ export default async function Home({ params }: HomePageProps) {
         <section id="faq" className="space-y-6 animate-fade-in" style={{ animationDelay: "0.12s" }}>
           <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
             <div className="space-y-2">
-              <p className="text-xs font-semibold uppercase tracking-[0.3em] text-primary">
-                {t("sections.faq.eyebrow")}
-              </p>
+              <p className="text-xs font-semibold uppercase tracking-[0.3em] text-primary">{t("sections.faq.eyebrow")}</p>
               <h2 className="text-3xl font-bold">{t("sections.faq.title")}</h2>
               <p className="max-w-2xl text-muted-foreground">{t("sections.faq.description")}</p>
             </div>
@@ -492,12 +471,13 @@ export default async function Home({ params }: HomePageProps) {
               <Link href="/faqs">{t("sections.faq.cta")}</Link>
             </Button>
           </div>
+
           <Card className="border border-border/60 bg-card/80 shadow-lg backdrop-blur">
             <CardContent className="p-4">
               <Accordion type="single" collapsible className="w-full space-y-2">
-                {faqItems.map((item, index) => (
+                {faq.map((item, index) => (
                   <AccordionItem
-                    key={item.question}
+                    key={`${item.question}-${index}`}
                     value={`faq-${index + 1}`}
                     className="rounded-xl border border-border/60 px-3 data-[state=open]:border-primary/50 data-[state=open]:bg-primary/5"
                   >
@@ -519,26 +499,31 @@ export default async function Home({ params }: HomePageProps) {
           className="relative overflow-hidden rounded-3xl border border-border/60 bg-linear-to-br from-card via-card/80 to-card/60 px-8 py-12 shadow-lg animate-fade-in"
           style={{ animationDelay: "0.14s" }}
         >
-          <div className="floating-orb-secondary right-[-60px] -top-20 opacity-25" />
+          <div className="floating-orb-secondary -right-15 -top-20 opacity-25" />
           <div className="floating-orb-tertiary -left-10 -bottom-20 opacity-20" />
+
           <div className="relative flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
             <div className="space-y-3">
-              <p className="text-xs font-semibold uppercase tracking-[0.3em] text-primary">
-                {t("sections.contact.eyebrow")}
-              </p>
+              <p className="text-xs font-semibold uppercase tracking-[0.3em] text-primary">{t("sections.contact.eyebrow")}</p>
               <h2 className="text-3xl font-bold">{t("sections.contact.title")}</h2>
               <p className="max-w-2xl text-muted-foreground">{t("sections.contact.description")}</p>
+
               <div className="flex flex-wrap gap-3">
                 <Button asChild className="transition hover:scale-[1.02] hover:shadow-lg">
                   <Link href="/request-demo">{t("sections.contact.primaryCta")}</Link>
                 </Button>
+
                 <Button asChild variant="secondary" className="transition hover:scale-[1.02] hover:shadow-lg">
-                  <a href={supportHref} className="font-semibold text-primary hover:underline">
-                    {supportEmail}
+                  <a
+                    href={`mailto:${t("sections.contact.supportEmail")}`}
+                    className="font-semibold text-primary hover:underline"
+                  >
+                    {t("sections.contact.secondaryCta")}
                   </a>
                 </Button>
               </div>
             </div>
+
             <div className="rounded-2xl border border-border/60 bg-background/80 p-5 shadow-md backdrop-blur-sm">
               <div className="flex items-center gap-3">
                 <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-primary">
@@ -549,11 +534,15 @@ export default async function Home({ params }: HomePageProps) {
                   <p className="text-sm text-muted-foreground">{t("sections.contact.supportSubtitle")}</p>
                 </div>
               </div>
+
               <div className="mt-4 space-y-2 text-sm text-muted-foreground">
                 <p>
                   {t("sections.contact.emailLabel")}{" "}
-                  <a href={supportHref} className="font-semibold text-primary hover:underline">
-                    {supportEmail}
+                  <a
+                    href={`mailto:${t("sections.contact.supportEmail")}`}
+                    className="font-semibold text-primary hover:underline"
+                  >
+                    {t("sections.contact.supportEmail")}
                   </a>
                 </p>
                 <p>{t("sections.contact.availability")}</p>

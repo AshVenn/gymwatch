@@ -14,7 +14,7 @@ export async function generateMetadata({ params }: PrivacyPageProps): Promise<Me
   const { locale } = await params
   setRequestLocale(locale)
 
-  const t = await getTranslations({ locale, namespace: "privacy.metadata" })
+  const t = await getTranslations({ locale, namespace: "privacyPage.metadata" })
 
   return {
     title: t("title"),
@@ -27,7 +27,7 @@ export default async function PrivacyPage({ params }: PrivacyPageProps) {
   const { locale } = await params
   setRequestLocale(locale)
 
-  const t = await getTranslations({ locale, namespace: "privacy" })
+  const t = await getTranslations({ locale, namespace: "privacyPage" })
 
   const supportEmail = process.env.SUPPORT_EMAIL || process.env.NEXT_PUBLIC_SUPPORT_EMAIL || "hello@gymwatch.ma"
   const supportPhone = process.env.SUPPORT_PHONE || process.env.NEXT_PUBLIC_SUPPORT_PHONE || "+212 6 00 00 00 00"

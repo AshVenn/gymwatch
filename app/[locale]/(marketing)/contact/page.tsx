@@ -23,7 +23,7 @@ export async function generateMetadata({ params }: ContactPageProps): Promise<Me
   const { locale } = await params
   setRequestLocale(locale)
 
-  const t = await getTranslations({ locale, namespace: "contact.metadata" })
+  const t = await getTranslations({ locale, namespace: "contactPage.metadata" })
 
   return {
     title: t("title"),
@@ -36,7 +36,7 @@ export default async function ContactPage({ params }: ContactPageProps) {
   const { locale } = await params
   setRequestLocale(locale)
 
-  const t = await getTranslations({ locale, namespace: "contact" })
+  const t = await getTranslations({ locale, namespace: "contactPage" })
 
   const supportEmail =
     process.env.SUPPORT_EMAIL || process.env.NEXT_PUBLIC_SUPPORT_EMAIL || "contact@gymwatch.ma"

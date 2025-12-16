@@ -13,7 +13,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const { locale } = await params
   setRequestLocale(locale)
 
-  const t = await getTranslations({ locale, namespace: "features.metadata" })
+  const t = await getTranslations({ locale, namespace: "featurePage.metadata" })
 
   return {
     title: t("title"),
@@ -26,7 +26,7 @@ export default async function FeaturesPage({ params }: PageProps) {
   const { locale } = await params
   setRequestLocale(locale)
 
-  const t = await getTranslations({ locale, namespace: "features" })
+  const t = await getTranslations({ locale, namespace: "featuresPage" })
 
   const navLinks = [
     { label: t("nav.features"), href: "/features" as const },

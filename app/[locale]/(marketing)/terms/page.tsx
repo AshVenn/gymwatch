@@ -12,7 +12,7 @@ export async function generateMetadata({ params }: TermsPageProps): Promise<Meta
   const { locale } = await params
   setRequestLocale(locale)
 
-  const t = await getTranslations({ locale, namespace: "terms.metadata" })
+  const t = await getTranslations({ locale, namespace: "termsPage.metadata" })
   return {
     title: t("title"),
     description: t("description"),
@@ -24,7 +24,7 @@ export default async function TermsPage({ params }: TermsPageProps) {
   const { locale } = await params
   setRequestLocale(locale)
 
-  const t = await getTranslations({ locale, namespace: "terms" })
+  const t = await getTranslations({ locale, namespace: "termsPage" })
 
   const supportEmail = process.env.SUPPORT_EMAIL || "hello@gymwatch.ma"
   const supportMailto = `mailto:${supportEmail}`

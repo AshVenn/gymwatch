@@ -14,7 +14,7 @@ export async function generateMetadata({ params }: RessourcesPageProps): Promise
   const { locale } = await params
   setRequestLocale(locale)
 
-  const t = await getTranslations({ locale, namespace: "ressources.metadata" })
+  const t = await getTranslations({ locale, namespace: "ressourcesPage.metadata" })
 
   return {
     title: t("title"),
@@ -35,7 +35,7 @@ export default async function RessourcesPage({ params }: RessourcesPageProps) {
   const { locale } = await params
   setRequestLocale(locale)
 
-  const t = await getTranslations({ locale, namespace: "ressources" })
+  const t = await getTranslations({ locale, namespace: "ressourcesPage" })
 
   const resources =
     (t.raw("resources") as Array<{

@@ -14,7 +14,7 @@ export async function generateMetadata({ params }: CookiesPageProps): Promise<Me
   const { locale } = await params
   setRequestLocale(locale)
 
-  const t = await getTranslations({ locale, namespace: "cookies.metadata" })
+  const t = await getTranslations({ locale, namespace: "cookiesPage.metadata" })
 
   return {
     title: t("title"),
@@ -27,7 +27,7 @@ export default async function CookiesPage({ params }: CookiesPageProps) {
   const { locale } = await params
   setRequestLocale(locale)
 
-  const t = await getTranslations({ locale, namespace: "cookies" })
+  const t = await getTranslations({ locale, namespace: "cookiesPage" })
 
   const supportEmail = process.env.SUPPORT_EMAIL || "hello@gymwatch.ma"
   const supportMailto = `mailto:${supportEmail}`

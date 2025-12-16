@@ -130,7 +130,7 @@
         "copyright": "© {year} GymWatch. All rights reserved."
       }
     },
-     "terms": {
+     "termsPage": {
     "metadata": {
       "title": "Terms of Use | GymWatch",
       "description": "GymWatch Terms of Use: access, security, responsibilities and governing law.",
@@ -206,7 +206,7 @@
       }
     }
   }
-,  "docs": {
+,  "docsPage": {
     "metadata": {
       "title": "Documentation | GymWatch",
       "description": "Guides to deploy GymWatch: multi-location setup, roles, access control, security and troubleshooting.",
@@ -355,7 +355,7 @@
     }
   }
 ,
-    "licenses": {
+    "licensesPage": {
     "metadata": {
       "title": "Open-source licenses | GymWatch",
       "description": "License information for open-source dependencies used by GymWatch.",
@@ -388,7 +388,7 @@
     },
     "footerNote": "Last updated: file automatically generated during build."
   },
-    "cookies": {
+    "cookiesPage": {
     "metadata": {
       "title": "Cookie Policy | GymWatch",
       "description": "Information about cookies and similar technologies used on GymWatch.",
@@ -441,7 +441,7 @@
       }
     }
   },
-    "privacy": {
+    "privacyPage": {
     "metadata": {
       "title": "Privacy Policy | GymWatch",
       "description": "How GymWatch collects, uses, and protects your personal data (Morocco).",
@@ -521,7 +521,7 @@
       }
     }
   },
-    "ressources": {
+    "ressourcesPage": {
     "metadata": {
       "title": "GymWatch Resources",
       "description": "Guides and articles on gym management: retention, access control, membership automations and multi-site operations.",
@@ -569,7 +569,7 @@
       }
     }
   },
-    "contact": {
+    "contactPage": {
     "metadata": {
       "title": "Contact & Support | GymWatch",
       "description": "Contact GymWatch: support, onboarding, and multi-location rollout for your gym management platform.",
@@ -620,7 +620,7 @@
       "actions": { "primary": "Schedule a demo", "secondary": "View plans" }
     }
   },
-  "about": {
+  "aboutPage": {
     "metadata": {
       "title": "About | GymWatch",
       "description": "Discover GymWatch’s mission: optimize gym and multi-location network operations with reliability, security, and automation.",
@@ -687,7 +687,7 @@
       }
     }
   },
-    "faqs": {
+    "faqsPage": {
     "metadata": {
       "title": "FAQ | GymWatch",
       "description": "Frequently asked questions about GymWatch: multi-site, subscriptions, access control, security and rollout.",
@@ -780,7 +780,7 @@
       }
     }
   },
-    "plans": {
+    "plansPage": {
     "metadata": {
       "title": "Plans & Pricing | GymWatch",
       "description": "Compare GymWatch plans (monthly/annual), see what’s included, and get answers to common pricing questions.",
@@ -849,7 +849,7 @@
       }
     }
   },
-    "features": {
+    "featuresPage": {
     "metadata": {
       "title": "GymWatch Features",
       "description": "Discover GymWatch, a gym SaaS: multi-club overview, access control, subscriptions, payments, and advanced reporting.",
@@ -2181,116 +2181,41 @@
         }
       },
       "stats": {
-        "clubs": {
-          "value": "+180",
-          "label": "Clubs managed",
-          "detail": "SaaS for gyms and multi-site fitness networks"
-        },
-        "members": {
-          "value": "42k",
-          "label": "Members tracked",
-          "detail": "Membership and access control management"
-        },
-        "satisfaction": {
-          "value": "98%",
-          "label": "Satisfaction",
-          "detail": "Premium onboarding and dedicated support"
-        }
+        "clubs": { "value": "+180", "label": "Clubs managed", "detail": "SaaS for gyms and multi-site fitness networks" },
+        "members": { "value": "42k", "label": "Members tracked", "detail": "Membership and access control management" },
+        "satisfaction": { "value": "98%", "label": "Satisfaction", "detail": "Premium onboarding and dedicated support" }
       },
       "pillars": {
-        "multiSite": {
-          "title": "Multi-club / multi-site",
-          "body": "Consolidated view of all clubs, centralized control and granular permissions per team."
-        },
-        "accessControl": {
-          "title": "Real-time access control",
-          "body": "QR codes, badges and presence tracking to secure your entries."
-        },
-        "billing": {
-          "title": "Memberships and billing",
-          "body": "Payments, clean invoices and automatic reminders without spreadsheets."
-        }
+        "multiSite": { "title": "Multi-club / multi-site", "body": "Consolidated view of all clubs, centralized control and granular permissions per team." },
+        "accessControl": { "title": "Real-time access control", "body": "QR codes, badges and presence tracking to secure your entries." },
+        "billing": { "title": "Memberships and billing", "body": "Payments, clean invoices and automatic reminders without spreadsheets." }
       },
       "features": {
-        "directorView": {
-          "title": "Network director view",
-          "body": "Consolidated dashboards for your multi-site KPIs and club traffic."
-        },
-        "access": {
-          "title": "Access control",
-          "body": "Instant logs, alerts and permission control by club, badge or QR code."
-        },
-        "automation": {
-          "title": "Automations and reminders",
-          "body": "Email/SMS for renewals, failed payments and expirations to reduce churn."
-        },
-        "subscriptions": {
-          "title": "Membership management",
-          "body": "Contracts, freeze, renewals and proration for clear billing."
-        },
-        "teams": {
-          "title": "Team supervision",
-          "body": "Roles, permissions and audit log of sensitive actions for each club."
-        },
-        "reporting": {
-          "title": "Exportable reporting",
-          "body": "CSV/PDF exports for finance, accounting and franchise partners."
-        },
-        "security": {
-          "title": "Reliability & security",
-          "body": "Encryption, backups and uptime for robust gym management software."
-        },
-        "api": {
-          "title": "API & integrations",
-          "body": "Connect your CRM, marketing site or turnstiles without losing data."
-        }
+        "directorView": { "title": "Network director view", "body": "Consolidated dashboards for your multi-site KPIs and club traffic." },
+        "access": { "title": "Access control", "body": "Instant logs, alerts and permission control by club, badge or QR code." },
+        "automation": { "title": "Automations and reminders", "body": "Email/SMS for renewals, failed payments and expirations to reduce churn." },
+        "subscriptions": { "title": "Membership management", "body": "Contracts, freeze, renewals and proration for clear billing." },
+        "teams": { "title": "Team supervision", "body": "Roles, permissions and audit log of sensitive actions for each club." },
+        "reporting": { "title": "Exportable reporting", "body": "CSV/PDF exports for finance, accounting and franchise partners." },
+        "security": { "title": "Reliability & security", "body": "Encryption, backups and uptime for robust gym management software." },
+        "api": { "title": "API & integrations", "body": "Connect your CRM, marketing site or turnstiles without losing data." }
       },
       "testimonials": {
-        "amine": {
-          "quote": "GymWatch brought structure to our multi-club network. Indicators are clear and access control prevents misuse.",
-          "author": "Amine L.",
-          "role": "Network director (8 clubs)"
-        },
-        "sarah": {
-          "quote": "Automated reminders lowered our unpaid invoices and freed time at the front desk. Premium interface, zero friction.",
-          "author": "Sarah M.",
-          "role": "COO fitness franchise"
-        },
-        "youssef": {
-          "quote": "Onboarding in 48 hours, responsive team, secure data. It’s the gym SaaS we were looking for.",
-          "author": "Youssef K.",
-          "role": "Operations manager"
-        }
+        "amine": { "quote": "GymWatch brought structure to our multi-club network. Indicators are clear and access control prevents misuse.", "author": "Amine L.", "role": "Network director (8 clubs)" },
+        "sarah": { "quote": "Automated reminders lowered our unpaid invoices and freed time at the front desk. Premium interface, zero friction.", "author": "Sarah M.", "role": "COO fitness franchise" },
+        "youssef": { "quote": "Onboarding in 48 hours, responsive team, secure data. It’s the gym SaaS we were looking for.", "author": "Youssef K.", "role": "Operations manager" }
       },
       "faq": {
-        "q1": {
-          "question": "Does the software support multi-club / multi-site networks?",
-          "answer": "Yes. GymWatch provides a consolidated view and per-club filters for members, memberships, access control and reporting."
-        },
-        "q2": {
-          "question": "How does access control work?",
-          "answer": "QR codes or badges, real-time validation and instant alerts. Permissions are driven by location, membership type and time slots."
-        },
-        "q3": {
-          "question": "Can reminders and payments be automated?",
-          "answer": "Yes, email/SMS reminders for due dates and failed payments are built-in. Invoices are generated automatically and can be exported."
-        },
-        "q4": {
-          "question": "Is there help for rollout and onboarding?",
-          "answer": "Our team helps you migrate data, configure access and train staff in just a few days."
-        },
-        "q5": {
-          "question": "Is the service secure?",
-          "answer": "Encryption, backups, granular roles and audit logs of sensitive actions for reliable gym management software."
-        }
+        "q1": { "question": "Does the software support multi-club / multi-site networks?", "answer": "Yes. GymWatch provides a consolidated view and per-club filters for members, memberships, access control and reporting." },
+        "q2": { "question": "How does access control work?", "answer": "QR codes or badges, real-time validation and instant alerts. Permissions are driven by location, membership type and time slots." },
+        "q3": { "question": "Can reminders and payments be automated?", "answer": "Yes, email/SMS reminders for due dates and failed payments are built-in. Invoices are generated automatically and can be exported." },
+        "q4": { "question": "Is there help for rollout and onboarding?", "answer": "Our team helps you migrate data, configure access and train staff in just a few days." },
+        "q5": { "question": "Is the service secure?", "answer": "Encryption, backups, granular roles and audit logs of sensitive actions for reliable gym management software." }
       },
       "plans": {
         "recommended": "Recommended",
         "cta": "Book a demo",
-        "toggle": {
-          "monthly": "Monthly",
-          "annual": "Annual (-{discount}%)"
-        },
+        "toggle": { "monthly": "Monthly", "annual": "Annual (-{discount}%)" },
         "billing": {
           "perMonth": "/ month",
           "monthlyHint": "Monthly billing, cancel anytime",
@@ -2301,50 +2226,20 @@
           "basic": {
             "name": "Basic",
             "description": "Essential features to centralize your members.",
-            "badges": [
-              "Email support",
-              "Due date alerts"
-            ],
-            "features": [
-              "Member and membership management",
-              "Expiration alerts and reminders",
-              "Essential analytics",
-              "Priority email support"
-            ]
+            "badges": ["Email support", "Due date alerts"],
+            "features": ["Member and membership management", "Expiration alerts and reminders", "Essential analytics", "Priority email support"]
           },
           "pro": {
             "name": "Pro",
             "description": "Automations, QR codes and advanced exports.",
-            "badges": [
-              "QR codes",
-              "Excel exports"
-            ],
-            "features": [
-              "Everything in Basic",
-              "QR code access control",
-              "Real-time presence tracking",
-              "Success/failure sound alerts",
-              "Excel exports for revenue & loyalty",
-              "Multi-club PDF/Excel exports"
-            ]
+            "badges": ["QR codes", "Excel exports"],
+            "features": ["Everything in Basic", "QR code access control", "Real-time presence tracking", "Success/failure sound alerts", "Excel exports for revenue & loyalty", "Multi-club PDF/Excel exports"]
           },
           "enterprise": {
             "name": "Enterprise",
             "description": "Multi-site offer with advanced automations and unlimited catalog.",
-            "badges": [
-              "Unlimited locations",
-              "Automations",
-              "Classes & scheduling"
-            ],
-            "features": [
-              "Unlimited clubs and users",
-              "Advanced access control (QR, badge, member app)",
-              "Multi-site presence tracking",
-              "Classes & schedule management (multi-team)",
-              "Full CSV/PDF exports",
-              "Detailed multi-site analytics",
-              "Marketing scenarios (email/SMS) in progress"
-            ]
+            "badges": ["Unlimited locations", "Automations", "Classes & scheduling"],
+            "features": ["Unlimited clubs and users", "Advanced access control (QR, badge, member app)", "Multi-site presence tracking", "Classes & schedule management (multi-team)", "Full CSV/PDF exports", "Detailed multi-site analytics", "Marketing scenarios (email/SMS) in progress"]
           }
         }
       },
@@ -2385,6 +2280,7 @@
           "secondaryCta": "Email us",
           "supportTitle": "Premium support",
           "supportSubtitle": "Response in under 24 business hours",
+          "supportEmail": "support@gymwatch.ma",
           "emailLabel": "Email:",
           "availability": "Availability: 8:00–19:00 CET",
           "deployment": "Rollout: multi-club, multi-site, franchises."

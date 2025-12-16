@@ -14,7 +14,7 @@ export async function generateMetadata({ params }: FaqPageProps): Promise<Metada
   const { locale } = await params
   setRequestLocale(locale)
 
-  const t = await getTranslations({ locale, namespace: "faqs.metadata" })
+  const t = await getTranslations({ locale, namespace: "faqsPage.metadata" })
 
   return {
     title: t("title"),
@@ -29,7 +29,7 @@ export default async function FaqPage({ params }: FaqPageProps) {
   const { locale } = await params
   setRequestLocale(locale)
 
-  const t = await getTranslations({ locale, namespace: "faqs" })
+  const t = await getTranslations({ locale, namespace: "faqsPage" })
   const faqs = t.raw("items") as FaqItem[]
 
   const supportEmail = process.env.SUPPORT_EMAIL || "contact@gymwatch.ma"

@@ -264,29 +264,29 @@ export function ApproveDemoDialog({ request, open, onOpenChange, onApproved }: P
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-3xl w-[95vw] max-h-[90vh] overflow-y-auto rounded-3xl border-border/70">
+      <DialogContent className="max-w-3xl w-[95vw] max-h-[90vh] overflow-y-auto rounded-3xl border-border/70 p-4 sm:p-6">
         <DialogHeader className="space-y-3">
-          <DialogTitle className="text-2xl font-bold">{t("title")}</DialogTitle>
-          <DialogDescription className="text-base">{t("description")}</DialogDescription>
+          <DialogTitle className="text-xl sm:text-2xl font-bold">{t("title")}</DialogTitle>
+          <DialogDescription className="text-sm sm:text-base">{t("description")}</DialogDescription>
         </DialogHeader>
 
         <div className="space-y-6">
-          <div className="flex items-center justify-between rounded-2xl border border-dashed border-primary/40 bg-linear-to-r from-primary/10 via-primary/5 to-background px-4 py-3 shadow-sm text-sm">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 rounded-2xl border border-dashed border-primary/40 bg-linear-to-r from-primary/10 via-primary/5 to-background px-3 sm:px-4 py-3 shadow-sm text-sm">
             <div className="flex items-center gap-2">
-              <Sparkles className="h-4 w-4 text-primary" />
+              <Sparkles className="h-4 w-4 shrink-0 text-primary" />
               <span className="font-semibold">
                 {t("labels.plan")} {form.watch("plan")} - {intervalLabel}
               </span>
             </div>
             <div className="flex items-center gap-2 font-bold text-primary">
-              <CalendarClock className="h-4 w-4" />
+              <CalendarClock className="h-4 w-4 shrink-0" />
               <span>{estimatedPriceLabel}</span>
             </div>
           </div>
 
           <Form {...form}>
             <form className="space-y-5" onSubmit={form.handleSubmit(onSubmit)}>
-              <div className="grid gap-4 md:grid-cols-2">
+              <div className="grid gap-4 sm:grid-cols-2">
                 <FormField
                   control={form.control}
                   name="name"
@@ -316,7 +316,7 @@ export function ApproveDemoDialog({ request, open, onOpenChange, onApproved }: P
                 />
               </div>
 
-              <div className="grid gap-4 md:grid-cols-2">
+              <div className="grid gap-4 sm:grid-cols-2">
                 <FormField
                   control={form.control}
                   name="phone"
@@ -346,7 +346,7 @@ export function ApproveDemoDialog({ request, open, onOpenChange, onApproved }: P
                 />
               </div>
 
-              <div className="grid gap-4 md:grid-cols-2">
+              <div className="grid gap-4 sm:grid-cols-2">
                 <FormField
                   control={form.control}
                   name="city"
@@ -407,7 +407,7 @@ export function ApproveDemoDialog({ request, open, onOpenChange, onApproved }: P
                 )}
               />
 
-              <div className="grid gap-4 md:grid-cols-2">
+              <div className="grid gap-4 sm:grid-cols-2">
                 <FormField
                   control={form.control}
                   name="plan"
@@ -452,7 +452,7 @@ export function ApproveDemoDialog({ request, open, onOpenChange, onApproved }: P
                 />
               </div>
 
-              <div className="grid gap-4 md:grid-cols-3">
+              <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
                 <FormField
                   control={form.control}
                   name="expiresAt"
@@ -506,7 +506,7 @@ export function ApproveDemoDialog({ request, open, onOpenChange, onApproved }: P
                 />
               </div>
 
-              <div className="grid gap-4 md:grid-cols-2">
+              <div className="grid gap-4 sm:grid-cols-2">
                 <FormField
                   control={form.control}
                   name="maxAdmins"
@@ -540,7 +540,7 @@ export function ApproveDemoDialog({ request, open, onOpenChange, onApproved }: P
                 />
               </div>
 
-              <div className="grid gap-4 md:grid-cols-2">
+              <div className="grid gap-4 sm:grid-cols-2">
                 <FormField
                   control={form.control}
                   name="ownerEmail"
@@ -570,7 +570,7 @@ export function ApproveDemoDialog({ request, open, onOpenChange, onApproved }: P
                 />
               </div>
 
-              <div className="grid gap-4 md:grid-cols-2">
+              <div className="grid gap-4 sm:grid-cols-2">
                 <FormField
                   control={form.control}
                   name="ownerFirstName"
@@ -598,12 +598,93 @@ export function ApproveDemoDialog({ request, open, onOpenChange, onApproved }: P
                 />
               </div>
 
+              <div className="grid gap-4 sm:grid-cols-2">
+                <FormField
+                  control={form.control}
+                  name="adminEmail"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-sm font-semibold">{t("fields.adminEmail")}</FormLabel>
+                      <FormControl>
+                        <Input type="email" {...field} className="rounded-xl border-border/70" />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="adminPassword"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-sm font-semibold">{t("fields.adminPassword")}</FormLabel>
+                      <FormControl>
+                        <Input type="password" {...field} className="rounded-xl border-border/70" />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
+              </div>
+
+              <div className="grid gap-4 sm:grid-cols-2">
+                <FormField
+                  control={form.control}
+                  name="adminFirstName"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-sm font-semibold">{t("fields.adminFirstName")}</FormLabel>
+                      <FormControl>
+                        <Input {...field} className="rounded-xl border-border/70" />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="adminLastName"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-sm font-semibold">{t("fields.adminLastName")}</FormLabel>
+                      <FormControl>
+                        <Input {...field} className="rounded-xl border-border/70" />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
+              </div>
+
+              <FormField
+                control={form.control}
+                name="adminVariantSlug"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="text-sm font-semibold">{t("fields.adminVariantSlug")}</FormLabel>
+                    <Select onValueChange={field.onChange} value={field.value}>
+                      <FormControl>
+                        <SelectTrigger className="rounded-xl border-border/70">
+                          <SelectValue placeholder={t("fields.adminVariantSlugPlaceholder")} />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent className="rounded-xl">
+                        {parsedVariants.map((variant) => (
+                          <SelectItem key={variant.slug} value={variant.slug}>
+                            {variant.name} ({variant.slug}){variant.isDefault ? ` - ${t("labels.default")}` : ""}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
               <Button
                 type="submit"
-                className="w-full rounded-xl shadow-md hover:shadow-lg transition-all"
                 disabled={approveDemo.isPending}
+                className="w-full rounded-xl shadow-md hover:shadow-lg transition-all"
               >
-                {approveDemo.isPending ? t("actions.provisioning") : t("actions.approve")}
+                {approveDemo.isPending ? t("actions.submitting") : t("actions.submit")}
               </Button>
             </form>
           </Form>

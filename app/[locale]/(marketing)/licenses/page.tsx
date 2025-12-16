@@ -13,7 +13,7 @@ export async function generateMetadata({ params }: LicensesPageProps): Promise<M
   const { locale } = await params
   setRequestLocale(locale)
 
-  const t = await getTranslations({ locale, namespace: "licenses.metadata" })
+  const t = await getTranslations({ locale, namespace: "licensesPage.metadata" })
 
   return {
     title: t("title"),
@@ -26,7 +26,7 @@ export default async function LicensesPage({ params }: LicensesPageProps) {
   const { locale } = await params
   setRequestLocale(locale)
 
-  const t = await getTranslations({ locale, namespace: "licenses" })
+  const t = await getTranslations({ locale, namespace: "licensesPage" })
 
   // Must exist in /public
   const licensesFilePath = "/THIRD_PARTY_LICENSES.txt"

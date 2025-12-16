@@ -5,11 +5,8 @@ import { Link, type AppLocale } from "@/i18n/routing"
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import {
-  DEFAULT_ANNUAL_DISCOUNT,
-  getPlanCatalogAsListLocalized,
-  getPlanCatalogAsList,
-} from "@/lib/subscription-plans"
+import { PlanCard } from "@/components/pricing/plan-card"
+import { DEFAULT_ANNUAL_DISCOUNT, getPlanCatalogAsListLocalized, getPlanCatalogAsList } from "@/lib/subscription-plans"
 
 type PlansPageProps = {
   params: Promise<{ locale: AppLocale }>
@@ -19,7 +16,7 @@ export async function generateMetadata({ params }: PlansPageProps): Promise<Meta
   const { locale } = await params
   setRequestLocale(locale)
 
-  const t = await getTranslations({ locale, namespace: "plans.metadata" })
+  const t = await getTranslations({ locale, namespace: "plansPage.metadata" })
 
   return {
     title: t("title"),
@@ -38,18 +35,25 @@ export default async function PlansPage({ params }: PlansPageProps) {
   const { locale } = await params
   setRequestLocale(locale)
 
-  const t = await getTranslations({ locale, namespace: "plans" })
+  const t = await getTranslations({ locale, namespace: "plansPage" })
 
-  // ✅ Plans catalog translated via next-intl (fallback to FR if missing keys)
   let planCatalog = getPlanCatalogAsList()
   try {
     const tCatalog = await getTranslations({ locale, namespace: "subscriptionPlans" })
     planCatalog = getPlanCatalogAsListLocalized(tCatalog)
   } catch {
-    // if subscriptionPlans namespace not ready yet, keep default FR catalog
+    // fallback
   }
 
-  const priceFormatter = new Intl.NumberFormat(getNumberLocale(locale), { style: "currency", currency: "MAD" })
+  const currencyFormatter = new Intl.NumberFormat(
+  locale === "fr" ? "fr-MA" : locale === "ar" ? "ar-MA" : "en-US",
+  {
+    style: "currency",
+    currency: "MAD",
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
+  },
+)
 
   const pricingFaqs = [
     {
@@ -70,79 +74,54 @@ export default async function PlansPage({ params }: PlansPageProps) {
     },
   ]
 
+  const roundPrice = (raw: number): number => {
+    if (raw >= 100) return Math.round(raw / 10) * 10
+    if (raw >= 10) return Math.round(raw / 5) * 5
+    return Math.round(raw)
+  }
+
   const renderPlanCards = (mode: "monthly" | "annual") =>
     planCatalog.map((plan, index) => {
       const annualTotal = plan.annualPrice ?? plan.monthlyPrice * 12
-      const annualMonthly = Math.round((annualTotal / 12) * 100) / 100
-      const price = mode === "annual" ? annualMonthly : plan.monthlyPrice
+      const annualMonthly = annualTotal / 12
+      const rawPrice = mode === "annual" ? annualMonthly : plan.monthlyPrice
+      const price = roundPrice(rawPrice)
 
       const billingHint =
         mode === "annual"
-          ? t("pricing.billingHintAnnual", { total: priceFormatter.format(annualTotal) })
+          ? t("pricing.billingHintAnnual", { total: currencyFormatter.format(roundPrice(annualTotal)) })
           : t("pricing.billingHintMonthly")
 
+      const tierKey = plan.tier.toLowerCase() as "basic" | "pro" | "enterprise"
+
       return (
-        <Card
+        <PlanCard
           key={`${plan.tier}-${mode}`}
-          className={`relative overflow-hidden border transition-all duration-300 hover:-translate-y-1 hover:shadow-xl ${
-            plan.highlight ? "border-primary/60 bg-primary/5" : "border-border/70 bg-background/80"
-          } animate-slide-up`}
-          style={{ animationDelay: `${0.05 + index * 0.05}s` }}
-        >
-          {plan.highlight && (
-            <span className="absolute right-4 top-4 rounded-full bg-primary px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-primary-foreground shadow-md">
-              {t("pricing.recommended")}
-            </span>
-          )}
+          tier={tierKey}
+          planName={plan.name}
+          description={plan.description}
+          price={price}
+          priceLabel={currencyFormatter.format(price)}
+          billingHint={billingHint}
+          badges={plan.badges}
+          features={plan.features}
+          ctaLabel={t("pricing.start")}                     
+          ctaHref="/request-demo"
+          isHighlighted={plan.highlight}
+          highlightLabel={plan.highlight ? t("pricing.recommended") : undefined}
+          showAnnualSavings={mode === "annual"}
+          annualSavingsText={
+            mode === "annual" ? t("pricing.saveAnnual", { discount: DEFAULT_ANNUAL_DISCOUNT }) : undefined 
+          }
+          perMonthLabel={t("pricing.perMonth")}        
+          animationDelay={`${0.08 + index * 0.05}s`}
+        />
 
-          <CardHeader className="space-y-3">
-            <CardTitle className="text-2xl">{plan.name}</CardTitle>
-            <CardDescription>{plan.description}</CardDescription>
-
-            <div className="flex items-baseline gap-2">
-              <span className="text-4xl font-bold text-foreground">{priceFormatter.format(price)}</span>
-              <span className="text-sm text-muted-foreground">{t("pricing.perMonth")}</span>
-            </div>
-
-            <p className="text-sm text-muted-foreground">{billingHint}</p>
-
-            {mode === "annual" && (
-              <p className="text-xs font-semibold text-primary">
-                {t("pricing.saveAnnual", { discount: DEFAULT_ANNUAL_DISCOUNT })}
-              </p>
-            )}
-          </CardHeader>
-
-          <CardContent className="space-y-3 text-sm">
-            <div className="flex flex-wrap gap-2">
-              {plan.badges.map((badge) => (
-                <span
-                  key={badge}
-                  className="rounded-full border border-border/70 bg-primary/5 px-2 py-1 text-[12px] font-semibold text-primary"
-                >
-                  {badge}
-                </span>
-              ))}
-            </div>
-
-            {plan.features.map((feature) => (
-              <div key={feature} className="flex items-center gap-2 text-muted-foreground">
-                <span className="h-1.5 w-1.5 rounded-full bg-primary/70" aria-hidden />
-                <span>{feature}</span>
-              </div>
-            ))}
-
-            <Button asChild variant={plan.highlight ? "default" : "outline"} className="w-full mt-2">
-              <Link href="/request-demo">{t("pricing.start")}</Link>
-            </Button>
-          </CardContent>
-        </Card>
       )
     })
 
   return (
     <div className="min-h-screen bg-background text-foreground">
-
       <main className="mx-auto flex max-w-6xl flex-col gap-12 px-4 pb-16 pt-12">
         {/* HERO */}
         <section className="space-y-4 animate-fade-in">
@@ -168,8 +147,8 @@ export default async function PlansPage({ params }: PlansPageProps) {
 
         {/* PRICING */}
         <section className="relative overflow-hidden rounded-3xl border border-border/60 bg-card/70 px-6 py-10 shadow-lg backdrop-blur">
-          <div className="floating-orb-primary right-[15%] top-[-120px] opacity-25" />
-          <div className="floating-orb-secondary left-[10%] bottom-[-120px] opacity-20" />
+          <div className="floating-orb-primary right-[15%] -top-30 opacity-25" />
+          <div className="floating-orb-secondary left-[10%] -bottom-30 opacity-20" />
 
           <div className="relative space-y-6">
             <input
@@ -181,7 +160,6 @@ export default async function PlansPage({ params }: PlansPageProps) {
             />
             <input id="pricing-annual" type="radio" name="pricing" className="peer/pricing-annual sr-only" />
 
-            {/* ✅ Selected = primary */}
             <div className="mx-auto flex w-full max-w-md items-center justify-center gap-2 rounded-full border border-border/60 bg-background/80 p-1 shadow-sm backdrop-blur">
               <label
                 htmlFor="pricing-monthly"

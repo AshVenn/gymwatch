@@ -85,10 +85,10 @@ export function EditGymDialog({ gymId, onClose }: Props) {
 
   return (
     <Dialog open={open} onOpenChange={(value) => !value && !updateGym.isPending && onClose()}>
-      <DialogContent className="max-w-md sm:max-w-lg md:max-w-2xl w-[95vw] max-h-[90vh] overflow-y-auto rounded-3xl border-border/70">
+      <DialogContent className="max-w-md sm:max-w-lg md:max-w-2xl w-[95vw] max-h-[90vh] overflow-y-auto rounded-3xl border-border/70 p-4 sm:p-6">
         <DialogHeader className="space-y-3">
-          <DialogTitle className="text-2xl font-bold">{t("title")}</DialogTitle>
-          <DialogDescription className="text-base">{t("description")}</DialogDescription>
+          <DialogTitle className="text-xl sm:text-2xl font-bold">{t("title")}</DialogTitle>
+          <DialogDescription className="text-sm sm:text-base">{t("description")}</DialogDescription>
         </DialogHeader>
 
         {isLoading && !gym ? (
@@ -96,7 +96,7 @@ export function EditGymDialog({ gymId, onClose }: Props) {
             <Skeleton className="h-10 w-full rounded-xl" />
             <Skeleton className="h-10 w-full rounded-xl" />
             <Skeleton className="h-10 w-full rounded-xl" />
-            <div className="grid gap-4 md:grid-cols-2">
+            <div className="grid gap-4 sm:grid-cols-2">
               <Skeleton className="h-10 w-full rounded-xl" />
               <Skeleton className="h-10 w-full rounded-xl" />
             </div>
@@ -147,7 +147,7 @@ export function EditGymDialog({ gymId, onClose }: Props) {
                 )}
               />
 
-              <div className="grid gap-4 md:grid-cols-2">
+              <div className="grid gap-4 sm:grid-cols-2">
                 <FormField
                   control={form.control}
                   name="city"

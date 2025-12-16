@@ -1,16 +1,10 @@
 "use client"
 
-import * as React from "react"
+import type * as React from "react"
 import Link from "next/link"
 import { useLocale, useTranslations } from "next-intl"
 import { motion, AnimatePresence } from "motion/react"
-import {
-  ArrowLeft,
-  ArrowRight,
-  CheckCircle2,
-  Lock,
-  Sparkles,
-} from "lucide-react"
+import { ArrowLeft, ArrowRight, CheckCircle2, Lock, Sparkles } from "lucide-react"
 
 import { cn } from "@/lib/utils"
 import { Badge } from "@/components/ui/badge"
@@ -31,42 +25,42 @@ export type SubscriptionDockItem = {
 
 type Props = {
   items: SubscriptionDockItem[]
+  currentPlan: string
   upgradeHref: string
   className?: string
 }
 
-/**
- * Desktop: dock inside banner
- * Mobile: FAB → Sheet
- */
-export function SubscriptionFeaturesDock({ items, upgradeHref, className }: Props) {
+export function SubscriptionFeaturesDock({ items, currentPlan, upgradeHref, className }: Props) {
   const locale = useLocale()
   const t = useTranslations("dashboard.featureAccess")
   const isRTL = locale === "ar"
 
   const Arrow = isRTL ? ArrowLeft : ArrowRight
   const corner = isRTL ? "left-4" : "right-4"
-  const includedCount = items.filter((x) => x.available).length
+
+  const enabledCount = items.filter((x) => x.available).length
+  const disabledCount = items.length - enabledCount
 
   return (
     <>
       {/* Desktop */}
       <div className={cn("hidden md:block", className)}>
         <div className={cn("absolute top-4 z-10", corner)}>
-          <div className="flex items-center gap-2 rounded-2xl border border-white/15 bg-white/10 p-2 backdrop-blur-xl">
+          <div className="flex items-center gap-2 rounded-2xl border border-white/20 bg-white/10 p-2 backdrop-blur-xl shadow-lg">
             <div className="hidden lg:flex items-center gap-2 px-2">
               <Sparkles className="h-4 w-4 text-white/90" />
               <span className="text-xs font-semibold text-white/90">
-                {t("modulesCount", { active: includedCount, total: items.length })}
+                {t("modulesCount", { active: enabledCount, total: items.length })}
               </span>
             </div>
 
             <TooltipProvider delayDuration={150}>
-              <div className="flex items-center gap-1">
+              <div className="flex items-center gap-1.5">
                 {items.map((item) => (
                   <FeatureIconPopover
                     key={item.id}
                     item={item}
+                    currentPlan={currentPlan}
                     upgradeHref={upgradeHref}
                     isRTL={isRTL}
                     Arrow={Arrow}
@@ -82,9 +76,12 @@ export function SubscriptionFeaturesDock({ items, upgradeHref, className }: Prop
       <div className="md:hidden">
         <MobileFeaturesFab
           items={items}
+          currentPlan={currentPlan}
           upgradeHref={upgradeHref}
           isRTL={isRTL}
           Arrow={Arrow}
+          enabledCount={enabledCount}
+          disabledCount={disabledCount}
         />
       </div>
     </>
@@ -93,11 +90,13 @@ export function SubscriptionFeaturesDock({ items, upgradeHref, className }: Prop
 
 function FeatureIconPopover({
   item,
+  currentPlan,
   upgradeHref,
   isRTL,
   Arrow,
 }: {
   item: SubscriptionDockItem
+  currentPlan: string
   upgradeHref: string
   isRTL: boolean
   Arrow: typeof ArrowRight
@@ -105,6 +104,10 @@ function FeatureIconPopover({
   const t = useTranslations("dashboard.featureAccess")
   const Icon = item.icon
   const locked = !item.available
+
+  const iconGradient = locked
+    ? "bg-white/5 border-white/15"
+    : "bg-gradient-to-br from-blue-500 to-blue-600 border-white/25"
 
   return (
     <Popover>
@@ -115,10 +118,9 @@ function FeatureIconPopover({
               type="button"
               aria-label={item.title}
               className={cn(
-                "group relative grid h-10 w-10 place-items-center rounded-xl border transition",
-                locked
-                  ? "border-white/15 bg-white/5 text-white/70 hover:bg-white/10"
-                  : "border-white/20 bg-white/10 text-white hover:bg-white/15",
+                "group relative grid h-10 w-10 place-items-center rounded-xl border transition-all duration-200",
+                iconGradient,
+                locked ? "text-white/70 hover:bg-white/10" : "text-white hover:scale-105 shadow-lg",
               )}
             >
               <Icon className="h-5 w-5" />
@@ -182,17 +184,22 @@ function FeatureIconPopover({
 
 function MobileFeaturesFab({
   items,
+  currentPlan,
   upgradeHref,
   isRTL,
   Arrow,
+  enabledCount,
+  disabledCount,
 }: {
   items: SubscriptionDockItem[]
+  currentPlan: string
   upgradeHref: string
   isRTL: boolean
   Arrow: typeof ArrowRight
+  enabledCount: number
+  disabledCount: number
 }) {
   const t = useTranslations("dashboard.featureAccess")
-  const includedCount = items.filter((x) => x.available).length
   const fabSide = isRTL ? "left-4" : "right-4"
 
   return (
@@ -215,20 +222,17 @@ function MobileFeaturesFab({
           >
             <Sparkles className="h-5 w-5" />
             <span className="absolute -right-2 -top-2 grid h-5 min-w-5 place-items-center rounded-full bg-primary px-1 text-[11px] font-bold text-primary-foreground">
-              {includedCount}
+              {enabledCount}
             </span>
           </motion.div>
         </button>
       </SheetTrigger>
 
-      <SheetContent
-        side={isRTL ? "left" : "right"}
-        className="w-[92vw] max-w-105 p-0"
-      >
+      <SheetContent side={isRTL ? "left" : "right"} className="w-[92vw] max-w-md p-0">
         <SheetHeader className="border-b border-border/60 p-4">
           <SheetTitle className="text-base">{t("modulesTitle")}</SheetTitle>
           <p className="text-xs text-muted-foreground">
-            {t("modulesCount", { active: includedCount, total: items.length })}
+            {t("modulesCount", { active: enabledCount, total: items.length })}
           </p>
         </SheetHeader>
 
@@ -245,9 +249,7 @@ function MobileFeaturesFab({
                   transition={{ delay: idx * 0.03 }}
                   className={cn(
                     "rounded-2xl border p-4",
-                    locked
-                      ? "border-dashed border-border/70 bg-muted/40"
-                      : "border-border/70 bg-card",
+                    locked ? "border-dashed border-border/70 bg-muted/40" : "border-border/70 bg-card",
                   )}
                 >
                   <div className="flex items-start gap-3">

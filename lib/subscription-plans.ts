@@ -29,9 +29,9 @@ export interface PlanCatalogEntry {
 export const DEFAULT_ANNUAL_DISCOUNT = 15
 
 const DEFAULT_MONTHLY_PRICING: Record<PlanTier, number> = {
-  BASIC: 200,
-  PRO: 350,
-  ENTERPRISE: 520,
+  BASIC: 150,
+  PRO: 250,
+  ENTERPRISE: 400,
 }
 
 export const DEFAULT_PLAN_LIMITS: PlanLimitsTable = {

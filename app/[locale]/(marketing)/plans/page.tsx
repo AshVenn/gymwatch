@@ -42,7 +42,6 @@ export default async function PlansPage({ params }: PlansPageProps) {
     const tCatalog = await getTranslations({ locale, namespace: "subscriptionPlans" })
     planCatalog = getPlanCatalogAsListLocalized(tCatalog)
   } catch {
-    // fallback
   }
 
   const currencyFormatter = new Intl.NumberFormat(

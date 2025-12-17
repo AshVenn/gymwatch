@@ -422,8 +422,8 @@ export default async function HomePage({ params }: HomePageProps) {
               </label>
             </div>
 
-            <div className="grid gap-6 md:grid-cols-3 peer-checked/billing-monthly:hidden">{renderPlanCards("monthly")}</div>
-            <div className="hidden gap-6 md:grid-cols-3 peer-checked/billing-monthly:grid peer-checked/billing-annual:hidden">
+            <div className="grid gap-6 md:grid-cols-3 peer-checked/billing-annual:hidden">{renderPlanCards("monthly")}</div>
+            <div className="hidden gap-6 md:grid-cols-3 peer-checked/billing-annual:grid peer-checked/billing-monthly:hidden">
               {renderPlanCards("annual")}
             </div>
           </div>

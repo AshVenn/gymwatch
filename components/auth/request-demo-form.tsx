@@ -73,6 +73,7 @@ type DemoRequestValues = {
   country: string
   plan: "BASIC" | "PRO" | "ENTERPRISE"
   message: string
+  botField?: string
 }
 
 const defaultValues: DemoRequestValues = {
@@ -87,6 +88,7 @@ const defaultValues: DemoRequestValues = {
   country: "",
   plan: "BASIC",
   message: "",
+  botField: "",
 }
 
 export default function RequestDemoForm({ locale, copy }: { locale: AppLocale; copy: RequestDemoCopy }) {
@@ -114,6 +116,7 @@ export default function RequestDemoForm({ locale, copy }: { locale: AppLocale; c
       country: z.string().min(1, required),
       plan: z.enum(["BASIC", "PRO", "ENTERPRISE"]),
       message: z.string().min(1, required).max(2000, copy.validation.messageMax),
+      botField: z.string().max(0).optional(),
     })
   }, [copy])
 
@@ -131,7 +134,9 @@ export default function RequestDemoForm({ locale, copy }: { locale: AppLocale; c
       })
 
       const data = await response.json().catch(() => ({}))
-      if (!response.ok) throw new Error(data.error || copy.toast.errorFallback)
+      const message =
+        response.status === 429 ? copy.toast.errorFallback : data.error || copy.toast.errorFallback
+      if (!response.ok) throw new Error(message)
       return data
     },
     onSuccess: () => {
@@ -154,6 +159,7 @@ export default function RequestDemoForm({ locale, copy }: { locale: AppLocale; c
       city: values.city.trim(),
       country: values.country.trim(),
       message: values.message.trim(),
+      botField: values.botField?.trim() ?? "",
     })
   }
 
@@ -246,6 +252,15 @@ export default function RequestDemoForm({ locale, copy }: { locale: AppLocale; c
             <CardContent>
               <Form {...form}>
                 <form className="space-y-5" onSubmit={form.handleSubmit(handleSubmit)}>
+                  <input
+                    type="text"
+                    tabIndex={-1}
+                    autoComplete="off"
+                    className="hidden"
+                    aria-hidden="true"
+                    {...form.register("botField")}
+                  />
+
                   <FormField
                     control={form.control}
                     name="gymName"

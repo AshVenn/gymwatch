@@ -2,24 +2,49 @@ import { NextRequest, NextResponse } from "next/server"
 import { DemoRequestStatus, GymPlanTier } from "@prisma/client"
 import { z, ZodError } from "zod"
 import { prisma } from "@/lib/prisma"
+import { getClientIdentifier, rateLimit } from "@/lib/rate-limit"
 
 const demoRequestSchema = z.object({
   gymName: z.string().min(2),
   gymEmail: z.string().email(),
   adminEmail: z.string().email(),
-  adminFirstName: z.string().optional(),
-  adminLastName: z.string().optional(),
-  phone: z.string().min(6).optional(),
-  address: z.string().optional(),
-  city: z.string().optional(),
-  country: z.string().optional(),
+  adminFirstName: z.string().min(1),
+  adminLastName: z.string().min(1),
+  phone: z.string().min(6),
+  address: z.string().min(1),
+  city: z.string().min(1),
+  country: z.string().min(1),
   plan: z.nativeEnum(GymPlanTier),
-  message: z.string().optional(),
+  message: z.string().min(1).max(2000),
+  botField: z.string().max(0).optional(),
 })
 
 export async function POST(request: NextRequest) {
   try {
+    const identifier = getClientIdentifier(request)
+    const limit = rateLimit({
+      key: `demo-request:${identifier}`,
+      limit: 5,
+      windowMs: 10 * 60 * 1000,
+    })
+
+    if (!limit.ok) {
+      return NextResponse.json(
+        { error: "RATE_LIMITED" },
+        { status: 429, headers: { "Retry-After": `${limit.retryAfter}` } },
+      )
+    }
+
+    const origin = request.headers.get("origin")
+    if (origin && origin !== request.nextUrl.origin) {
+      return NextResponse.json({ error: "Payload invalide" }, { status: 400 })
+    }
+
     const body = demoRequestSchema.parse(await request.json())
+
+    if (body.botField) {
+      return NextResponse.json({ error: "Payload invalide" }, { status: 400 })
+    }
 
     const existing = await prisma.demoRequest.findFirst({
       where: { gymEmail: body.gymEmail, status: DemoRequestStatus.PENDING },
@@ -37,14 +62,14 @@ export async function POST(request: NextRequest) {
         gymName: body.gymName.trim(),
         gymEmail: body.gymEmail.trim().toLowerCase(),
         adminEmail: body.adminEmail.trim().toLowerCase(),
-        adminFirstName: body.adminFirstName?.trim() || null,
-        adminLastName: body.adminLastName?.trim() || null,
-        phone: body.phone?.trim() || null,
-        address: body.address?.trim() || null,
-        city: body.city?.trim() || null,
-        country: body.country?.trim() || null,
+        adminFirstName: body.adminFirstName.trim(),
+        adminLastName: body.adminLastName.trim(),
+        phone: body.phone.trim(),
+        address: body.address.trim(),
+        city: body.city.trim(),
+        country: body.country.trim(),
         plan: body.plan,
-        message: body.message?.trim() || null,
+        message: body.message.trim(),
         status: DemoRequestStatus.PENDING,
       },
     })

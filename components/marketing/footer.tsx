@@ -85,6 +85,11 @@ export async function MarketingFooter({ locale }: { locale: AppLocale }) {
                 </Link>
               </li>
               <li>
+                <Link locale={locale} href="/clubs" className="text-muted-foreground hover:text-primary">
+                  {t("product.clubs")}
+                </Link>
+              </li>
+              <li>
                 <Link locale={locale} href="/ressources" className="text-muted-foreground hover:text-primary">
                   {t("product.resources")}
                 </Link>

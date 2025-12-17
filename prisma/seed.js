@@ -166,6 +166,8 @@ function effectiveSessionLimitMinutes(gym, variant) {
 
 async function clearDatabase() {
   console.log('Clearing database...')
+  await prisma.partnerClubTranslation.deleteMany()
+  await prisma.partnerClub.deleteMany()
   await prisma.classBooking.deleteMany()
   await prisma.classSession.deleteMany()
   await prisma.accessEvent.deleteMany()
@@ -356,6 +358,164 @@ async function refreshMembersLastVisitedAt(memberIds) {
       await prisma.member.update({
         where: { id: memberId },
         data: { lastVisitedAt: last.checkIn },
+      })
+    }
+  }
+}
+
+async function seedPartnerClubs() {
+  const placeholderLogo = 'https://res.cloudinary.com/demo/image/upload/v1312461204/sample.jpg'
+  const placeholderCover = 'https://res.cloudinary.com/demo/image/upload/c_fill,w_1200,h_720,q_auto,f_auto/v1312461204/sample.jpg'
+
+  const entries = [
+    {
+      slug: 'fitzone-casa',
+      websiteUrl: 'https://fitzone.ma',
+      logoUrl: placeholderLogo,
+      logoPublicId: 'sample',
+      coverUrl: placeholderCover,
+      coverPublicId: 'sample',
+      order: 1,
+      isPublished: true,
+      translations: {
+        fr: {
+          name: 'FitZone Casablanca',
+          city: 'Casablanca',
+          country: 'Maroc',
+          tagline: 'Réseau premium connecté à GymWatch',
+          description: 'Multi-site avec contrôle d’accès en temps réel, reporting exportable et onboarding premium.',
+        },
+        en: {
+          name: 'FitZone Casablanca',
+          city: 'Casablanca',
+          country: 'Morocco',
+          tagline: 'Premium network powered by GymWatch',
+          description: 'Multi-site rollout with access control, exportable reporting and premium onboarding.',
+        },
+        ar: {
+          name: 'فيتزون الدار البيضاء',
+          city: 'الدار البيضاء',
+          country: 'المغرب',
+          tagline: 'شبكة بريميوم مع GymWatch',
+          description: 'إدارة متعددة الفروع مع تحكم فوري في الدخول وتقارير قابلة للتصدير وانضمام سريع.',
+        },
+      },
+    },
+    {
+      slug: 'powergym-rabat',
+      websiteUrl: 'https://powergym.ma',
+      logoUrl: placeholderLogo,
+      logoPublicId: 'sample',
+      coverUrl: placeholderCover,
+      coverPublicId: 'sample',
+      order: 2,
+      isPublished: true,
+      translations: {
+        fr: {
+          name: 'PowerGym Rabat',
+          city: 'Rabat',
+          country: 'Maroc',
+          tagline: 'Automatisations et contrôle d’accès',
+          description: 'Badges, QR codes et rappels automatiques pour réduire les impayés et sécuriser les entrées.',
+        },
+        en: {
+          name: 'PowerGym Rabat',
+          city: 'Rabat',
+          country: 'Morocco',
+          tagline: 'Automations and access control',
+          description: 'Badges, QR codes and automated reminders to cut unpaid invoices and secure entries.',
+        },
+        ar: {
+          name: 'باور جيم الرباط',
+          city: 'الرباط',
+          country: 'المغرب',
+          tagline: 'أتمتة وتحكم في الدخول',
+          description: 'شارات و رموز QR وتنبيهات تلقائية لتقليل المتأخرات وتأمين المداخل.',
+        },
+      },
+    },
+    {
+      slug: 'atlas-fitness',
+      websiteUrl: 'https://atlas-fitness.ma',
+      logoUrl: placeholderLogo,
+      logoPublicId: 'sample',
+      coverUrl: placeholderCover,
+      coverPublicId: 'sample',
+      order: 3,
+      isPublished: true,
+      translations: {
+        fr: {
+          name: 'Atlas Fitness',
+          city: 'Marrakech',
+          country: 'Maroc',
+          tagline: 'Pilotage multi-salles',
+          description: 'Vue réseau, indicateurs par club et exports CSV/PDF pour la finance et les franchises.',
+        },
+        en: {
+          name: 'Atlas Fitness',
+          city: 'Marrakech',
+          country: 'Morocco',
+          tagline: 'Multi-club control',
+          description: 'Network-wide view, per-club indicators and CSV/PDF exports for finance and franchise ops.',
+        },
+        ar: {
+          name: 'أطلس فيتنس',
+          city: 'مراكش',
+          country: 'المغرب',
+          tagline: 'إدارة متعددة الفروع',
+          description: 'رؤية شاملة للشبكة ومؤشرات لكل نادٍ مع صادرات CSV/PDF للمالية والامتيازات.',
+        },
+      },
+    },
+  ]
+
+  for (const entry of entries) {
+    const partner = await prisma.partnerClub.upsert({
+      where: { slug: entry.slug },
+      update: {
+        websiteUrl: entry.websiteUrl,
+        logoUrl: entry.logoUrl,
+        logoPublicId: entry.logoPublicId,
+        coverUrl: entry.coverUrl,
+        coverPublicId: entry.coverPublicId,
+        order: entry.order,
+        isPublished: entry.isPublished,
+      },
+      create: {
+        slug: entry.slug,
+        websiteUrl: entry.websiteUrl,
+        logoUrl: entry.logoUrl,
+        logoPublicId: entry.logoPublicId,
+        coverUrl: entry.coverUrl,
+        coverPublicId: entry.coverPublicId,
+        order: entry.order,
+        isPublished: entry.isPublished,
+      },
+    })
+
+    const locales = Object.keys(entry.translations || {})
+    for (const locale of locales) {
+      const t = entry.translations[locale]
+      if (!t || !t.name) continue
+
+      await prisma.partnerClubTranslation.upsert({
+        where: { partnerId_locale: { partnerId: partner.id, locale } },
+        update: {
+          name: t.name,
+          city: t.city ?? null,
+          country: t.country ?? null,
+          tagline: t.tagline ?? null,
+          description: t.description ?? null,
+        },
+        create: {
+          partnerId: partner.id,
+          locale,
+          name: t.name,
+          city: t.city ?? null,
+          country: t.country ?? null,
+          tagline: t.tagline ?? null,
+          description: t.description ?? null,
+        },
       })
     }
   }
@@ -842,6 +1002,8 @@ async function runSeed() {
       },
     ],
   })
+
+  await seedPartnerClubs()
 
   return {
     gymsSeeded: 4,

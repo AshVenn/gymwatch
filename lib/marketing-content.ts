@@ -2,7 +2,7 @@ import type { Metadata } from "next"
 
 import { routing, type AppLocale } from "@/i18n/routing"
 
-type MarketingPage = "home" | "plans" | "faqs" | "about" | "contact" | "ressources"
+type MarketingPage = "home" | "plans" | "faqs" | "about" | "contact" | "ressources" | "clubs"
 
 type SeoEntry = {
   title: string
@@ -30,6 +30,7 @@ type MarketingCopy = {
     ressources: string
     about: string
     contact: string
+    clubs: string
   }
 
 
@@ -51,6 +52,7 @@ const marketingCopy: Record<AppLocale, MarketingCopy> = {
       ressources: "Ressources",
       about: "À propos",
       contact: "Contact",
+      clubs: "Clubs partenaires",
     },
     seo: {
       home: {
@@ -83,6 +85,12 @@ const marketingCopy: Record<AppLocale, MarketingCopy> = {
           "Contactez GymWatch : support, onboarding et déploiement multi-salles pour votre logiciel de gestion de salle de sport.",
         keywords: ["contact GymWatch", "support", "onboarding", "multi-salles"],
       },
+      clubs: {
+        title: "Clubs partenaires GymWatch",
+        description:
+          "Réseaux et clubs qui utilisent GymWatch : contrôle d’accès, reporting exportable et support bilingue.",
+        keywords: ["clubs partenaires", "réseaux multi-salles", "contrôle d’accès"],
+      },
       ressources: {
         title: "Ressources GymWatch",
         description:
@@ -104,7 +112,8 @@ const marketingCopy: Record<AppLocale, MarketingCopy> = {
         eyebrow: "Plans et tarifs",
         title: "Plans et tarifs GymWatch",
         subtitle: "Des offres pensées pour les réseaux multi-salles.",
-        description: "Comparez mensuel et annuel (-20 %) et choisissez les modules : contrôle d’accès, automatisations et reporting.",
+        description:
+          "Comparez mensuel et annuel (-20 %) et choisissez les modules : contrôle d’accès, automatisations et reporting.",
         primaryCta: "Demander une démo",
         secondaryCta: "Parler au support",
       },
@@ -112,7 +121,8 @@ const marketingCopy: Record<AppLocale, MarketingCopy> = {
         eyebrow: "FAQ",
         title: "Questions fréquentes GymWatch",
         subtitle: "Multi-sites, contrôle d’accès et facturation expliqués.",
-        description: "Découvrez comment nous accompagnons les réseaux : déploiement, sécurité, support et évolutions produit.",
+        description:
+          "Découvrez comment nous accompagnons les réseaux : déploiement, sécurité, support et évolutions produit.",
         primaryCta: "Demander une démo",
         secondaryCta: "Nous écrire",
       },
@@ -120,7 +130,8 @@ const marketingCopy: Record<AppLocale, MarketingCopy> = {
         eyebrow: "À propos",
         title: "À propos de GymWatch",
         subtitle: "Une plateforme unique, fiable et sécurisée.",
-        description: "Nous aidons les réseaux de salles de sport à piloter membres, abonnements et contrôle d’accès avec une expérience moderne.",
+        description:
+          "Nous aidons les réseaux de salles de sport à piloter membres, abonnements et contrôle d’accès avec une expérience moderne.",
         primaryCta: "Demander une démo",
         secondaryCta: "Voir les fonctionnalités",
       },
@@ -130,6 +141,15 @@ const marketingCopy: Record<AppLocale, MarketingCopy> = {
         subtitle: "Onboarding multi-salles et accompagnement.",
         description: "Notre équipe vous accompagne : cadrage, migration, formation et support continu.",
         primaryCta: "Planifier une démo",
+        secondaryCta: "Nous écrire",
+      },
+      clubs: {
+        eyebrow: "Clubs partenaires",
+        title: "Les clubs qui tournent sur GymWatch",
+        subtitle: "Logos Cloudinary et contenus traduits.",
+        description:
+          "Exemples de réseaux multi-salles avec contrôle d’accès, reporting exportable et support bilingue.",
+        primaryCta: "Demander une démo",
         secondaryCta: "Nous écrire",
       },
       ressources: {
@@ -154,6 +174,7 @@ const marketingCopy: Record<AppLocale, MarketingCopy> = {
       ressources: "Resources",
       about: "About",
       contact: "Contact",
+      clubs: "Clubs",
     },
     seo: {
       home: {
@@ -180,6 +201,11 @@ const marketingCopy: Record<AppLocale, MarketingCopy> = {
         title: "GymWatch contact & support",
         description: "Contact GymWatch for onboarding, rollout and support for your gym management platform.",
         keywords: ["GymWatch support", "contact", "onboarding", "rollout"],
+      },
+      clubs: {
+        title: "GymWatch partner clubs",
+        description: "Partner clubs and franchises running GymWatch with Cloudinary assets and bilingual marketing copy.",
+        keywords: ["partner clubs", "gymwatch clubs", "multi-site gyms"],
       },
       ressources: {
         title: "GymWatch resources",
@@ -228,6 +254,14 @@ const marketingCopy: Record<AppLocale, MarketingCopy> = {
         primaryCta: "Schedule a demo",
         secondaryCta: "Email us",
       },
+      clubs: {
+        eyebrow: "Partner clubs",
+        title: "Clubs running GymWatch",
+        subtitle: "Cloudinary visuals and bilingual stories.",
+        description: "Explore real clubs and franchises using GymWatch for access control, exports and multi-site oversight.",
+        primaryCta: "Book a demo",
+        secondaryCta: "Talk to support",
+      },
       ressources: {
         eyebrow: "Resources",
         title: "GymWatch guides & resources",
@@ -250,6 +284,7 @@ const marketingCopy: Record<AppLocale, MarketingCopy> = {
       ressources: "الموارد",
       about: "من نحن",
       contact: "تواصل معنا",
+      clubs: "الأندية الشريكة",
     },
     seo: {
       home: {
@@ -276,6 +311,11 @@ const marketingCopy: Record<AppLocale, MarketingCopy> = {
         title: "التواصل والدعم | GymWatch",
         description: "تواصل مع GymWatch للدعم والإعداد والإطلاق لشبكتك متعددة الفروع.",
         keywords: ["دعم GymWatch", "تواصل", "إعداد", "إطلاق"],
+      },
+      clubs: {
+        title: "الأندية الشريكة | GymWatch",
+        description: "الأندية والشبكات التي تستخدم GymWatch للتحكم في الدخول والتقارير القابلة للتصدير.",
+        keywords: ["أندية شريكة", "شبكات متعددة الفروع", "التحكم في الدخول"],
       },
       ressources: {
         title: "الموارد | GymWatch",
@@ -324,6 +364,14 @@ const marketingCopy: Record<AppLocale, MarketingCopy> = {
         primaryCta: "احجز عرضاً",
         secondaryCta: "راسلنا",
       },
+      clubs: {
+        eyebrow: "الأندية الشريكة",
+        title: "أندية تعمل عبر GymWatch",
+        subtitle: "صور Cloudinary ومحتوى متعدد اللغات.",
+        description: "اكتشف أندية وشبكات تستخدم GymWatch للتحكم في الدخول والتقارير وإدارة الفروع.",
+        primaryCta: "احجز عرضاً",
+        secondaryCta: "تواصل مع الدعم",
+      },
       ressources: {
         eyebrow: "الموارد",
         title: "موارد وأدلة GymWatch",
@@ -336,12 +384,14 @@ const marketingCopy: Record<AppLocale, MarketingCopy> = {
   },
 }
 
+
 const marketingRoutes: Record<MarketingPage, keyof typeof routing.pathnames> = {
   home: "/",
   plans: "/plans",
   faqs: "/faqs",
   about: "/about",
   contact: "/contact",
+  clubs: "/clubs",
   ressources: "/ressources",
 }
 
@@ -375,6 +425,7 @@ export function getMarketingNavLinks(locale: AppLocale, options: { useHomeAnchor
 
   return [
     { label: labels.features, href: useHomeAnchors ? "/#features" : "/features" },
+    { label: labels.clubs, href: resolveMarketingPath("clubs", locale) },
     { label: labels.plans, href: useHomeAnchors ? "/#plans" : resolveMarketingPath("plans", locale) },
     { label: labels.contact, href: useHomeAnchors ? "/#contact" : "/contact" },
   ]

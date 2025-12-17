@@ -161,7 +161,8 @@
       "pricing": "الأسعار",
       "resources": "الموارد",
       "requestDemo": "اطلب عرضاً",
-      "about": "من نحن"
+      "about": "من نحن",
+      "clubs": "الأندية الشريكة"
     },
     "support": {
       "title": "الدعم",
@@ -1154,6 +1155,78 @@
       "load": "تعذر تحميل الطلبات."
     }
   },
+  "superAdminPartnersPage": {
+    "title": "الأندية الشريكة",
+    "subtitle": "إدارة الأندية المعروضة في الصفحة العامة مع صور Cloudinary والترجمات المخزنة في القاعدة.",
+    "actions": {
+      "create": "إضافة نادٍ",
+      "edit": "تعديل",
+      "delete": "حذف",
+      "cancel": "إلغاء",
+      "save": "حفظ"
+    },
+    "dialog": {
+      "createTitle": "نادٍ جديد",
+      "editTitle": "تعديل النادي"
+    },
+    "fields": {
+      "slug": "المسار",
+      "website": "الموقع",
+      "order": "الترتيب",
+      "published": "منشور",
+      "localeTab": "اللغة",
+      "logo": "الشعار",
+      "cover": "الصورة",
+      "translations": "الترجمات",
+      "translationHint": "يجب الاحتفاظ باسم واحد على الأقل لتحسين الفهرسة.",
+      "name": "الاسم",
+      "tagline": "عبارة قصيرة",
+      "city": "المدينة",
+      "country": "البلد",
+      "description": "الوصف"
+    },
+    "placeholders": {
+      "name": "اسم النادي",
+      "tagline": "عبارة قصيرة",
+      "city": "المدينة",
+      "country": "البلد",
+      "description": "بضع كلمات عن هذا النادي"
+    },
+    "upload": {
+      "logo": "الشعار / البادج",
+      "cover": "صورة الغلاف",
+      "hint": "يتم التخزين على Cloudinary.",
+      "replace": "استبدال",
+      "cta": "رفع"
+    },
+    "table": {
+      "title": "الأندية المنشورة",
+      "subtitle": "{count} نادي",
+      "name": "الاسم",
+      "status": "الحالة",
+      "slug": "المسار",
+      "order": "الترتيب",
+      "updated": "آخر تحديث",
+      "actions": "إجراءات"
+    },
+    "status": {
+      "published": "منشور",
+      "draft": "مسودة"
+    },
+    "empty": {
+      "title": "لا يوجد أندية بعد",
+      "subtitle": "أضف نادياً شريكاً لعرضه في صفحة التسويق."
+    },
+    "toasts": {
+      "created": "تم حفظ النادي",
+      "updated": "تم تحديث النادي",
+      "deleted": "تم حذف النادي",
+      "uploadSuccess": "تم رفع الصورة"
+    },
+    "errors": {
+      "missingName": "أضف اسماً مترجماً قبل الحفظ."
+    }
+  },
   "superAdminSettings": {
     "title": "إعدادات الخطط",
     "subtitle": "تعديل الأسعار، الخصم السنوي، وحدود الخطط حسب المستوى.",
@@ -1183,77 +1256,88 @@
       "purging": "جارٍ الحذف..."
     }
   },
-  "superAdminApproveDemo": {
-    "title": "إنشاء حساب تجريبي",
-    "description": "تمت تعبئة الحقول تلقائيًا من الطلب. عدّلها إذا لزم قبل التأكيد.",
-    "labels": {
-      "plan": "الخطة",
-      "monthly": "شهري",
-      "annual": "سنوي",
-      "default": "افتراضي"
-    },
-    "fields": {
-      "gymName": "اسم القاعة",
-      "email": "البريد الإلكتروني",
-      "phone": "الهاتف",
-      "address": "العنوان",
-      "city": "المدينة",
-      "country": "البلد",
-      "variantsLabel": "فروع/نسخ القاعة (مفصولة بفواصل)",
-      "variantsPlaceholder": "الرئيسية، فرع، بريميوم",
-      "plan": "الخطة",
-      "billing": "الفوترة",
-      "subscriptionExpiresAt": "تاريخ انتهاء الاشتراك",
-      "demoEndsAt": "نهاية التجربة",
-      "graceDays": "أيام السماح",
-      "maxAdmins": "عدد المشرفين المسموح",
-      "internalNote": "ملاحظة داخلية (اختياري)",
-      "internalNotePlaceholder": "تم إرسال بيانات الدخول عبر البريد...",
-      "ownerEmail": "بريد المالك",
-      "ownerPassword": "كلمة مرور المالك",
-      "ownerFirstName": "اسم المالك",
-      "ownerLastName": "لقب المالك"
-    },
-    "hints": {
-      "firstVariantDefault": "يتم اعتماد أول فرع كافتراضي للحسابات الجديدة."
-    },
-    "plans": {
-      "basic": "Basic",
-      "pro": "Pro",
-      "enterprise": "Enterprise"
-    },
-    "secondaryAdmin": {
-      "title": "إضافة مشرف ثانٍ (اختياري)",
-      "email": "بريد المشرف",
-      "password": "كلمة مرور المشرف",
-      "firstName": "اسم المشرف",
-      "lastName": "لقب المشرف",
-      "variant": "الفرع المعيّن",
-      "defaultVariant": "الافتراضي: {name}"
-    },
-    "actions": {
-      "create": "إنشاء الحساب التجريبي",
-      "creating": "جارٍ الإنشاء..."
-    },
-    "toast": {
-      "provisioned": "تم تجهيز الحساب التجريبي",
-      "failed": "تعذر إنشاء الحساب التجريبي"
-    },
-    "validation": {
-      "nameRequired": "الاسم مطلوب",
-      "invalidEmail": "بريد غير صالح",
-      "phoneRequired": "الهاتف مطلوب",
-      "atLeastOneVariant": "على الأقل فرع واحد",
-      "min8": "8 أحرف على الأقل"
-    },
-    "defaults": {
-      "variantNames": "الرئيسية, فرع",
-      "defaultVariant": "الرئيسية",
-      "ownerFirstName": "المالك",
-      "adminFirstName": "مشرف",
-      "adminLastName": "تجريبي"
-    }
+"superAdminApproveDemo": {
+  "title": "إنشاء حساب تجريبي",
+  "description": "تمت تعبئة الحقول تلقائيًا من الطلب. عدّلها إذا لزم قبل التأكيد.",
+  "labels": {
+    "plan": "الخطة",
+    "monthly": "شهري",
+    "annual": "سنوي",
+    "default": "افتراضي"
   },
+  "fields": {
+    "gymName": "اسم القاعة",
+    "email": "البريد الإلكتروني",
+    "phone": "الهاتف",
+    "address": "العنوان",
+    "city": "المدينة",
+    "country": "البلد",
+    "variantsLabel": "فروع/نسخ القاعة (مفصولة بفواصل)",
+    "variantsPlaceholder": "الرئيسية، فرع، بريميوم",
+    "plan": "الخطة",
+    "billing": "الفوترة",
+    "subscriptionExpiresAt": "تاريخ انتهاء الاشتراك",
+    "demoEndsAt": "نهاية التجربة",
+    "graceDays": "أيام السماح",
+    "maxAdmins": "عدد المشرفين المسموح",
+    "internalNote": "ملاحظة داخلية (اختياري)",
+    "internalNotePlaceholder": "تم إرسال بيانات الدخول عبر البريد...",
+    "ownerEmail": "بريد المالك",
+    "ownerPassword": "كلمة مرور المالك",
+    "ownerFirstName": "اسم المالك",
+    "ownerLastName": "لقب المالك",
+
+    "adminEmail": "بريد مشرف ثانٍ",
+    "adminPassword": "كلمة مرور المشرف الثاني",
+    "adminFirstName": "اسم المشرف الثاني",
+    "adminLastName": "لقب المشرف الثاني",
+    "adminVariantSlug": "فرع المشرف الثاني",
+    "adminVariantSlugPlaceholder": "اختر فرعًا"
+  },
+  "hints": {
+    "firstVariantDefault": "يتم اعتماد أول فرع كافتراضي للحسابات الجديدة."
+  },
+  "plans": {
+    "basic": "Basic",
+    "pro": "Pro",
+    "enterprise": "Enterprise"
+  },
+  "secondaryAdmin": {
+    "title": "إضافة مشرف ثانٍ (اختياري)",
+    "email": "بريد المشرف",
+    "password": "كلمة مرور المشرف",
+    "firstName": "اسم المشرف",
+    "lastName": "لقب المشرف",
+    "variant": "الفرع المعيّن",
+    "defaultVariant": "الافتراضي: {name}"
+  },
+  "actions": {
+    "create": "إنشاء الحساب التجريبي",
+    "creating": "جارٍ الإنشاء...",
+
+    "submit": "إنشاء الحساب التجريبي",
+    "submitting": "جارٍ الإنشاء..."
+  },
+  "toast": {
+    "provisioned": "تم تجهيز الحساب التجريبي",
+    "failed": "تعذر إنشاء الحساب التجريبي"
+  },
+  "validation": {
+    "nameRequired": "الاسم مطلوب",
+    "invalidEmail": "بريد غير صالح",
+    "phoneRequired": "الهاتف مطلوب",
+    "atLeastOneVariant": "على الأقل فرع واحد",
+    "min8": "8 أحرف على الأقل"
+  },
+  "defaults": {
+    "variantNames": "الرئيسية, فرع",
+    "defaultVariant": "الرئيسية",
+    "ownerFirstName": "المالك",
+    "adminFirstName": "مشرف",
+    "adminLastName": "تجريبي"
+  }
+}
+,
   "superAdminCreateGym": {
     "title": "قاعة جديدة",
     "description": "سجّل قاعة جديدة ومالكها.",
@@ -1777,7 +1861,8 @@
       "overview": "نظرة عامة",
       "gyms": "إدارة القاعات",
       "demoRequests": "طلبات التجربة",
-      "settings": "الإعدادات"
+      "settings": "الإعدادات",
+      "partners": "الأندية الشريكة"
     }
   },
   "superAdminGymAnalytics": {
@@ -1867,65 +1952,66 @@
       "helper": "المدفوعات المُصرَّح بها"
     }
   },
-  "superAdminGymSubscription": {
-    "title": "إعدادات الاشتراك",
-    "description": "حدّث الخطة أو السعة.",
-    "modulesActive": "الوحدات النشطة",
-    "variantMode": {
-      "mono": "فرع واحد - {count} فرع/متغير",
-      "multi": "عدة فروع - {count} فرع/متغير"
-    },
-    "fields": {
-      "status": "الحالة",
-      "plan": "الخطة",
-      "interval": "الفوترة",
-      "expiresAt": "تاريخ الانتهاء",
-      "graceDays": "أيام السماح",
-      "maxAdmins": "عدد المدراء المسموح"
-    },
-    "placeholders": {
-      "pickDate": "اختر تاريخاً"
-    },
-    "status": {
-      "active": "نشط",
-      "suspended": "موقوف",
-      "expired": "منتهي"
-    },
-    "plan": {
-      "basic": "Basic",
-      "pro": "Pro",
-      "enterprise": "Enterprise"
-    },
-    "interval": {
-      "monthly": "شهري",
-      "annual": "سنوي"
-    },
-    "exports": {
-      "title": "تصديرات النادي",
-      "excel": "تقرير Excel",
-      "pdf": "تقرير PDF",
-      "loading": "جاري التصدير..."
-    },
-    "invoice": {
-      "download": "تنزيل الفاتورة",
-      "print": "طباعة",
-      "generating": "جارٍ الإنشاء...",
-      "preparing": "جارٍ التحضير...",
-      "save": "??? ?????????",
-      "saving": "???? ?????..."
-    },
-    "toasts": {
-      "invoiceDownloaded": "تم تنزيل الفاتورة.",
-      "invoicePrintReady": "الفاتورة جاهزة للطباعة.",
-      "exportSuccess": "تم تنزيل تقرير {format}.",
-      "saved": "?? ????? ????????."
-    },
-    "errors": {
-      "invoiceGeneric": "تعذر إنشاء الفاتورة",
-      "exportFailed": "فشل التصدير",
-      "saveFailed": "???? ??? ????????"
-    }
+ "superAdminGymSubscription": {
+  "title": "إعدادات الاشتراك",
+  "description": "حدّث الخطة أو السعة.",
+  "modulesActive": "الوحدات النشطة",
+  "variantMode": {
+    "mono": "فرع واحد - {count} فرع/متغير",
+    "multi": "عدة فروع - {count} فرع/متغير"
   },
+  "fields": {
+    "status": "الحالة",
+    "plan": "الخطة",
+    "interval": "الفوترة",
+    "expiresAt": "تاريخ الانتهاء",
+    "graceDays": "أيام السماح",
+    "maxAdmins": "عدد المدراء المسموح"
+  },
+  "placeholders": {
+    "pickDate": "اختر تاريخاً"
+  },
+  "status": {
+    "active": "نشط",
+    "suspended": "موقوف",
+    "expired": "منتهي"
+  },
+  "plan": {
+    "basic": "Basic",
+    "pro": "Pro",
+    "enterprise": "Enterprise"
+  },
+  "interval": {
+    "monthly": "شهري",
+    "annual": "سنوي"
+  },
+  "exports": {
+    "title": "تصديرات النادي",
+    "excel": "تقرير Excel",
+    "pdf": "تقرير PDF",
+    "loading": "جاري التصدير..."
+  },
+  "invoice": {
+    "download": "تنزيل الفاتورة",
+    "print": "طباعة",
+    "generating": "جارٍ الإنشاء...",
+    "preparing": "جارٍ التحضير...",
+    "save": "حفظ",
+    "saving": "جارٍ الحفظ..."
+  },
+  "toasts": {
+    "invoiceDownloaded": "تم تنزيل الفاتورة.",
+    "invoicePrintReady": "الفاتورة جاهزة للطباعة.",
+    "exportSuccess": "تم تنزيل تقرير {format}.",
+    "saved": "تم تحديث الاشتراك."
+  },
+  "errors": {
+    "invoiceGeneric": "تعذر إنشاء الفاتورة",
+    "exportFailed": "فشل التصدير",
+    "saveFailed": "تعذر حفظ الاشتراك"
+  }
+}
+,
   "superAdminGymTeam": {
     "title": "الفريق ({used}/{max})",
     "infinite": "∞",
@@ -2524,6 +2610,38 @@
           "availability": "التوفر: 8:00–19:00 CET",
           "deployment": "التفعيل: متعدد الأندية، متعدد الفروع، امتيازات."
         }
+      }
+    },
+    "clubs": {
+      "hero": {
+        "eyebrow": "الأندية الشريكة",
+        "title": "أندية تعمل على GymWatch",
+        "subtitle": "صور Cloudinary ونصوص مترجمة",
+        "description": "تعرف على الأندية والشبكات التي تستخدم GymWatch للتحكم في الدخول والتقارير والأصول المترجمة.",
+        "primaryCta": "احجز عرضاً",
+        "secondaryCta": "تواصل معنا"
+      },
+      "highlights": {
+        "asset": "أصول Cloudinary",
+        "assetDesc": "شعارات وصور غلاف مخزنة في Cloudinary لسرعة التحميل.",
+        "localization": "ترجمات مخزنة",
+        "localizationDesc": "الأسماء والمدن والوصف محفوظة لكل لغة."
+      },
+      "grid": {
+        "eyebrow": "أندية موثوقة",
+        "title": "أندية مميزة",
+        "subtitle": "تم النشر من لوحة المشرف العليا مع الترجمات في قاعدة البيانات.",
+        "count": "{count} نادي منشور",
+        "empty": {
+          "title": "لا يوجد أندية منشورة",
+          "subtitle": "انشر ناديًا من لوحة المشرف العليا لعرضه هنا."
+        },
+        "missingCover": "لا توجد صورة غلاف",
+        "badge": "Club GymWatch",
+        "locationUnknown": "الموقع غير محدد",
+        "fallbackDescription": "سيظهر هذا النادي مع وصفه المترجم وأصول Cloudinary.",
+        "slug": "المسار: {slug}",
+        "visit": "زيارة الموقع"
       }
     }
   },

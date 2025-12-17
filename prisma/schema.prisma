@@ -399,3 +399,35 @@ model ClassBooking {
   @@index([status])
   @@unique([classSessionId, memberId])
 }
+
+model PartnerClub {
+  id             String   @id @default(cuid())
+  slug           String   @unique
+  websiteUrl     String?
+  logoUrl        String?
+  logoPublicId   String?
+  coverUrl       String?
+  coverPublicId  String?
+  order          Int      @default(0)
+  isPublished    Boolean  @default(false)
+  translations   PartnerClubTranslation[]
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+}
+
+model PartnerClubTranslation {
+  id          Int         @id @default(autoincrement())
+  partnerId   String
+  partner     PartnerClub @relation(fields: [partnerId], references: [id], onDelete: Cascade)
+  locale      String
+  name        String
+  city        String?
+  country     String?
+  tagline     String?
+  description String?
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  @@unique([partnerId, locale])
+  @@index([locale])
+}

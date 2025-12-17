@@ -161,7 +161,8 @@
       "pricing": "Tarifs",
       "resources": "Ressources",
       "requestDemo": "Demander une démo",
-      "about": "À propos"
+      "about": "À propos",
+      "clubs": "Clubs partenaires"
     },
     "support": {
       "title": "Support",
@@ -1155,6 +1156,78 @@
       "load": "Impossible de charger les demandes."
     }
   },
+  "superAdminPartnersPage": {
+    "title": "Clubs partenaires",
+    "subtitle": "GǸrez les clubs affichǸs sur la page publique avec images Cloudinary et traductions.",
+    "actions": {
+      "create": "Ajouter un club",
+      "edit": "Éditer",
+      "delete": "Supprimer",
+      "cancel": "Annuler",
+      "save": "Enregistrer"
+    },
+    "dialog": {
+      "createTitle": "Nouveau club",
+      "editTitle": "Éditer le club"
+    },
+    "fields": {
+      "slug": "Slug",
+      "website": "Site web",
+      "order": "Ordre",
+      "published": "PubliǸ",
+      "localeTab": "Langue",
+      "logo": "Logo",
+      "cover": "Visuel",
+      "translations": "Traductions",
+      "translationHint": "Conservez au moins un nom pour le SEO.",
+      "name": "Nom",
+      "tagline": "Accroche",
+      "city": "Ville",
+      "country": "Pays",
+      "description": "Description"
+    },
+    "placeholders": {
+      "name": "Nom du club",
+      "tagline": "Accroche courte",
+      "city": "Ville",
+      "country": "Pays",
+      "description": "Quelques mots sur ce club"
+    },
+    "upload": {
+      "logo": "Logo / badge",
+      "cover": "Visuel / cover",
+      "hint": "PNG/SVG recommandǸ. StockǸ sur Cloudinary.",
+      "replace": "Remplacer",
+      "cta": "Uploader"
+    },
+    "table": {
+      "title": "Clubs publiǸs",
+      "subtitle": "{count, plural, one {# club} other {# clubs}}",
+      "name": "Nom",
+      "status": "Statut",
+      "slug": "Slug",
+      "order": "Ordre",
+      "updated": "Mis  jour",
+      "actions": "Actions"
+    },
+    "status": {
+      "published": "PubliǸ",
+      "draft": "Brouillon"
+    },
+    "empty": {
+      "title": "Aucun club pour l'instant",
+      "subtitle": "Ajoutez un club partenaire pour l'afficher sur la page marketing."
+    },
+    "toasts": {
+      "created": "Club enregistrǸ",
+      "updated": "Club mis  jour",
+      "deleted": "Club supprimǸ",
+      "uploadSuccess": "Image envoyǸe"
+    },
+    "errors": {
+      "missingName": "Ajoutez au moins un nom traduit avant de sauvegarder."
+    }
+  },
   "superAdminSettings": {
     "title": "Paramétrage des plans",
     "subtitle": "Ajustez les prix, la remise annuelle et les plafonds de plans par palier.",
@@ -1184,77 +1257,88 @@
       "purging": "Purge en cours..."
     }
   },
-  "superAdminApproveDemo": {
-    "title": "Créer le compte démo",
-    "description": "Les champs sont pré-remplis depuis la demande. Ajustez si nécessaire avant de confirmer.",
-    "labels": {
-      "plan": "Plan",
-      "monthly": "Mensuel",
-      "annual": "Annuel",
-      "default": "défaut"
-    },
-    "fields": {
-      "gymName": "Nom de la salle",
-      "email": "Email",
-      "phone": "Téléphone",
-      "address": "Adresse",
-      "city": "Ville",
-      "country": "Pays",
-      "variantsLabel": "Variantes du gym (séparées par des virgules)",
-      "variantsPlaceholder": "Principal, Premium, Budget",
-      "plan": "Plan",
-      "billing": "Facturation",
-      "subscriptionExpiresAt": "Expiration abonnement",
-      "demoEndsAt": "Fin de la démo",
-      "graceDays": "Jours de grâce",
-      "maxAdmins": "Admins autorisés",
-      "internalNote": "Note interne (optionnel)",
-      "internalNotePlaceholder": "Accès envoyé par mail...",
-      "ownerEmail": "Email propriétaire",
-      "ownerPassword": "Mot de passe propriétaire",
-      "ownerFirstName": "Prénom propriétaire",
-      "ownerLastName": "Nom propriétaire"
-    },
-    "hints": {
-      "firstVariantDefault": "La première variante est appliquée par défaut aux nouveaux comptes."
-    },
-    "plans": {
-      "basic": "Basic",
-      "pro": "Pro",
-      "enterprise": "Enterprise"
-    },
-    "secondaryAdmin": {
-      "title": "Ajouter un admin secondaire (optionnel)",
-      "email": "Email admin",
-      "password": "Mot de passe admin",
-      "firstName": "Prénom admin",
-      "lastName": "Nom admin",
-      "variant": "Variante assignée",
-      "defaultVariant": "Par défaut : {name}"
-    },
-    "actions": {
-      "create": "Créer le compte démo",
-      "creating": "Création en cours..."
-    },
-    "toast": {
-      "provisioned": "Compte démo provisionné",
-      "failed": "Impossible de créer le compte démo"
-    },
-    "validation": {
-      "nameRequired": "Nom requis",
-      "invalidEmail": "Email invalide",
-      "phoneRequired": "Téléphone requis",
-      "atLeastOneVariant": "Au moins une variante",
-      "min8": "Min. 8 caractères"
-    },
-    "defaults": {
-      "variantNames": "Principal, Annexe",
-      "defaultVariant": "Principal",
-      "ownerFirstName": "Propriétaire",
-      "adminFirstName": "Admin",
-      "adminLastName": "Démo"
-    }
+"superAdminApproveDemo": {
+  "title": "Créer le compte démo",
+  "description": "Les champs sont pré-remplis depuis la demande. Ajustez si nécessaire avant de confirmer.",
+  "labels": {
+    "plan": "Plan",
+    "monthly": "Mensuel",
+    "annual": "Annuel",
+    "default": "défaut"
   },
+  "fields": {
+    "gymName": "Nom de la salle",
+    "email": "Email",
+    "phone": "Téléphone",
+    "address": "Adresse",
+    "city": "Ville",
+    "country": "Pays",
+    "variantsLabel": "Variantes du gym (séparées par des virgules)",
+    "variantsPlaceholder": "Principal, Premium, Budget",
+    "plan": "Plan",
+    "billing": "Facturation",
+    "subscriptionExpiresAt": "Expiration abonnement",
+    "demoEndsAt": "Fin de la démo",
+    "graceDays": "Jours de grâce",
+    "maxAdmins": "Admins autorisés",
+    "internalNote": "Note interne (optionnel)",
+    "internalNotePlaceholder": "Accès envoyé par mail...",
+    "ownerEmail": "Email propriétaire",
+    "ownerPassword": "Mot de passe propriétaire",
+    "ownerFirstName": "Prénom propriétaire",
+    "ownerLastName": "Nom propriétaire",
+
+    "adminEmail": "Email admin secondaire",
+    "adminPassword": "Mot de passe admin secondaire",
+    "adminFirstName": "Prénom admin secondaire",
+    "adminLastName": "Nom admin secondaire",
+    "adminVariantSlug": "Variante admin secondaire",
+    "adminVariantSlugPlaceholder": "Choisir une variante"
+  },
+  "hints": {
+    "firstVariantDefault": "La première variante est appliquée par défaut aux nouveaux comptes."
+  },
+  "plans": {
+    "basic": "Basic",
+    "pro": "Pro",
+    "enterprise": "Enterprise"
+  },
+  "secondaryAdmin": {
+    "title": "Ajouter un admin secondaire (optionnel)",
+    "email": "Email admin",
+    "password": "Mot de passe admin",
+    "firstName": "Prénom admin",
+    "lastName": "Nom admin",
+    "variant": "Variante assignée",
+    "defaultVariant": "Par défaut : {name}"
+  },
+  "actions": {
+    "create": "Créer le compte démo",
+    "creating": "Création en cours...",
+
+    "submit": "Créer le compte démo",
+    "submitting": "Création en cours..."
+  },
+  "toast": {
+    "provisioned": "Compte démo provisionné",
+    "failed": "Impossible de créer le compte démo"
+  },
+  "validation": {
+    "nameRequired": "Nom requis",
+    "invalidEmail": "Email invalide",
+    "phoneRequired": "Téléphone requis",
+    "atLeastOneVariant": "Au moins une variante",
+    "min8": "Min. 8 caractères"
+  },
+  "defaults": {
+    "variantNames": "Principal, Annexe",
+    "defaultVariant": "Principal",
+    "ownerFirstName": "Propriétaire",
+    "adminFirstName": "Admin",
+    "adminLastName": "Démo"
+  }
+}
+,
   "superAdminCreateGym": {
     "title": "Nouvelle salle",
     "description": "Enregistrez une salle et son propriétaire.",
@@ -1875,6 +1959,7 @@
       "overview": "Vue d'ensemble",
       "gyms": "Gestion des salles",
       "demoRequests": "Demandes de démo",
+      "partners": "Clubs partenaires",
       "settings": "Paramètres"
     }
   },
@@ -2535,6 +2620,38 @@
           "availability": "Disponibilité : 8:00–19:00 CET",
           "deployment": "Déploiement : multi-clubs, multi-sites, franchises."
         }
+      }
+    },
+    "clubs": {
+      "hero": {
+        "eyebrow": "Clubs partenaires",
+        "title": "Les clubs qui utilisent GymWatch",
+        "subtitle": "Logos Cloudinary et contenu traduit",
+        "description": "Découvrez des réseaux multi-salles qui utilisent GymWatch pour le contrôle d’accès, les exports et le support bilingue.",
+        "primaryCta": "Demander une démo",
+        "secondaryCta": "Nous écrire"
+      },
+      "highlights": {
+        "asset": "Assets Cloudinary",
+        "assetDesc": "Logos et covers servis via Cloudinary pour des pages rapides.",
+        "localization": "Traductions en base",
+        "localizationDesc": "Noms, villes et descriptions stockés par langue."
+      },
+      "grid": {
+        "eyebrow": "Clubs de confiance",
+        "title": "Clubs mis en avant",
+        "subtitle": "Publiez vos clubs depuis le CMS super-admin avec les traductions en base de données.",
+        "count": "{count, plural, one {# club publié} other {# clubs publiés}}",
+        "empty": {
+          "title": "Aucun club publié",
+          "subtitle": "Publiez un club partenaire depuis l’interface super-admin pour l’afficher ici."
+        },
+        "missingCover": "Aucune cover fournie",
+        "badge": "Club GymWatch",
+        "locationUnknown": "Localisation non renseignée",
+        "fallbackDescription": "Ce club apparaîtra avec sa description traduite et ses visuels Cloudinary.",
+        "slug": "Slug : {slug}",
+        "visit": "Visiter le site"
       }
     }
   },

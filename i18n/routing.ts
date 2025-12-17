@@ -26,6 +26,7 @@ export const routing = defineRouting({
       fr: "/faq",
       ar: "/faq",
     },
+    "/clubs": "/clubs",
 
     "/ressources": "/ressources",
     "/login": "/login",

@@ -1,6 +1,7 @@
 ﻿import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import type { PlanFeatures, PlanLimitsTable, PlanPricingTable } from '@/lib/subscription-plans'
+import type { AppLocale } from '@/i18n/routing'
 
 export type GymPlanTier = 'BASIC' | 'PRO' | 'ENTERPRISE'
 export type GymSubscriptionStatus = 'ACTIVE' | 'SUSPENDED' | 'EXPIRED'
@@ -157,6 +158,48 @@ export interface DemoRequest {
   createdGymId?: string | null
 }
 
+export type PartnerTranslation = {
+  name?: string
+  city?: string
+  country?: string
+  tagline?: string
+  description?: string
+}
+
+export interface PartnerClubAdmin {
+  id: string
+  slug: string
+  websiteUrl?: string | null
+  logoUrl?: string | null
+  logoPublicId?: string | null
+  coverUrl?: string | null
+  coverPublicId?: string | null
+  order: number
+  isPublished: boolean
+  translations: Partial<Record<AppLocale, PartnerTranslation>>
+  createdAt?: string
+  updatedAt?: string
+}
+
+export type PartnerUploadResult = {
+  url: string
+  publicId: string
+  width?: number
+  height?: number
+}
+
+export type PartnerClubInput = {
+  slug?: string
+  websiteUrl?: string | null
+  logoUrl?: string | null
+  logoPublicId?: string | null
+  coverUrl?: string | null
+  coverPublicId?: string | null
+  order?: number
+  isPublished?: boolean
+  translations?: Partial<Record<AppLocale, PartnerTranslation>>
+}
+
 async function fetchJSON<T>(input: string | URL, init?: RequestInit): Promise<T> {
   const response = await fetch(input, init)
   if (!response.ok) {
@@ -249,6 +292,85 @@ export function useDemoRequest(requestId?: string | null) {
     queryKey: ['super-admin', 'demo-request', requestId],
     enabled: Boolean(requestId),
     queryFn: () => fetchJSON(`/api/super-admin/demo-requests/${requestId}`),
+  })
+}
+
+export function usePartnerClubs() {
+  return useQuery<PartnerClubAdmin[]>({
+    queryKey: ['super-admin', 'partners'],
+    queryFn: () => fetchJSON('/api/super-admin/partners'),
+  })
+}
+
+export function useCreatePartnerClub() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async (payload: PartnerClubInput) =>
+      fetchJSON('/api/super-admin/partners', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['super-admin', 'partners'] })
+    },
+    onError: (error: Error) => {
+      toast.error(error.message)
+    },
+  })
+}
+
+export function useUpdatePartnerClub() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async (payload: { partnerId: string; data: PartnerClubInput }) =>
+      fetchJSON(`/api/super-admin/partners/${payload.partnerId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload.data),
+      }),
+    onSuccess: (_data, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['super-admin', 'partners'] })
+      queryClient.invalidateQueries({ queryKey: ['super-admin', 'partner', variables.partnerId] })
+    },
+    onError: (error: Error) => {
+      toast.error(error.message)
+    },
+  })
+}
+
+export function useDeletePartnerClub() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async (partnerId: string) =>
+      fetchJSON(`/api/super-admin/partners/${partnerId}`, {
+        method: 'DELETE',
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['super-admin', 'partners'] })
+    },
+    onError: (error: Error) => {
+      toast.error(error.message)
+    },
+  })
+}
+
+export function useUploadPartnerAsset() {
+  return useMutation({
+    mutationFn: async (payload: { file: File; folder?: string; publicId?: string }) => {
+      const formData = new FormData()
+      formData.append('file', payload.file)
+      if (payload.folder) formData.append('folder', payload.folder)
+      if (payload.publicId) formData.append('publicId', payload.publicId)
+
+      return fetchJSON<PartnerUploadResult>('/api/super-admin/partners/upload', {
+        method: 'POST',
+        body: formData,
+      })
+    },
+    onError: (error: Error) => {
+      toast.error(error.message)
+    },
   })
 }
 

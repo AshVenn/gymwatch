@@ -210,9 +210,9 @@ export async function POST(request: NextRequest) {
         gymId,
         memberId: member.id,
         allowedVariantId,
-        checkoutAt: checkoutDate === "INVALID" ? undefined : checkoutDate,
-        rangeFrom: fromDate === "INVALID" ? undefined : fromDate,
-        rangeTo: toDate === "INVALID" ? undefined : toDate,
+        checkoutAt: checkoutDate ?? undefined,
+        rangeFrom: fromDate ?? undefined,
+        rangeTo: toDate ?? undefined,
       })
 
       try {

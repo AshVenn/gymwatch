@@ -1,4 +1,5 @@
 import type { Metadata } from "next"
+import { headers } from "next/headers"
 import { notFound } from "next/navigation"
 import { CalendarClock, Clock3, MapPin, ShieldCheck, Sparkles } from "lucide-react"
 import { getTranslations, setRequestLocale } from "next-intl/server"
@@ -52,8 +53,29 @@ type QrProfilePageProps = {
   params: Promise<{ locale: AppLocale; token: string }>
 }
 
+async function resolveInternalUrl(path: string) {
+  const envBase = process.env.NEXT_PUBLIC_APP_URL ?? process.env.NEXTAUTH_URL
+  if (envBase) {
+    try {
+      const url = new URL(path, envBase)
+      return url.toString()
+    } catch {
+      // ignore invalid env base, fall back to headers
+    }
+  }
+
+  const headersList = await headers()
+  const protocol = headersList.get("x-forwarded-proto") ?? "https"
+  const host = headersList.get("x-forwarded-host") ?? headersList.get("host")
+  if (!host) {
+    throw new Error("Missing host to resolve internal URL")
+  }
+
+  return new URL(path, `${protocol}://${host}`).toString()
+}
+
 async function fetchProfile(token: string, locale: AppLocale): Promise<QrProfileResponse | null> {
-  const endpoint = `/api/gym-team/qr/verify?token=${encodeURIComponent(token)}`
+  const endpoint = await resolveInternalUrl(`/api/gym-team/qr/verify?token=${encodeURIComponent(token)}`)
   const response = await fetch(endpoint, {
     cache: "no-store",
     headers: { "accept-language": locale },

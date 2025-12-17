@@ -379,11 +379,7 @@ export function DashboardShell({
 
         <main className="flex-1 overflow-auto px-5 py-8 md:px-8">
           <div className="mx-auto w-full max-w-7xl space-y-8">
-            {topSlot ? (
-              <div className="rounded-2xl border border-border/50 bg-card/95 p-5 shadow-sm backdrop-blur-sm">
-                {topSlot}
-              </div>
-            ) : null}
+            {topSlot ?? null}
             {children}
           </div>
         </main>

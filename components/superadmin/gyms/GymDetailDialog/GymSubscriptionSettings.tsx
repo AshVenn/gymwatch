@@ -56,6 +56,7 @@ export function GymSubscriptionSettings({ gym }: Props) {
 
   const [downloading, setDownloading] = useState<'excel' | 'pdf' | null>(null)
   const [processingInvoice, setProcessingInvoice] = useState<'download' | 'print' | null>(null)
+  const [saving, setSaving] = useState(false)
 
   useEffect(() => {
     form.reset({
@@ -85,6 +86,7 @@ export function GymSubscriptionSettings({ gym }: Props) {
           subscriptionGracePeriodDays: payload.grace,
           maxAdminAccounts: payload.maxAdmins,
           locale,
+          apply: false,
         }),
       })
 
@@ -125,7 +127,37 @@ export function GymSubscriptionSettings({ gym }: Props) {
     }
   }
 
-  const onSubmit = (values: SubscriptionValues) => handleInvoice('download', values)
+  const onSubmit = async (values: SubscriptionValues) => {
+    try {
+      setSaving(true)
+      const response = await fetch(`/api/super-admin/gyms/${gym.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          subscriptionStatus: values.status,
+          subscriptionPlan: values.plan,
+          billingInterval: values.interval,
+          subscriptionExpiresAt: values.expiresAt || null,
+          subscriptionGracePeriodDays: values.grace,
+          maxAdminAccounts: values.maxAdmins,
+        }),
+      })
+
+      const body = await response.json().catch(() => ({}))
+      if (!response.ok) {
+        throw new Error((body as any)?.error || t('errors.saveFailed'))
+      }
+
+      toast.success(t('toasts.saved'))
+      queryClient.invalidateQueries({ queryKey: ['super-admin', 'gym', gym.id] })
+      queryClient.invalidateQueries({ queryKey: ['super-admin', 'gyms'] })
+    } catch (error) {
+      const msg = error instanceof Error ? error.message : t('errors.saveFailed')
+      toast.error(msg)
+    } finally {
+      setSaving(false)
+    }
+  }
 
   const downloadReport = async (format: 'excel' | 'pdf') => {
     try {
@@ -319,8 +351,18 @@ export function GymSubscriptionSettings({ gym }: Props) {
               </div>
             </div>
 
-            <div className="flex flex-col gap-3 sm:flex-row sm:justify-end">
-              <Button type="submit" className="w-full sm:w-auto" disabled={processingInvoice !== null}>
+            <div className="flex flex-col gap-3 sm:flex-row sm:justify-end sm:flex-wrap">
+              <Button type="submit" className="w-full sm:w-auto" disabled={saving || processingInvoice !== null}>
+                {saving ? t('invoice.saving') : t('invoice.save')}
+              </Button>
+
+              <Button
+                type="button"
+                variant="outline"
+                className="w-full sm:w-auto"
+                onClick={form.handleSubmit((values) => handleInvoice('download', values))}
+                disabled={processingInvoice !== null || saving}
+              >
                 {processingInvoice === 'download' ? t('invoice.generating') : t('invoice.download')}
               </Button>
 
@@ -329,7 +371,7 @@ export function GymSubscriptionSettings({ gym }: Props) {
                 variant="outline"
                 className="w-full sm:w-auto"
                 onClick={form.handleSubmit((values) => handleInvoice('print', values))}
-                disabled={processingInvoice !== null}
+                disabled={processingInvoice !== null || saving}
               >
                 {processingInvoice === 'print' ? t('invoice.preparing') : t('invoice.print')}
               </Button>

@@ -1449,17 +1449,21 @@
       "loading": "Exporting..."
     },
     "invoice": {
+      "save": "Save changes",
+      "saving": "Saving...",
       "download": "Download invoice",
       "print": "Print",
       "generating": "Generating...",
       "preparing": "Preparing..."
     },
     "toasts": {
+      "saved": "Subscription updated.",
       "invoiceDownloaded": "Invoice downloaded.",
       "invoicePrintReady": "Invoice ready to print.",
       "exportSuccess": "{format} report downloaded."
     },
     "errors": {
+      "saveFailed": "Unable to save subscription",
       "invoiceGeneric": "Unable to generate invoice",
       "exportFailed": "Export failed"
     }
@@ -3034,6 +3038,54 @@
         "pending": "Deleting...",
         "confirm": "Delete"
       }
+    }
+  },
+  "qrProfile": {
+    "meta": {
+      "title": "Member QR badge",
+      "description": "Show this badge to access your gym or review your status."
+    },
+    "hero": {
+      "badge": "QR badge",
+      "subtitle": "Scan to display your subscription status. Reception can validate check-ins."
+    },
+    "subscription": {
+      "title": "Subscription",
+      "noPlan": "No active plan",
+      "period": "From {start} to {end}",
+      "missing": "Subscription dates unavailable",
+      "progress": "Progress",
+      "daysRemaining": "{count} day(s) left",
+      "status": {
+        "ACTIVE": "Active",
+        "EXPIRES_TODAY": "Expires today",
+        "EXPIRED": "Expired"
+      }
+    },
+    "visits": {
+      "title": "Visits",
+      "today": "Today",
+      "limitLabel": "Daily limit",
+      "remaining": "Remaining",
+      "unlimited": "Unlimited",
+      "limitReached": "Daily visit limit reached"
+    },
+    "classes": {
+      "title": "Upcoming classes",
+      "subtitle": "Bookings linked to this member",
+      "empty": "No upcoming classes booked"
+    },
+    "actions": {
+      "staffTitle": "Staff actions",
+      "description": "You are logged in as staff for this gym. Use quick actions to validate the scan.",
+      "checkIn": "Check-in",
+      "checkOut": "Check-out",
+      "saving": "Saving...",
+      "disabled": "Access control is not enabled for this gym",
+      "success": "Visit recorded for {name}",
+      "checkoutSuccess": "Checkout recorded for {name}",
+      "error": "Scan failed",
+      "fallback": "member"
     }
   }
 }

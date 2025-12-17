@@ -1,4 +1,5 @@
 import type { Metadata } from "next"
+import { cache } from "react"
 import { getTranslations, setRequestLocale } from "next-intl/server"
 
 import { Link, type AppLocale } from "@/i18n/routing"
@@ -6,7 +7,21 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { PlanCard } from "@/components/pricing/plan-card"
-import { DEFAULT_ANNUAL_DISCOUNT, getPlanCatalogAsListLocalized, getPlanCatalogAsList } from "@/lib/subscription-plans"
+import {
+  DEFAULT_ANNUAL_DISCOUNT,
+  getPlanCatalogAsListLocalized,
+  getPlanCatalogAsList,
+  PLAN_PRICING,
+} from "@/lib/subscription-plans"
+import { getPlanPricing } from "@/lib/plan-settings"
+
+const getCachedPlanPricing = cache(async () => {
+  try {
+    return await getPlanPricing()
+  } catch {
+    return PLAN_PRICING
+  }
+})
 
 type PlansPageProps = {
   params: Promise<{ locale: AppLocale }>
@@ -37,10 +52,12 @@ export default async function PlansPage({ params }: PlansPageProps) {
 
   const t = await getTranslations({ locale, namespace: "plansPage" })
 
-  let planCatalog = getPlanCatalogAsList()
+  const pricing = await getCachedPlanPricing()
+
+  let planCatalog = getPlanCatalogAsList(pricing)
   try {
     const tCatalog = await getTranslations({ locale, namespace: "subscriptionPlans" })
-    planCatalog = getPlanCatalogAsListLocalized(tCatalog)
+    planCatalog = getPlanCatalogAsListLocalized(tCatalog, pricing)
   } catch {
   }
 

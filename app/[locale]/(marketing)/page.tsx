@@ -1,5 +1,6 @@
 // app/[locale]/(marketing)/page.tsx
 import type { Metadata } from "next"
+import { cache } from "react"
 import Image from "next/image"
 import {
   ArrowRight,
@@ -21,11 +22,25 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Link, type AppLocale } from "@/i18n/routing"
 import { buildMarketingMetadata } from "@/lib/marketing-content"
-import { DEFAULT_ANNUAL_DISCOUNT, getPlanCatalogAsList, getPlanCatalogAsListLocalized } from "@/lib/subscription-plans"
+import {
+  DEFAULT_ANNUAL_DISCOUNT,
+  getPlanCatalogAsList,
+  getPlanCatalogAsListLocalized,
+  PLAN_PRICING,
+} from "@/lib/subscription-plans"
 import { cn } from "@/lib/utils"
 import { getTranslations, setRequestLocale } from "next-intl/server"
 
 import { PlanCard } from "../../../components/pricing/plan-card"
+import { getPlanPricing } from "@/lib/plan-settings"
+
+const getCachedPlanPricing = cache(async () => {
+  try {
+    return await getPlanPricing()
+  } catch {
+    return PLAN_PRICING
+  }
+})
 
 type HomePageProps = {
   params: Promise<{ locale: string }>
@@ -64,10 +79,12 @@ export default async function HomePage({ params }: HomePageProps) {
   // (so your JSON should have: { "marketing": { "home": { ... }}} )
   const t = await getTranslations({ locale, namespace: "marketing.home" })
 
-  let planCatalog = getPlanCatalogAsList()
+  const pricing = await getCachedPlanPricing()
+
+  let planCatalog = getPlanCatalogAsList(pricing)
   try {
     const tCatalog = await getTranslations({ locale, namespace: "subscriptionPlans" })
-    planCatalog = getPlanCatalogAsListLocalized(tCatalog)
+    planCatalog = getPlanCatalogAsListLocalized(tCatalog, pricing)
   } catch {
     // fallback to default FR catalog
   }

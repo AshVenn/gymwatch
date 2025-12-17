@@ -18,6 +18,7 @@ import {
 
 import { cn } from "@/lib/utils"
 import { SubscriptionFeaturesDock, type SubscriptionDockItem } from "@/components/dashboard/subscription-features-dock"
+import { getPlanFeatures } from "@/lib/subscription-plans"
 
 function formatPlanKey(plan?: string | null) {
   if (plan === "PRO") return "pro"
@@ -55,10 +56,11 @@ export function SubscriptionBanner() {
     return `/${locale}${base}`
   }
 
-  const hasAccessControl = Boolean((session?.user as any)?.hasAccessControl ?? true)
-  const hasPresence = Boolean((session?.user as any)?.hasPresence ?? true)
-  const hasCourses = Boolean((session?.user as any)?.hasCourses ?? true)
-  const hasExcelReports = Boolean((session?.user as any)?.hasExcelReports ?? true)
+  const baseFeatures = getPlanFeatures((session?.user as any)?.subscriptionPlan ?? currentPlan)
+  const hasAccessControl = Boolean((session?.user as any)?.hasAccessControl ?? baseFeatures.accessControl)
+  const hasPresence = Boolean((session?.user as any)?.hasPresence ?? baseFeatures.presenceTracking)
+  const hasCourses = Boolean((session?.user as any)?.hasCourses ?? baseFeatures.courses)
+  const hasExcelReports = Boolean((session?.user as any)?.hasExcelReports ?? baseFeatures.excelReports)
 
   const allDockItems: SubscriptionDockItem[] = [
     {

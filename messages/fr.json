@@ -14,12 +14,19 @@
     "openGraphImageAlt": "Motif abstrait GymWatch",
     "twitterTitle": "GymWatch - La solution de gestion des salles de sport",
     "twitterDescription": "Automatisez vos abonnements, simplifiez vos opérations et inspirez vos membres avec GymWatch."
-  },  
+  },
   "requestDemoHome": {
     "metadata": {
       "title": "Demander une démo | GymWatch",
       "description": "Planifiez une démonstration personnalisée de GymWatch. Envoyez votre demande et recevez un espace de test préconfiguré.",
-      "keywords": ["GymWatch", "démo", "demande de démo", "logiciel salle de sport", "gestion abonnement", "QR code"]
+      "keywords": [
+        "GymWatch",
+        "démo",
+        "demande de démo",
+        "logiciel salle de sport",
+        "gestion abonnement",
+        "QR code"
+      ]
     },
     "hero": {
       "badge": "Demande de démo",
@@ -54,9 +61,18 @@
       }
     },
     "plans": {
-      "basic": { "title": "Basic", "desc": "Gestion essentielle" },
-      "pro": { "title": "Pro", "desc": "QR codes, exports" },
-      "enterprise": { "title": "Enterprise", "desc": "Multi-sites, cours" }
+      "basic": {
+        "title": "Basic",
+        "desc": "Gestion essentielle"
+      },
+      "pro": {
+        "title": "Pro",
+        "desc": "QR codes, exports"
+      },
+      "enterprise": {
+        "title": "Enterprise",
+        "desc": "Multi-sites, cours"
+      }
     },
     "form": {
       "title": "Demander une démo",
@@ -68,17 +84,50 @@
         "sending": "Envoi en cours…"
       },
       "fields": {
-        "gymName": { "label": "Nom de la salle", "placeholder": "Ex : FitZone Casablanca" },
-        "gymEmail": { "label": "Email de la salle", "placeholder": "contact@salle.ma" },
-        "phone": { "label": "Téléphone", "placeholder": "+212…" },
-        "address": { "label": "Adresse", "placeholder": "Avenue…" },
-        "city": { "label": "Ville", "placeholder": "Casablanca" },
-        "country": { "label": "Pays", "placeholder": "Maroc" },
-        "adminFirstName": { "label": "Prénom (admin)", "placeholder": "Sanae" },
-        "adminLastName": { "label": "Nom (admin)", "placeholder": "Belkadi" },
-        "adminEmail": { "label": "Email administrateur principal", "placeholder": "admin@salle.ma" },
-        "plan": { "label": "Plan souhaité", "placeholder": "Choisir un plan" },
-        "message": { "label": "Contexte ou besoins particuliers", "placeholder": "Multi-sites ? QR ? Exports ? Cours ? Objectifs…" }
+        "gymName": {
+          "label": "Nom de la salle",
+          "placeholder": "Ex : FitZone Casablanca"
+        },
+        "gymEmail": {
+          "label": "Email de la salle",
+          "placeholder": "contact@salle.ma"
+        },
+        "phone": {
+          "label": "Téléphone",
+          "placeholder": "+212…"
+        },
+        "address": {
+          "label": "Adresse",
+          "placeholder": "Avenue…"
+        },
+        "city": {
+          "label": "Ville",
+          "placeholder": "Casablanca"
+        },
+        "country": {
+          "label": "Pays",
+          "placeholder": "Maroc"
+        },
+        "adminFirstName": {
+          "label": "Prénom (admin)",
+          "placeholder": "Sanae"
+        },
+        "adminLastName": {
+          "label": "Nom (admin)",
+          "placeholder": "Belkadi"
+        },
+        "adminEmail": {
+          "label": "Email administrateur principal",
+          "placeholder": "admin@salle.ma"
+        },
+        "plan": {
+          "label": "Plan souhaité",
+          "placeholder": "Choisir un plan"
+        },
+        "message": {
+          "label": "Contexte ou besoins particuliers",
+          "placeholder": "Multi-sites ? QR ? Exports ? Cours ? Objectifs…"
+        }
       }
     },
     "toast": {
@@ -92,49 +141,55 @@
       "messageMax": "Message trop long"
     }
   },
-      "footer": {
-      "brand": {
-        "description": "La plateforme tout-en-un pour gérer votre salle de sport avec intelligence et simplicité."
-      },
-      "social": {
-        "facebookLabel": "Facebook",
-        "twitterLabel": "Twitter",
-        "instagramLabel": "Instagram",
-        "linkedinLabel": "LinkedIn",
-        "facebookHref": "#",
-        "twitterHref": "#",
-        "instagramHref": "#",
-        "linkedinHref": "#"
-      },
-      "product": {
-        "title": "Produit",
-        "features": "Fonctionnalités",
-        "pricing": "Tarifs",
-        "resources": "Ressources",
-        "requestDemo": "Demander une démo",
-        "about": "À propos"
-      },
-      "support": {
-        "title": "Support",
-        "contact": "Contact",
-        "docs": "Documentation"
-      },
-      "legal": {
-        "title": "Légal",
-        "privacy": "Confidentialité",
-        "terms": "Conditions",
-        "cookies": "Cookies",
-        "licenses": "Licences"
-      },
-      "bottom": {
-        "copyright": "© {year} GymWatch. Tous droits réservés."
-      }
+  "footer": {
+    "brand": {
+      "description": "La plateforme tout-en-un pour gérer votre salle de sport avec intelligence et simplicité."
     },
+    "social": {
+      "facebookLabel": "Facebook",
+      "twitterLabel": "Twitter",
+      "instagramLabel": "Instagram",
+      "linkedinLabel": "LinkedIn",
+      "facebookHref": "#",
+      "twitterHref": "#",
+      "instagramHref": "#",
+      "linkedinHref": "#"
+    },
+    "product": {
+      "title": "Produit",
+      "features": "Fonctionnalités",
+      "pricing": "Tarifs",
+      "resources": "Ressources",
+      "requestDemo": "Demander une démo",
+      "about": "À propos"
+    },
+    "support": {
+      "title": "Support",
+      "contact": "Contact",
+      "docs": "Documentation"
+    },
+    "legal": {
+      "title": "Légal",
+      "privacy": "Confidentialité",
+      "terms": "Conditions",
+      "cookies": "Cookies",
+      "licenses": "Licences"
+    },
+    "bottom": {
+      "copyright": "© {year} GymWatch. Tous droits réservés."
+    }
+  },
   "termsPage": {
     "metadata": {
       "title": "Conditions d’utilisation | GymWatch",
       "description": "Conditions d’utilisation de GymWatch : accès, sécurité, responsabilités et droit applicable.",
-      "keywords": ["conditions", "CGU", "GymWatch", "salle de sport", "Maroc"]
+      "keywords": [
+        "conditions",
+        "CGU",
+        "GymWatch",
+        "salle de sport",
+        "Maroc"
+      ]
     },
     "badge": "Légal",
     "title": "Conditions d’utilisation",
@@ -210,7 +265,13 @@
     "metadata": {
       "title": "Documentation | GymWatch",
       "description": "Guides pour déployer GymWatch : multi-sites, rôles, contrôle d’accès, sécurité et dépannage.",
-      "keywords": ["documentation", "GymWatch", "contrôle d’accès", "multi-sites", "support"]
+      "keywords": [
+        "documentation",
+        "GymWatch",
+        "contrôle d’accès",
+        "multi-sites",
+        "support"
+      ]
     },
     "hero": {
       "badge": "Documentation",
@@ -358,7 +419,12 @@
     "metadata": {
       "title": "Licences open-source | GymWatch",
       "description": "Liste des licences des dépendances open-source utilisées par GymWatch.",
-      "keywords": ["licences", "open-source", "GymWatch", "dépendances"]
+      "keywords": [
+        "licences",
+        "open-source",
+        "GymWatch",
+        "dépendances"
+      ]
     },
     "hero": {
       "badge": "Licences",
@@ -387,11 +453,16 @@
     },
     "footerNote": "Dernière mise à jour : fichier généré automatiquement lors du build."
   },
-    "cookiesPage": {
+  "cookiesPage": {
     "metadata": {
       "title": "Politique de cookies | GymWatch",
       "description": "Informations sur l’utilisation des cookies et technologies similaires sur GymWatch.",
-      "keywords": ["cookies", "politique de cookies", "GymWatch", "confidentialité"]
+      "keywords": [
+        "cookies",
+        "politique de cookies",
+        "GymWatch",
+        "confidentialité"
+      ]
     },
     "hero": {
       "badge": "Cookies",
@@ -440,11 +511,18 @@
       }
     }
   },
-    "privacyPage": {
+  "privacyPage": {
     "metadata": {
       "title": "Politique de confidentialité | GymWatch",
       "description": "Comment GymWatch collecte, utilise et protège vos données personnelles (Maroc).",
-      "keywords": ["confidentialité", "données personnelles", "GymWatch", "Maroc", "CNDP", "loi 09-08"]
+      "keywords": [
+        "confidentialité",
+        "données personnelles",
+        "GymWatch",
+        "Maroc",
+        "CNDP",
+        "loi 09-08"
+      ]
     },
     "hero": {
       "badge": "Confidentialité",
@@ -520,11 +598,17 @@
       }
     }
   },
-    "ressourcesPage": {
+  "ressourcesPage": {
     "metadata": {
       "title": "Ressources GymWatch",
       "description": "Guides et articles sur la gestion de salles de sport : fidélisation, contrôle d’accès, automatisation des abonnements et réseaux multi-salles.",
-      "keywords": ["ressources", "gestion salle de sport", "contrôle d’accès", "SaaS fitness", "multi-salles"]
+      "keywords": [
+        "ressources",
+        "gestion salle de sport",
+        "contrôle d’accès",
+        "SaaS fitness",
+        "multi-salles"
+      ]
     },
     "nav": {
       "features": "Fonctionnalités",
@@ -568,11 +652,17 @@
       }
     }
   },
-    "contactPage": {
+  "contactPage": {
     "metadata": {
       "title": "Contact et support | GymWatch",
       "description": "Contactez GymWatch : support, onboarding et déploiement multi-salles pour votre logiciel de gestion de salle de sport.",
-      "keywords": ["contact GymWatch", "support", "onboarding", "multi-salles", "logiciel salle de sport"]
+      "keywords": [
+        "contact GymWatch",
+        "support",
+        "onboarding",
+        "multi-salles",
+        "logiciel salle de sport"
+      ]
     },
     "nav": {
       "features": "Fonctionnalités",
@@ -589,16 +679,31 @@
       "title": "Écrivez-nous",
       "description": "Réponse en moins de 24h ouvrées. Nous sécurisons vos données et vos échanges.",
       "fields": {
-        "name": { "label": "Nom et prénom", "placeholder": "Votre nom" },
-        "email": { "label": "Email professionnel", "placeholder": "you@entreprise.com" },
-        "company": { "label": "Société / réseau", "placeholder": "Nom de la salle ou du réseau" },
-        "sites": { "label": "Nombre de sites", "placeholder": "Ex. 3 salles" },
+        "name": {
+          "label": "Nom et prénom",
+          "placeholder": "Votre nom"
+        },
+        "email": {
+          "label": "Email professionnel",
+          "placeholder": "you@entreprise.com"
+        },
+        "company": {
+          "label": "Société / réseau",
+          "placeholder": "Nom de la salle ou du réseau"
+        },
+        "sites": {
+          "label": "Nombre de sites",
+          "placeholder": "Ex. 3 salles"
+        },
         "message": {
           "label": "Votre besoin",
           "placeholder": "Décrivez vos attentes : contrôle d'accès, abonnements, reporting, déploiement multi-salles…"
         }
       },
-      "actions": { "send": "Envoyer", "emailDirect": "Nous écrire directement" }
+      "actions": {
+        "send": "Envoyer",
+        "emailDirect": "Nous écrire directement"
+      }
     },
     "side": {
       "support": {
@@ -620,14 +725,23 @@
       "kicker": "Déploiement",
       "title": "Onboarding multi-salles en quelques jours",
       "description": "Migration des membres, paramétrage du contrôle d'accès, formation des équipes : nous orchestrons le lancement pour que GymWatch soit opérationnel rapidement.",
-      "actions": { "primary": "Planifier une démo", "secondary": "Voir les plans" }
+      "actions": {
+        "primary": "Planifier une démo",
+        "secondary": "Voir les plans"
+      }
     }
   },
-    "aboutPage": {
+  "aboutPage": {
     "metadata": {
       "title": "À propos | GymWatch",
       "description": "Découvrez la mission de GymWatch : optimiser la gestion des salles de sport et réseaux multi-salles avec fiabilité, sécurité et automatisation.",
-      "keywords": ["GymWatch", "SaaS salles de sport", "multi-salles", "abonnements", "contrôle d'accès"]
+      "keywords": [
+        "GymWatch",
+        "SaaS salles de sport",
+        "multi-salles",
+        "abonnements",
+        "contrôle d'accès"
+      ]
     },
     "nav": {
       "features": "Fonctionnalités",
@@ -662,27 +776,48 @@
       "title": "Notre trajectoire"
     },
     "timeline": [
-      { "title": "Création", "detail": "Lancement de GymWatch pour simplifier la gestion des abonnements et du contrôle d'accès." },
-      { "title": "Scale multi-salles", "detail": "Support natif des réseaux multi-sites avec reporting consolidé et rôles granulaires." },
-      { "title": "Automatisation", "detail": "Relances, facturation et intégrations API pour réduire les tâches manuelles." },
-      { "title": "Vision", "detail": "Un logiciel de gestion de salle de sport premium, sécurisé et toujours à jour pour vos équipes." }
+      {
+        "title": "Création",
+        "detail": "Lancement de GymWatch pour simplifier la gestion des abonnements et du contrôle d'accès."
+      },
+      {
+        "title": "Scale multi-salles",
+        "detail": "Support natif des réseaux multi-sites avec reporting consolidé et rôles granulaires."
+      },
+      {
+        "title": "Automatisation",
+        "detail": "Relances, facturation et intégrations API pour réduire les tâches manuelles."
+      },
+      {
+        "title": "Vision",
+        "detail": "Un logiciel de gestion de salle de sport premium, sécurisé et toujours à jour pour vos équipes."
+      }
     ],
     "team": {
       "kicker": "Notre équipe",
       "title": "Experts produit, data et opérations",
       "description": "Nous combinons expérience terrain (front desk, opérations) et expertise SaaS pour livrer un logiciel de gestion de salle de sport fiable, orienté data et accessible.",
-      "bullets": ["Support et accompagnement dédiés", "Livraison continue d'améliorations produit"],
+      "bullets": [
+        "Support et accompagnement dédiés",
+        "Livraison continue d'améliorations produit"
+      ],
       "actions": {
         "contact": "Échanger avec nous",
         "choosePlan": "Choisir un plan"
       }
     }
   },
-    "faqsPage": {
+  "faqsPage": {
     "metadata": {
       "title": "FAQ | GymWatch",
       "description": "Questions fréquentes sur GymWatch : multi-salles, abonnements, contrôle d’accès, sécurité et déploiement.",
-      "keywords": ["FAQ GymWatch", "logiciel salle de sport", "contrôle d'accès", "abonnements", "multi-salles"]
+      "keywords": [
+        "FAQ GymWatch",
+        "logiciel salle de sport",
+        "contrôle d'accès",
+        "abonnements",
+        "multi-salles"
+      ]
     },
     "hero": {
       "eyebrow": "FAQ",
@@ -728,12 +863,15 @@
       "secondaryCta": "Contacter le support"
     }
   },
-    "subscriptionPlans": {
+  "subscriptionPlans": {
     "tiers": {
       "basic": {
         "name": "Basic",
         "description": "Fonctionnalités essentielles pour centraliser vos membres",
-        "badges": ["Support email", "Alertes d’échéance"],
+        "badges": [
+          "Support email",
+          "Alertes d’échéance"
+        ],
         "features": [
           "Gestion des membres et abonnements",
           "Alertes d’expiration et relances",
@@ -744,7 +882,10 @@
       "pro": {
         "name": "Pro",
         "description": "Automatisations, QR codes et exports avancés",
-        "badges": ["QR codes", "Exports Excel"],
+        "badges": [
+          "QR codes",
+          "Exports Excel"
+        ],
         "features": [
           "Tout le plan Basic",
           "Contrôle d’accès par QR code",
@@ -758,7 +899,11 @@
         "name": "Enterprise",
         "highlightLabel": "Enterprise",
         "description": "Offre multi-sites avec automatisations avancées et catalogue illimité",
-        "badges": ["Multi-salles illimitées", "Automatisations", "Cours & planning"],
+        "badges": [
+          "Multi-salles illimitées",
+          "Automatisations",
+          "Cours & planning"
+        ],
         "features": [
           "Salles et utilisateurs illimités",
           "Contrôle d’accès avancé (QR, badge, app membre)",
@@ -771,11 +916,16 @@
       }
     }
   },
-    "plansPage": {
+  "plansPage": {
     "metadata": {
       "title": "Plans & Tarifs | GymWatch",
       "description": "Comparez les plans GymWatch (mensuel/annuel), découvrez les fonctionnalités incluses et nos réponses aux questions fréquentes.",
-      "keywords": ["tarifs gym", "plans SaaS salle de sport", "abonnement gestion salle de sport", "pricing gym software"]
+      "keywords": [
+        "tarifs gym",
+        "plans SaaS salle de sport",
+        "abonnement gestion salle de sport",
+        "pricing gym software"
+      ]
     },
     "hero": {
       "eyebrow": "Tarifs",
@@ -840,7 +990,7 @@
       }
     }
   },
-    "featuresPage": {
+  "featuresPage": {
     "metadata": {
       "title": "Fonctionnalités de GymWatch",
       "description": "Découvrez GymWatch, SaaS pour salles de sport : vue multi-salles, contrôle d’accès, gestion des abonnements et reporting avancé.",
@@ -1393,16 +1543,20 @@
       "download": "Télécharger la facture",
       "print": "Imprimer",
       "generating": "Génération...",
-      "preparing": "Préparation..."
+      "preparing": "Préparation...",
+      "save": "Sauvegarder",
+      "saving": "Enregistrement..."
     },
     "toasts": {
       "invoiceDownloaded": "Facture téléchargée.",
       "invoicePrintReady": "Facture prête à imprimer.",
-      "exportSuccess": "Rapport {format} téléchargé."
+      "exportSuccess": "Rapport {format} téléchargé.",
+      "saved": "Abonnement mis à jour."
     },
     "errors": {
       "invoiceGeneric": "Impossible de générer la facture",
-      "exportFailed": "Export impossible"
+      "exportFailed": "Export impossible",
+      "saveFailed": "Impossible d'enregistrer l'abonnement"
     }
   },
   "superAdminGymTeam": {
@@ -2172,41 +2326,116 @@
         }
       },
       "stats": {
-        "clubs": { "value": "+180", "label": "Clubs gérés", "detail": "SaaS pour salles et réseaux multi-sites" },
-        "members": { "value": "42k", "label": "Membres suivis", "detail": "Gestion des abonnements et du contrôle d’accès" },
-        "satisfaction": { "value": "98%", "label": "Satisfaction", "detail": "Onboarding premium et support dédié" }
+        "clubs": {
+          "value": "+180",
+          "label": "Clubs gérés",
+          "detail": "SaaS pour salles et réseaux multi-sites"
+        },
+        "members": {
+          "value": "42k",
+          "label": "Membres suivis",
+          "detail": "Gestion des abonnements et du contrôle d’accès"
+        },
+        "satisfaction": {
+          "value": "98%",
+          "label": "Satisfaction",
+          "detail": "Onboarding premium et support dédié"
+        }
       },
       "pillars": {
-        "multiSite": { "title": "Multi-club / multi-site", "body": "Vue consolidée de tous les clubs, pilotage centralisé et permissions fines par équipe." },
-        "accessControl": { "title": "Contrôle d’accès en temps réel", "body": "QR codes, badges et suivi de présence pour sécuriser vos entrées." },
-        "billing": { "title": "Abonnements et facturation", "body": "Paiements, factures propres et relances automatiques sans tableurs." }
+        "multiSite": {
+          "title": "Multi-club / multi-site",
+          "body": "Vue consolidée de tous les clubs, pilotage centralisé et permissions fines par équipe."
+        },
+        "accessControl": {
+          "title": "Contrôle d’accès en temps réel",
+          "body": "QR codes, badges et suivi de présence pour sécuriser vos entrées."
+        },
+        "billing": {
+          "title": "Abonnements et facturation",
+          "body": "Paiements, factures propres et relances automatiques sans tableurs."
+        }
       },
       "features": {
-        "directorView": { "title": "Vue directeur réseau", "body": "Dashboards consolidés pour vos KPIs multi-sites et le trafic des clubs." },
-        "access": { "title": "Contrôle d’accès", "body": "Logs instantanés, alertes et gestion des permissions par club, badge ou QR code." },
-        "automation": { "title": "Automatisations & relances", "body": "Email/SMS pour renouvellements, paiements échoués et expirations afin de réduire le churn." },
-        "subscriptions": { "title": "Gestion des abonnements", "body": "Contrats, gel, renouvellements et prorata pour une facturation claire." },
-        "teams": { "title": "Supervision des équipes", "body": "Rôles, permissions et journal d’audit des actions sensibles par club." },
-        "reporting": { "title": "Reporting exportable", "body": "Exports CSV/PDF pour finance, comptabilité et partenaires franchisés." },
-        "security": { "title": "Fiabilité & sécurité", "body": "Chiffrement, sauvegardes et disponibilité pour un logiciel robuste." },
-        "api": { "title": "API & intégrations", "body": "Connectez votre CRM, votre site marketing ou vos tourniquets sans perte de données." }
+        "directorView": {
+          "title": "Vue directeur réseau",
+          "body": "Dashboards consolidés pour vos KPIs multi-sites et le trafic des clubs."
+        },
+        "access": {
+          "title": "Contrôle d’accès",
+          "body": "Logs instantanés, alertes et gestion des permissions par club, badge ou QR code."
+        },
+        "automation": {
+          "title": "Automatisations & relances",
+          "body": "Email/SMS pour renouvellements, paiements échoués et expirations afin de réduire le churn."
+        },
+        "subscriptions": {
+          "title": "Gestion des abonnements",
+          "body": "Contrats, gel, renouvellements et prorata pour une facturation claire."
+        },
+        "teams": {
+          "title": "Supervision des équipes",
+          "body": "Rôles, permissions et journal d’audit des actions sensibles par club."
+        },
+        "reporting": {
+          "title": "Reporting exportable",
+          "body": "Exports CSV/PDF pour finance, comptabilité et partenaires franchisés."
+        },
+        "security": {
+          "title": "Fiabilité & sécurité",
+          "body": "Chiffrement, sauvegardes et disponibilité pour un logiciel robuste."
+        },
+        "api": {
+          "title": "API & intégrations",
+          "body": "Connectez votre CRM, votre site marketing ou vos tourniquets sans perte de données."
+        }
       },
       "testimonials": {
-        "amine": { "quote": "GymWatch a structuré notre réseau multi-clubs. Les indicateurs sont clairs et le contrôle d’accès limite les abus.", "author": "Amine L.", "role": "Directeur réseau (8 clubs)" },
-        "sarah": { "quote": "Les relances automatiques ont réduit nos impayés et libéré du temps à l’accueil. Interface premium, zéro friction.", "author": "Sarah M.", "role": "COO franchise fitness" },
-        "youssef": { "quote": "Onboarding en 48h, équipe réactive, données sécurisées. C’est le SaaS gym qu’on cherchait.", "author": "Youssef K.", "role": "Responsable opérations" }
+        "amine": {
+          "quote": "GymWatch a structuré notre réseau multi-clubs. Les indicateurs sont clairs et le contrôle d’accès limite les abus.",
+          "author": "Amine L.",
+          "role": "Directeur réseau (8 clubs)"
+        },
+        "sarah": {
+          "quote": "Les relances automatiques ont réduit nos impayés et libéré du temps à l’accueil. Interface premium, zéro friction.",
+          "author": "Sarah M.",
+          "role": "COO franchise fitness"
+        },
+        "youssef": {
+          "quote": "Onboarding en 48h, équipe réactive, données sécurisées. C’est le SaaS gym qu’on cherchait.",
+          "author": "Youssef K.",
+          "role": "Responsable opérations"
+        }
       },
       "faq": {
-        "q1": { "question": "Le logiciel supporte-t-il les réseaux multi-clubs / multi-sites ?", "answer": "Oui. GymWatch offre une vue consolidée et des filtres par club pour membres, abonnements, contrôle d’accès et reporting." },
-        "q2": { "question": "Comment fonctionne le contrôle d’accès ?", "answer": "QR codes ou badges, validation en temps réel et alertes instantanées. Les permissions dépendent du site, du type d’abonnement et des créneaux horaires." },
-        "q3": { "question": "Peut-on automatiser relances et paiements ?", "answer": "Oui, relances email/SMS pour échéances et paiements échoués. Les factures sont générées automatiquement et exportables." },
-        "q4": { "question": "Y a-t-il un accompagnement pour le déploiement ?", "answer": "Notre équipe vous aide à migrer vos données, configurer l’accès et former le staff en quelques jours." },
-        "q5": { "question": "Le service est-il sécurisé ?", "answer": "Chiffrement, sauvegardes, rôles granulaires et journal d’audit des actions sensibles pour une gestion fiable." }
+        "q1": {
+          "question": "Le logiciel supporte-t-il les réseaux multi-clubs / multi-sites ?",
+          "answer": "Oui. GymWatch offre une vue consolidée et des filtres par club pour membres, abonnements, contrôle d’accès et reporting."
+        },
+        "q2": {
+          "question": "Comment fonctionne le contrôle d’accès ?",
+          "answer": "QR codes ou badges, validation en temps réel et alertes instantanées. Les permissions dépendent du site, du type d’abonnement et des créneaux horaires."
+        },
+        "q3": {
+          "question": "Peut-on automatiser relances et paiements ?",
+          "answer": "Oui, relances email/SMS pour échéances et paiements échoués. Les factures sont générées automatiquement et exportables."
+        },
+        "q4": {
+          "question": "Y a-t-il un accompagnement pour le déploiement ?",
+          "answer": "Notre équipe vous aide à migrer vos données, configurer l’accès et former le staff en quelques jours."
+        },
+        "q5": {
+          "question": "Le service est-il sécurisé ?",
+          "answer": "Chiffrement, sauvegardes, rôles granulaires et journal d’audit des actions sensibles pour une gestion fiable."
+        }
       },
       "plans": {
         "recommended": "Recommandé",
         "cta": "Réserver une démo",
-        "toggle": { "monthly": "Mensuel", "annual": "Annuel (-{discount}%)" },
+        "toggle": {
+          "monthly": "Mensuel",
+          "annual": "Annuel (-{discount}%)"
+        },
         "billing": {
           "perMonth": "/ mois",
           "monthlyHint": "Facturation mensuelle, résiliable à tout moment",
@@ -2217,20 +2446,50 @@
           "basic": {
             "name": "Basic",
             "description": "Les essentiels pour centraliser vos membres.",
-            "badges": ["Support email", "Alertes d’échéance"],
-            "features": ["Gestion des membres et abonnements", "Alertes d’expiration et relances", "Analytics essentiels", "Support email prioritaire"]
+            "badges": [
+              "Support email",
+              "Alertes d’échéance"
+            ],
+            "features": [
+              "Gestion des membres et abonnements",
+              "Alertes d’expiration et relances",
+              "Analytics essentiels",
+              "Support email prioritaire"
+            ]
           },
           "pro": {
             "name": "Pro",
             "description": "Automatisations, QR codes et exports avancés.",
-            "badges": ["QR codes", "Exports Excel"],
-            "features": ["Tout dans Basic", "Contrôle d’accès par QR code", "Suivi de présence en temps réel", "Alertes sonores succès/échec", "Exports Excel revenus & fidélité", "Exports PDF/Excel multi-clubs"]
+            "badges": [
+              "QR codes",
+              "Exports Excel"
+            ],
+            "features": [
+              "Tout dans Basic",
+              "Contrôle d’accès par QR code",
+              "Suivi de présence en temps réel",
+              "Alertes sonores succès/échec",
+              "Exports Excel revenus & fidélité",
+              "Exports PDF/Excel multi-clubs"
+            ]
           },
           "enterprise": {
             "name": "Enterprise",
             "description": "Offre multi-sites avec automatisations avancées et catalogues illimités.",
-            "badges": ["Sites illimités", "Automatisations", "Cours & planning"],
-            "features": ["Clubs et utilisateurs illimités", "Contrôle d’accès avancé (QR, badge, app membre)", "Suivi de présence multi-sites", "Gestion des cours & planning (multi-équipes)", "Exports CSV/PDF complets", "Analytics multi-sites détaillés", "Scénarios marketing (email/SMS) en cours"]
+            "badges": [
+              "Sites illimités",
+              "Automatisations",
+              "Cours & planning"
+            ],
+            "features": [
+              "Clubs et utilisateurs illimités",
+              "Contrôle d’accès avancé (QR, badge, app membre)",
+              "Suivi de présence multi-sites",
+              "Gestion des cours & planning (multi-équipes)",
+              "Exports CSV/PDF complets",
+              "Analytics multi-sites détaillés",
+              "Scénarios marketing (email/SMS) en cours"
+            ]
           }
         }
       },
@@ -3025,6 +3284,54 @@
         "pending": "Suppression...",
         "confirm": "Supprimer"
       }
+    }
+  },
+  "qrProfile": {
+    "meta": {
+      "title": "Badge QR membre",
+      "description": "Présentez ce badge pour accéder à votre salle ou consulter votre statut."
+    },
+    "hero": {
+      "badge": "Badge QR",
+      "subtitle": "Scannez pour afficher votre statut d'abonnement. L'accueil peut valider les passages."
+    },
+    "subscription": {
+      "title": "Abonnement",
+      "noPlan": "Aucun plan actif",
+      "period": "Du {start} au {end}",
+      "missing": "Dates d'abonnement indisponibles",
+      "progress": "Progression",
+      "daysRemaining": "{count} jour(s) restant(s)",
+      "status": {
+        "ACTIVE": "Actif",
+        "EXPIRES_TODAY": "Expire aujourd'hui",
+        "EXPIRED": "Expiré"
+      }
+    },
+    "visits": {
+      "title": "Visites",
+      "today": "Aujourd'hui",
+      "limitLabel": "Limite quotidienne",
+      "remaining": "Restant",
+      "unlimited": "Illimitée",
+      "limitReached": "Limite quotidienne atteinte"
+    },
+    "classes": {
+      "title": "Cours à venir",
+      "subtitle": "Réservations liées à ce membre",
+      "empty": "Aucun cours réservé"
+    },
+    "actions": {
+      "staffTitle": "Actions équipe",
+      "description": "Vous êtes connecté en tant que staff pour cette salle. Validez le scan ici.",
+      "checkIn": "Entrée",
+      "checkOut": "Sortie",
+      "saving": "Enregistrement...",
+      "disabled": "Le contrôle d'accès n'est pas activé pour cette salle",
+      "success": "Visite enregistrée pour {name}",
+      "checkoutSuccess": "Sortie enregistrée pour {name}",
+      "error": "Échec du scan",
+      "fallback": "membre"
     }
   }
 }

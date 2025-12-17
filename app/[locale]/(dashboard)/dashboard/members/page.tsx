@@ -39,6 +39,7 @@ import { PaginationControls, usePagination } from "@/components/dashboard/pagina
 import { usePlanFeatures } from "@/app/hooks/use-plan-features"
 import { useVariantOptions } from "@/app/hooks/use-variants"
 import { VariantSelector } from "@/components/dashboard/variant-selector"
+import { buildQrUrl, extractQrToken } from "@/lib/qr"
 
 const Scanner = dynamic<IScannerProps>(() => import("@yudiel/react-qr-scanner").then((mod) => mod.Scanner), {
   ssr: false,
@@ -282,8 +283,10 @@ export default function MembersPage() {
     oscillator.stop(ctx.currentTime + 0.2)
   }
 
-  const handleScan = async (token: string | null) => {
-    if (!token || token.length < 10) return
+  const handleScan = async (rawToken: string | null) => {
+    const token = extractQrToken(rawToken ?? "")
+    if (!token) return
+
     const tokenKey = `${token}-${scanDirection}`
     if (lastTokenRef.current === tokenKey) return
     lastTokenRef.current = tokenKey
@@ -545,7 +548,14 @@ export default function MembersPage() {
     if (!qrMember) return
     let active = true
     setQrImage("")
-    QRCode.toDataURL(qrMember.qrToken, { width: 320, margin: 2 }).then((url: string) => {
+    const value = (() => {
+      try {
+        return buildQrUrl(qrMember.qrToken, locale, typeof window !== "undefined" ? window.location.origin : undefined)
+      } catch {
+        return qrMember.qrToken
+      }
+    })()
+    QRCode.toDataURL(value, { width: 320, margin: 2 }).then((url: string) => {
       if (active) {
         setQrImage(url)
       }
@@ -553,7 +563,7 @@ export default function MembersPage() {
     return () => {
       active = false
     }
-  }, [qrMember])
+  }, [locale, qrMember])
 
   useEffect(() => {
     if (editingId) return

@@ -19,6 +19,7 @@ import { Label } from '@/components/ui/label'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Switch } from '@/components/ui/switch'
 import { usePlanFeatures } from '@/app/hooks/use-plan-features'
+import { buildQrUrl } from '@/lib/qr'
 
 interface MemberDetail {
   id: string
@@ -130,13 +131,25 @@ export default function MemberBadgePage() {
     if (!memberQuery.data?.qrToken || !hasQrTools) return
     let active = true
     setQrImage('')
-    QRCode.toDataURL(memberQuery.data.qrToken, { width: 280, margin: 2 }).then((url) => {
+    const value = (() => {
+      try {
+        return buildQrUrl(
+          memberQuery.data?.qrToken,
+          locale,
+          typeof window !== 'undefined' ? window.location.origin : undefined,
+        )
+      } catch {
+        return memberQuery.data?.qrToken
+      }
+    })()
+
+    QRCode.toDataURL(value, { width: 280, margin: 2 }).then((url) => {
       if (active) setQrImage(url)
     })
     return () => {
       active = false
     }
-  }, [memberQuery.data?.qrToken, hasQrTools])
+  }, [locale, memberQuery.data?.qrToken, hasQrTools])
 
   const simulateScan = useMutation({
     mutationFn: async (withVisit: boolean) => {

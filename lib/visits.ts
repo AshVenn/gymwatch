@@ -26,6 +26,8 @@ export type VisitResult = {
   lastName: string
   memberName: string
   planName: string | null
+  planDurationDays: number | null
+  subscriptionStartsAt: Date | null
   subscriptionEndsAt: Date | null
   status: SubscriptionStatus
   active: boolean
@@ -205,6 +207,8 @@ export async function markVisitForMember({
       lastName: member.lastName,
       memberName: `${member.firstName} ${member.lastName}`.trim(),
       planName: latestSubscription?.plan?.name ?? null,
+      planDurationDays: latestSubscription?.plan?.durationDays ?? null,
+      subscriptionStartsAt: latestSubscription?.startDate ?? null,
       subscriptionEndsAt: latestSubscription?.endDate ?? null,
       status,
       active: isActive,
@@ -250,13 +254,15 @@ export async function markVisitForMember({
     memberId: member.id,
     firstName: member.firstName,
     lastName: member.lastName,
-    memberName: `${member.firstName} ${member.lastName}`.trim(),
-    planName: latestSubscription?.plan?.name ?? null,
-    subscriptionEndsAt: latestSubscription?.endDate ?? null,
-    status,
-    active: isActive,
-    alreadyVisited: visitsToday > 0,
-    visitsToday: updatedVisitsToday,
+      memberName: `${member.firstName} ${member.lastName}`.trim(),
+      planName: latestSubscription?.plan?.name ?? null,
+      planDurationDays: latestSubscription?.plan?.durationDays ?? null,
+      subscriptionStartsAt: latestSubscription?.startDate ?? null,
+      subscriptionEndsAt: latestSubscription?.endDate ?? null,
+      status,
+      active: isActive,
+      alreadyVisited: visitsToday > 0,
+      visitsToday: updatedVisitsToday,
     visitLimit,
     visitsRemaining,
     limitState,

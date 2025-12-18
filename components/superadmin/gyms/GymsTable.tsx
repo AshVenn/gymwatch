@@ -6,6 +6,7 @@ import {
   ClipboardList,
   FileCog,
   PenSquare,
+  User2,
   Trash2,
   Users,
 } from 'lucide-react'
@@ -34,6 +35,7 @@ import { getPlanFeatures } from '@/lib/subscription-plans'
 
 export type GymAction =
   | 'overview'
+  | 'members'
   | 'team'
   | 'plans'
   | 'subscription'
@@ -57,6 +59,12 @@ const STATUS_KEY: Record<string, 'active' | 'suspended' | 'expired'> = {
   ACTIVE: 'active',
   SUSPENDED: 'suspended',
   EXPIRED: 'expired',
+}
+
+const STATUS_STYLES: Record<'active' | 'suspended' | 'expired', string> = {
+  active: 'border-emerald-500/60 bg-emerald-500/10 text-emerald-900 dark:text-emerald-50 dark:border-emerald-400/60',
+  suspended: 'border-amber-500/60 bg-amber-500/10 text-amber-900 dark:text-amber-50 dark:border-amber-400/60',
+  expired: 'border-rose-500/60 bg-rose-500/10 text-rose-900 dark:text-rose-50 dark:border-rose-400/60',
 }
 
 const PLAN_KEY: Record<string, 'basic' | 'pro' | 'enterprise'> = {
@@ -86,6 +94,7 @@ export function GymsTable({
     tone?: 'destructive'
   }> = [
     { type: 'overview', icon: BarChart3, label: t('actions.overview') },
+    { type: 'members', icon: User2, label: t('actions.members') },
     { type: 'team', icon: Users, label: t('actions.team') },
     { type: 'plans', icon: ClipboardList, label: t('actions.plans') },
     { type: 'subscription', icon: FileCog, label: t('actions.subscription') },
@@ -173,13 +182,7 @@ export function GymsTable({
                 </TableCell>
 
                 <TableCell>
-                  <Badge
-                    variant={
-                      gym.subscriptionStatus === 'EXPIRED'
-                        ? 'destructive'
-                        : 'secondary'
-                    }
-                  >
+                  <Badge variant="outline" className={cn('text-xs font-semibold', STATUS_STYLES[statusKey])}>
                     {t(`status.${statusKey}`)}
                   </Badge>
 
@@ -198,6 +201,11 @@ export function GymsTable({
                       }),
                     })}
                   </p>
+                  {gym.subscriptionStatus === 'SUSPENDED' && gym.freezeReason ? (
+                    <p className="text-xs text-amber-600 dark:text-amber-200">
+                      {t('suspensionReason', { reason: gym.freezeReason })}
+                    </p>
+                  ) : null}
 
                   <p className="text-xs text-muted-foreground">
                     {t(

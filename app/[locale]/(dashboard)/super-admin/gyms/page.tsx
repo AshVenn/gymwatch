@@ -10,6 +10,7 @@ import { GymFilters } from "@/components/superadmin/gyms/GymFilters"
 import { GymsTable, type GymAction } from "@/components/superadmin/gyms/GymsTable"
 import { GymDetailDialog } from "@/components/superadmin/gyms/GymDetailDialog/GymDetailDialog"
 import { CreateGymDialog } from "@/components/superadmin/gyms/CreateGymDialog"
+import { GymMembersSheet } from "@/components/superadmin/gyms/GymMembersSheet"
 import { GymActionSheet } from "@/components/superadmin/gyms/GymActionSheet"
 import { EditGymDialog } from "@/components/superadmin/gyms/EditGymDialog"
 import { DeleteGymDialog } from "@/components/superadmin/gyms/DeleteGymDialog"
@@ -127,6 +128,13 @@ export default function SuperAdminGymsPage() {
       <EditGymDialog gymId={currentAction.type === "edit" ? currentAction.gymId : null} onClose={closeAction} />
 
       <DeleteGymDialog gym={currentAction.type === "delete" ? selectedGym : null} onClose={closeAction} />
+
+      <GymMembersSheet
+        gymId={currentAction.type === "members" ? currentAction.gymId : null}
+        gymName={selectedGym?.name}
+        open={currentAction.type === "members" && Boolean(currentAction.gymId)}
+        onClose={closeAction}
+      />
     </div>
   )
 }

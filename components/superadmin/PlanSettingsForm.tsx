@@ -56,6 +56,7 @@ function formatCurrency(value: number, locale: string) {
 
 export function PlanSettingsForm() {
   const t = useTranslations('planSettings')
+  const capT = useTranslations('superAdminPlanCap')
   const locale = useLocale()
 
   const { data, isLoading } = usePlanSettings()
@@ -111,7 +112,7 @@ export function PlanSettingsForm() {
   )
 
   const formatLimit = (value?: number | null) => {
-    if (isUnlimitedLimit(value)) return t('limits.unlimited')
+    if (isUnlimitedLimit(value)) return capT('unlimited')
     return t('limits.activeCount', { count: value ?? 0 })
   }
 
@@ -259,7 +260,7 @@ export function PlanSettingsForm() {
                       name="basicPlanLimitPerVariant"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>{t('limits.perVariant')}</FormLabel>
+                          <FormLabel>{capT('perVariant')}</FormLabel>
                           <FormControl>
                             <Input type="number" step="1" {...field} />
                           </FormControl>
@@ -272,7 +273,7 @@ export function PlanSettingsForm() {
                       name="basicPlanLimitPerNetwork"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>{t('limits.perNetwork')}</FormLabel>
+                          <FormLabel>{capT('perNetwork')}</FormLabel>
                           <FormControl>
                             <Input type="number" step="1" {...field} />
                           </FormControl>
@@ -296,7 +297,7 @@ export function PlanSettingsForm() {
                       name="proPlanLimitPerVariant"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>{t('limits.perVariant')}</FormLabel>
+                          <FormLabel>{capT('perVariant')}</FormLabel>
                           <FormControl>
                             <Input type="number" step="1" {...field} />
                           </FormControl>
@@ -309,7 +310,7 @@ export function PlanSettingsForm() {
                       name="proPlanLimitPerNetwork"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>{t('limits.perNetwork')}</FormLabel>
+                          <FormLabel>{capT('perNetwork')}</FormLabel>
                           <FormControl>
                             <Input type="number" step="1" {...field} />
                           </FormControl>
@@ -333,7 +334,7 @@ export function PlanSettingsForm() {
                       name="enterprisePlanLimitPerVariant"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>{t('limits.perVariant')}</FormLabel>
+                          <FormLabel>{capT('perVariant')}</FormLabel>
                           <FormControl>
                             <Input type="number" step="1" {...field} />
                           </FormControl>
@@ -346,7 +347,7 @@ export function PlanSettingsForm() {
                       name="enterprisePlanLimitPerNetwork"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>{t('limits.perNetwork')}</FormLabel>
+                          <FormLabel>{capT('perNetwork')}</FormLabel>
                           <FormControl>
                             <Input type="number" step="1" {...field} />
                           </FormControl>

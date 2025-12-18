@@ -4,7 +4,7 @@ import Link from "next/link"
 import { useEffect, useMemo, useState } from "react"
 import { useSession } from "next-auth/react"
 import { useMutation, useQuery } from "@tanstack/react-query"
-import { Activity, AlertTriangle, Clock3, LogOut, RefreshCw, Users } from "lucide-react"
+import { Activity, AlertTriangle, CheckCircle2, Clock3, LogOut, RefreshCw, Users } from "lucide-react"
 import { useLocale, useTranslations } from "next-intl"
 import { toast } from "sonner"
 
@@ -63,6 +63,15 @@ type VisitAnalyticsResponse = {
   maxSessionMinutes: number | null
 }
 
+type MemberForVisit = {
+  id: string
+  firstName: string
+  lastName: string
+  email?: string | null
+  phone?: string | null
+  gymVariant?: { id: string; name: string; slug: string } | null
+}
+
 const formatInputDate = (date: Date) => date.toISOString().slice(0, 10)
 const formatTimeInput = (value: Date) => value.toISOString().slice(11, 16)
 const buildDateTimeString = (date: string, time?: string) => {
@@ -81,9 +90,11 @@ const defaultSummary = {
 
 export default function PresencePage() {
   const t = useTranslations("dashboard.presence")
+  const tMembers = useTranslations("dashboard.members")
   const tFeatureAccess = useTranslations("dashboard.featureAccess")
   const locale = useLocale()
   const { data: session, status } = useSession()
+  const gymId = (session?.user as any)?.gymId as string | undefined
   const { tier, hasAccessControl, hasPresence, hasCourses, hasExcelReports, hasMultiLocations } = usePlanFeatures()
 
   const {
@@ -122,6 +133,9 @@ export default function PresencePage() {
   const [checkoutTime, setCheckoutTime] = useState<string>(formatTimeInput(new Date()))
   const [checkoutWindowStart, setCheckoutWindowStart] = useState<string>("")
   const [checkoutWindowEnd, setCheckoutWindowEnd] = useState<string>("")
+  const [manualVisitDialogOpen, setManualVisitDialogOpen] = useState(false)
+  const [manualVisitSearch, setManualVisitSearch] = useState("")
+  const [manualVisitLoading, setManualVisitLoading] = useState<string | null>(null)
 
   const planLabel = tier === "ENTERPRISE" ? "Enterprise" : tier === "PRO" ? "Pro" : "Basic"
 
@@ -154,6 +168,21 @@ export default function PresencePage() {
         : allowAllVariants
           ? null
           : (defaultVariantId ?? variants[0]?.id ?? null)
+
+  const manualVisitMembers = useQuery<MemberForVisit[]>({
+    queryKey: ["manual-visit-members", gymId, variantFilter],
+    enabled: status === "authenticated" && hasPresence && manualVisitDialogOpen && Boolean(gymId) && !variantsLoading,
+    queryFn: async () => {
+      const params = new URLSearchParams()
+      if (variantFilter) params.set("variantId", variantFilter)
+      const response = await fetch(`/api/gym-team/members${params.toString() ? `?${params.toString()}` : ""}`)
+      if (!response.ok) {
+        throw new Error(tMembers("errors.loadMembers"))
+      }
+      const data = await response.json()
+      return Array.isArray(data) ? data : []
+    },
+  })
 
   const visitsQuery = useQuery<VisitAnalyticsResponse>({
     queryKey: ["visits", session?.user?.gymId, variantFilter, view, selectedDate, from, to, search],
@@ -316,6 +345,105 @@ export default function PresencePage() {
     ],
   )
 
+  const manualVisitOptions = useMemo(() => {
+    const list = manualVisitMembers.data ?? []
+    const term = manualVisitSearch.trim().toLowerCase()
+    return list
+      .filter((member) => {
+        const matchesVariant = !variantFilter || member.gymVariant?.id === variantFilter
+        if (!matchesVariant) return false
+        if (!term) return true
+        const fullName = `${member.firstName} ${member.lastName}`.toLowerCase()
+        return (
+          fullName.includes(term) ||
+          (member.email ?? "").toLowerCase().includes(term) ||
+          (member.phone ?? "").toLowerCase().includes(term)
+        )
+      })
+      .sort((a, b) => a.firstName.localeCompare(b.firstName))
+  }, [manualVisitMembers.data, manualVisitSearch, variantFilter])
+
+  const markManualVisit = async (memberId: string) => {
+    if (!memberId) return
+    try {
+      setManualVisitLoading(memberId)
+      const response = await fetch("/api/gym-team/visits", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ memberId, markVisit: true }),
+      })
+      const data = await response.json().catch(() => ({}))
+      if (!response.ok) {
+        throw new Error((data as any)?.error || tMembers("errors.markVisit"))
+      }
+      const fullName = (data as any)?.memberName || tMembers("visits.fullNameFallback")
+      const visitLimit = typeof (data as any)?.visitLimit === "number" ? (data as any).visitLimit : null
+      const visitsToday = typeof (data as any)?.visitsToday === "number" ? (data as any).visitsToday : null
+      const overDailyLimit =
+        typeof (data as any)?.overDailyLimit === "boolean"
+          ? (data as any).overDailyLimit
+          : visitLimit !== null && visitLimit > 0 && visitsToday !== null && visitsToday >= visitLimit
+      const visitsRemaining =
+        typeof (data as any)?.visitsRemaining === "number" ? Math.max((data as any).visitsRemaining, 0) : null
+      const limitState = ((data as any).limitState as string) ?? "OK"
+      const limitWarning = limitState === "WARNING"
+      const openVisitId = typeof (data as any)?.openVisitId === "string" ? (data as any).openVisitId : null
+      const hasOpenVisit = Boolean(openVisitId)
+      const blocked = (limitState === "BLOCKED" || overDailyLimit) && !hasOpenVisit
+
+      if (!(data as any)?.active) {
+        toast.error(tMembers("toasts.visitInactive"))
+        return
+      }
+
+      if (hasOpenVisit) {
+        if (openVisitId) {
+          setCheckoutVisitId(openVisitId)
+          setCheckoutDialogOpen(true)
+          const now = new Date()
+          setCheckoutDate(formatInputDate(now))
+          setCheckoutTime(formatTimeInput(now))
+        }
+        toast.warning(tMembers("toasts.checkoutRequired", { name: fullName }))
+        setManualVisitDialogOpen(false)
+        return
+      }
+
+      if (blocked) {
+        toast.error(tMembers("toasts.visitLimitReached", { name: fullName }))
+        return
+      }
+
+      if (limitWarning) {
+        const remainingLabel =
+          visitsRemaining !== null ? tMembers("visits.remainingLabel", { remaining: visitsRemaining }) : ""
+        toast.warning(
+          tMembers("toasts.visitLastOfDay", {
+            name: fullName,
+            remainingLabel,
+          }),
+        )
+      }
+
+      const remainingLabel =
+        visitsRemaining !== null ? tMembers("visits.remainingLabel", { remaining: visitsRemaining }) : ""
+      toast.success(
+        tMembers("toasts.visitRecorded", {
+          name: fullName,
+          count: (data as any)?.todayVisitorCount ?? 0,
+          remainingLabel,
+        }),
+      )
+      setManualVisitDialogOpen(false)
+      visitsQuery.refetch()
+    } catch (error) {
+      const message = error instanceof Error ? error.message : tMembers("errors.markVisit")
+      toast.error(message)
+    } finally {
+      setManualVisitLoading(null)
+    }
+  }
+
   if (status === "loading" || variantsLoading) {
     return (
       <div className="space-y-4 animate-in fade-in duration-500">
@@ -371,6 +499,78 @@ export default function PresencePage() {
             loading={variantsLoading}
             allowAll={allowAllVariants}
           />
+
+          <Dialog open={manualVisitDialogOpen} onOpenChange={setManualVisitDialogOpen}>
+            <DialogTrigger asChild>
+              <Button
+                variant="outline"
+                onClick={() => setManualVisitDialogOpen(true)}
+                className="rounded-2xl border-emerald-200 bg-emerald-50 text-emerald-700 transition-all hover:scale-105 hover:bg-emerald-100"
+              >
+                <CheckCircle2 className="mr-2 h-4 w-4" />
+                {tMembers("visitsDialog.trigger")}
+              </Button>
+            </DialogTrigger>
+
+            <DialogContent className="max-w-md sm:max-w-lg w-[95vw]">
+              <DialogHeader>
+                <DialogTitle>{tMembers("visitsDialog.title")}</DialogTitle>
+                <DialogDescription>{tMembers("visitsDialog.description")}</DialogDescription>
+              </DialogHeader>
+              <div className="space-y-3">
+                <Input
+                  placeholder={tMembers("visitsDialog.searchPlaceholder")}
+                  value={manualVisitSearch}
+                  onChange={(event) => setManualVisitSearch(event.target.value)}
+                />
+                <div className="max-h-72 overflow-y-auto space-y-2">
+                  {manualVisitMembers.isLoading ? (
+                    <div className="space-y-2">
+                      <Skeleton className="h-12 w-full rounded-lg" />
+                      <Skeleton className="h-12 w-full rounded-lg" />
+                    </div>
+                  ) : manualVisitMembers.isError ? (
+                    <p className="text-sm text-destructive">{tMembers("errors.loadMembers")}</p>
+                  ) : manualVisitOptions.length === 0 ? (
+                    <p className="text-sm text-muted-foreground">{tMembers("visitsDialog.empty")}</p>
+                  ) : (
+                    manualVisitOptions.map((member) => (
+                      <div
+                        key={member.id}
+                        className="flex items-center justify-between rounded-lg border border-border/60 px-3 py-2"
+                      >
+                        <div>
+                          <p className="font-semibold">
+                            {member.firstName} {member.lastName}
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            {member.email || member.phone || tMembers("visitsDialog.noContact")}
+                          </p>
+                          {member.gymVariant?.name ? (
+                            <p className="text-xs text-muted-foreground">
+                              {tMembers("visitsDialog.variantLabel", {
+                                variant: member.gymVariant.name,
+                              })}
+                            </p>
+                          ) : null}
+                        </div>
+                        <Button
+                          size="sm"
+                          variant="secondary"
+                          disabled={manualVisitLoading === member.id}
+                          onClick={() => markManualVisit(member.id)}
+                        >
+                          {manualVisitLoading === member.id
+                            ? tMembers("visitsDialog.actions.saving")
+                            : tMembers("visitsDialog.actions.submit")}
+                        </Button>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
+            </DialogContent>
+          </Dialog>
 
           <Dialog open={checkoutDialogOpen} onOpenChange={setCheckoutDialogOpen}>
             <DialogTrigger asChild>

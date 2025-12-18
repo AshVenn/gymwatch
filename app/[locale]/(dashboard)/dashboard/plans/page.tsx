@@ -6,8 +6,7 @@ import { useLocale, useTranslations } from "next-intl"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-import { MoreVertical, Plus, Edit2, Trash2 } from "lucide-react"
+import { Plus, Edit2, Trash2 } from "lucide-react"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { toast } from "sonner"
 import { usePagination } from "@/components/dashboard/pagination-controls"
@@ -20,6 +19,7 @@ import { Select,SelectItem,SelectTrigger,SelectValue,SelectContent } from "@/com
 import { Dialog,DialogContent,DialogHeader,DialogTitle } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Switch } from "@/components/ui/switch"
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 
 interface Plan {
   id: string
@@ -415,152 +415,6 @@ export default function PlansPage() {
             ) : null}
           </div>
         ) : null}
-        {/* </Enhanced limits alert */}
-                <Dialog open={isOpen} onOpenChange={setIsOpen}>
-          <DialogContent className="max-w-md sm:max-w-lg w-[95vw]">
-            <DialogHeader>
-              <DialogTitle>{editingId ? t('page.dialog.editTitle') : t('page.dialog.addTitle')}</DialogTitle>
-            </DialogHeader>
-
-            {error && <p className="text-sm text-destructive">{error}</p>}
-
-            <div className="space-y-4">
-              <div>
-                <Label htmlFor="plan-variant">{t('page.dialog.variant')}</Label>
-                {isGymAdmin ? (
-                  <p className="text-sm text-muted-foreground">
-                    {variants.find((variant) => variant.id === lockedVariantId)?.name ?? t('page.dialog.assignedVariant')}
-                  </p>
-                ) : (
-                  <Select value={effectivePlanVariantId} onValueChange={(value) => setPlanVariantId(value)}>
-                    <SelectTrigger id="plan-variant">
-                      <SelectValue placeholder={t('page.dialog.variantPlaceholder')} />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {(variants ?? []).map((variant) => (
-                        <SelectItem key={variant.id} value={variant.id}>
-                          {variant.name} {variant.isDefault ? t('page.dialog.default') : ''}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                )}
-              </div>
-              <div>
-                <Label htmlFor="plan-name">{t('page.dialog.name')}</Label>
-                <Input
-                  id="plan-name"
-                  value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  placeholder={t('page.dialog.namePlaceholder')}
-                />
-              </div>
-
-              <div>
-                <Label htmlFor="plan-duration">{t('page.dialog.duration')}</Label>
-                <Input
-                  id="plan-duration"
-                  type="number"
-                  value={formData.durationDays}
-                  onChange={(e) => setFormData({ ...formData, durationDays: e.target.value })}
-                  placeholder="30"
-                />
-              </div>
-
-              <div>
-                <Label htmlFor="plan-price">{t('page.dialog.price')}</Label>
-                <Input
-                  id="plan-price"
-                  type="number"
-                  step="0.01"
-                  value={formData.price}
-                  onChange={(e) => setFormData({ ...formData, price: e.target.value })}
-                  placeholder="300"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <Label htmlFor="plan-visits">{t('page.dialog.visitsPerDay')}</Label>
-                  <div className="flex items-center gap-2">
-                    <Switch
-                      id="plan-visits-unlimited"
-                      checked={formData.unlimitedVisits}
-                      onCheckedChange={(checked) =>
-                        setFormData((prev) => ({
-                          ...prev,
-                          unlimitedVisits: checked,
-                          visitsPerDay: checked ? '' : prev.visitsPerDay || '1',
-                        }))
-                      }
-                    />
-                    <Label htmlFor="plan-visits-unlimited" className="text-sm text-muted-foreground">
-                      {t('page.dialog.unlimited')}
-                    </Label>
-                  </div>
-                </div>
-                <Input
-                  id="plan-visits"
-                  type="number"
-                  min={1}
-                  disabled={formData.unlimitedVisits}
-                  value={formData.unlimitedVisits ? '' : formData.visitsPerDay}
-                  onChange={(e) => setFormData({ ...formData, visitsPerDay: e.target.value })}
-                  placeholder="1"
-                />
-                <p className="text-xs text-muted-foreground">
-                  {t('page.dialog.visitsHelper')}
-                </p>
-              </div>
-
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <Label htmlFor="plan-session-limit">{t('page.dialog.sessionLimit')}</Label>
-                  <span className="text-xs text-muted-foreground">
-                    {selectedVariantLimit
-                      ? t('page.dialog.sessionLimitVariant', { limit: selectedVariantLimit })
-                      : t('page.dialog.sessionLimitFallback')}
-                  </span>
-                </div>
-                <Input
-                  id="plan-session-limit"
-                  type="number"
-                  min={1}
-                  value={formData.maxSessionMinutes}
-                  onChange={(e) => setFormData({ ...formData, maxSessionMinutes: e.target.value })}
-                  placeholder={
-                    selectedVariantLimit
-                      ? String(selectedVariantLimit)
-                      : t('page.dialog.sessionLimitPlaceholder')
-                  }
-                />
-                <p className="text-xs text-muted-foreground">
-                  {t('page.dialog.sessionLimitHelper')}
-                </p>
-              </div>
-
-              <div className="flex items-center justify-between">
-                <Label htmlFor="plan-active" className="text-sm font-medium">
-                  {t('page.dialog.active')}
-                </Label>
-                <Switch
-                  id="plan-active"
-                  checked={formData.isActive}
-                  onCheckedChange={(checked) => setFormData({ ...formData, isActive: checked })}
-                />
-              </div>
-
-              <Button onClick={handleSubmit} className="w-full" disabled={savePlanMutation.isPending}>
-                {savePlanMutation.isPending
-                  ? t('page.dialog.saving')
-                  : editingId
-                    ? t('page.dialog.update')
-                    : t('page.dialog.create')}
-              </Button>
-            </div>
-          </DialogContent>
-        </Dialog>
-
         <div className="overflow-hidden rounded-3xl border border-border/60 bg-card/90 shadow-md backdrop-blur-sm">
           <Table>
             <TableHeader>
@@ -596,23 +450,37 @@ export default function PlansPage() {
                   </TableCell>
                   <TableCell>{plan.gymVariant?.name ?? "-"}</TableCell>
                   <TableCell className="text-right">
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="sm">
-                          <MoreVertical size={16} />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem onSelect={() => handleEditPlan(plan)}>
-                          <Edit2 className="mr-2" size={16} />
-                          {t("page.table.edit")}
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onSelect={() => handleDeletePlan(plan.id)} className="text-destructive">
-                          <Trash2 className="mr-2" size={16} />
-                          {t("page.table.delete")}
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
+                    <TooltipProvider>
+                      <div className="flex justify-end gap-1.5">
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button
+                              size="icon"
+                              variant="outline"
+                              className="h-9 w-9 rounded-full border-sky-200 bg-sky-50 text-sky-700 hover:bg-sky-100"
+                              onClick={() => handleEditPlan(plan)}
+                            >
+                              <Edit2 className="h-4 w-4" />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>{t("page.table.edit")}</TooltipContent>
+                        </Tooltip>
+
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button
+                              size="icon"
+                              variant="ghost"
+                              className="h-9 w-9 rounded-full text-destructive hover:bg-destructive/10 hover:text-destructive focus-visible:text-destructive"
+                              onClick={() => handleDeletePlan(plan.id)}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>{t("page.table.delete")}</TooltipContent>
+                        </Tooltip>
+                      </div>
+                    </TooltipProvider>
                   </TableCell>
                 </TableRow>
               ))}
@@ -634,6 +502,145 @@ export default function PlansPage() {
             {t("page.loadError")}
           </div>
         ) : null}
+
+        <Dialog open={isOpen} onOpenChange={setIsOpen}>
+          <DialogContent className="max-w-md sm:max-w-lg w-[95vw]">
+            <DialogHeader>
+              <DialogTitle>{editingId ? t("page.dialog.editTitle") : t("page.dialog.addTitle")}</DialogTitle>
+            </DialogHeader>
+
+            {error && <p className="text-sm text-destructive">{error}</p>}
+
+            <div className="space-y-4">
+              <div>
+                <Label htmlFor="plan-variant">{t("page.dialog.variant")}</Label>
+                {isGymAdmin ? (
+                  <p className="text-sm text-muted-foreground">
+                    {variants.find((variant) => variant.id === lockedVariantId)?.name ??
+                      t("page.dialog.assignedVariant")}
+                  </p>
+                ) : (
+                  <Select value={effectivePlanVariantId} onValueChange={(value) => setPlanVariantId(value)}>
+                    <SelectTrigger id="plan-variant">
+                      <SelectValue placeholder={t("page.dialog.variantPlaceholder")} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {(variants ?? []).map((variant) => (
+                        <SelectItem key={variant.id} value={variant.id}>
+                          {variant.name} {variant.isDefault ? t("page.dialog.default") : ""}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
+              </div>
+
+              <div>
+                <Label htmlFor="plan-name">{t("page.dialog.name")}</Label>
+                <Input
+                  id="plan-name"
+                  value={formData.name}
+                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  placeholder={t("page.dialog.namePlaceholder")}
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="plan-duration">{t("page.dialog.duration")}</Label>
+                <Input
+                  id="plan-duration"
+                  type="number"
+                  value={formData.durationDays}
+                  onChange={(e) => setFormData({ ...formData, durationDays: e.target.value })}
+                  placeholder="30"
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="plan-price">{t("page.dialog.price")}</Label>
+                <Input
+                  id="plan-price"
+                  type="number"
+                  step="0.01"
+                  value={formData.price}
+                  onChange={(e) => setFormData({ ...formData, price: e.target.value })}
+                  placeholder="300"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="plan-visits">{t("page.dialog.visitsPerDay")}</Label>
+                  <div className="flex items-center gap-2">
+                    <Switch
+                      id="plan-visits-unlimited"
+                      checked={formData.unlimitedVisits}
+                      onCheckedChange={(checked) =>
+                        setFormData((prev) => ({
+                          ...prev,
+                          unlimitedVisits: checked,
+                          visitsPerDay: checked ? "" : prev.visitsPerDay || "1",
+                        }))
+                      }
+                    />
+                    <Label htmlFor="plan-visits-unlimited" className="text-sm text-muted-foreground">
+                      {t("page.dialog.unlimited")}
+                    </Label>
+                  </div>
+                </div>
+                <Input
+                  id="plan-visits"
+                  type="number"
+                  min={1}
+                  disabled={formData.unlimitedVisits}
+                  value={formData.unlimitedVisits ? "" : formData.visitsPerDay}
+                  onChange={(e) => setFormData({ ...formData, visitsPerDay: e.target.value })}
+                  placeholder="1"
+                />
+                <p className="text-xs text-muted-foreground">{t("page.dialog.visitsHelper")}</p>
+              </div>
+
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="plan-session-limit">{t("page.dialog.sessionLimit")}</Label>
+                  <span className="text-xs text-muted-foreground">
+                    {selectedVariantLimit
+                      ? t("page.dialog.sessionLimitVariant", { limit: selectedVariantLimit })
+                      : t("page.dialog.sessionLimitFallback")}
+                  </span>
+                </div>
+                <Input
+                  id="plan-session-limit"
+                  type="number"
+                  min={1}
+                  value={formData.maxSessionMinutes}
+                  onChange={(e) => setFormData({ ...formData, maxSessionMinutes: e.target.value })}
+                  placeholder={selectedVariantLimit ? String(selectedVariantLimit) : t("page.dialog.sessionLimitPlaceholder")}
+                />
+                <p className="text-xs text-muted-foreground">{t("page.dialog.sessionLimitHelper")}</p>
+              </div>
+
+              <div className="flex items-center justify-between">
+                <Label htmlFor="plan-active" className="text-sm font-medium">
+                  {t("page.dialog.active")}
+                </Label>
+                <Switch
+                  id="plan-active"
+                  checked={formData.isActive}
+                  onCheckedChange={(checked) => setFormData({ ...formData, isActive: checked })}
+                />
+              </div>
+
+              <Button onClick={handleSubmit} className="w-full" disabled={savePlanMutation.isPending}>
+                {savePlanMutation.isPending
+                  ? t("page.dialog.saving")
+                  : editingId
+                    ? t("page.dialog.update")
+                    : t("page.dialog.create")}
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
     )
   }

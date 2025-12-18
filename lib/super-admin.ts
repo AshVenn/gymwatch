@@ -1,7 +1,7 @@
-import { GymSubscriptionStatus, UserRole } from "@prisma/client"
+import { GymFreezeStatus, GymSubscriptionStatus, UserRole } from "@prisma/client"
 import { prisma } from "./prisma"
 import { hashPassword } from "./auth"
-import { getPlanFeatures } from "./subscription-plans"
+import { applyFeatureOverrides, getPlanFeatures, type FeatureOverrideMap } from "./subscription-plans"
 import { resolvePlanPrice } from "./plan-settings"
 import { GymPlanTier, GymBillingInterval } from "@prisma/client"
 import { resolveGymPlanLimits } from "./plan-settings"
@@ -56,6 +56,29 @@ function resolveVariantMode(
 ) {
   const total = typeof count === "number" ? count : variants?.length ?? 0
   return total > 1 ? "MULTI" : "SINGLE"
+}
+
+type OverrideMapByGym = Record<string, FeatureOverrideMap>
+
+async function fetchFeatureOverridesForGyms(gymIds: string[]): Promise<OverrideMapByGym> {
+  if (!gymIds.length) return {}
+
+  const rows = await prisma.featureOverride.findMany({
+    where: { gymId: { in: gymIds } },
+    select: { gymId: true, feature: true, enabled: true },
+  })
+
+  return rows.reduce<OverrideMapByGym>((acc, row) => {
+    const current = acc[row.gymId] ?? {}
+    current[row.feature as keyof FeatureOverrideMap] = row.enabled
+    acc[row.gymId] = current
+    return acc
+  }, {})
+}
+
+async function fetchFeatureOverridesForGym(gymId: string): Promise<FeatureOverrideMap> {
+  const grouped = await fetchFeatureOverridesForGyms([gymId])
+  return grouped[gymId] ?? {}
 }
 
 export async function getSuperAdminOverview() {
@@ -170,6 +193,9 @@ export async function listGymsForSuperAdmin() {
       demoEndsAt: true,
       subscriptionGracePeriodDays: true,
       analyticsSnapshot: true,
+      capacity: true,
+      maxMembers: true,
+      maxVariants: true,
       updatedAt: true,
       maxAdminAccounts: true,
       planLimitPerVariant: true,
@@ -177,8 +203,13 @@ export async function listGymsForSuperAdmin() {
       owner: {
         select: { id: true, email: true, firstName: true, lastName: true },
       },
+      tenantPlans: {
+        orderBy: { startsAt: "desc" },
+        take: 1,
+        select: { freezeStatus: true, freezeReason: true, freezeUntil: true },
+      },
       variants: {
-        select: { id: true, name: true, slug: true, isDefault: true },
+        select: { id: true, name: true, slug: true, isDefault: true, capacity: true },
         orderBy: [{ isDefault: "desc" }, { name: "asc" }],
       },
       users: {
@@ -191,6 +222,8 @@ export async function listGymsForSuperAdmin() {
     },
   })
 
+  const overridesByGym = await fetchFeatureOverridesForGyms(gyms.map((gym) => gym.id))
+
   return Promise.all(
     gyms.map(async (gym) => {
       const daysRemaining = gym.subscriptionExpiresAt
@@ -201,6 +234,8 @@ export async function listGymsForSuperAdmin() {
         perVariant: gym.planLimitPerVariant,
         perNetwork: gym.planLimitPerNetwork,
       })
+      const featureOverrides = overridesByGym[gym.id] ?? {}
+      const planFeatures = applyFeatureOverrides(getPlanFeatures(gym.subscriptionPlan), featureOverrides)
 
       return {
         id: gym.id,
@@ -223,11 +258,14 @@ export async function listGymsForSuperAdmin() {
         memberCount: gym._count.members,
         activeSubscriptions: gym._count.subscriptions,
         updatedAt: gym.updatedAt,
-        owner: gym.owner
-          ? {
-              id: gym.owner.id,
-              email: gym.owner.email,
-              firstName: gym.owner.firstName,
+      capacity: gym.capacity,
+      maxMembers: gym.maxMembers,
+      maxVariants: gym.maxVariants,
+      owner: gym.owner
+        ? {
+            id: gym.owner.id,
+            email: gym.owner.email,
+            firstName: gym.owner.firstName,
               lastName: gym.owner.lastName,
             }
           : null,
@@ -236,9 +274,13 @@ export async function listGymsForSuperAdmin() {
         planLimitPerVariant: gym.planLimitPerVariant ?? undefined,
         planLimitPerNetwork: gym.planLimitPerNetwork ?? undefined,
         planLimits,
+        freezeStatus: gym.tenantPlans?.[0]?.freezeStatus ?? null,
+        freezeReason: gym.tenantPlans?.[0]?.freezeReason ?? null,
+        freezeUntil: gym.tenantPlans?.[0]?.freezeUntil ?? null,
         variants: gym.variants,
         variantCount: gym._count.variants,
-        planFeatures: getPlanFeatures(gym.subscriptionPlan),
+        planFeatures,
+        featureOverrides,
         variantMode,
       }
     }),
@@ -268,6 +310,9 @@ export async function getSuperAdminGymDetail(gymId: string) {
       createdAt: true,
       updatedAt: true,
       maxAdminAccounts: true,
+      capacity: true,
+      maxMembers: true,
+      maxVariants: true,
       planLimitPerVariant: true,
       planLimitPerNetwork: true,
       owner: {
@@ -286,8 +331,13 @@ export async function getSuperAdminGymDetail(gymId: string) {
           },
         },
       },
+      tenantPlans: {
+        orderBy: { startsAt: "desc" },
+        take: 1,
+        select: { freezeStatus: true, freezeReason: true, freezeUntil: true },
+      },
       variants: {
-        select: { id: true, name: true, slug: true, isDefault: true },
+        select: { id: true, name: true, slug: true, isDefault: true, capacity: true },
         orderBy: [{ isDefault: "desc" }, { name: "asc" }],
       },
       subscriptions: {
@@ -309,11 +359,14 @@ export async function getSuperAdminGymDetail(gymId: string) {
     return null
   }
 
+  const featureOverrides = await fetchFeatureOverridesForGym(gymId)
   const daysRemaining = gym.subscriptionExpiresAt
     ? Math.ceil((gym.subscriptionExpiresAt.getTime() - Date.now()) / (1000 * 60 * 60 * 24))
     : null
   const variantMode = resolveVariantMode(gym._count.variants, gym.variants)
+  const tenantPlan = gym.tenantPlans?.[0] ?? null
 
+  const now = new Date()
   const paymentsLast30Days = await prisma.payment.aggregate({
     where: {
       gymId,
@@ -323,10 +376,20 @@ export async function getSuperAdminGymDetail(gymId: string) {
     },
     _sum: { amount: true },
   })
+  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1)
+  const paymentsCurrentMonth = await prisma.payment.aggregate({
+    where: { gymId, paymentDate: { gte: monthStart } },
+    _sum: { amount: true },
+  })
+  const paymentsTotal = await prisma.payment.aggregate({
+    where: { gymId },
+    _sum: { amount: true },
+  })
   const planLimits = await resolveGymPlanLimits(gym.subscriptionPlan, {
     perVariant: gym.planLimitPerVariant,
     perNetwork: gym.planLimitPerNetwork,
   })
+  const planFeatures = applyFeatureOverrides(getPlanFeatures(gym.subscriptionPlan), featureOverrides)
 
   const admins = gym.users
     .filter((user) => user.role === UserRole.GYM_ADMIN)
@@ -338,6 +401,21 @@ export async function getSuperAdminGymDetail(gymId: string) {
       gymVariantId: user.gymVariantId,
       gymVariant: user.gymVariant,
     }))
+
+  const memberPreview = await prisma.member.findMany({
+    where: { gymId },
+    take: 12,
+    orderBy: { createdAt: "desc" },
+    select: {
+      id: true,
+      firstName: true,
+      lastName: true,
+      email: true,
+      phone: true,
+      createdAt: true,
+      gymVariant: { select: { id: true, name: true, slug: true } },
+    },
+  })
 
   return {
     id: gym.id,
@@ -356,6 +434,9 @@ export async function getSuperAdminGymDetail(gymId: string) {
     demoEndsAt: gym.demoEndsAt,
     subscriptionGracePeriodDays: gym.subscriptionGracePeriodDays,
     maxAdminAccounts: gym.maxAdminAccounts,
+    capacity: gym.capacity,
+    maxMembers: gym.maxMembers,
+    maxVariants: gym.maxVariants,
     analyticsSnapshot: gym.analyticsSnapshot,
     membershipPlans: gym.membershipPlans,
     subscriptions: gym.subscriptions,
@@ -365,16 +446,23 @@ export async function getSuperAdminGymDetail(gymId: string) {
     variantCount: gym._count.variants,
     daysRemaining,
     paymentsLast30Days: paymentsLast30Days._sum.amount ?? 0,
+    paymentsCurrentMonth: paymentsCurrentMonth._sum.amount ?? 0,
+    paymentsTotal: paymentsTotal._sum.amount ?? 0,
     owner: gym.owner,
     admins,
     createdAt: gym.createdAt,
     updatedAt: gym.updatedAt,
-    planFeatures: getPlanFeatures(gym.subscriptionPlan),
-      variantMode,
+    planFeatures,
+    featureOverrides,
+    variantMode,
     adminCount: admins.length,
     planLimitPerVariant: gym.planLimitPerVariant ?? undefined,
     planLimitPerNetwork: gym.planLimitPerNetwork ?? undefined,
     planLimits,
+    freezeStatus: tenantPlan?.freezeStatus ?? null,
+    freezeReason: tenantPlan?.freezeReason ?? null,
+    freezeUntil: tenantPlan?.freezeUntil ?? null,
+    memberPreview,
   }
 }
 
@@ -398,6 +486,12 @@ export async function updateGymFromSuperAdmin(
     demoEndsAt?: Date | null
     planLimitPerVariant?: number | null
     planLimitPerNetwork?: number | null
+    capacity?: number | null
+    maxMembers?: number | null
+    maxVariants?: number | null
+    freezeStatus?: GymFreezeStatus | null
+    freezeReason?: string | null
+    freezeUntil?: Date | null
   },
 ) {
   let subscriptionPrice: number | undefined
@@ -412,6 +506,11 @@ export async function updateGymFromSuperAdmin(
     const interval = data.billingInterval ?? current?.billingInterval ?? "MONTHLY"
     subscriptionPrice = await resolvePlanPrice(plan, interval)
   }
+
+  const tenantPlan = await prisma.tenantPlan.findFirst({
+    where: { gymId },
+    orderBy: { startsAt: "desc" },
+  })
 
   const updatedGym = await prisma.gym.update({
     where: { id: gymId },
@@ -430,6 +529,9 @@ export async function updateGymFromSuperAdmin(
       subscriptionGracePeriodDays: data.subscriptionGracePeriodDays ?? undefined,
       analyticsSnapshot: data.analyticsSnapshot ?? undefined,
       maxAdminAccounts: data.maxAdminAccounts ?? undefined,
+      capacity: typeof data.capacity === "number" ? data.capacity : undefined,
+      maxMembers: typeof data.maxMembers === "number" ? data.maxMembers : undefined,
+      maxVariants: typeof data.maxVariants === "number" ? data.maxVariants : undefined,
       isDemo: typeof data.isDemo === "boolean" ? data.isDemo : undefined,
       demoEndsAt: data.demoEndsAt ?? undefined,
       planLimitPerVariant: data.planLimitPerVariant ?? undefined,
@@ -437,11 +539,34 @@ export async function updateGymFromSuperAdmin(
     },
   })
 
+  if (tenantPlan && (data.freezeStatus !== undefined || data.freezeReason !== undefined || data.freezeUntil !== undefined)) {
+    await prisma.tenantPlan.update({
+      where: { id: tenantPlan.id },
+      data: {
+        freezeStatus: data.freezeStatus ?? null,
+        freezeReason: data.freezeReason ?? null,
+        freezeUntil: data.freezeUntil ?? null,
+      },
+    })
+
+    if (data.freezeStatus === GymFreezeStatus.ACTIVE) {
+      await prisma.tenantPlanFreeze.create({
+        data: {
+          tenantPlanId: tenantPlan.id,
+          reason: data.freezeReason ?? "Manual freeze",
+          requestedUntil: data.freezeUntil ?? null,
+        },
+      })
+    }
+  }
+
   const variantCount = await prisma.gymVariant.count({ where: { gymId } })
+  const featureOverrides = await fetchFeatureOverridesForGym(gymId)
 
   return {
     ...updatedGym,
-    planFeatures: getPlanFeatures(updatedGym.subscriptionPlan),
+    planFeatures: applyFeatureOverrides(getPlanFeatures(updatedGym.subscriptionPlan), featureOverrides),
+    featureOverrides,
     variantMode: resolveVariantMode(variantCount),
   }
 }

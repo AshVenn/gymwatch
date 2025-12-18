@@ -1137,12 +1137,15 @@
       "resolution": "تاريخ الحل",
       "actions": "إجراءات"
     },
-    "actions": {
-      "view": "عرض",
-      "createDemo": "إنشاء نسخة تجريبية",
-      "markResolved": "وضع كـ تم الحل",
-      "refuse": "رفض"
-    },
+            "actions": {
+          "markVisit": "????? ?????",
+          "manualCheckout": "????? ???? ????",
+          "edit": "?????",
+          "qrCode": "??? QR ?????",
+          "statsExcel": "???????? Excel",
+          "exportPending": "???? ???????...",
+          "delete": "???"
+        },
     "details": {
       "title": "تفاصيل الطلب",
       "sentOn": "أُرسل بتاريخ {date}",
@@ -1157,7 +1160,7 @@
   },
   "superAdminPartnersPage": {
     "title": "الأندية الشريكة",
-    "subtitle": "إدارة الأندية المعروضة في الصفحة العامة مع صور Cloudinary والترجمات المخزنة في القاعدة.",
+    "subtitle": "إدارة الأندية المعروضة في الصفحة العامة مع صور والترجمات المخزنة في القاعدة.",
     "actions": {
       "create": "إضافة نادٍ",
       "edit": "تعديل",
@@ -1195,7 +1198,7 @@
     "upload": {
       "logo": "الشعار / البادج",
       "cover": "صورة الغلاف",
-      "hint": "يتم التخزين على Cloudinary.",
+      "hint": "يُنصح باستخدام PNG أو SVG.",
       "replace": "استبدال",
       "cta": "رفع"
     },
@@ -1254,90 +1257,93 @@
       "hint": "سيتم حذف السجلات الأقدم من {days} يومًا فقط. السجلات الأحدث ستبقى كما هي.",
       "button": "حذف السجلات",
       "purging": "جارٍ الحذف..."
+    },
+    "planSetupMoved": {
+      "title": "تم نقل إعداد الخطط",
+      "subtitle": "قم بإدارة الأسعار والحدود والميزات من صفحة إعداد الخطط.",
+      "helper": "التغييرات متاحة فقط للمشرف العام.",
+      "cta": "فتح إعداد الخطط"
     }
   },
-"superAdminApproveDemo": {
-  "title": "إنشاء حساب تجريبي",
-  "description": "تمت تعبئة الحقول تلقائيًا من الطلب. عدّلها إذا لزم قبل التأكيد.",
-  "labels": {
-    "plan": "الخطة",
-    "monthly": "شهري",
-    "annual": "سنوي",
-    "default": "افتراضي"
+  "superAdminApproveDemo": {
+    "title": "إنشاء حساب تجريبي",
+    "description": "تمت تعبئة الحقول تلقائيًا من الطلب. عدّلها إذا لزم قبل التأكيد.",
+    "labels": {
+      "plan": "الخطة",
+      "monthly": "شهري",
+      "annual": "سنوي",
+      "default": "افتراضي"
+    },
+    "fields": {
+      "gymName": "اسم القاعة",
+      "email": "البريد الإلكتروني",
+      "phone": "الهاتف",
+      "address": "العنوان",
+      "city": "المدينة",
+      "country": "البلد",
+      "variantsLabel": "فروع/نسخ القاعة (مفصولة بفواصل)",
+      "variantsPlaceholder": "الرئيسية، فرع، بريميوم",
+      "plan": "الخطة",
+      "billing": "الفوترة",
+      "subscriptionExpiresAt": "تاريخ انتهاء الاشتراك",
+      "demoEndsAt": "نهاية التجربة",
+      "graceDays": "أيام السماح",
+      "maxAdmins": "عدد المشرفين المسموح",
+      "internalNote": "ملاحظة داخلية (اختياري)",
+      "internalNotePlaceholder": "تم إرسال بيانات الدخول عبر البريد...",
+      "ownerEmail": "بريد المالك",
+      "ownerPassword": "كلمة مرور المالك",
+      "ownerFirstName": "اسم المالك",
+      "ownerLastName": "لقب المالك",
+      "adminEmail": "بريد مشرف ثانٍ",
+      "adminPassword": "كلمة مرور المشرف الثاني",
+      "adminFirstName": "اسم المشرف الثاني",
+      "adminLastName": "لقب المشرف الثاني",
+      "adminVariantSlug": "فرع المشرف الثاني",
+      "adminVariantSlugPlaceholder": "اختر فرعًا"
+    },
+    "hints": {
+      "firstVariantDefault": "يتم اعتماد أول فرع كافتراضي للحسابات الجديدة."
+    },
+    "plans": {
+      "basic": "Basic",
+      "pro": "Pro",
+      "enterprise": "Enterprise"
+    },
+    "secondaryAdmin": {
+      "title": "إضافة مشرف ثانٍ (اختياري)",
+      "email": "بريد المشرف",
+      "password": "كلمة مرور المشرف",
+      "firstName": "اسم المشرف",
+      "lastName": "لقب المشرف",
+      "variant": "الفرع المعيّن",
+      "defaultVariant": "الافتراضي: {name}"
+    },
+    "actions": {
+      "create": "إنشاء الحساب التجريبي",
+      "creating": "جارٍ الإنشاء...",
+      "submit": "إنشاء الحساب التجريبي",
+      "submitting": "جارٍ الإنشاء..."
+    },
+    "toast": {
+      "provisioned": "تم تجهيز الحساب التجريبي",
+      "failed": "تعذر إنشاء الحساب التجريبي"
+    },
+    "validation": {
+      "nameRequired": "الاسم مطلوب",
+      "invalidEmail": "بريد غير صالح",
+      "phoneRequired": "الهاتف مطلوب",
+      "atLeastOneVariant": "على الأقل فرع واحد",
+      "min8": "8 أحرف على الأقل"
+    },
+    "defaults": {
+      "variantNames": "الرئيسية, فرع",
+      "defaultVariant": "الرئيسية",
+      "ownerFirstName": "المالك",
+      "adminFirstName": "مشرف",
+      "adminLastName": "تجريبي"
+    }
   },
-  "fields": {
-    "gymName": "اسم القاعة",
-    "email": "البريد الإلكتروني",
-    "phone": "الهاتف",
-    "address": "العنوان",
-    "city": "المدينة",
-    "country": "البلد",
-    "variantsLabel": "فروع/نسخ القاعة (مفصولة بفواصل)",
-    "variantsPlaceholder": "الرئيسية، فرع، بريميوم",
-    "plan": "الخطة",
-    "billing": "الفوترة",
-    "subscriptionExpiresAt": "تاريخ انتهاء الاشتراك",
-    "demoEndsAt": "نهاية التجربة",
-    "graceDays": "أيام السماح",
-    "maxAdmins": "عدد المشرفين المسموح",
-    "internalNote": "ملاحظة داخلية (اختياري)",
-    "internalNotePlaceholder": "تم إرسال بيانات الدخول عبر البريد...",
-    "ownerEmail": "بريد المالك",
-    "ownerPassword": "كلمة مرور المالك",
-    "ownerFirstName": "اسم المالك",
-    "ownerLastName": "لقب المالك",
-
-    "adminEmail": "بريد مشرف ثانٍ",
-    "adminPassword": "كلمة مرور المشرف الثاني",
-    "adminFirstName": "اسم المشرف الثاني",
-    "adminLastName": "لقب المشرف الثاني",
-    "adminVariantSlug": "فرع المشرف الثاني",
-    "adminVariantSlugPlaceholder": "اختر فرعًا"
-  },
-  "hints": {
-    "firstVariantDefault": "يتم اعتماد أول فرع كافتراضي للحسابات الجديدة."
-  },
-  "plans": {
-    "basic": "Basic",
-    "pro": "Pro",
-    "enterprise": "Enterprise"
-  },
-  "secondaryAdmin": {
-    "title": "إضافة مشرف ثانٍ (اختياري)",
-    "email": "بريد المشرف",
-    "password": "كلمة مرور المشرف",
-    "firstName": "اسم المشرف",
-    "lastName": "لقب المشرف",
-    "variant": "الفرع المعيّن",
-    "defaultVariant": "الافتراضي: {name}"
-  },
-  "actions": {
-    "create": "إنشاء الحساب التجريبي",
-    "creating": "جارٍ الإنشاء...",
-
-    "submit": "إنشاء الحساب التجريبي",
-    "submitting": "جارٍ الإنشاء..."
-  },
-  "toast": {
-    "provisioned": "تم تجهيز الحساب التجريبي",
-    "failed": "تعذر إنشاء الحساب التجريبي"
-  },
-  "validation": {
-    "nameRequired": "الاسم مطلوب",
-    "invalidEmail": "بريد غير صالح",
-    "phoneRequired": "الهاتف مطلوب",
-    "atLeastOneVariant": "على الأقل فرع واحد",
-    "min8": "8 أحرف على الأقل"
-  },
-  "defaults": {
-    "variantNames": "الرئيسية, فرع",
-    "defaultVariant": "الرئيسية",
-    "ownerFirstName": "المالك",
-    "adminFirstName": "مشرف",
-    "adminLastName": "تجريبي"
-  }
-}
-,
   "superAdminCreateGym": {
     "title": "قاعة جديدة",
     "description": "سجّل قاعة جديدة ومالكها.",
@@ -1509,8 +1515,10 @@
       "plans": "الخطط",
       "subscription": "الاشتراك",
       "edit": "تعديل",
-      "delete": "حذف"
-    }
+      "delete": "حذف",
+      "members": "عرض الأعضاء"
+    },
+    "suspensionReason": "إيقاف: {reason}"
   },
   "superAdminGymSummary": {
     "cards": {
@@ -1688,6 +1696,12 @@
       "pdf": "تقرير PDF",
       "exporting": "جاري التصدير..."
     },
+    "pulse": {
+      "activationTitle": "معدل التفعيل",
+      "activationSubtitle": "{total} صالات متعقبة",
+      "expiringTitle": "ستنتهي قريباً",
+      "expiringSubtitle": "خلال 10 أيام"
+    },
     "kpis": {
       "totalGyms": "إجمالي القاعات",
       "activeSubscribers": "المشتركون النشطون",
@@ -1862,7 +1876,8 @@
       "gyms": "إدارة القاعات",
       "demoRequests": "طلبات التجربة",
       "settings": "الإعدادات",
-      "partners": "الأندية الشريكة"
+      "partners": "الأندية الشريكة",
+      "planSetup": "إعداد الخطط"
     }
   },
   "superAdminGymAnalytics": {
@@ -1872,7 +1887,9 @@
     },
     "statusChart": {
       "title": "توزيع الحالات",
-      "description": "اشتراكات القاعة"
+      "description": "اشتراكات القاعة",
+      "empty": "لا توجد بيانات اشتراك.",
+      "helper": "النسب المئوية بناءً على الاشتراكات الحالية والسابقة."
     },
     "upcoming": {
       "empty": "لا توجد انتهاءات قريبة.",
@@ -1887,6 +1904,8 @@
     }
   },
   "superAdminGymDetail": {
+    "loadingTitle": "جاري التحميل...",
+    "loadingSubtitle": "يرجى الانتظار لحظة.",
     "demoPill": "تجريبي",
     "unknownLocation": "الموقع غير معروف",
     "planPrefix": "الخطة",
@@ -1914,6 +1933,25 @@
       "pending": "جاري التحويل...",
       "helper": "إلغاء وضع العرض التجريبي وتفعيل النادي.",
       "confirm": "هل تريد تحويل {name} إلى نادٍ فعّال؟"
+    },
+    "capacity": {
+      "title": "السعة والحدود",
+      "helper": "السعة الإجمالية والحدود لكل فرع.",
+      "value": "{value} مقعد",
+      "unset": "غير محدد",
+      "gymTotal": "سعة النادي",
+      "noVariantCaps": "لا توجد سعات للفروع.",
+      "maxMembers": "أقصى الأعضاء: {value}",
+      "maxDaily": "أقصى دخول يومي: {value}",
+      "unlimited": "غير محدود"
+    },
+    "team": {
+      "title": "المالك والمشرفون",
+      "count": "{count} مشرف",
+      "owner": "المالك",
+      "noOwner": "لا يوجد مالك",
+      "noAdmins": "لا يوجد مشرفون بعد",
+      "remaining": "+{count} إضافي"
     }
   },
   "superAdminGymPlans": {
@@ -1947,71 +1985,77 @@
       "title": "الاشتراكات النشطة",
       "helper": "تتم مزامنتها يومياً"
     },
-    "revenue30d": {
-      "title": "الإيرادات (30 يوماً)",
-      "helper": "المدفوعات المُصرَّح بها"
+    "earningsMonth": {
+      "title": "إيرادات (الشهر)",
+      "helper": "المدفوعات المسجلة هذا الشهر"
+    },
+    "earningsLifetime": {
+      "title": "إيرادات تراكمية",
+      "helper": "كل المدفوعات المسجلة"
     }
   },
- "superAdminGymSubscription": {
-  "title": "إعدادات الاشتراك",
-  "description": "حدّث الخطة أو السعة.",
-  "modulesActive": "الوحدات النشطة",
-  "variantMode": {
-    "mono": "فرع واحد - {count} فرع/متغير",
-    "multi": "عدة فروع - {count} فرع/متغير"
+  "superAdminGymSubscription": {
+    "title": "إعدادات الاشتراك",
+    "description": "حدّث الخطة أو السعة.",
+    "modulesActive": "الوحدات النشطة",
+    "variantMode": {
+      "mono": "فرع واحد - {count} فرع/متغير",
+      "multi": "عدة فروع - {count} فرع/متغير"
+    },
+    "fields": {
+      "status": "الحالة",
+      "plan": "الخطة",
+      "interval": "الفوترة",
+      "expiresAt": "تاريخ الانتهاء",
+      "graceDays": "أيام السماح",
+      "maxAdmins": "عدد المدراء المسموح",
+      "suspensionReason": "سبب الإيقاف"
+    },
+    "placeholders": {
+      "pickDate": "اختر تاريخاً",
+      "suspensionReason": "سبب الإيقاف"
+    },
+    "status": {
+      "active": "نشط",
+      "suspended": "موقوف",
+      "expired": "منتهي"
+    },
+    "plan": {
+      "basic": "Basic",
+      "pro": "Pro",
+      "enterprise": "Enterprise"
+    },
+    "interval": {
+      "monthly": "شهري",
+      "annual": "سنوي"
+    },
+    "exports": {
+      "title": "تصديرات النادي",
+      "excel": "تقرير Excel",
+      "pdf": "تقرير PDF",
+      "loading": "جاري التصدير..."
+    },
+    "invoice": {
+      "download": "تنزيل الفاتورة",
+      "print": "طباعة",
+      "generating": "جارٍ الإنشاء...",
+      "preparing": "جارٍ التحضير...",
+      "save": "حفظ",
+      "saving": "جارٍ الحفظ..."
+    },
+    "toasts": {
+      "invoiceDownloaded": "تم تنزيل الفاتورة.",
+      "invoicePrintReady": "الفاتورة جاهزة للطباعة.",
+      "exportSuccess": "تم تنزيل تقرير {format}.",
+      "saved": "تم تحديث الاشتراك."
+    },
+    "errors": {
+      "invoiceGeneric": "تعذر إنشاء الفاتورة",
+      "exportFailed": "فشل التصدير",
+      "saveFailed": "تعذر حفظ الاشتراك",
+      "reasonRequired": "يرجى إدخال سبب الإيقاف"
+    }
   },
-  "fields": {
-    "status": "الحالة",
-    "plan": "الخطة",
-    "interval": "الفوترة",
-    "expiresAt": "تاريخ الانتهاء",
-    "graceDays": "أيام السماح",
-    "maxAdmins": "عدد المدراء المسموح"
-  },
-  "placeholders": {
-    "pickDate": "اختر تاريخاً"
-  },
-  "status": {
-    "active": "نشط",
-    "suspended": "موقوف",
-    "expired": "منتهي"
-  },
-  "plan": {
-    "basic": "Basic",
-    "pro": "Pro",
-    "enterprise": "Enterprise"
-  },
-  "interval": {
-    "monthly": "شهري",
-    "annual": "سنوي"
-  },
-  "exports": {
-    "title": "تصديرات النادي",
-    "excel": "تقرير Excel",
-    "pdf": "تقرير PDF",
-    "loading": "جاري التصدير..."
-  },
-  "invoice": {
-    "download": "تنزيل الفاتورة",
-    "print": "طباعة",
-    "generating": "جارٍ الإنشاء...",
-    "preparing": "جارٍ التحضير...",
-    "save": "حفظ",
-    "saving": "جارٍ الحفظ..."
-  },
-  "toasts": {
-    "invoiceDownloaded": "تم تنزيل الفاتورة.",
-    "invoicePrintReady": "الفاتورة جاهزة للطباعة.",
-    "exportSuccess": "تم تنزيل تقرير {format}.",
-    "saved": "تم تحديث الاشتراك."
-  },
-  "errors": {
-    "invoiceGeneric": "تعذر إنشاء الفاتورة",
-    "exportFailed": "فشل التصدير",
-    "saveFailed": "تعذر حفظ الاشتراك"
-  }
-}
-,
   "superAdminGymTeam": {
     "title": "الفريق ({used}/{max})",
     "infinite": "∞",
@@ -2094,6 +2138,14 @@
         "title": "زيارات اليوم",
         "subtitle": "عمليات دخول مسجّلة"
       },
+      "capacity": {
+        "title": "السعة",
+        "subtitle": "{percent}% خلال {scope}",
+        "unlimited": "غير محدودة",
+        "unlimitedSubtitle": "بدون حد للسعة",
+        "defaultScope": "كل الفروع",
+        "trendLabel": "{direction} · {delta} خلال {window} دقيقة"
+      },
       "activeMembers": {
         "title": "أعضاء نشطون",
         "subtitle": "اشتراك صالح"
@@ -2123,6 +2175,28 @@
       "membersLabel": "{count} عضو",
       "radialFooterLine": "{active} نشط من أصل {total} عضو",
       "radialFooterHint": "تفصيل حالات الاشتراك"
+    },
+    "dailySummary": {
+      "kicker": "اليوم",
+      "title": "ملخص اليوم",
+      "visitsTitle": "الدخول",
+      "vsYesterday": "{value} مقابل أمس",
+      "checkouts": "{value} عمليات خروج",
+      "revenueTitle": "إيرادات اليوم",
+      "revenueValue": "{value} MAD",
+      "revenueHint": "المدفوعات المسجلة اليوم",
+      "revenueLocked": "مقيد",
+      "membersTitle": "أعضاء جدد اليوم",
+      "avgDuration": "المتوسط: {value}",
+      "minutes": "دقائق",
+      "noDuration": "لا زيارات مكتملة بعد",
+      "capacityTitle": "اتجاه السعة",
+      "capacityWindow": "آخر {window} دقيقة",
+      "capacityScope": "النطاق: {scope}",
+      "trendUp": "ارتفاع",
+      "trendDown": "انخفاض",
+      "trendFlat": "مستقر",
+      "noComparison": "لا يوجد مقارنة"
     },
     "expiring": {
       "title": "اشتراكات تنتهي خلال 7 أيام القادمة",
@@ -2218,6 +2292,21 @@
       "tierUnlimitedVariant": "غير محدود لكل فئة",
       "tierUnlimitedNetwork": "غير محدود على الشبكة",
       "footer": "يتم تطبيق الحدود على الخطط النشطة فقط. تواصل مع الدعم لأي استثناء."
+    },
+    "variants": {
+      "title": "الفروع",
+      "desc": "تعديل حدود السعة لكل فرع. يمكن للمشرفين تعديل الفرع المعيّن لهم فقط.",
+      "capacityLabel": "السعة (عدد الأشخاص)",
+      "save": "حفظ",
+      "saving": "جارٍ الحفظ...",
+      "default": "افتراضي",
+      "empty": "لم يتم العثور على فروع.",
+      "errors": {
+        "updateFailed": "تعذّر تحديث الفرع"
+      },
+      "success": {
+        "updated": "تم تحديث الفرع بنجاح"
+      }
     }
   },
   "subscriptionBanner": {
@@ -2612,38 +2701,38 @@
         }
       }
     },
-  "clubsPage": {
-    "hero": {
-      "eyebrow": "الأندية الشريكة",
-      "title": "الأندية التي تستخدم GymWatch",
-      "subtitle": "اكتشف شبكة نوادينا الموثوقة",
-      "description": "تصفح الأندية الشريكة التي تعتمد على GymWatch لتسهيل دخول الأعضاء وتنظيم الزيارات وتقديم تجربة تدريب عصرية.",
-      "primaryCta": "احجز عرضًا تجريبيًا",
-      "secondaryCta": "تواصل معنا"
-    },
-    "highlights": {
-      "asset": "شركاء موثوقون",
-      "assetDesc": "أندية حقيقية تستخدم GymWatch يوميًا.",
-      "localization": "قريب منك",
-      "localizationDesc": "اعثر على الأندية حسب المدينة واستكشف معلوماتها."
-    },
-    "grid": {
-      "eyebrow": "شبكتنا",
-      "title": "أندية مميزة",
-      "subtitle": "استكشف الأندية الشريكة واختر الأنسب لأسلوب تدريبك.",
-      "count": "{count, plural, one {نادي واحد} other {# أندية}}",
-      "empty": {
-        "title": "لا توجد أندية بعد",
-        "subtitle": "عد قريبًا — سنضيف أندية شريكة جديدة باستمرار."
+    "clubsPage": {
+      "hero": {
+        "eyebrow": "الأندية الشريكة",
+        "title": "الأندية التي تستخدم GymWatch",
+        "subtitle": "اكتشف شبكة نوادينا الموثوقة",
+        "description": "تصفح الأندية الشريكة التي تعتمد على GymWatch لتسهيل دخول الأعضاء وتنظيم الزيارات وتقديم تجربة تدريب عصرية.",
+        "primaryCta": "احجز عرضًا تجريبيًا",
+        "secondaryCta": "تواصل معنا"
       },
-      "missingCover": "لا توجد صورة غلاف",
-      "badge": "نادي شريك",
-      "locationUnknown": "الموقع غير محدد",
-      "fallbackDescription": "نادي شريك ضمن شبكة GymWatch — التفاصيل قريبًا.",
-      "slug": "معرّف النادي: {slug}",
-      "visit": "زيارة الموقع"
+      "highlights": {
+        "asset": "شركاء موثوقون",
+        "assetDesc": "أندية حقيقية تستخدم GymWatch يوميًا.",
+        "localization": "قريب منك",
+        "localizationDesc": "اعثر على الأندية حسب المدينة واستكشف معلوماتها."
+      },
+      "grid": {
+        "eyebrow": "شبكتنا",
+        "title": "أندية مميزة",
+        "subtitle": "استكشف الأندية الشريكة واختر الأنسب لأسلوب تدريبك.",
+        "count": "{count, plural, one {نادي واحد} other {# أندية}}",
+        "empty": {
+          "title": "لا توجد أندية بعد",
+          "subtitle": "عد قريبًا — سنضيف أندية شريكة جديدة باستمرار."
+        },
+        "missingCover": "لا توجد صورة غلاف",
+        "badge": "نادي شريك",
+        "locationUnknown": "الموقع غير محدد",
+        "fallbackDescription": "نادي شريك ضمن شبكة GymWatch — التفاصيل قريبًا.",
+        "slug": "معرّف النادي: {slug}",
+        "visit": "زيارة الموقع"
+      }
     }
-  }
   },
   "dashboard": {
     "nav": {
@@ -3352,6 +3441,7 @@
         "deleteError": "تعذّر حذف العضو",
         "qrPlanOnly": "رمز QR للعضو متاح فقط في خطة Pro",
         "visitInactive": "الاشتراك غير نشط أو منتهٍ",
+        "checkoutRequired": "يُرجى تسجيل خروج الزيارة الحالية لـ {name} أولاً",
         "visitLimitReached": "لقد بلغ {name} الحد اليومي",
         "visitLastOfDay": "آخر زيارة لليوم للعضو {name}{remainingLabel}",
         "visitRecorded": "تم تسجيل حضور {name} ({count} زيارة اليوم){remainingLabel}"
@@ -3374,13 +3464,14 @@
           "variant": "الفرع",
           "actions": "إجراءات"
         },
-        "actions": {
-          "markVisit": "تسجيل زيارة",
-          "edit": "تعديل",
-          "qrCode": "رمز QR للعضو",
-          "statsExcel": "إحصائيات Excel",
-          "exportPending": "جارٍ التصدير...",
-          "delete": "حذف"
+                "actions": {
+          "markVisit": "????? ?????",
+          "manualCheckout": "????? ???? ????",
+          "edit": "?????",
+          "qrCode": "??? QR ?????",
+          "statsExcel": "???????? Excel",
+          "exportPending": "???? ???????...",
+          "delete": "???"
         }
       },
       "deleteDialog": {
@@ -3423,6 +3514,19 @@
       "unlimited": "غير محدود",
       "limitReached": "تم بلوغ الحد اليومي"
     },
+    "history": {
+      "title": "النشاط الأخير",
+      "subtitle": "آخر عمليات الدخول",
+      "last30Days": "الزيارات آخر 30 يومًا",
+      "details": "بيانات العضو",
+      "email": "البريد الإلكتروني",
+      "phone": "الهاتف",
+      "unknown": "غير معروف",
+      "recentVisits": "آخر 4 زيارات",
+      "empty": "لا توجد زيارات مسجلة بعد.",
+      "checkedOut": "تم تسجيل الخروج",
+      "checkedIn": "تم تسجيل الدخول"
+    },
     "classes": {
       "title": "الحصص القادمة",
       "subtitle": "الحجوزات المرتبطة بهذا العضو",
@@ -3440,5 +3544,48 @@
       "error": "فشل المسح",
       "fallback": "عضو"
     }
+  },
+  "superAdminPlanCap": {
+    "label": "حد الخطة",
+    "perVariant": "حد لكل فرع",
+    "perNetwork": "حد على الشبكة",
+    "unlimited": "غير محدود"
+  },
+  "superAdminPlanSetup": {
+    "title": "إعداد الخطط",
+    "subtitle": "تحكم في الأسعار والخصومات والميزات وحدود الخطط لكل فئة.",
+    "capsTitle": "الأسعار والحدود",
+    "capsDescription": "تعديل الأسعار الشهرية والخصم السنوي وحدود الخطط.",
+    "featuresTitle": "الميزات المضمنة",
+    "featuresDescription": "عرض سريع للميزات لكل فئة.",
+    "featuresHelper": "يتم تطبيق تغييرات المشرف فوراً.",
+    "plans": {
+      "BASIC": "Basic",
+      "PRO": "Pro",
+      "ENTERPRISE": "Enterprise"
+    }
+  },
+  "superAdminGymMembers": {
+    "title": "أعضاء {name}",
+    "subtitle": "قائمة الأعضاء مع ترقيم الصفحات.",
+    "count": "{count} عضو",
+    "page": "صفحة {page} / {pages}",
+    "columns": {
+      "name": "الاسم",
+      "contact": "التواصل",
+      "variant": "الفرع",
+      "joined": "تاريخ الانضمام"
+    },
+    "missing": "غير متوفر",
+    "unknown": "عضو",
+    "empty": "لا يوجد أعضاء."
   }
 }
+
+
+
+
+
+
+
+

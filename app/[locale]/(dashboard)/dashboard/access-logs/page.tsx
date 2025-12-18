@@ -11,7 +11,7 @@ import { useTranslations } from "next-intl"
 import { AccessLogFilters } from "@/components/dashboard/access-logs/filters"
 import { AccessLogTable, type AccessLogRow } from "@/components/dashboard/access-logs/table"
 import { buildFeatureAccessItems, LockedFeatureState } from "@/components/dashboard/feature-access-grid"
-import { PaginationControls, usePagination } from "@/components/dashboard/pagination-controls"
+import { PaginationControls } from "@/components/dashboard/pagination-controls"
 import { VariantSelector } from "@/components/dashboard/variant-selector"
 import { usePlanFeatures } from "@/app/hooks/use-plan-features"
 import { useVariantOptions } from "@/app/hooks/use-variants"
@@ -23,6 +23,9 @@ import { Skeleton } from "@/components/ui/skeleton"
 type AccessLogResponse = {
   events: AccessLogRow[]
   maxSessionMinutes: number | null
+  total: number
+  page: number
+  pageSize: number
 }
 
 export default function AccessLogsPage() {
@@ -40,6 +43,7 @@ export default function AccessLogsPage() {
   const { data: session, status } = useSession()
   const { tier, hasAccessControl, hasPresence, hasCourses, hasExcelReports, hasMultiLocations } = usePlanFeatures()
   const queryClient = useQueryClient()
+  const gymId = (session?.user as any)?.gymId as string | undefined
 
   const {
     variants,
@@ -60,6 +64,7 @@ export default function AccessLogsPage() {
   const [sourceFilter, setSourceFilter] = useState<string>("ALL")
   const [from, setFrom] = useState<string>("")
   const [to, setTo] = useState<string>("")
+  const [page, setPage] = useState(1)
   const [deletingId, setDeletingId] = useState<string | null>(null)
 
   const planLabel = tier === "ENTERPRISE" ? "Enterprise" : tier === "PRO" ? "Pro" : "Basic"
@@ -119,8 +124,12 @@ export default function AccessLogsPage() {
           ? null
           : (defaultVariantId ?? variants[0]?.id ?? null)
 
+  useEffect(() => {
+    setPage(1)
+  }, [variantFilter, statusFilter, sourceFilter, from, to, search])
+
   const accessLogsQuery = useQuery<AccessLogResponse>({
-    queryKey: ["access-events", session?.user?.gymId, variantFilter, statusFilter, sourceFilter, from, to, search],
+    queryKey: ["access-events", session?.user?.gymId, variantFilter, statusFilter, sourceFilter, from, to, search, page],
     enabled: status === "authenticated" && hasAccessControl && !variantsLoading,
     queryFn: async () => {
       const params = new URLSearchParams()
@@ -130,7 +139,8 @@ export default function AccessLogsPage() {
       if (search.trim()) params.set("q", search.trim())
       if (from) params.set("from", from)
       if (to) params.set("to", to)
-      params.set("limit", "200")
+      params.set("page", page.toString())
+      params.set("pageSize", "12")
 
       const response = await fetch(`/api/gym-team/access-events?${params.toString()}`)
       const body = await response.json().catch(() => ({}))
@@ -140,6 +150,9 @@ export default function AccessLogsPage() {
         events: (body.events as AccessLogRow[] | undefined) ?? [],
         maxSessionMinutes:
           typeof body.maxSessionMinutes === "number" && body.maxSessionMinutes > 0 ? body.maxSessionMinutes : null,
+        total: typeof body.total === "number" ? body.total : 0,
+        page: typeof body.page === "number" ? body.page : 1,
+        pageSize: typeof body.pageSize === "number" ? body.pageSize : 12,
       }
     },
   })
@@ -165,7 +178,15 @@ export default function AccessLogsPage() {
 
   const events = useMemo(() => accessLogsQuery.data?.events ?? [], [accessLogsQuery.data?.events])
   const sessionLimit = accessLogsQuery.data?.maxSessionMinutes ?? null
-  const pagination = usePagination(events, 12)
+  const totalEvents = accessLogsQuery.data?.total ?? events.length
+  const pageSizeFromApi = accessLogsQuery.data?.pageSize ?? 12
+  const pageCount = Math.max(1, Math.ceil(totalEvents / pageSizeFromApi))
+
+  useEffect(() => {
+    if (page > pageCount) {
+      setPage(pageCount || 1)
+    }
+  }, [page, pageCount])
 
   const FLAGGED_STATUSES: AccessEventStatus[] = [
     AccessEventStatus.SESSION_OVERSTAY,
@@ -269,7 +290,9 @@ export default function AccessLogsPage() {
           <Button
             variant="outline"
             size="sm"
-            onClick={() => accessLogsQuery.refetch()}
+            onClick={() => {
+              accessLogsQuery.refetch()
+            }}
             disabled={accessLogsQuery.isFetching}
             className="rounded-2xl transition-all hover:scale-105"
           >
@@ -361,7 +384,7 @@ export default function AccessLogsPage() {
 
       <Card className="overflow-hidden rounded-3xl border border-border/60 bg-card/90 shadow-md backdrop-blur-sm">
         <CardHeader className="flex flex-col gap-1 pb-2 sm:flex-row sm:items-center sm:justify-between">
-          <CardTitle className="text-sm font-medium text-muted-foreground">{t("tableCount", { count: events.length })}</CardTitle>
+          <CardTitle className="text-sm font-medium text-muted-foreground">{t("tableCount", { count: totalEvents })}</CardTitle>
           <div className="flex flex-wrap items-center gap-2">
             {flaggedCount > 0 ? (
               <Badge
@@ -392,21 +415,22 @@ export default function AccessLogsPage() {
           ) : (
             <>
               <AccessLogTable
-                events={pagination.data}
+                events={events}
                 onDelete={deleteMutation.mutate}
                 deletingId={deleteMutation.isPending ? deletingId : null}
               />
               <PaginationControls
-                page={pagination.page}
-                pageCount={pagination.pageCount}
-                pageSize={pagination.pageSize}
-                totalItems={events.length}
-                onPageChange={pagination.setPage}
+                page={page}
+                pageCount={pageCount}
+                pageSize={pageSizeFromApi}
+                totalItems={totalEvents}
+                onPageChange={setPage}
               />
             </>
           )}
         </CardContent>
       </Card>
+
     </div>
   )
 }

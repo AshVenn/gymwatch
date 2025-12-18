@@ -1156,81 +1156,88 @@
       "load": "Impossible de charger les demandes."
     }
   },
-  "superAdminPartnersPage": {
-    "title": "Clubs partenaires",
-    "subtitle": "GǸrez les clubs affichǸs sur la page publique avec images Cloudinary et traductions.",
-    "actions": {
-      "create": "Ajouter un club",
-      "edit": "Éditer",
-      "delete": "Supprimer",
-      "cancel": "Annuler",
-      "save": "Enregistrer"
-    },
-    "dialog": {
-      "createTitle": "Nouveau club",
-      "editTitle": "Éditer le club"
-    },
-    "fields": {
-      "slug": "Slug",
-      "website": "Site web",
-      "order": "Ordre",
-      "published": "PubliǸ",
-      "localeTab": "Langue",
-      "logo": "Logo",
-      "cover": "Visuel",
-      "translations": "Traductions",
-      "translationHint": "Conservez au moins un nom pour le SEO.",
-      "name": "Nom",
-      "tagline": "Accroche",
-      "city": "Ville",
-      "country": "Pays",
-      "description": "Description"
-    },
-    "placeholders": {
-      "name": "Nom du club",
-      "tagline": "Accroche courte",
-      "city": "Ville",
-      "country": "Pays",
-      "description": "Quelques mots sur ce club"
-    },
-    "upload": {
-      "logo": "Logo / badge",
-      "cover": "Visuel / cover",
-      "hint": "PNG/SVG recommandǸ. StockǸ sur Cloudinary.",
-      "replace": "Remplacer",
-      "cta": "Uploader"
-    },
-    "table": {
-      "title": "Clubs publiǸs",
-      "subtitle": "{count, plural, one {# club} other {# clubs}}",
-      "name": "Nom",
-      "status": "Statut",
-      "slug": "Slug",
-      "order": "Ordre",
-      "updated": "Mis  jour",
-      "actions": "Actions"
-    },
-    "status": {
-      "published": "PubliǸ",
-      "draft": "Brouillon"
-    },
-    "empty": {
-      "title": "Aucun club pour l'instant",
-      "subtitle": "Ajoutez un club partenaire pour l'afficher sur la page marketing."
-    },
-    "toasts": {
-      "created": "Club enregistrǸ",
-      "updated": "Club mis  jour",
-      "deleted": "Club supprimǸ",
-      "uploadSuccess": "Image envoyǸe"
-    },
-    "errors": {
-      "missingName": "Ajoutez au moins un nom traduit avant de sauvegarder."
-    }
+"superAdminPartnersPage": {
+  "title": "Clubs partenaires",
+  "subtitle": "Gérez les clubs affichés sur la page publique avec images et traductions.",
+  "actions": {
+    "create": "Ajouter un club",
+    "edit": "Éditer",
+    "delete": "Supprimer",
+    "cancel": "Annuler",
+    "save": "Enregistrer"
   },
+  "dialog": {
+    "createTitle": "Nouveau club",
+    "editTitle": "Éditer le club"
+  },
+  "fields": {
+    "slug": "Slug",
+    "website": "Site web",
+    "order": "Ordre",
+    "published": "Publié",
+    "localeTab": "Langue",
+    "logo": "Logo",
+    "cover": "Visuel",
+    "translations": "Traductions",
+    "translationHint": "Conservez au moins un nom pour le SEO.",
+    "name": "Nom",
+    "tagline": "Accroche",
+    "city": "Ville",
+    "country": "Pays",
+    "description": "Description"
+  },
+  "placeholders": {
+    "name": "Nom du club",
+    "tagline": "Accroche courte",
+    "city": "Ville",
+    "country": "Pays",
+    "description": "Quelques mots sur ce club"
+  },
+  "upload": {
+    "logo": "Logo / badge",
+    "cover": "Visuel / cover",
+    "hint": "PNG/SVG recommandé.",
+    "replace": "Remplacer",
+    "cta": "Uploader"
+  },
+  "table": {
+    "title": "Clubs publiés",
+    "subtitle": "{count, plural, one {# club} other {# clubs}}",
+    "name": "Nom",
+    "status": "Statut",
+    "slug": "Slug",
+    "order": "Ordre",
+    "updated": "Mis à jour",
+    "actions": "Actions"
+  },
+  "status": {
+    "published": "Publié",
+    "draft": "Brouillon"
+  },
+  "empty": {
+    "title": "Aucun club pour l'instant",
+    "subtitle": "Ajoutez un club partenaire pour l'afficher sur la page marketing."
+  },
+  "toasts": {
+    "created": "Club enregistré",
+    "updated": "Club mis à jour",
+    "deleted": "Club supprimé",
+    "uploadSuccess": "Image envoyée"
+  },
+  "errors": {
+    "missingName": "Ajoutez au moins un nom traduit avant de sauvegarder."
+  }
+}
+,
   "superAdminSettings": {
-    "title": "Paramétrage des plans",
-    "subtitle": "Ajustez les prix, la remise annuelle et les plafonds de plans par palier.",
+    "title": "Paramètres super-admin",
+    "subtitle": "Outils de sécurité et de maintenance pour votre compte admin.",
+    "planSetupMoved": {
+      "title": "Configuration des plans déplacée",
+      "subtitle": "Gérez les prix, plafonds et fonctionnalités depuis la page dédiée.",
+      "helper": "Réservé aux super-admins pour appliquer les changements globalement.",
+      "cta": "Ouvrir la page Plans"
+    },
     "password": {
       "cardTitle": "Changer le mot de passe",
       "cardDescription": "Valide immédiatement et force la reconnexion.",
@@ -1504,7 +1511,9 @@
     },
     "statusChart": {
       "title": "Répartition des statuts",
-      "description": "Abonnements de la salle"
+      "description": "Abonnements de la salle",
+      "empty": "Aucune donnée d'abonnement.",
+      "helper": "Pourcentage basé sur les abonnements actifs et passés."
     },
     "upcoming": {
       "empty": "Pas d'expiration immédiate.",
@@ -1518,7 +1527,24 @@
       "INCONNU": "Inconnu"
     }
   },
+  "superAdminGymMembers": {
+    "title": "Membres de {name}",
+    "subtitle": "Liste paginée des membres de cette salle.",
+    "count": "{count, plural, one {# membre} other {# membres}}",
+    "page": "Page {page} / {pages}",
+    "columns": {
+      "name": "Nom",
+      "contact": "Contact",
+      "variant": "Variante",
+      "joined": "Inscription"
+    },
+    "missing": "Non renseigné",
+    "unknown": "Membre",
+    "empty": "Aucun membre trouvé."
+  },
   "superAdminGymDetail": {
+    "loadingTitle": "Chargement...",
+    "loadingSubtitle": "Veuillez patienter.",
     "demoPill": "DÉMO",
     "unknownLocation": "Localisation inconnue",
     "planPrefix": "Plan",
@@ -1532,6 +1558,25 @@
     "noVariants": "Aucune variante enregistrée",
     "demoUntil": "Démo jusqu'au {date}",
     "hint": "Utilisez les actions rapides du tableau pour gérer l'équipe, les plans et les paramètres d'abonnement de cette salle.",
+    "capacity": {
+      "title": "Capacité et limites",
+      "helper": "Capacité globale et plafonds par variante.",
+      "value": "{value} places",
+      "unset": "Non défini",
+      "gymTotal": "Capacité de la salle",
+      "noVariantCaps": "Aucune capacité par variante.",
+      "maxMembers": "Max membres : {value}",
+      "maxDaily": "Entrées max / jour : {value}",
+      "unlimited": "Illimité"
+    },
+    "team": {
+      "title": "Propriétaire et admins",
+      "count": "{count} admin(s)",
+      "owner": "Propriétaire",
+      "noOwner": "Aucun propriétaire",
+      "noAdmins": "Aucun admin pour l'instant",
+      "remaining": "+{count} de plus"
+    },
     "plan": {
       "BASIC": "Basic",
       "PRO": "Pro",
@@ -1579,15 +1624,47 @@
       "title": "Abonnements actifs",
       "helper": "Synchronisés quotidiennement"
     },
-    "revenue30d": {
-      "title": "Revenus (30 jours)",
-      "helper": "Paiements déclarés"
+    "earningsMonth": {
+      "title": "Revenus (mois)",
+      "helper": "Paiements enregistrés ce mois-ci"
+    },
+    "earningsLifetime": {
+      "title": "Revenus cumulés",
+      "helper": "Tous les paiements enregistrés"
     }
   },
   "superAdminGymSubscription": {
     "title": "Paramètres d'abonnement",
     "description": "Mettez à jour le plan ou la capacité.",
     "modulesActive": "Modules actifs",
+    "overrides": {
+      "title": "Surcharges de fonctionnalités",
+      "description": "Forcer ou désactiver des modules pour cette salle.",
+      "inherit": "Hériter du plan",
+      "forceOn": "Forcer ON",
+      "forceOff": "Forcer OFF",
+      "save": "Enregistrer",
+      "saving": "Enregistrement...",
+      "saved": "Surcharges mises à jour",
+      "reset": "Réinitialiser",
+      "planState": "Plan : {state}",
+      "effective": "Effectif : {state}",
+      "state": {
+        "on": "Activé",
+        "off": "Désactivé"
+      },
+      "features": {
+        "accessControl": "Contrôle d'accès",
+        "presenceTracking": "Suivi de présence",
+        "courses": "Cours",
+        "qrTools": "Outils QR",
+        "qrDownloads": "Exports QR",
+        "excelReports": "Exports Excel"
+      },
+      "errors": {
+        "saveFailed": "Impossible de mettre à jour les surcharges"
+      }
+    },
     "variantMode": {
       "mono": "Mono-salle - {count} variante(s)",
       "multi": "Multi-salles - {count} variante(s)"
@@ -1598,10 +1675,12 @@
       "interval": "Facturation",
       "expiresAt": "Date d'expiration",
       "graceDays": "Jours de grâce",
-      "maxAdmins": "Admins autorisés"
+      "maxAdmins": "Admins autorisés",
+      "suspensionReason": "Motif de suspension"
     },
     "placeholders": {
-      "pickDate": "Choisir une date"
+      "pickDate": "Choisir une date",
+      "suspensionReason": "Pourquoi cette salle est-elle suspendue ?"
     },
     "status": {
       "active": "Actif",
@@ -1640,7 +1719,8 @@
     "errors": {
       "invoiceGeneric": "Impossible de générer la facture",
       "exportFailed": "Export impossible",
-      "saveFailed": "Impossible d'enregistrer l'abonnement"
+      "saveFailed": "Impossible d'enregistrer l'abonnement",
+      "reasonRequired": "Indiquez un motif de suspension"
     }
   },
   "superAdminGymTeam": {
@@ -1694,6 +1774,7 @@
     "demoBadge": "DEMO",
     "demoPrefix": "Démo",
     "planLine": "Plan {plan} - {interval} - {price}",
+    "suspensionReason": "Suspension : {reason}",
     "status": {
       "active": "Actif",
       "suspended": "Suspendue",
@@ -1724,6 +1805,7 @@
     "page": "Page {page} / {pageCount}",
     "actions": {
       "overview": "Vue d'ensemble",
+      "members": "Voir les membres",
       "team": "Administrateurs",
       "plans": "Plans",
       "subscription": "Abonnement",
@@ -1829,6 +1911,26 @@
       "effective": "Effectif : {perVariant} par site, {perNetwork} réseau."
     }
   },
+  "superAdminPlanCap": {
+    "label": "Plafond de plan",
+    "perVariant": "Plafond par variante",
+    "perNetwork": "Plafond r\u00e9seau",
+    "unlimited": "Illimit\u00e9"
+  },
+  "superAdminPlanSetup": {
+    "title": "Configuration des plans",
+    "subtitle": "Contr\u00f4lez les prix, remises annuelles, fonctions et plafonds pour chaque palier.",
+    "capsTitle": "Tarifs et plafonds",
+    "capsDescription": "Modifiez les prix mensuels, la remise annuelle et les plafonds par palier.",
+    "featuresTitle": "Modules inclus",
+    "featuresDescription": "Vue rapide des modules par offre.",
+    "featuresHelper": "Les changements super-admin sont appliqu\u00e9s instantan\u00e9ment.",
+    "plans": {
+      "BASIC": "Basic",
+      "PRO": "Pro",
+      "ENTERPRISE": "Enterprise"
+    }
+  },
   "superAdminDemoRequests": {
     "header": {
       "title": "Demandes de démo",
@@ -1900,6 +2002,12 @@
       "pdf": "Rapport PDF",
       "exporting": "Export en cours..."
     },
+    "pulse": {
+      "activationTitle": "Taux d'activation",
+      "activationSubtitle": "{total} salles suivies",
+      "expiringTitle": "Expire bientôt",
+      "expiringSubtitle": "Sous 10 jours"
+    },
     "kpis": {
       "totalGyms": "Nombre total de salles",
       "activeSubscribers": "Abonnés actifs",
@@ -1957,6 +2065,7 @@
   "superAdminLayout": {
     "nav": {
       "overview": "Vue d'ensemble",
+      "planSetup": "Configuration des plans",
       "gyms": "Gestion des salles",
       "demoRequests": "Demandes de démo",
       "partners": "Clubs partenaires",
@@ -2104,6 +2213,14 @@
         "title": "Visites aujourd'hui",
         "subtitle": "Passages enregistrés"
       },
+      "capacity": {
+        "title": "Capacité",
+        "subtitle": "{percent}% utilisés · {scope}",
+        "unlimited": "Illimitée",
+        "unlimitedSubtitle": "Pas de limite de capacité",
+        "defaultScope": "toutes les variantes",
+        "trendLabel": "{direction} · {delta} sur {window} min"
+      },
       "activeMembers": {
         "title": "Membres actifs",
         "subtitle": "Avec abonnement valide"
@@ -2133,6 +2250,28 @@
       "membersLabel": "{count} membres",
       "radialFooterLine": "{active} actifs sur {total} membres",
       "radialFooterHint": "Répartition des statuts d'abonnement"
+    },
+    "dailySummary": {
+      "kicker": "Aujourd'hui",
+      "title": "Résumé du jour",
+      "visitsTitle": "Entrées",
+      "vsYesterday": "{value} vs hier",
+      "checkouts": "{value} sorties",
+      "revenueTitle": "Revenus du jour",
+      "revenueValue": "{value} MAD",
+      "revenueHint": "Paiements enregistrés aujourd'hui",
+      "revenueLocked": "Restreint",
+      "membersTitle": "Nouveaux membres",
+      "avgDuration": "Durée moy. : {value}",
+      "minutes": "min",
+      "noDuration": "Aucune visite terminée",
+      "capacityTitle": "Tendance capacité",
+      "capacityWindow": "vs dernières {window} minutes",
+      "capacityScope": "Portée : {scope}",
+      "trendUp": "En hausse",
+      "trendDown": "En baisse",
+      "trendFlat": "Stable",
+      "noComparison": "Pas encore de comparaison"
     },
     "expiring": {
       "title": "Abonnements expirant dans les 7 prochains jours",
@@ -2228,7 +2367,23 @@
       "tierUnlimitedVariant": "Illimité par variante",
       "tierUnlimitedNetwork": "Illimité réseau",
       "footer": "Les plafonds sont appliqués uniquement sur les plans actifs. Contactez le support pour toute dérogation."
-    }
+    },
+    "variants": {
+        "title": "Variantes",
+        "desc": "Modifier les limites de capacité par variante. Seule la variante assignée est modifiable pour les rôles admin.",
+        "capacityLabel": "Capacité (personnes)",
+        "save": "Enregistrer",
+        "saving": "Enregistrement...",
+        "default": "Par défaut",
+        "empty": "Aucune variante trouvée.",
+        "errors": {
+          "updateFailed": "Impossible de mettre à jour la variante"
+        },
+        "success": {
+          "updated": "Variante mise à jour"
+        }
+      }
+
   },
   "subscriptionBanner": {
     "brandLine": "GymWatch Plan {plan}{demoSuffix}",
@@ -2456,7 +2611,7 @@
         },
         "subscriptions": {
           "title": "Gestion des abonnements",
-          "body": "Contrats, gel, renouvellements et prorata pour une facturation claire."
+          "body": "Contrats, suspension, renouvellements et prorata pour une facturation claire."
         },
         "teams": {
           "title": "Supervision des équipes",
@@ -3362,6 +3517,7 @@
         "deleteError": "Impossible de supprimer le membre",
         "qrPlanOnly": "Le QR code membre est réservé au plan Pro",
         "visitInactive": "Abonnement inactif ou expiré",
+        "checkoutRequired": "Enregistrez d'abord la sortie en cours pour {name}",
         "visitLimitReached": "{name} a atteint la limite journalière",
         "visitLastOfDay": "Dernière visite du jour pour {name}{remainingLabel}",
         "visitRecorded": "{name} marque présent ({count} visite(s) aujourd'hui){remainingLabel}"
@@ -3386,6 +3542,7 @@
         },
         "actions": {
           "markVisit": "Marquer visite",
+          "manualCheckout": "Sortie manuelle",
           "edit": "Modifier",
           "qrCode": "QR code membre",
           "statsExcel": "Stats Excel",
@@ -3433,6 +3590,19 @@
       "unlimited": "Illimitée",
       "limitReached": "Limite quotidienne atteinte"
     },
+    "history": {
+      "title": "Activité récente",
+      "subtitle": "Vos dernières entrées",
+      "last30Days": "Visites sur les 30 derniers jours",
+      "details": "Détails du membre",
+      "email": "Email",
+      "phone": "Téléphone",
+      "unknown": "Inconnu",
+      "recentVisits": "4 dernières visites",
+      "empty": "Aucune visite enregistrée.",
+      "checkedOut": "Sortie enregistrée",
+      "checkedIn": "Entrée enregistrée"
+    },
     "classes": {
       "title": "Cours à venir",
       "subtitle": "Réservations liées à ce membre",
@@ -3452,3 +3622,6 @@
     }
   }
 }
+
+
+

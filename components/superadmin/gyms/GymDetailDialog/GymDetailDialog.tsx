@@ -79,6 +79,12 @@ export function GymDetailDialog({ gymId, onClose }: Props) {
     return date.toLocaleDateString(locale)
   }, [gym, locale])
 
+  const capacityValue = typeof gym?.capacity === "number" && gym.capacity > 0 ? gym.capacity : null
+  const variantCaps = (gym?.variants ?? []).map((variant) => ({
+    ...variant,
+    capacity: typeof variant.capacity === "number" && variant.capacity > 0 ? variant.capacity : null,
+  }))
+
   const handleConvert = () => {
     if (!gym) return
     const confirmed = confirm(t("convert.confirm", { name: gym.name }))
@@ -96,6 +102,32 @@ export function GymDetailDialog({ gymId, onClose }: Props) {
   return (
     <Dialog open={open} onOpenChange={(value) => !value && onClose()}>
       <DialogContent className="max-w-md sm:max-w-lg md:max-w-4xl w-[95vw] max-h-[90vh] overflow-y-auto space-y-6 rounded-2xl bg-card p-4 sm:p-6">
+        <DialogHeader className="space-y-3">
+          <DialogTitle className="flex flex-wrap items-center gap-2 text-lg sm:text-xl">
+            {gym?.name ?? t("loadingTitle", { default: "Gym details" } as any)}
+            {gym?.isDemo ? (
+              <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs font-semibold text-primary">
+                {t("demoPill")}
+              </span>
+            ) : null}
+          </DialogTitle>
+
+          <DialogDescription className="text-pretty text-xs sm:text-sm leading-relaxed">
+            {gym
+              ? `${gym.city ? gym.city : t("unknownLocation")}${gym.country ? `, ${gym.country}` : ""} - ${t("planPrefix")} ${planLabel} - ${intervalLabel} - ${priceLabel} - ${typeLabel} (${t("variantsCount", { count: variantTotal })})${demoEndsLabel ? ` - ${t("demoUntil", { date: demoEndsLabel })}` : ""}`
+              : t("loadingSubtitle", { default: "Fetching gym data..." } as any)}
+          </DialogDescription>
+
+          {gym?.isDemo ? (
+            <div className="flex flex-wrap gap-2">
+              <Button size="sm" onClick={handleConvert} disabled={convertDemo.isPending}>
+                {convertDemo.isPending ? t("convert.pending") : t("convert.cta")}
+              </Button>
+              <p className="text-xs text-muted-foreground">{t("convert.helper")}</p>
+            </div>
+          ) : null}
+        </DialogHeader>
+
         {isLoading || !gym ? (
           <div className="space-y-4 py-6">
             <div className="flex items-center justify-between">
@@ -112,36 +144,6 @@ export function GymDetailDialog({ gymId, onClose }: Props) {
           </div>
         ) : (
           <>
-            <DialogHeader className="space-y-3">
-              <DialogTitle className="flex flex-wrap items-center gap-2 text-lg sm:text-xl">
-                {gym.name}
-                {gym.isDemo ? (
-                  <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs font-semibold text-primary">
-                    {t("demoPill")}
-                  </span>
-                ) : null}
-              </DialogTitle>
-
-              <DialogDescription className="text-pretty text-xs sm:text-sm leading-relaxed">
-                {gym.city ? gym.city : t("unknownLocation")}
-                {gym.country ? `, ${gym.country}` : ""} {" - "}
-                {t("planPrefix")} {planLabel} {" - "}
-                {intervalLabel} {" - "}
-                {priceLabel} {" - "}
-                {typeLabel} ({t("variantsCount", { count: variantTotal })})
-                {demoEndsLabel ? ` - ${t("demoUntil", { date: demoEndsLabel })}` : ""}
-              </DialogDescription>
-
-              {gym.isDemo ? (
-                <div className="flex flex-wrap gap-2">
-                  <Button size="sm" onClick={handleConvert} disabled={convertDemo.isPending}>
-                    {convertDemo.isPending ? t("convert.pending") : t("convert.cta")}
-                  </Button>
-                  <p className="text-xs text-muted-foreground">{t("convert.helper")}</p>
-                </div>
-              ) : null}
-            </DialogHeader>
-
             <div className="rounded-xl border border-border/60 bg-muted/30 px-4 py-3">
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <p className="text-sm font-semibold">{t("variantsTitle")}</p>
@@ -173,6 +175,109 @@ export function GymDetailDialog({ gymId, onClose }: Props) {
               </div>
 
               <PlanModuleList features={planFeatures} />
+            </div>
+
+            <div className="grid gap-3 md:grid-cols-2">
+              <div className="space-y-2 rounded-xl border border-border/60 bg-muted/30 px-4 py-3">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <p className="text-sm font-semibold">{t("capacity.title")}</p>
+                  <Badge variant="secondary" className="rounded-full">
+                    {capacityValue !== null ? t("capacity.value", { value: capacityValue }) : t("capacity.unset")}
+                  </Badge>
+                </div>
+                <p className="text-xs text-muted-foreground">{t("capacity.helper")}</p>
+
+                <div className="rounded-lg border border-dashed border-border/60 bg-background/60 p-3 text-sm">
+                  <p className="font-semibold">{t("capacity.gymTotal")}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {capacityValue !== null ? t("capacity.value", { value: capacityValue }) : t("capacity.unset")}
+                  </p>
+                  {typeof gym.maxMembers === "number" ? (
+                    <p className="text-xs text-muted-foreground">
+                      {t("capacity.maxMembers", {
+                        value: gym.maxMembers < 0 ? t("capacity.unlimited") : gym.maxMembers,
+                      })}
+                    </p>
+                  ) : null}
+                </div>
+
+                <div className="space-y-2">
+                  {variantCaps.length ? (
+                    variantCaps.map((variant) => (
+                      <div
+                        key={variant.id}
+                        className="flex items-center justify-between rounded-lg border border-border/60 bg-card/70 px-3 py-2"
+                      >
+                        <div className="flex items-center gap-2 text-sm font-semibold">
+                          <span>{variant.name}</span>
+                          {variant.isDefault ? (
+                            <Badge variant="outline" className="text-[11px]">
+                              {t("default")}
+                            </Badge>
+                          ) : null}
+                        </div>
+                        <Badge variant="outline" className="border-border/70 text-[11px]">
+                          {variant.capacity !== null ? t("capacity.value", { value: variant.capacity }) : t("capacity.unset")}
+                        </Badge>
+                      </div>
+                    ))
+                  ) : (
+                    <p className="text-xs text-muted-foreground">{t("capacity.noVariantCaps")}</p>
+                  )}
+                </div>
+              </div>
+
+              <div className="space-y-3 rounded-xl border border-border/60 bg-muted/30 px-4 py-3">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <p className="text-sm font-semibold">{t("team.title")}</p>
+                  <Badge variant="outline" className="rounded-full border-border/60">
+                    {t("team.count", { count: gym.admins?.length ?? 0 })}
+                  </Badge>
+                </div>
+
+                <div className="space-y-2 text-sm">
+                  {gym.owner ? (
+                    <div className="rounded-lg border border-border/60 bg-card/70 p-3">
+                      <p className="font-semibold">{t("team.owner")}</p>
+                      <p className="text-muted-foreground">
+                        {[gym.owner.firstName, gym.owner.lastName].filter(Boolean).join(" ") || gym.owner.email}
+                      </p>
+                      <p className="text-xs text-muted-foreground">{gym.owner.email}</p>
+                    </div>
+                  ) : (
+                    <p className="text-xs text-muted-foreground">{t("team.noOwner")}</p>
+                  )}
+
+                  <div className="space-y-1">
+                    {(gym.admins ?? []).slice(0, 4).map((admin) => (
+                      <div
+                        key={admin.id}
+                        className="flex items-center justify-between rounded-lg border border-border/60 bg-card/70 px-3 py-2"
+                      >
+                        <div>
+                          <p className="font-semibold">
+                            {[admin.firstName, admin.lastName].filter(Boolean).join(" ") || admin.email}
+                          </p>
+                          <p className="text-xs text-muted-foreground">{admin.email}</p>
+                        </div>
+                        {admin.gymVariant?.name ? (
+                          <Badge variant="outline" className="border-border/70 text-[11px]">
+                            {admin.gymVariant.name}
+                          </Badge>
+                        ) : null}
+                      </div>
+                    ))}
+                    {(gym.admins?.length ?? 0) === 0 ? (
+                      <p className="text-xs text-muted-foreground">{t("team.noAdmins")}</p>
+                    ) : null}
+                    {(gym.admins?.length ?? 0) > 4 ? (
+                      <p className="text-xs text-muted-foreground">
+                        {t("team.remaining", { count: (gym.admins?.length ?? 0) - 4 })}
+                      </p>
+                    ) : null}
+                  </div>
+                </div>
+              </div>
             </div>
 
             <GymStats gym={gym} />

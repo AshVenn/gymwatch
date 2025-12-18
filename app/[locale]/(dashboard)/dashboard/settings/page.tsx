@@ -6,12 +6,16 @@ import { useSession } from "next-auth/react"
 import { AlertCircle } from "lucide-react"
 import { useQuery } from "@tanstack/react-query"
 import { useTranslations } from "next-intl"
+import { useState } from "react"
 
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
 import { cn } from "@/lib/utils"
 import { DEFAULT_PLAN_LIMITS, resolvePlanLimitsForTier, type PlanLimitsTable } from "@/lib/subscription-plans"
+import { Input } from "@/components/ui/input"
+import { Button } from "@/components/ui/button"
+import { toast } from "sonner"
 
 interface GymData {
   id: string
@@ -30,6 +34,13 @@ interface GymData {
     unlimitedPerNetwork: boolean
     sources: { perVariant: "PLAN_DEFAULT" | "GYM_OVERRIDE"; perNetwork: "PLAN_DEFAULT" | "GYM_OVERRIDE" }
   }
+}
+
+interface VariantData {
+  id: string
+  name: string
+  isDefault: boolean
+  capacity?: number | null
 }
 
 function ReadonlyField({
@@ -55,6 +66,7 @@ function ReadonlyField({
 export default function SettingsPage() {
   const t = useTranslations("dashOwAdGymSettings")
   const { data: session } = useSession()
+  const [updatingId, setUpdatingId] = useState<string | null>(null)
 
   const gymKey = useMemo(() => ["gym", session?.user?.gymId ?? "no-gym"] as const, [session?.user?.gymId])
 
@@ -77,6 +89,20 @@ export default function SettingsPage() {
     queryFn: async () => {
       const response = await fetch("/api/gym-team/plan-settings")
       if (!response.ok) throw new Error(t("errors.planLimitsFetch"))
+      return response.json()
+    },
+  })
+
+  const {
+    data: variants,
+    refetch: refetchVariants,
+    isLoading: variantsLoading,
+  } = useQuery<VariantData[]>({
+    queryKey: ["gym-variants", session?.user?.gymId],
+    enabled: Boolean(session?.user?.gymId),
+    queryFn: async () => {
+      const response = await fetch("/api/gym-team/variants")
+      if (!response.ok) throw new Error("Unable to load variants")
       return response.json()
     },
   })
@@ -114,6 +140,27 @@ export default function SettingsPage() {
 
   const hasOverrides = (gym?.planLimitPerVariant ?? null) !== null || (gym?.planLimitPerNetwork ?? null) !== null
 
+  const handleCapacitySave = async (variantId: string, capacity: number) => {
+    try {
+      setUpdatingId(variantId)
+      const response = await fetch("/api/gym-team/variants", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ variantId, capacity }),
+      })
+      if (!response.ok) {
+        const payload = await response.json().catch(() => null)
+        throw new Error(payload?.error ?? t("variants.errors.updateFailed"))
+      }
+      await refetchVariants()
+      toast.success(t("variants.success.updated"))
+    } catch (error) {
+      toast.error((error as Error).message)
+    } finally {
+      setUpdatingId(null)
+    }
+  }
+
   if (isLoading) {
     return (
       <div className="mx-auto max-w-6xl space-y-6 animate-in fade-in duration-500">
@@ -122,8 +169,8 @@ export default function SettingsPage() {
           <Skeleton className="h-32 w-full rounded-3xl" />
         </div>
         <div className="grid gap-4 lg:grid-cols-2">
-          <Skeleton className="h-[360px] rounded-3xl" />
-          <Skeleton className="h-[360px] rounded-3xl" />
+          <Skeleton className="h-90 rounded-3xl" />
+          <Skeleton className="h-90 rounded-3xl" />
         </div>
       </div>
     )
@@ -280,6 +327,83 @@ export default function SettingsPage() {
           </div>
 
           <p className="text-xs leading-relaxed text-muted-foreground">{t("limits.footer")}</p>
+        </CardContent>
+      </Card>
+
+      <Card className="overflow-hidden rounded-3xl border border-border/60 bg-card/90 shadow-md backdrop-blur-sm">
+        <CardHeader className="pb-2">
+          <CardTitle>{t("variants.title")}</CardTitle>
+          <CardDescription>{t("variants.desc")}</CardDescription>
+        </CardHeader>
+
+        <CardContent className="space-y-3">
+          {variantsLoading ? (
+            <div className="space-y-3">
+              {Array.from({ length: 2 }).map((_, idx) => (
+                <Skeleton key={idx} className="h-16 w-full rounded-xl" />
+              ))}
+            </div>
+          ) : (variants ?? []).length === 0 ? (
+            <p className="text-sm text-muted-foreground">{t("variants.empty")}</p>
+          ) : (
+            (variants ?? []).map((variant) => {
+              const inputId = `variant-capacity-${variant.id}`
+              const defaultBadge = variant.isDefault ? (
+                <Badge variant="outline" className="rounded-full border-primary/50 text-primary">
+                  {t("variants.default")}
+                </Badge>
+              ) : null
+
+              return (
+                <div
+                  key={variant.id}
+                  className="flex flex-col gap-3 rounded-xl border border-border/60 bg-muted/30 p-3 md:flex-row md:items-center md:justify-between"
+                >
+                  <div className="space-y-1">
+                    <p className="font-semibold leading-tight">{variant.name}</p>
+                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                      {defaultBadge}
+                      <span>{t("variants.capacityLabel")}</span>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <Input
+                      id={inputId}
+                      type="number"
+                      min={0}
+                      max={100000}
+                      defaultValue={variant.capacity ?? 0}
+                      className="w-28"
+                      onBlur={(event) => {
+                        const next = Number(event.target.value)
+                        if (Number.isNaN(next) || next < 0) {
+                          event.target.value = String(variant.capacity ?? 0)
+                        }
+                      }}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          const next = Number((e.target as HTMLInputElement).value)
+                          handleCapacitySave(variant.id, Math.max(0, Math.trunc(next || 0)))
+                        }
+                      }}
+                    />
+                    <Button
+                      size="sm"
+                      onClick={() => {
+                        const input = document.getElementById(inputId) as HTMLInputElement | null
+                        const next = input ? Number(input.value) : variant.capacity ?? 0
+                        handleCapacitySave(variant.id, Math.max(0, Math.trunc(next || 0)))
+                      }}
+                      disabled={updatingId === variant.id}
+                    >
+                      {updatingId === variant.id ? t("variants.saving") : t("variants.save")}
+                    </Button>
+                  </div>
+                </div>
+              )
+            })
+          )}
         </CardContent>
       </Card>
     </div>

@@ -15,10 +15,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const navigationItems: NavigationItem[] = [
     { href: "/dashboard", label: tNav("dashboard"), icon: LayoutGrid },
     { href: "/dashboard/members", label: tNav("members"), icon: Users },
+    { href: "/dashboard/subscriptions", label: tNav("subscriptions"), icon: Calendar },
     { href: "/dashboard/access-logs", label: tNav("accessLogs"), icon: KeyRound },
     { href: "/dashboard/presence", label: tNav("presence"), icon: Activity },
     { href: "/dashboard/classes", label: tNav("classes"), icon: CalendarClock },
-    { href: "/dashboard/subscriptions", label: tNav("subscriptions"), icon: Calendar },
     { href: "/dashboard/plans", label: tNav("plans"), icon: Layers },
     { href: "/dashboard/settings", label: tNav("settings"), icon: Settings },
   ]

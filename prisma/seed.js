@@ -9,6 +9,9 @@ const {
   GymBillingInterval,
   GymSubscriptionStatus,
   DemoRequestStatus,
+  AccessRuleType,
+  AccessRuleSeverity,
+  GymFreezeStatus,
 } = require('@prisma/client')
 const bcrypt = require('bcrypt')
 
@@ -70,6 +73,104 @@ async function ensurePreference(userId, overrides = {}) {
     where: { userId },
     update: payload,
     create: { userId, ...payload },
+  })
+}
+
+async function upsertPlans() {
+  const catalog = [
+    {
+      tier: GymPlanTier.BASIC,
+      billingInterval: GymBillingInterval.MONTHLY,
+      name: 'Basic Monthly',
+      price: 200,
+      maxVariants: 2,
+      maxMembers: 600,
+      capacityPerGym: 80,
+      capacityPerVariant: 60,
+    },
+    {
+      tier: GymPlanTier.PRO,
+      billingInterval: GymBillingInterval.MONTHLY,
+      name: 'Pro Monthly',
+      price: 350,
+      maxVariants: 6,
+      maxMembers: 1400,
+      capacityPerGym: 160,
+      capacityPerVariant: 120,
+    },
+    {
+      tier: GymPlanTier.ENTERPRISE,
+      billingInterval: GymBillingInterval.MONTHLY,
+      name: 'Enterprise Monthly',
+      price: 520,
+      maxVariants: -1,
+      maxMembers: -1,
+      capacityPerGym: 260,
+      capacityPerVariant: 180,
+    },
+  ]
+
+  const byTier = new Map()
+
+  for (const plan of catalog) {
+    const record = await prisma.plan.upsert({
+      where: {
+        tier_billingInterval: {
+          tier: plan.tier,
+          billingInterval: plan.billingInterval,
+        },
+      },
+      update: {
+        name: plan.name,
+        price: plan.price,
+        maxVariants: plan.maxVariants,
+        maxMembers: plan.maxMembers,
+        capacityPerGym: plan.capacityPerGym,
+        capacityPerVariant: plan.capacityPerVariant,
+      },
+      create: {
+        name: plan.name,
+        tier: plan.tier,
+        billingInterval: plan.billingInterval,
+        price: plan.price,
+        maxVariants: plan.maxVariants,
+        maxMembers: plan.maxMembers,
+        capacityPerGym: plan.capacityPerGym,
+        capacityPerVariant: plan.capacityPerVariant,
+      },
+    })
+    byTier.set(plan.tier, record)
+  }
+
+  return byTier
+}
+
+async function attachTenantPlan(gym, planRecord, options = {}) {
+  const id = `tenant-plan-${gym.id}`
+  return prisma.tenantPlan.upsert({
+    where: { id },
+    update: {
+      status: gym.subscriptionStatus ?? GymSubscriptionStatus.ACTIVE,
+      planId: planRecord.id,
+      startsAt: gym.subscriptionStartedAt ?? new Date(),
+      endsAt: gym.subscriptionExpiresAt ?? null,
+      gracePeriodDays: gym.subscriptionGracePeriodDays ?? 0,
+      freezeStatus: options.freezeStatus ?? null,
+      freezeReason: options.freezeReason ?? null,
+      freezeUntil: options.freezeUntil ?? null,
+    },
+    create: {
+      id,
+      gymId: gym.id,
+      planId: planRecord.id,
+      status: gym.subscriptionStatus ?? GymSubscriptionStatus.ACTIVE,
+      startsAt: gym.subscriptionStartedAt ?? new Date(),
+      endsAt: gym.subscriptionExpiresAt ?? null,
+      gracePeriodDays: gym.subscriptionGracePeriodDays ?? 0,
+      freezeStatus: options.freezeStatus ?? null,
+      freezeReason: options.freezeReason ?? null,
+      freezeUntil: options.freezeUntil ?? null,
+    },
   })
 }
 
@@ -166,6 +267,10 @@ function effectiveSessionLimitMinutes(gym, variant) {
 
 async function clearDatabase() {
   console.log('Clearing database...')
+  await prisma.accessRuleEvent.deleteMany()
+  await prisma.tenantPlanFreeze.deleteMany()
+  await prisma.tenantPlan.deleteMany()
+  await prisma.plan.deleteMany()
   await prisma.partnerClubTranslation.deleteMany()
   await prisma.partnerClub.deleteMany()
   await prisma.classBooking.deleteMany()
@@ -210,8 +315,8 @@ async function upsertAdmin({ email, password, firstName, lastName, gymId, gymVar
 
 /**
  * ===== REALISTIC ACCESS ENGINE =====
- * We seed "attempts". Each attempt creates an AccessEvent.
- * Only GRANTED attempts create a Visit (and optionally CHECKED_OUT/SESSION_OVERSTAY).
+ * We seed access events. Each entry creates an AccessEvent.
+ * Only GRANTED entries create a Visit (and optionally CHECKED_OUT/SESSION_OVERSTAY).
  */
 
 async function getMemberSubscriptionForMoment(memberId, moment) {
@@ -250,6 +355,12 @@ async function logAccess(memberId, status, source, createdAt) {
 async function createVisitFromGrant({ gym, variant, memberId, createdAt, durationMinutes, checkout }) {
   const checkIn = createdAt
   const checkOut = checkout === false ? null : new Date(checkIn.getTime() + (durationMinutes ?? 75) * 60 * 1000)
+  const sessionLimit = effectiveSessionLimitMinutes(gym, variant)
+  const resolvedDuration = checkout === false ? 0 : durationMinutes ?? 0
+  const overstayMinutes =
+    typeof sessionLimit === 'number' && sessionLimit > 0 && resolvedDuration > sessionLimit
+      ? resolvedDuration - sessionLimit
+      : 0
 
   const visit = await prisma.visit.create({
     data: {
@@ -258,6 +369,7 @@ async function createVisitFromGrant({ gym, variant, memberId, createdAt, duratio
       gymVariantId: variant.id,
       checkIn,
       checkOut,
+      overstayMinutes: overstayMinutes > 0 ? overstayMinutes : 0,
     },
   })
 
@@ -265,8 +377,7 @@ async function createVisitFromGrant({ gym, variant, memberId, createdAt, duratio
   if (visit.checkOut) {
     await logAccess(memberId, AccessEventStatus.CHECKED_OUT, AccessEventSource.MANUAL, visit.checkOut)
 
-    const limit = effectiveSessionLimitMinutes(gym, variant)
-    if (typeof limit === 'number' && limit > 0 && (durationMinutes ?? 0) > limit) {
+    if (typeof sessionLimit === 'number' && sessionLimit > 0 && (durationMinutes ?? 0) > sessionLimit) {
       await logAccess(memberId, AccessEventStatus.SESSION_OVERSTAY, AccessEventSource.SIMULATOR, new Date(visit.checkOut.getTime() + 60_000))
     }
   }
@@ -283,7 +394,7 @@ async function createVisitFromGrant({ gym, variant, memberId, createdAt, duratio
  * 4) Daily limit based on plan.visitsPerDay => DENIED_DAILY_LIMIT
  * 5) Else => GRANTED + create Visit
  */
-async function seedAttempt({
+async function seedAccessEntry({
   gym,
   variantsById,
   member,
@@ -364,17 +475,14 @@ async function refreshMembersLastVisitedAt(memberIds) {
 }
 
 async function seedPartnerClubs() {
-  const placeholderLogo = 'https://res.cloudinary.com/demo/image/upload/v1312461204/sample.jpg'
-  const placeholderCover = 'https://res.cloudinary.com/demo/image/upload/c_fill,w_1200,h_720,q_auto,f_auto/v1312461204/sample.jpg'
-
   const entries = [
     {
       slug: 'fitzone-casa',
       websiteUrl: 'https://fitzone.ma',
-      logoUrl: placeholderLogo,
-      logoPublicId: 'sample',
-      coverUrl: placeholderCover,
-      coverPublicId: 'sample',
+      logoUrl: '/gyms/FitZone.png',
+      logoPublicId: 'fitzone-local',
+      coverUrl: '/gyms/FitZone.png',
+      coverPublicId: 'fitzone-local',
       order: 1,
       isPublished: true,
       translations: {
@@ -404,10 +512,10 @@ async function seedPartnerClubs() {
     {
       slug: 'powergym-rabat',
       websiteUrl: 'https://powergym.ma',
-      logoUrl: placeholderLogo,
-      logoPublicId: 'sample',
-      coverUrl: placeholderCover,
-      coverPublicId: 'sample',
+      logoUrl: '/gyms/PowerGym.png',
+      logoPublicId: 'powergym-local',
+      coverUrl: '/gyms/PowerGym.png',
+      coverPublicId: 'powergym-local',
       order: 2,
       isPublished: true,
       translations: {
@@ -437,23 +545,23 @@ async function seedPartnerClubs() {
     {
       slug: 'atlas-fitness',
       websiteUrl: 'https://atlas-fitness.ma',
-      logoUrl: placeholderLogo,
-      logoPublicId: 'sample',
-      coverUrl: placeholderCover,
-      coverPublicId: 'sample',
+      logoUrl: '/gyms/AtlasFitness.png',
+      logoPublicId: 'atlas-local',
+      coverUrl: '/gyms/AtlasFitness.png',
+      coverPublicId: 'atlas-local',
       order: 3,
       isPublished: true,
       translations: {
         fr: {
           name: 'Atlas Fitness',
-          city: 'Marrakech',
+          city: 'Fès',
           country: 'Maroc',
           tagline: 'Pilotage multi-salles',
           description: 'Vue réseau, indicateurs par club et exports CSV/PDF pour la finance et les franchises.',
         },
         en: {
           name: 'Atlas Fitness',
-          city: 'Marrakech',
+          city: 'Fes',
           country: 'Morocco',
           tagline: 'Multi-club control',
           description: 'Network-wide view, per-club indicators and CSV/PDF exports for finance and franchise ops.',
@@ -563,6 +671,8 @@ async function runSeed() {
     },
   })
 
+  const planCatalog = await upsertPlans()
+
   // Super admin (KEEP SAME PASSWORD)
   const adminPassword = await hashPassword('Admin123!')
   const superAdmin = await prisma.user.upsert({
@@ -595,6 +705,9 @@ async function runSeed() {
       subscriptionGracePeriodDays: 3,
       maxSessionMinutes: 180,
       maxAdminAccounts: 5,
+      maxMembers: 1200,
+      maxVariants: 6,
+      capacity: 160,
       lastSettingsUpdateAt: now,
       todayVisitorCount: 0,
       todayVisitorDate: todayStart,
@@ -614,6 +727,9 @@ async function runSeed() {
       subscriptionGracePeriodDays: 3,
       maxSessionMinutes: 180,
       maxAdminAccounts: 5,
+      maxMembers: 1200,
+      maxVariants: 6,
+      capacity: 160,
       lastSettingsUpdateAt: now,
       todayVisitorCount: 0,
       todayVisitorDate: todayStart,
@@ -634,6 +750,9 @@ async function runSeed() {
       subscriptionGracePeriodDays: 7,
       maxSessionMinutes: 180,
       maxAdminAccounts: 3,
+      maxMembers: 800,
+      maxVariants: 3,
+      capacity: 110,
       lastSettingsUpdateAt: now,
       todayVisitorCount: 0,
       todayVisitorDate: todayStart,
@@ -653,6 +772,9 @@ async function runSeed() {
       subscriptionGracePeriodDays: 7,
       maxSessionMinutes: 180,
       maxAdminAccounts: 3,
+      maxMembers: 800,
+      maxVariants: 3,
+      capacity: 110,
       lastSettingsUpdateAt: now,
       todayVisitorCount: 0,
       todayVisitorDate: todayStart,
@@ -672,6 +794,9 @@ async function runSeed() {
       subscriptionGracePeriodDays: 5,
       maxSessionMinutes: 180,
       maxAdminAccounts: 10,
+      maxMembers: 1800,
+      maxVariants: -1,
+      capacity: 260,
       lastSettingsUpdateAt: now,
       todayVisitorCount: 0,
       todayVisitorDate: todayStart,
@@ -692,6 +817,9 @@ async function runSeed() {
       subscriptionGracePeriodDays: 5,
       maxSessionMinutes: 180,
       maxAdminAccounts: 10,
+      maxMembers: 1800,
+      maxVariants: -1,
+      capacity: 260,
       lastSettingsUpdateAt: now,
       todayVisitorCount: 0,
       todayVisitorDate: todayStart,
@@ -712,6 +840,9 @@ async function runSeed() {
       subscriptionGracePeriodDays: 3,
       maxSessionMinutes: 180,
       maxAdminAccounts: 2,
+      maxMembers: 400,
+      maxVariants: 3,
+      capacity: 90,
       lastSettingsUpdateAt: now,
       todayVisitorCount: 0,
       todayVisitorDate: todayStart,
@@ -734,6 +865,9 @@ async function runSeed() {
       subscriptionGracePeriodDays: 3,
       maxSessionMinutes: 180,
       maxAdminAccounts: 2,
+      maxMembers: 400,
+      maxVariants: 3,
+      capacity: 90,
       lastSettingsUpdateAt: now,
       todayVisitorCount: 0,
       todayVisitorDate: todayStart,
@@ -741,18 +875,51 @@ async function runSeed() {
     },
   })
 
+  const resolvePlanByTier = (tier) => planCatalog.get(tier) ?? planCatalog.values().next().value
+
+  const tenantPlans = {
+    fitzone: await attachTenantPlan(gym1, resolvePlanByTier(GymPlanTier.PRO)),
+    power: await attachTenantPlan(gym2, resolvePlanByTier(GymPlanTier.BASIC), {
+      freezeStatus: GymFreezeStatus.ACTIVE,
+      freezeReason: 'Payment dispute',
+      freezeUntil: addDays(now, 14),
+    }),
+    enterprise: await attachTenantPlan(enterpriseGym, resolvePlanByTier(GymPlanTier.ENTERPRISE)),
+    demo: await attachTenantPlan(demoGym, resolvePlanByTier(GymPlanTier.BASIC)),
+  }
+
+  if (tenantPlans.power) {
+    await prisma.tenantPlanFreeze.upsert({
+      where: { id: `${tenantPlans.power.id}-freeze` },
+      update: {
+        reason: 'Billing freeze (demo)',
+        requestedUntil: addDays(now, 14),
+        liftedAt: null,
+      },
+      create: {
+        id: `${tenantPlans.power.id}-freeze`,
+        tenantPlanId: tenantPlans.power.id,
+        reason: 'Billing freeze (demo)',
+        requestedUntil: addDays(now, 14),
+      },
+    })
+  }
+
   // Variants
   const gym1Variants = await createVariantsForGym(gym1.id, ['Principal'])
-  await prisma.gymVariant.update({ where: { id: gym1Variants[0].id }, data: { maxSessionMinutes: 160 } })
+  await prisma.gymVariant.update({ where: { id: gym1Variants[0].id }, data: { maxSessionMinutes: 160, capacity: 150 } })
 
   const gym2Variants = await createVariantsForGym(gym2.id, ['Femmes', 'Hommes'])
-  await prisma.gymVariant.update({ where: { id: gym2Variants[0].id }, data: { maxSessionMinutes: 140 } })
-  await prisma.gymVariant.update({ where: { id: gym2Variants[1].id }, data: { maxSessionMinutes: 120 } })
+  await prisma.gymVariant.update({ where: { id: gym2Variants[0].id }, data: { maxSessionMinutes: 140, capacity: 100 } })
+  await prisma.gymVariant.update({ where: { id: gym2Variants[1].id }, data: { maxSessionMinutes: 120, capacity: 110 } })
 
   const enterpriseVariants = await createVariantsForGym(enterpriseGym.id, ['Centre', 'Nord', 'Sud'])
-  await prisma.gymVariant.update({ where: { id: enterpriseVariants[0].id }, data: { maxSessionMinutes: 200 } })
+  await prisma.gymVariant.update({ where: { id: enterpriseVariants[0].id }, data: { maxSessionMinutes: 200, capacity: 180 } })
 
   const demoVariants = await createVariantsForGym(demoGym.id, ['Downtown', 'Uptown', 'Cardio'])
+  await prisma.gymVariant.update({ where: { id: demoVariants[0].id }, data: { capacity: 70, maxSessionMinutes: 90 } })
+  await prisma.gymVariant.update({ where: { id: demoVariants[1].id }, data: { capacity: 60, maxSessionMinutes: 130 } })
+  await prisma.gymVariant.update({ where: { id: demoVariants[2].id }, data: { capacity: 50, maxSessionMinutes: 110 } })
 
   // Map fresh variants by id
   const variantsById = new Map()
@@ -924,41 +1091,45 @@ async function runSeed() {
 
   console.log('✅ Created subscriptions and payments')
 
-  // ====== REALISTIC ATTEMPTS ======
+  // ====== REALISTIC ACCESS EVENTS ======
   // - Some granted -> create visits
   // - Some denied due to EXPIRED, INACTIVE, DAILY LIMIT, ALREADY CHECKED IN
 
   const base = new Date()
 
-  // Gym1 attempts
-  await seedAttempt({ gym: gym1, variantsById, member: members1[0], attemptAt: buildDate(base, 0, 9, 0), durationMinutes: 80, checkout: false, source: AccessEventSource.QR_SCAN })
+  // Gym1 entries
+  await seedAccessEntry({ gym: gym1, variantsById, member: members1[0], attemptAt: buildDate(base, 0, 9, 0), durationMinutes: 80, checkout: false, source: AccessEventSource.QR_SCAN })
   // Same member tries again while still checked in => ALREADY_CHECKED_IN
-  await seedAttempt({ gym: gym1, variantsById, member: members1[0], attemptAt: buildDate(base, 0, 9, 20), durationMinutes: 60, checkout: true, source: AccessEventSource.QR_SCAN })
+  await seedAccessEntry({ gym: gym1, variantsById, member: members1[0], attemptAt: buildDate(base, 0, 9, 20), durationMinutes: 60, checkout: true, source: AccessEventSource.QR_SCAN })
 
   // Member with plan visitsPerDay=1 tries twice same day => second is DENIED_DAILY_LIMIT
-  await seedAttempt({ gym: gym1, variantsById, member: members1[1], attemptAt: buildDate(base, 0, 11, 0), durationMinutes: 60, checkout: true, source: AccessEventSource.SIMULATOR })
-  await seedAttempt({ gym: gym1, variantsById, member: members1[1], attemptAt: buildDate(base, 0, 18, 15), durationMinutes: 45, checkout: true, source: AccessEventSource.QR_SCAN })
+  await seedAccessEntry({ gym: gym1, variantsById, member: members1[1], attemptAt: buildDate(base, 0, 11, 0), durationMinutes: 60, checkout: true, source: AccessEventSource.SIMULATOR })
+  await seedAccessEntry({ gym: gym1, variantsById, member: members1[1], attemptAt: buildDate(base, 0, 18, 15), durationMinutes: 45, checkout: true, source: AccessEventSource.QR_SCAN })
 
   // Member likely expired (because seeding creates 3rd+ subs as expired) tries => DENIED_EXPIRED
-  await seedAttempt({ gym: gym1, variantsById, member: members1[3], attemptAt: buildDate(base, 0, 8, 10), durationMinutes: 50, checkout: true, source: AccessEventSource.MANUAL })
+  await seedAccessEntry({ gym: gym1, variantsById, member: members1[3], attemptAt: buildDate(base, 0, 8, 10), durationMinutes: 50, checkout: true, source: AccessEventSource.MANUAL })
 
   // Inactive member => DENIED_INACTIVE
-  await seedAttempt({ gym: gym1, variantsById, member: members1[5], attemptAt: buildDate(base, 0, 10, 0), durationMinutes: 40, checkout: true, source: AccessEventSource.QR_SCAN })
+  await seedAccessEntry({ gym: gym1, variantsById, member: members1[5], attemptAt: buildDate(base, 0, 10, 0), durationMinutes: 40, checkout: true, source: AccessEventSource.QR_SCAN })
 
-  // Gym2 attempts
-  await seedAttempt({ gym: gym2, variantsById, member: members2[0], attemptAt: buildDate(base, 0, 8, 0), durationMinutes: 50, checkout: true, source: AccessEventSource.QR_SCAN })
-  await seedAttempt({ gym: gym2, variantsById, member: members2[0], attemptAt: buildDate(base, -1, 19, 0), durationMinutes: 55, checkout: true, source: AccessEventSource.QR_SCAN })
+  // Gym2 entries
+  await seedAccessEntry({ gym: gym2, variantsById, member: members2[0], attemptAt: buildDate(base, 0, 8, 0), durationMinutes: 50, checkout: true, source: AccessEventSource.QR_SCAN })
+  await seedAccessEntry({ gym: gym2, variantsById, member: members2[0], attemptAt: buildDate(base, -1, 19, 0), durationMinutes: 55, checkout: true, source: AccessEventSource.QR_SCAN })
   // This one stays checked-in (open session)
-  await seedAttempt({ gym: gym2, variantsById, member: members2[1], attemptAt: buildDate(base, -2, 12, 0), durationMinutes: 150, checkout: false, source: AccessEventSource.SIMULATOR })
+  await seedAccessEntry({ gym: gym2, variantsById, member: members2[1], attemptAt: buildDate(base, -2, 12, 0), durationMinutes: 150, checkout: false, source: AccessEventSource.SIMULATOR })
 
-  // Enterprise attempts
-  await seedAttempt({ gym: enterpriseGym, variantsById, member: enterpriseMembers[0], attemptAt: buildDate(base, 0, 7, 0), durationMinutes: 60, checkout: true, source: AccessEventSource.QR_SCAN })
+  // Enterprise entries
+  await seedAccessEntry({ gym: enterpriseGym, variantsById, member: enterpriseMembers[0], attemptAt: buildDate(base, 0, 7, 0), durationMinutes: 60, checkout: true, source: AccessEventSource.QR_SCAN })
   // Overstay candidate (duration bigger than limits) => SESSION_OVERSTAY will be logged after checkout
-  await seedAttempt({ gym: enterpriseGym, variantsById, member: enterpriseMembers[1], attemptAt: buildDate(base, -1, 18, 0), durationMinutes: 260, checkout: true, source: AccessEventSource.QR_SCAN })
+  await seedAccessEntry({ gym: enterpriseGym, variantsById, member: enterpriseMembers[1], attemptAt: buildDate(base, -1, 18, 0), durationMinutes: 260, checkout: true, source: AccessEventSource.QR_SCAN })
 
-  // Demo attempts
-  await seedAttempt({ gym: demoGym, variantsById, member: membersDemo[0], attemptAt: buildDate(base, -1, 10, 0), durationMinutes: 75, checkout: true, source: AccessEventSource.SIMULATOR })
-  await seedAttempt({ gym: demoGym, variantsById, member: membersDemo[2], attemptAt: buildDate(base, 0, 7, 0), durationMinutes: 60, checkout: false, source: AccessEventSource.QR_SCAN })
+  // Demo entries
+  await seedAccessEntry({ gym: demoGym, variantsById, member: membersDemo[0], attemptAt: buildDate(base, -1, 10, 0), durationMinutes: 75, checkout: true, source: AccessEventSource.SIMULATOR })
+  await seedAccessEntry({ gym: demoGym, variantsById, member: membersDemo[2], attemptAt: buildDate(base, 0, 7, 0), durationMinutes: 60, checkout: false, source: AccessEventSource.QR_SCAN })
+
+  // Extra logs for analytics & pagination
+  await seedAccessEntry({ gym: gym1, variantsById, member: members1[2], attemptAt: buildDate(base, -3, 17, 30), durationMinutes: 95, checkout: true, source: AccessEventSource.MANUAL })
+  await seedAccessEntry({ gym: gym2, variantsById, member: members2[4], attemptAt: buildDate(base, -4, 6, 45), durationMinutes: 80, checkout: true, source: AccessEventSource.SIMULATOR })
 
   // Update lastVisitedAt for members that actually visited
   const allMembers = [...members1, ...members2, ...enterpriseMembers, ...membersDemo]
@@ -966,7 +1137,7 @@ async function runSeed() {
 
   // Update gyms daily stats from real visits
   await Promise.all([refreshGymDailyStats(gym1), refreshGymDailyStats(gym2), refreshGymDailyStats(enterpriseGym), refreshGymDailyStats(demoGym)])
-  console.log('✅ Seeded realistic access attempts → visits only when granted')
+  console.log('✅ Seeded realistic access events → visits only when granted')
 
   // Demo requests
   await prisma.demoRequest.createMany({
@@ -999,6 +1170,19 @@ async function runSeed() {
         resolvedById: superAdmin.id,
         createdGymId: demoGym.id,
         resolutionNote: 'Compte demo et acces envoyes',
+      },
+      {
+        gymName: 'Nordic Pulse',
+        gymEmail: 'contact@nordicpulse.ma',
+        adminEmail: 'ops@nordicpulse.ma',
+        adminFirstName: 'Lamia',
+        adminLastName: 'Fathi',
+        phone: '+212633221199',
+        city: 'Tanger',
+        country: 'Maroc',
+        plan: GymPlanTier.ENTERPRISE,
+        message: 'Reseau premium avec controle d acces et exports.',
+        status: DemoRequestStatus.PENDING,
       },
     ],
   })

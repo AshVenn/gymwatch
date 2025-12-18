@@ -19,6 +19,8 @@ type QrProfileResponse = {
     id: string
     firstName: string
     lastName: string
+    email: string | null
+    phone: string | null
     variantName: string | null
     gymName: string | null
   }
@@ -37,6 +39,13 @@ type QrProfileResponse = {
     visitsRemaining: number | null
     limitState: string
     overDailyLimit: boolean
+    recent: Array<{
+      id: string
+      checkIn: string
+      checkOut: string | null
+      variantName: string | null
+    }>
+    last30Days: number
   }
   classes: Array<{
     id: string
@@ -155,6 +164,8 @@ export default async function QrProfilePage({ params }: QrProfilePageProps) {
       : null
   const visitsRemaining =
     typeof profile.visits.visitsRemaining === "number" ? Math.max(profile.visits.visitsRemaining, 0) : null
+  const recentVisits = profile.visits.recent ?? []
+  const timeFormatter = new Intl.DateTimeFormat(locale, { hour: "2-digit", minute: "2-digit" })
 
   return (
     <div className="min-h-screen bg-background px-4 py-10 text-foreground">
@@ -203,7 +214,7 @@ export default async function QrProfilePage({ params }: QrProfilePageProps) {
           </Card>
         ) : null}
 
-        <div className="grid gap-4 md:grid-cols-2">
+        <div className="grid gap-4 md:grid-cols-3">
           <Card className="border-border/70 bg-card/80 shadow-sm">
             <CardHeader className="flex flex-row items-center justify-between">
               <div>
@@ -267,6 +278,70 @@ export default async function QrProfilePage({ params }: QrProfilePageProps) {
               {profile.visits.overDailyLimit ? (
                 <p className="text-xs text-amber-600">{t("visits.limitReached")}</p>
               ) : null}
+            </CardContent>
+          </Card>
+
+          <Card className="border-border/70 bg-card/80 shadow-sm">
+            <CardHeader>
+              <CardTitle className="text-base">{t("history.title")}</CardTitle>
+              <p className="text-sm text-muted-foreground">{t("history.subtitle")}</p>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <div className="flex items-center justify-between rounded-lg border border-border/60 bg-muted/40 px-3 py-2">
+                <span className="text-sm text-muted-foreground">{t("history.last30Days")}</span>
+                <Badge variant="secondary" className="rounded-full">
+                  {profile.visits.last30Days ?? 0}
+                </Badge>
+              </div>
+
+              <div className="rounded-lg border border-border/60 bg-muted/30 px-3 py-2 text-sm">
+                <p className="font-semibold">{t("history.details")}</p>
+                <div className="mt-2 space-y-1 text-xs text-muted-foreground">
+                  <div className="flex items-center justify-between gap-2">
+                    <span>{t("history.email")}</span>
+                    <span className="font-medium text-foreground">
+                      {profile.member.email ?? t("history.unknown")}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between gap-2">
+                    <span>{t("history.phone")}</span>
+                    <span className="font-medium text-foreground">
+                      {profile.member.phone ?? t("history.unknown")}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <p className="text-sm font-semibold">{t("history.recentVisits")}</p>
+                {recentVisits.length === 0 ? (
+                  <p className="text-sm text-muted-foreground">{t("history.empty")}</p>
+                ) : (
+                  <div className="space-y-2">
+                    {recentVisits.map((visit) => {
+                      const checkInDate = new Date(visit.checkIn)
+                      const dateLabel = formatDate(visit.checkIn, locale)
+                      return (
+                        <div
+                          key={visit.id}
+                          className="flex items-center justify-between rounded-lg border border-border/50 bg-card/70 px-3 py-2 text-sm"
+                        >
+                          <div className="space-y-0.5">
+                            <p className="font-semibold">{dateLabel ?? t("history.unknown")}</p>
+                            <p className="text-xs text-muted-foreground">
+                              {timeFormatter.format(checkInDate)}
+                              {visit.variantName ? ` · ${visit.variantName}` : ""}
+                            </p>
+                          </div>
+                          <Badge variant="outline" className="text-[11px]">
+                            {visit.checkOut ? t("history.checkedOut") : t("history.checkedIn")}
+                          </Badge>
+                        </div>
+                      )
+                    })}
+                  </div>
+                )}
+              </div>
             </CardContent>
           </Card>
         </div>

@@ -404,13 +404,25 @@ export default function SubscriptionsPage() {
         typeof (data as any).visitsRemaining === "number" ? Math.max((data as any).visitsRemaining, 0) : null
       const limitState = ((data as any).limitState as string) ?? "OK"
       const limitWarning = limitState === "WARNING"
-      const blocked = limitState === "BLOCKED" || overDailyLimit
+      const openVisitId = typeof (data as any)?.openVisitId === "string" ? (data as any).openVisitId : null
+      const blocked = (limitState === "BLOCKED" || overDailyLimit) && !openVisitId
 
       if (!(data as any).active) {
         toast.error(t("toasts.inactiveOrExpired"))
-      } else if (blocked) {
+        return
+      }
+
+      if (openVisitId) {
+        toast.warning(t("toasts.dailyLimitReached", { name: fullName }))
+        return
+      }
+
+      if (blocked) {
         toast.error(t("toasts.dailyLimitReached", { name: fullName }))
-      } else if (limitWarning) {
+        return
+      }
+
+      if (limitWarning) {
         const remaining =
           visitsRemaining !== null
             ? visitsRemaining === 1
@@ -418,17 +430,17 @@ export default function SubscriptionsPage() {
               : t("labels.remainingVisitsMany", { count: visitsRemaining })
             : ""
         toast.warning(t("toasts.lastVisitWarning", { name: fullName, remaining }))
-      } else {
-        const remaining =
-          visitsRemaining !== null
-            ? visitsRemaining === 1
-              ? t("labels.remainingShortOne")
-              : t("labels.remainingShortMany", { count: visitsRemaining })
-            : ""
-        toast.success(
-          t("toasts.markedPresent", { name: fullName, count: (data as any).todayVisitorCount ?? 0, remaining }),
-        )
       }
+
+      const remaining =
+        visitsRemaining !== null
+          ? visitsRemaining === 1
+            ? t("labels.remainingShortOne")
+            : t("labels.remainingShortMany", { count: visitsRemaining })
+          : ""
+      toast.success(
+        t("toasts.markedPresent", { name: fullName, count: (data as any).todayVisitorCount ?? 0, remaining }),
+      )
 
       setVisitDialogOpen(false)
     } catch (error) {
@@ -712,92 +724,20 @@ export default function SubscriptionsPage() {
                             {t("actions.printInvoice")}
                           </DropdownMenuItem>
 
-                          <Dialog open={renewingId === sub.id} onOpenChange={(open) => !open && setRenewingId(null)}>
-                            <DialogTrigger asChild>
-                              <DropdownMenuItem
-                                onSelect={(event) => {
-                                  event.preventDefault()
-                                  setRenewingId(sub.id)
-                                  setRenewalForm({
-                                    planId: "",
-                                    startDate: new Date().toISOString().split("T")[0],
-                                    createPayment: true,
-                                  })
-                                }}
-                              >
-                                <RotateCcw className="mr-2" size={16} />
-                                {t("actions.editRenew")}
-                              </DropdownMenuItem>
-                            </DialogTrigger>
-
-                            <DialogContent className="border-border/60 bg-card text-foreground">
-                              <DialogHeader>
-                                <DialogTitle>{t("renew.title")}</DialogTitle>
-                              </DialogHeader>
-
-                              <div className="space-y-4">
-                                <div>
-                                  <Label htmlFor="renew-plan" className="text-foreground">
-                                    {t("renew.planLabel")}
-                                  </Label>
-                                  <Select
-                                    value={renewalForm.planId}
-                                    onValueChange={(value) => setRenewalForm({ ...renewalForm, planId: value })}
-                                  >
-                                    <SelectTrigger id="renew-plan" className="mt-1">
-                                      <SelectValue placeholder={t("renew.planPlaceholder")} />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                      {availablePlans.map((plan) => (
-                                        <SelectItem key={plan.id} value={plan.id}>
-                                          <div className="flex flex-col">
-                                            <span className="font-medium">{plan.name}</span>
-                                            <span className="text-xs text-muted-foreground">
-                                              {describePlan(plan.visitsPerDay ?? null, plan.maxSessionMinutes ?? null) ||
-                                                t("table.visitsFallback")}
-                                            </span>
-                                          </div>
-                                        </SelectItem>
-                                      ))}
-                                    </SelectContent>
-                                  </Select>
-                                </div>
-
-                                <div className="space-y-2">
-                                  <Label className="text-foreground">{t("renew.startDateLabel")}</Label>
-                                  <Input
-                                    type="date"
-                                    value={renewalForm.startDate}
-                                    onChange={(e) => setRenewalForm({ ...renewalForm, startDate: e.target.value })}
-                                  />
-                                  {endPreview && (
-                                    <p className="text-xs text-muted-foreground">
-                                      {t("renew.endPreview", { date: dateFormatter.format(endPreview) })}
-                                    </p>
-                                  )}
-                                </div>
-
-                                <div className="flex items-center justify-between rounded-md border border-border/60 p-3">
-                                  <div className="space-y-0.5">
-                                    <p className="text-sm font-medium">{t("renew.createPaymentTitle")}</p>
-                                    <p className="text-xs text-muted-foreground">{t("renew.createPaymentDesc")}</p>
-                                  </div>
-                                  <Switch
-                                    checked={renewalForm.createPayment}
-                                    onCheckedChange={(checked) => setRenewalForm({ ...renewalForm, createPayment: checked })}
-                                  />
-                                </div>
-
-                                <Button
-                                  className="w-full"
-                                  onClick={handleRenewalSubmit}
-                                  disabled={renewSubscriptionMutation.isPending}
-                                >
-                                  {renewSubscriptionMutation.isPending ? t("renew.saving") : t("renew.save")}
-                                </Button>
-                              </div>
-                            </DialogContent>
-                          </Dialog>
+                          <DropdownMenuItem
+                            onSelect={(event) => {
+                              event.preventDefault()
+                              setRenewingId(sub.id)
+                              setRenewalForm({
+                                planId: "",
+                                startDate: new Date().toISOString().split("T")[0],
+                                createPayment: true,
+                              })
+                            }}
+                          >
+                            <RotateCcw className="mr-2" size={16} />
+                            {t("actions.editRenew")}
+                          </DropdownMenuItem>
 
                           <DropdownMenuItem
                             onClick={() => handleDeleteSubscription(sub.id)}
@@ -808,6 +748,77 @@ export default function SubscriptionsPage() {
                           </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
+                      {renewingId === sub.id ? (
+                        <Dialog open onOpenChange={(open) => !open && setRenewingId(null)}>
+                          <DialogContent className="border-border/60 bg-card text-foreground">
+                            <DialogHeader>
+                              <DialogTitle>{t("renew.title")}</DialogTitle>
+                            </DialogHeader>
+
+                            <div className="space-y-4">
+                              <div>
+                                <Label htmlFor="renew-plan" className="text-foreground">
+                                  {t("renew.planLabel")}
+                                </Label>
+                                <Select
+                                  value={renewalForm.planId}
+                                  onValueChange={(value) => setRenewalForm({ ...renewalForm, planId: value })}
+                                >
+                                  <SelectTrigger id="renew-plan" className="mt-1">
+                                    <SelectValue placeholder={t("renew.planPlaceholder")} />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    {availablePlans.map((plan) => (
+                                      <SelectItem key={plan.id} value={plan.id}>
+                                        <div className="flex flex-col">
+                                          <span className="font-medium">{plan.name}</span>
+                                          <span className="text-xs text-muted-foreground">
+                                            {describePlan(plan.visitsPerDay ?? null, plan.maxSessionMinutes ?? null) ||
+                                              t("table.visitsFallback")}
+                                          </span>
+                                        </div>
+                                      </SelectItem>
+                                    ))}
+                                  </SelectContent>
+                                </Select>
+                              </div>
+
+                              <div className="space-y-2">
+                                <Label className="text-foreground">{t("renew.startDateLabel")}</Label>
+                                <Input
+                                  type="date"
+                                  value={renewalForm.startDate}
+                                  onChange={(e) => setRenewalForm({ ...renewalForm, startDate: e.target.value })}
+                                />
+                                {endPreview && (
+                                  <p className="text-xs text-muted-foreground">
+                                    {t("renew.endPreview", { date: dateFormatter.format(endPreview) })}
+                                  </p>
+                                )}
+                              </div>
+
+                              <div className="flex items-center justify-between rounded-md border border-border/60 p-3">
+                                <div className="space-y-0.5">
+                                  <p className="text-sm font-medium">{t("renew.createPaymentTitle")}</p>
+                                  <p className="text-xs text-muted-foreground">{t("renew.createPaymentDesc")}</p>
+                                </div>
+                                <Switch
+                                  checked={renewalForm.createPayment}
+                                  onCheckedChange={(checked) => setRenewalForm({ ...renewalForm, createPayment: checked })}
+                                />
+                              </div>
+
+                              <Button
+                                className="w-full"
+                                onClick={handleRenewalSubmit}
+                                disabled={renewSubscriptionMutation.isPending}
+                              >
+                                {renewSubscriptionMutation.isPending ? t("renew.saving") : t("renew.save")}
+                              </Button>
+                            </div>
+                          </DialogContent>
+                        </Dialog>
+                      ) : null}
                     </TableCell>
                   </TableRow>
                 ))}

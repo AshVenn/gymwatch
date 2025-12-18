@@ -21,10 +21,12 @@ const isSameDay = (left: Date | null | undefined, right: Date) => {
 }
 
 export type VisitResult = {
+  visitId: string | null
   memberId: string
   firstName: string
   lastName: string
   memberName: string
+  variantId: string
   planName: string | null
   planDurationDays: number | null
   subscriptionStartsAt: Date | null
@@ -36,11 +38,12 @@ export type VisitResult = {
   visitLimit: number | null
   overDailyLimit: boolean
   visitsRemaining: number | null
-  limitState: "OK" | "WARNING" | "BLOCKED"
+  limitState: "OK" | "WARNING" | "BLOCKED" | "OPEN_VISIT"
   visitRecorded: boolean
   markVisitAttempted: boolean
   daysRemaining: number | null
   todayVisitorCount: number
+  openVisitId?: string | null
 }
 
 export type CheckoutResult = {
@@ -176,6 +179,17 @@ export async function markVisitForMember({
     })
   }
 
+  const openVisit = await prisma.visit.findFirst({
+    where: {
+      gymId,
+      memberId: member.id,
+      checkOut: null,
+      ...(allowedVariantId ? { gymVariantId: allowedVariantId } : {}),
+    },
+    select: { id: true },
+    orderBy: { checkIn: "desc" },
+  })
+
   const visitLimitRaw = latestSubscription?.plan?.visitsPerDay
   const visitLimit =
     typeof visitLimitRaw === "number" && Number.isFinite(visitLimitRaw)
@@ -189,31 +203,41 @@ export async function markVisitForMember({
       checkIn: { gte: today, lte: endOfDay(today) },
     },
   })
+  const openVisitsToday = await prisma.visit.count({
+    where: {
+      memberId: member.id,
+      checkIn: { gte: today, lte: endOfDay(today) },
+      checkOut: null,
+    },
+  })
   const markAttempted = Boolean(markVisit)
-  const overDailyLimit = visitLimit !== null && visitsToday >= visitLimit
-  const effectiveCount = markAttempted && isActive && !overDailyLimit ? visitsToday + 1 : visitsToday
+  const overDailyLimit = visitLimit !== null && openVisitsToday >= visitLimit
+  const effectiveCount = markAttempted && isActive && !overDailyLimit ? openVisitsToday + 1 : openVisitsToday
   const visitsRemaining = visitLimit !== null ? Math.max(visitLimit - effectiveCount, 0) : null
+  const projectedTotalVisits = markAttempted && isActive && !overDailyLimit ? visitsToday + 1 : visitsToday
   const limitState: VisitResult["limitState"] =
-    overDailyLimit || (!markAttempted && visitLimit !== null && visitsToday >= visitLimit)
-      ? "BLOCKED"
-      : visitLimit !== null && markAttempted && effectiveCount >= visitLimit
+    overDailyLimit
+      ? "OPEN_VISIT"
+      : visitLimit !== null && markAttempted && visitsRemaining <= 0
         ? "WARNING"
         : "OK"
 
   if (!markAttempted || !isActive || overDailyLimit) {
     return {
+      visitId: openVisit?.id ?? null,
       memberId: member.id,
       firstName: member.firstName,
       lastName: member.lastName,
       memberName: `${member.firstName} ${member.lastName}`.trim(),
+      variantId: member.gymVariantId,
       planName: latestSubscription?.plan?.name ?? null,
       planDurationDays: latestSubscription?.plan?.durationDays ?? null,
       subscriptionStartsAt: latestSubscription?.startDate ?? null,
       subscriptionEndsAt: latestSubscription?.endDate ?? null,
       status,
       active: isActive,
-      alreadyVisited: visitsToday > 0,
-      visitsToday,
+      alreadyVisited: visitsToday > 0 || Boolean(openVisit),
+      visitsToday: projectedTotalVisits,
       visitLimit,
       overDailyLimit,
       visitsRemaining,
@@ -222,10 +246,11 @@ export async function markVisitForMember({
       markVisitAttempted: markAttempted,
       daysRemaining,
       todayVisitorCount: gym.todayVisitorCount,
+      openVisitId: openVisit?.id ?? null,
     }
   }
 
-  const [, updatedGym] = await prisma.$transaction([
+  const [, updatedGym, visit] = await prisma.$transaction([
     prisma.member.update({
       where: { id: member.id },
       data: { lastVisitedAt: now },
@@ -245,24 +270,27 @@ export async function markVisitForMember({
         gymVariantId: member.gymVariantId,
         checkIn: now,
       },
+      select: { id: true },
     }),
   ])
 
   const updatedVisitsToday = visitsToday + 1
 
   return {
+    visitId: visit.id,
     memberId: member.id,
     firstName: member.firstName,
     lastName: member.lastName,
-      memberName: `${member.firstName} ${member.lastName}`.trim(),
-      planName: latestSubscription?.plan?.name ?? null,
-      planDurationDays: latestSubscription?.plan?.durationDays ?? null,
-      subscriptionStartsAt: latestSubscription?.startDate ?? null,
-      subscriptionEndsAt: latestSubscription?.endDate ?? null,
-      status,
-      active: isActive,
-      alreadyVisited: visitsToday > 0,
-      visitsToday: updatedVisitsToday,
+    memberName: `${member.firstName} ${member.lastName}`.trim(),
+    variantId: member.gymVariantId,
+    planName: latestSubscription?.plan?.name ?? null,
+    planDurationDays: latestSubscription?.plan?.durationDays ?? null,
+    subscriptionStartsAt: latestSubscription?.startDate ?? null,
+    subscriptionEndsAt: latestSubscription?.endDate ?? null,
+    status,
+    active: isActive,
+    alreadyVisited: visitsToday > 0,
+    visitsToday: projectedTotalVisits,
     visitLimit,
     visitsRemaining,
     limitState,
@@ -271,6 +299,7 @@ export async function markVisitForMember({
     markVisitAttempted: markAttempted,
     daysRemaining,
     todayVisitorCount: updatedGym.todayVisitorCount,
+    openVisitId: openVisit?.id ?? null,
   }
 }
 

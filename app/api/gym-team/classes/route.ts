@@ -4,7 +4,7 @@ import { z } from "zod"
 import { ClassBookingStatus } from "@prisma/client"
 import { authOptions } from "@/lib/auth-middleware"
 import { prisma } from "@/lib/prisma"
-import { hasPlanFeature } from "@/lib/subscription-plans"
+import { resolveGymFeatures } from "@/lib/tenant-features"
 
 const classSessionSchema = z.object({
   title: z.string().min(1),
@@ -43,7 +43,8 @@ export async function GET(request: NextRequest) {
   if (!gymId) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
   }
-  if (!hasPlanFeature(tier, "courses")) {
+  const { features } = await resolveGymFeatures({ gymId, tier })
+  if (!features.courses) {
     return NextResponse.json({ error: "Plan Enterprise requis" }, { status: 403 })
   }
   if (role === "GYM_ADMIN" && !sessionVariantId) {
@@ -119,7 +120,8 @@ export async function POST(request: NextRequest) {
   if (!gymId) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
   }
-  if (!hasPlanFeature(tier, "courses")) {
+  const { features } = await resolveGymFeatures({ gymId, tier })
+  if (!features.courses) {
     return NextResponse.json({ error: "Plan Enterprise requis" }, { status: 403 })
   }
   if (role === "GYM_ADMIN" && !sessionVariantId) {

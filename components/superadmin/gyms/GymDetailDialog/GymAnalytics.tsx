@@ -6,25 +6,21 @@ import {
   ChartTooltipContent,
   type ChartConfig,
 } from '@/components/ui/chart'
-import {
-  ResponsiveContainer,
-  LineChart,
-  Line,
-  CartesianGrid,
-  XAxis,
-  YAxis,
-  PieChart,
-  Pie,
-  Cell,
-} from 'recharts'
+import { ResponsiveContainer, LineChart, Line, CartesianGrid, XAxis, YAxis } from 'recharts'
 import { useTranslations, useLocale } from 'next-intl'
 import { useMemo } from 'react'
 
+const safeDate = (value: string | Date | null | undefined) => {
+  if (!value) return null
+  const parsed = value instanceof Date ? value : new Date(value)
+  return Number.isNaN(parsed.getTime()) ? null : parsed
+}
+
 const STATUS_COLORS: Record<string, string> = {
-  ACTIVE: 'oklch(0.69 0.22 267.04)',
-  SUSPENDED: 'oklch(0.704 0.191 22.216)',
-  EXPIRED: 'oklch(0.61 0.16 292.64)',
-  EXPIRES_TODAY: 'oklch(0.704 0.191 22.216)',
+  ACTIVE: 'oklch(0.68 0.2 150)',
+  SUSPENDED: 'oklch(0.65 0.18 55)',
+  EXPIRED: 'oklch(0.63 0.17 280)',
+  EXPIRES_TODAY: 'oklch(0.65 0.18 55)',
 }
 
 const expiryChartConfig: ChartConfig = {
@@ -32,20 +28,6 @@ const expiryChartConfig: ChartConfig = {
     label: 'Expirations',
     color: STATUS_COLORS.ACTIVE,
   },
-}
-
-const statusChartConfig: ChartConfig = {
-  value: { label: 'Abonnements' },
-}
-
-type Props = {
-  gym: SuperAdminGymDetail
-}
-
-function safeDate(value?: string | null) {
-  if (!value) return null
-  const d = new Date(value)
-  return Number.isNaN(d.getTime()) ? null : d
 }
 
 export function GymAnalytics({ gym }: Props) {
@@ -81,23 +63,18 @@ export function GymAnalytics({ gym }: Props) {
     return Object.entries(acc).map(([status, value]) => ({ status, value }))
   }, [subscriptions])
 
-  const upcoming = useMemo(() => {
-    return subscriptions
-      .slice()
-      .filter((s) => Boolean(safeDate(s.endDate)))
-      .sort((a, b) => (safeDate(a.endDate)?.getTime() ?? 0) - (safeDate(b.endDate)?.getTime() ?? 0))
-      .slice(0, 5)
-  }, [subscriptions])
-
-  const statusChartData = useMemo(
-    () =>
-      statusBreakdown.map((entry) => ({
+  const statusChartData = useMemo(() => {
+    const total = statusBreakdown.reduce((sum, entry) => sum + entry.value, 0)
+    return statusBreakdown.map((entry) => {
+      const percent = total > 0 ? Math.round((entry.value / total) * 100) : 0
+      return {
         ...entry,
+        percent,
         label: t(`status.${entry.status}` as any, { fallback: entry.status }),
         fill: STATUS_COLORS[entry.status] ?? STATUS_COLORS.EXPIRED,
-      })),
-    [statusBreakdown, t],
-  )
+      }
+    })
+  }, [statusBreakdown, t])
 
   return (
     <>
@@ -121,8 +98,9 @@ export function GymAnalytics({ gym }: Props) {
                   stroke={STATUS_COLORS.ACTIVE}
                   strokeWidth={2}
                   connectNulls
-                  dot={({ cx, cy }) => (
+                  dot={({ cx, cy, index }) => (
                     <circle
+                      key={`dot-${index}-${cx}-${cy}`}
                       cx={cx}
                       cy={cy}
                       r={5}
@@ -143,52 +121,34 @@ export function GymAnalytics({ gym }: Props) {
           <CardDescription>{t('statusChart.description')}</CardDescription>
         </CardHeader>
 
-        <CardContent className="flex flex-col gap-4">
-          <ChartContainer config={statusChartConfig}>
-            <ResponsiveContainer width="100%" height={240}>
-              <PieChart>
-                <Pie
-                  data={statusChartData}
-                  dataKey="value"
-                  nameKey="label"
-                  innerRadius={60}
-                  label
-                >
-                  {statusChartData.map((entry) => (
-                    <Cell key={entry.status} fill={entry.fill} />
-                  ))}
-                </Pie>
-                <ChartTooltip content={<ChartTooltipContent />} />
-              </PieChart>
-            </ResponsiveContainer>
-          </ChartContainer>
-
-          <div className="space-y-2 text-sm">
-            {upcoming.length ? (
-              upcoming.map((subscription) => {
-                const endDate = safeDate(subscription.endDate)
-                return (
+        <CardContent className="space-y-3">
+          {statusChartData.length ? (
+            statusChartData.map((entry) => (
+              <div key={entry.status} className="space-y-1">
+                <div className="flex items-center justify-between text-sm font-semibold">
+                  <span className="flex items-center gap-2">
+                    <span
+                      className="h-2 w-2 rounded-full"
+                      style={{ backgroundColor: entry.fill }}
+                      aria-hidden
+                    />
+                    <span className="sr-only">{entry.label}</span>
+                  </span>
+                  <span>{entry.percent}%</span>
+                </div>
+                <div className="h-2 rounded-full bg-muted">
                   <div
-                    key={subscription.id}
-                    className="flex items-center justify-between rounded-md border border-border/70 p-3"
-                  >
-                    <div>
-                      <p className="font-medium">
-                        {endDate ? endDate.toLocaleDateString(locale) : t('upcoming.unknownDate')}
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        {t(`status.${subscription.status || 'INCONNU'}` as any, {
-                          fallback: subscription.status || 'INCONNU',
-                        })}
-                      </p>
-                    </div>
-                  </div>
-                )
-              })
-            ) : (
-              <p className="text-muted-foreground">{t('upcoming.empty')}</p>
-            )}
-          </div>
+                    className="h-full rounded-full"
+                    style={{ width: `${entry.percent}%`, background: entry.fill }}
+                    aria-hidden
+                  />
+                </div>
+              </div>
+            ))
+          ) : (
+            <p className="text-sm text-muted-foreground">{t('statusChart.empty')}</p>
+          )}
+          <p className="text-xs text-muted-foreground">{t('statusChart.helper')}</p>
         </CardContent>
       </Card>
     </>

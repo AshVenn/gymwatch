@@ -4,6 +4,7 @@ import { getServerSession } from "next-auth"
 import { z } from "zod"
 import { PDFDocument, rgb } from "pdf-lib"
 import fontkit from "@pdf-lib/fontkit"
+import type { Prisma } from "@prisma/client"
 import { promises as fs } from "fs"
 import path from "path"
 import reshaper from "arabic-persian-reshaper"
@@ -42,6 +43,13 @@ const labels = {
     revenue: "Revenus cumulés",
     recentSubs: "Abonnements récents",
     endsAt: "fin",
+    capacity: "Capacité",
+    maxMembers: "Membres max",
+    maxVariants: "Variants max",
+    freeze: "État de gel",
+    freezeUntil: "Gel jusqu'au",
+    freezeReason: "Raison du gel",
+    gymSnapshot: "Vue d'ensemble des salles",
     missingParams: "Paramètres manquants",
     notFound: "Salle introuvable",
   },
@@ -63,30 +71,45 @@ const labels = {
     revenue: "Cumulative revenue",
     recentSubs: "Recent subscriptions",
     endsAt: "ends",
+    capacity: "Capacity",
+    maxMembers: "Max members",
+    maxVariants: "Max variants",
+    freeze: "Freeze status",
+    freezeUntil: "Freeze until",
+    freezeReason: "Freeze reason",
+    gymSnapshot: "Gym snapshot",
     missingParams: "Missing parameters",
     notFound: "Gym not found",
   },
   ar: {
-    titleGlobal: "تقرير GymWatch التنفيذي",
-    generatedAt: "تم في",
-    globalView: "عرض عام",
-    activeGyms: "صالات نشطة",
-    activeSubscriptions: "اشتراكات نشطة",
-    totalMembers: "إجمالي الأعضاء",
-    cumulativeRevenue: "الإيرادات التراكمية",
-    topGyms: "أفضل ٥ صالات",
-    plan: "الخطة",
-    status: "الحالة",
-    address: "العنوان",
-    owner: "المالك",
-    members: "الأعضاء",
-    active: "الاشتراكات النشطة",
-    revenue: "الإيرادات التراكمية",
-    recentSubs: "أحدث الاشتراكات",
-    endsAt: "تنتهي",
-    missingParams: "معلمات مفقودة",
-    notFound: "النادي غير موجود",
+    titleGlobal: "????? GymWatch ????????",
+    generatedAt: "?? ??",
+    globalView: "??? ???",
+    activeGyms: "????? ????",
+    activeSubscriptions: "???????? ????",
+    totalMembers: "?????? ???????",
+    cumulativeRevenue: "????????? ?????????",
+    topGyms: "???? 5 ?????",
+    plan: "?????",
+    status: "??????",
+    address: "???????",
+    owner: "??????",
+    members: "???????",
+    active: "?????????? ??????",
+    revenue: "????????? ?????????",
+    recentSubs: "???? ??????????",
+    endsAt: "?????",
+    capacity: "?????",
+    maxMembers: "???? ???????",
+    maxVariants: "???? ??????",
+    freeze: "???? ???????",
+    freezeUntil: "??????? ???",
+    freezeReason: "??? ???????",
+    gymSnapshot: "???? ??? ???????",
+    missingParams: "??????? ??????",
+    notFound: "?????? ??? ?????",
   },
+
 } as const
 
 type ExportLocale = keyof typeof labels
@@ -492,11 +515,22 @@ export async function GET(request: NextRequest) {
     drawer.gap(10)
 
     if (scope === "global") {
-      const [gyms, payments] = await Promise.all([
+      const gymInclude = {
+        _count: { select: { members: true, subscriptions: true } },
+        owner: { select: { email: true } },
+        tenantPlans: { orderBy: { startsAt: "desc" }, take: 1, include: { plan: true } },
+      } satisfies Prisma.GymInclude
+
+      const [gyms, payments, revenueByGym] = await Promise.all([
         prisma.gym.findMany({
-          include: { _count: { select: { members: true, subscriptions: true } } },
+          include: gymInclude,
+          orderBy: { createdAt: "desc" },
         }),
         prisma.payment.aggregate({ _sum: { amount: true } }),
+        prisma.payment.groupBy({
+          by: ["gymId"],
+          _sum: { amount: true },
+        }),
       ])
 
       drawer.drawTitle(wording.globalView)
@@ -514,18 +548,44 @@ export async function GET(request: NextRequest) {
 
       drawer.drawTitle(wording.topGyms)
 
-      const revenueByGym = await prisma.payment.groupBy({
-        by: ["gymId"],
-        _sum: { amount: true },
-        orderBy: { _sum: { amount: "desc" } },
-        take: 5,
-      })
+      const revenueLookup = new Map(revenueByGym.map((entry) => [entry.gymId, entry._sum.amount ?? 0]))
+      const gymLookup = new Map(gyms.map((g) => [g.id, g]))
 
-      const lookup = new Map(gyms.map((g) => [g.id, g]))
-      revenueByGym.forEach((entry, index) => {
-        const gym = lookup.get(entry.gymId)
+      Array.from(revenueLookup.entries())
+        .sort((a, b) => (b[1] ?? 0) - (a[1] ?? 0))
+        .slice(0, 5)
+        .forEach(([gymId, amount], index) => {
+          const gym = gymLookup.get(gymId)
+          if (!gym) return
+          drawer.drawLine(
+            `${index + 1}. ${gym.name}`,
+            `${gym.subscriptionPlan} - ${currency(amount ?? 0)}`,
+          )
+        })
+
+      drawer.gap(10)
+      drawer.drawTitle(wording.gymSnapshot)
+      gyms.slice(0, 12).forEach((gym) => {
+        const tenantPlan = gym.tenantPlans?.[0]
+        const freezeStatus = tenantPlan?.freezeStatus ?? "ACTIVE"
+        drawer.drawLine(
+          gym.name,
+          `${tenantPlan?.plan?.tier ?? gym.subscriptionPlan} · ${tenantPlan?.plan?.billingInterval ?? gym.billingInterval}`,
+        )
+        drawer.drawLine(
+          wording.status,
+          freezeStatus !== "ACTIVE" && tenantPlan?.freezeUntil
+            ? `${freezeStatus} (${safeText(formatExportDate(tenantPlan.freezeUntil, valueLocale, { dateStyle: "medium" }))})`
+            : freezeStatus,
+        )
+        drawer.drawLine(wording.capacity, `${gym.capacity ?? 0}`)
+        drawer.drawLine(
+          wording.maxMembers,
+          `${gym.maxMembers ?? -1} · ${wording.maxVariants}: ${gym.maxVariants ?? -1}`,
+        )
         if (!gym) return
-        drawer.drawLine(`${index + 1}. ${gym.name}`, `${gym.subscriptionPlan} - ${currency(entry._sum.amount ?? 0)}`)
+        drawer.drawLine(wording.revenue, currency(revenueLookup.get(gym.id) ?? 0))
+        drawer.gap(6)
       })
     } else if (scope === "gym" && gymId) {
       const gym = await prisma.gym.findUnique({
@@ -533,6 +593,7 @@ export async function GET(request: NextRequest) {
         include: {
           _count: { select: { members: true, subscriptions: true } },
           owner: { select: { email: true } },
+          tenantPlans: { orderBy: { startsAt: "desc" }, take: 1, include: { plan: true } },
         },
       })
 
@@ -540,18 +601,31 @@ export async function GET(request: NextRequest) {
         return NextResponse.json({ error: wording.notFound }, { status: 404 })
       }
 
+      const tenantPlan = gym.tenantPlans?.[0]
       const payments = await prisma.payment.aggregate({
         where: { gymId },
         _sum: { amount: true },
       })
 
       drawer.drawTitle(gym.name)
-      drawer.drawLine(wording.plan, `${gym.subscriptionPlan} (${gym.billingInterval})`)
-      drawer.drawLine(wording.status, gym.subscriptionStatus)
+      drawer.drawLine(
+        wording.plan,
+        `${tenantPlan?.plan?.tier ?? gym.subscriptionPlan} (${tenantPlan?.plan?.billingInterval ?? gym.billingInterval})`,
+      )
+      drawer.drawLine(wording.status, tenantPlan?.status ?? gym.subscriptionStatus)
       drawer.drawLine(wording.address, `${gym.city ?? "-"}, ${gym.country ?? "-"}`)
       drawer.drawLine(wording.owner, gym.owner?.email ?? "--")
       drawer.drawLine(wording.members, `${gym._count.members}`)
       drawer.drawLine(wording.active, `${gym._count.subscriptions}`)
+      drawer.drawLine(wording.capacity, `${gym.capacity ?? 0}`)
+      drawer.drawLine(wording.maxMembers, `${gym.maxMembers ?? -1}`)
+      drawer.drawLine(wording.maxVariants, `${gym.maxVariants ?? -1}`)
+      drawer.drawLine(wording.freeze, tenantPlan?.freezeStatus ?? "ACTIVE")
+      drawer.drawLine(
+        wording.freezeUntil,
+        tenantPlan?.freezeUntil ? safeText(formatExportDate(tenantPlan.freezeUntil, valueLocale, { dateStyle: "medium" })) : "--",
+      )
+      drawer.drawLine(wording.freezeReason, tenantPlan?.freezeReason ?? "--")
       drawer.drawLine(wording.revenue, currency(payments._sum.amount ?? 0))
       drawer.gap(12)
 

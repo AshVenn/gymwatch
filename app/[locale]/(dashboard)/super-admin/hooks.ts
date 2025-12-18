@@ -1,11 +1,12 @@
 ﻿import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
-import type { PlanFeatures, PlanLimitsTable, PlanPricingTable } from '@/lib/subscription-plans'
+import type { FeatureOverrideMap, PlanFeatures, PlanLimitsTable, PlanPricingTable } from '@/lib/subscription-plans'
 import type { AppLocale } from '@/i18n/routing'
 
 export type GymPlanTier = 'BASIC' | 'PRO' | 'ENTERPRISE'
 export type GymSubscriptionStatus = 'ACTIVE' | 'SUSPENDED' | 'EXPIRED'
 export type GymBillingInterval = 'MONTHLY' | 'ANNUAL'
+export type GymFreezeStatusValue = 'ACTIVE' | 'LIFTED'
 export type DemoRequestStatus = 'PENDING' | 'RESOLVED' | 'REFUSED'
 export interface PlanSettingsResponse {
   settings: {
@@ -67,6 +68,12 @@ export interface SuperAdminGym {
   memberCount: number
   activeSubscriptions: number
   updatedAt: string
+  capacity?: number | null
+  maxMembers?: number | null
+  maxVariants?: number | null
+  freezeStatus?: GymFreezeStatusValue | null
+  freezeReason?: string | null
+  freezeUntil?: string | null
   planLimitPerVariant?: number | null
   planLimitPerNetwork?: number | null
   planLimits?: {
@@ -76,6 +83,7 @@ export interface SuperAdminGym {
     unlimitedPerNetwork: boolean
     sources: { perVariant: "PLAN_DEFAULT" | "GYM_OVERRIDE"; perNetwork: "PLAN_DEFAULT" | "GYM_OVERRIDE" }
   }
+  featureOverrides?: FeatureOverrideMap
   owner: {
     id: string
     email: string
@@ -89,6 +97,7 @@ export interface SuperAdminGym {
     name: string
     slug: string
     isDefault: boolean
+    capacity?: number | null
   }[]
   variantCount?: number
   variantMode?: 'SINGLE' | 'MULTI'
@@ -97,10 +106,13 @@ export interface SuperAdminGym {
 
 export interface SuperAdminGymDetail extends SuperAdminGym {
   paymentsLast30Days: number
+  paymentsCurrentMonth?: number
+  paymentsTotal?: number
   variantCount?: number
   planLimitPerVariant?: number | null
   planLimitPerNetwork?: number | null
   planLimits?: SuperAdminGym['planLimits']
+  featureOverrides?: FeatureOverrideMap
   admins: {
     id: string
     email: string
@@ -125,6 +137,13 @@ export interface SuperAdminGymDetail extends SuperAdminGym {
       isDefault: boolean
     } | null
   }[]
+  freezeStatus?: GymFreezeStatusValue | null
+  freezeReason?: string | null
+  freezeUntil?: string | null
+  memberPreview?: GymMemberSummary[]
+  capacity?: number | null
+  maxMembers?: number | null
+  maxVariants?: number | null
   subscriptions: {
     id: string
     status: string
@@ -135,7 +154,18 @@ export interface SuperAdminGymDetail extends SuperAdminGym {
     name: string
     slug: string
     isDefault: boolean
+    capacity?: number | null
   }[]
+}
+
+export type GymMemberSummary = {
+  id: string
+  firstName: string
+  lastName: string
+  email?: string | null
+  phone?: string | null
+  createdAt?: string
+  gymVariant?: { id: string; name: string; slug: string } | null
 }
 
 export interface DemoRequest {
@@ -270,6 +300,18 @@ export function useSuperAdminGym(gymId?: string | null) {
     queryKey: ['super-admin', 'gym', gymId],
     enabled: Boolean(gymId),
     queryFn: () => fetchJSON(`/api/super-admin/gyms/${gymId}`),
+  })
+}
+
+export function useSuperAdminGymMembers(gymId?: string | null, page = 1, pageSize = 8) {
+  return useQuery<{ members: GymMemberSummary[]; total: number; page: number; pageSize: number }>({
+    queryKey: ['super-admin', 'gym-members', gymId, page, pageSize],
+    enabled: Boolean(gymId),
+    keepPreviousData: true,
+    queryFn: () =>
+      fetchJSON(
+        `/api/super-admin/gyms/${gymId}/members?page=${encodeURIComponent(page)}&pageSize=${encodeURIComponent(pageSize)}`,
+      ),
   })
 }
 

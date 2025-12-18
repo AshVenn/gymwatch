@@ -1,6 +1,7 @@
 "use client"
 
 import { useTransition } from "react"
+import Link from "next/link"
 import { useForm } from "react-hook-form"
 import { z } from "zod"
 import { zodResolver } from "@hookform/resolvers/zod"
@@ -13,7 +14,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
-import { PlanSettingsForm } from "@/components/superadmin/PlanSettingsForm"
 import { usePurgeAccessLogs } from "../hooks"
 
 export default function SuperAdminSettingsPage() {
@@ -83,8 +83,18 @@ export default function SuperAdminSettingsPage() {
         <p className="text-muted-foreground text-lg leading-relaxed">{t("subtitle")}</p>
       </div>
 
-      {/* Plan settings */}
-      <PlanSettingsForm />
+      <Card className="border-border/60 bg-card/90 backdrop-blur-sm rounded-3xl shadow-lg">
+        <CardHeader>
+          <CardTitle className="text-xl">{t("planSetupMoved.title")}</CardTitle>
+          <CardDescription className="text-base">{t("planSetupMoved.subtitle")}</CardDescription>
+        </CardHeader>
+        <CardContent className="flex flex-wrap items-center justify-between gap-3">
+          <p className="text-sm text-muted-foreground">{t("planSetupMoved.helper")}</p>
+          <Button asChild className="rounded-xl shadow-sm">
+            <Link href="/super-admin/plan-setup">{t("planSetupMoved.cta")}</Link>
+          </Button>
+        </CardContent>
+      </Card>
 
       <Card className="border-border/60 bg-card/90 backdrop-blur-sm rounded-3xl shadow-lg">
         <CardHeader>

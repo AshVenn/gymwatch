@@ -14,6 +14,7 @@ import {
   TrendingUp,
   Activity,
   BarChart3,
+  Gauge,
   Users,
   UserPlus,
 } from "lucide-react"
@@ -47,12 +48,38 @@ interface DashboardStats {
   monthlyRevenue: number
   activeMembers: number
   newMembers: number
+  newMembersToday?: number
   percentageChange: number
   revenueByMonth: { month: string; revenue: number }[]
   planDistribution: { name: string; value: number }[]
   expiringSoon: { id: string; memberName: string; endDate: string; daysLeft: number }[]
   todayVisitorCount: number
   canViewRevenue: boolean
+  capacity: {
+    current: number
+    limit: number | null
+    percent: number | null
+    state: "OK" | "OVER"
+    scope: "GYM" | "VARIANT" | string
+    scopeLabel: string | null
+    trend?: {
+      direction: "up" | "down" | "flat"
+      delta: number
+      deltaPercent: number | null
+      previous: number
+      windowMinutes?: number
+    }
+  }
+  dailySummary?: {
+    visitsToday: number
+    visitsYesterday: number
+    visitDelta: number
+    visitDeltaPercent: number | null
+    checkoutsToday: number
+    paymentsToday: number | null
+    newMembersToday: number
+    averageVisitDurationMinutes: number | null
+  }
 }
 
 export default function DashboardPage() {
@@ -95,12 +122,24 @@ export default function DashboardPage() {
       monthlyRevenue: 0,
       activeMembers: 0,
       newMembers: 0,
+      newMembersToday: 0,
       percentageChange: 0,
       revenueByMonth: [],
       planDistribution: [],
       expiringSoon: [],
       todayVisitorCount: 0,
       canViewRevenue: true,
+      capacity: { current: 0, limit: null, percent: null, state: "OK", scope: "GYM", scopeLabel: null, trend: undefined },
+      dailySummary: {
+        visitsToday: 0,
+        visitsYesterday: 0,
+        visitDelta: 0,
+        visitDeltaPercent: null,
+        checkoutsToday: 0,
+        paymentsToday: null,
+        newMembersToday: 0,
+        averageVisitDurationMinutes: null,
+      },
     }),
     [],
   )
@@ -124,22 +163,81 @@ export default function DashboardPage() {
         monthlyRevenue: data.monthlyRevenue ?? 0,
         activeMembers: data.activeMembers ?? 0,
         newMembers: data.newMembers ?? 0,
+        newMembersToday: data.newMembersToday ?? 0,
         percentageChange: data.percentageChange ?? 0,
         revenueByMonth: data.revenueByMonth ?? [],
         planDistribution: data.planDistribution ?? [],
         expiringSoon: data.expiringSoon ?? [],
         todayVisitorCount: data.todayVisitorCount ?? 0,
         canViewRevenue: data.canViewRevenue ?? true,
+        capacity: {
+          current: data.capacity?.current ?? 0,
+          limit: data.capacity?.limit ?? null,
+          percent: data.capacity?.percent ?? null,
+          state: data.capacity?.state ?? "OK",
+          scope: data.capacity?.scope ?? "GYM",
+          scopeLabel: data.capacity?.scopeLabel ?? null,
+          trend: data.capacity?.trend,
+        },
+        dailySummary: {
+          visitsToday: data.dailySummary?.visitsToday ?? 0,
+          visitsYesterday: data.dailySummary?.visitsYesterday ?? 0,
+          visitDelta: data.dailySummary?.visitDelta ?? 0,
+          visitDeltaPercent: data.dailySummary?.visitDeltaPercent ?? null,
+          checkoutsToday: data.dailySummary?.checkoutsToday ?? 0,
+          paymentsToday: data.dailySummary?.paymentsToday ?? null,
+          newMembersToday: data.dailySummary?.newMembersToday ?? 0,
+          averageVisitDurationMinutes: data.dailySummary?.averageVisitDurationMinutes ?? null,
+        },
       } satisfies DashboardStats
     },
   })
 
   const expiringSoon = (stats.expiringSoon ?? []) as DashboardStats["expiringSoon"]
+  const capacity = stats.capacity ?? defaultStats.capacity
+  const dailySummary = stats.dailySummary ?? defaultStats.dailySummary!
   const [expiringPage, setExpiringPage] = useState(1)
   useEffect(() => setExpiringPage(1), [expiringSoon.length])
 
   const canViewRevenue = stats.canViewRevenue !== false
   const percentageChange = stats.percentageChange ?? 0
+  const capacityValue =
+    capacity.limit && capacity.limit > 0
+      ? `${capacity.current.toLocaleString()}/${capacity.limit.toLocaleString()}`
+      : t("cards.capacity.unlimited")
+  const capacityTrendLabel =
+    capacity.trend && capacity.trend.windowMinutes
+      ? t("cards.capacity.trendLabel", {
+          delta: Math.abs(capacity.trend.delta),
+          direction: capacity.trend.direction === "up" ? t("dailySummary.trendUp") : capacity.trend.direction === "down" ? t("dailySummary.trendDown") : t("dailySummary.trendFlat"),
+          window: capacity.trend.windowMinutes,
+        })
+      : capacity.trend
+        ? t("cards.capacity.trendLabel", {
+            delta: Math.abs(capacity.trend.delta),
+            direction: capacity.trend.direction === "up" ? t("dailySummary.trendUp") : capacity.trend.direction === "down" ? t("dailySummary.trendDown") : t("dailySummary.trendFlat"),
+            window: 60,
+          })
+        : null
+  const capacitySubtitle =
+    capacity.limit && capacity.limit > 0
+      ? [t("cards.capacity.subtitle", { percent: capacity.percent ?? 0, scope: capacity.scopeLabel ?? t("cards.capacity.defaultScope") }), capacityTrendLabel]
+          .filter(Boolean)
+          .join(" • ")
+      : t("cards.capacity.unlimitedSubtitle")
+  const visitDeltaLabel =
+    dailySummary.visitDeltaPercent !== null
+      ? `${dailySummary.visitDelta >= 0 ? "+" : ""}${dailySummary.visitDeltaPercent}%`
+      : t("dailySummary.noComparison")
+  const visitDeltaClass = dailySummary.visitDelta >= 0 ? "text-emerald-600" : "text-rose-600"
+  const averageDurationLabel =
+    typeof dailySummary.averageVisitDurationMinutes === "number"
+      ? `${dailySummary.averageVisitDurationMinutes} ${t("dailySummary.minutes")}`
+      : t("dailySummary.noDuration")
+  const revenueTodayLabel =
+    dailySummary.paymentsToday !== null
+      ? t("dailySummary.revenueValue", { value: dailySummary.paymentsToday.toLocaleString() })
+      : t("dailySummary.revenueLocked")
 
   const statCards: Array<{
     title: string
@@ -148,7 +246,7 @@ export default function DashboardPage() {
     icon: LucideIcon
     accent: string
     subtitle?: string
-  }> = [
+    }> = [
     canViewRevenue
       ? {
           title: t("cards.monthlyRevenue.title"),
@@ -164,6 +262,17 @@ export default function DashboardPage() {
       icon: Activity,
       accent: "from-blue-500/20 via-blue-500/10 to-blue-500/5",
       subtitle: t("cards.visitsToday.subtitle"),
+    },
+    {
+      title: t("cards.capacity.title"),
+      value: capacityValue,
+      valueClass: capacity.state === "OVER" ? "text-rose-600" : "text-primary",
+      icon: Gauge,
+      accent:
+        capacity.state === "OVER"
+          ? "from-rose-500/20 via-rose-500/10 to-rose-500/5"
+          : "from-primary/20 via-primary/10 to-primary/5",
+      subtitle: capacitySubtitle,
     },
     {
       title: t("cards.activeMembers.title"),
@@ -427,6 +536,77 @@ export default function DashboardPage() {
             </div>
           </div>
         ) : null}
+      </div>
+
+      {/* Daily summary */}
+      <div className="space-y-3">
+        <div className="flex items-center justify-between gap-3">
+          <div>
+            <p className="text-sm text-muted-foreground">{t("dailySummary.kicker")}</p>
+            <h2 className="text-lg font-semibold">{t("dailySummary.title")}</h2>
+          </div>
+        </div>
+        <div className="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-4">
+          <Card className="rounded-2xl border border-border/60 bg-card/80 backdrop-blur-sm shadow-sm">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">{t("dailySummary.visitsTitle")}</CardTitle>
+              <Activity className="h-4 w-4 text-primary" />
+            </CardHeader>
+            <CardContent className="space-y-1">
+              <div className="text-3xl font-bold">{dailySummary.visitsToday.toLocaleString()}</div>
+              <p className={`text-sm ${visitDeltaClass}`}>
+                {t("dailySummary.vsYesterday", { value: visitDeltaLabel })}
+              </p>
+              <p className="text-xs text-muted-foreground">
+                {t("dailySummary.checkouts", { value: dailySummary.checkoutsToday.toLocaleString() })}
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card className="rounded-2xl border border-border/60 bg-card/80 backdrop-blur-sm shadow-sm">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">{t("dailySummary.revenueTitle")}</CardTitle>
+              <BarChart3 className="h-4 w-4 text-primary" />
+            </CardHeader>
+            <CardContent className="space-y-1">
+              <div className="text-3xl font-bold">{revenueTodayLabel}</div>
+              <p className="text-xs text-muted-foreground">
+                {t("dailySummary.revenueHint")}
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card className="rounded-2xl border border-border/60 bg-card/80 backdrop-blur-sm shadow-sm">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">{t("dailySummary.membersTitle")}</CardTitle>
+              <UserPlus className="h-4 w-4 text-primary" />
+            </CardHeader>
+            <CardContent className="space-y-1">
+              <div className="text-3xl font-bold">{(dailySummary.newMembersToday ?? 0).toLocaleString()}</div>
+              <p className="text-sm text-muted-foreground">{t("dailySummary.avgDuration", { value: averageDurationLabel })}</p>
+            </CardContent>
+          </Card>
+
+          <Card className="rounded-2xl border border-border/60 bg-card/80 backdrop-blur-sm shadow-sm">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">{t("dailySummary.capacityTitle")}</CardTitle>
+              <Gauge className="h-4 w-4 text-primary" />
+            </CardHeader>
+            <CardContent className="space-y-1">
+              <div className="text-3xl font-bold">
+                {capacity.trend ? `${capacity.trend.delta > 0 ? "+" : ""}${capacity.trend.delta}` : t("dailySummary.trendFlat")}
+              </div>
+              <p className="text-sm text-muted-foreground">
+                {capacity.trend
+                  ? t("dailySummary.capacityWindow", { window: capacity.trend.windowMinutes ?? 60 })
+                  : t("dailySummary.noComparison")}
+              </p>
+              <p className="text-xs text-muted-foreground">
+                {t("dailySummary.capacityScope", { scope: capacity.scopeLabel ?? t("cards.capacity.defaultScope") })}
+              </p>
+            </CardContent>
+          </Card>
+        </div>
       </div>
 
       {/* Stat cards */}

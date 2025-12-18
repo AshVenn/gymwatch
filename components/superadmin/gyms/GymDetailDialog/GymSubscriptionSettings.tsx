@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import type { SuperAdminGymDetail } from '@/app/[locale]/(dashboard)/super-admin/hooks'
 import { useLocale, useTranslations } from 'next-intl'
 import { useQueryClient } from '@tanstack/react-query'
@@ -16,7 +16,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form'
 
 import { PlanModuleBadges } from '../PlanModules'
-import { getPlanFeatures } from '@/lib/subscription-plans'
+import { getPlanFeatures, type PlanFeatureKey } from '@/lib/subscription-plans'
 import { toast } from 'sonner'
 
 type Props = {
@@ -30,9 +30,19 @@ const schema = z.object({
   expiresAt: z.string().optional(),
   grace: z.coerce.number().min(0).max(30),
   maxAdmins: z.coerce.number().min(1),
+  reason: z.string().max(120).optional(),
 })
 
 type SubscriptionValues = z.infer<typeof schema>
+
+const FEATURE_KEYS: PlanFeatureKey[] = [
+  'accessControl',
+  'presenceTracking',
+  'courses',
+  'qrTools',
+  'qrDownloads',
+  'excelReports',
+]
 
 export function GymSubscriptionSettings({ gym }: Props) {
   const t = useTranslations('superAdminGymSubscription')
@@ -48,15 +58,25 @@ export function GymSubscriptionSettings({ gym }: Props) {
       expiresAt: gym.subscriptionExpiresAt?.split('T')[0] ?? '',
       grace: gym.subscriptionGracePeriodDays,
       maxAdmins: gym.maxAdminAccounts,
+      reason: '',
     },
   })
+  const selectedStatus = form.watch('status')
 
-  const planFeatures = gym.planFeatures ?? getPlanFeatures(gym.subscriptionPlan)
+  const baseFeatures = useMemo(() => getPlanFeatures(gym.subscriptionPlan), [gym.subscriptionPlan])
+  const planFeatures = gym.planFeatures ?? baseFeatures
   const variantTotal = gym.variantCount ?? gym.variants?.length ?? 0
 
   const [downloading, setDownloading] = useState<'excel' | 'pdf' | null>(null)
   const [processingInvoice, setProcessingInvoice] = useState<'download' | 'print' | null>(null)
   const [saving, setSaving] = useState(false)
+  const [savingOverrides, setSavingOverrides] = useState(false)
+  const [overrideDraft, setOverrideDraft] = useState<Record<PlanFeatureKey, boolean | null>>(() =>
+    FEATURE_KEYS.reduce((acc, key) => {
+      acc[key] = null
+      return acc
+    }, {} as Record<PlanFeatureKey, boolean | null>),
+  )
 
   useEffect(() => {
     form.reset({
@@ -66,8 +86,57 @@ export function GymSubscriptionSettings({ gym }: Props) {
       expiresAt: gym.subscriptionExpiresAt?.split('T')[0] ?? '',
       grace: gym.subscriptionGracePeriodDays,
       maxAdmins: gym.maxAdminAccounts,
+      reason: '',
     })
   }, [gym, form])
+
+  useEffect(() => {
+    const next = FEATURE_KEYS.reduce((acc, key) => {
+      acc[key] = (gym.featureOverrides ?? {})[key] ?? null
+      return acc
+    }, {} as Record<PlanFeatureKey, boolean | null>)
+    setOverrideDraft(next)
+  }, [gym.featureOverrides])
+
+  const setAllInherit = () =>
+    setOverrideDraft(
+      FEATURE_KEYS.reduce((acc, key) => {
+        acc[key] = null
+        return acc
+      }, {} as Record<PlanFeatureKey, boolean | null>),
+    )
+
+  const handleOverrideChange = (key: PlanFeatureKey, value: 'inherit' | 'on' | 'off') => {
+    setOverrideDraft((prev) => ({
+      ...prev,
+      [key]: value === 'inherit' ? null : value === 'on',
+    }))
+  }
+
+  const saveOverrides = async () => {
+    try {
+      setSavingOverrides(true)
+      const response = await fetch(`/api/super-admin/gyms/${gym.id}/feature-overrides`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ overrides: overrideDraft }),
+      })
+
+      const body = await response.json().catch(() => ({}))
+      if (!response.ok) {
+        throw new Error((body as any)?.error || t('overrides.errors.saveFailed'))
+      }
+
+      toast.success(t('overrides.saved'))
+      queryClient.invalidateQueries({ queryKey: ['super-admin', 'gym', gym.id] })
+      queryClient.invalidateQueries({ queryKey: ['super-admin', 'gyms'] })
+    } catch (error) {
+      const msg = error instanceof Error ? error.message : t('overrides.errors.saveFailed')
+      toast.error(msg)
+    } finally {
+      setSavingOverrides(false)
+    }
+  }
 
   const handleInvoice = async (mode: 'download' | 'print', values?: SubscriptionValues) => {
     const payload = values ?? form.getValues()
@@ -128,6 +197,11 @@ export function GymSubscriptionSettings({ gym }: Props) {
   }
 
   const onSubmit = async (values: SubscriptionValues) => {
+    if (values.status === 'SUSPENDED' && !values.reason?.trim()) {
+      toast.error(t('errors.reasonRequired'))
+      return
+    }
+
     try {
       setSaving(true)
       const response = await fetch(`/api/super-admin/gyms/${gym.id}`, {
@@ -140,6 +214,9 @@ export function GymSubscriptionSettings({ gym }: Props) {
           subscriptionExpiresAt: values.expiresAt || null,
           subscriptionGracePeriodDays: values.grace,
           maxAdminAccounts: values.maxAdmins,
+          freezeStatus: values.status === 'SUSPENDED' ? 'ACTIVE' : 'LIFTED',
+          freezeReason: values.status === 'SUSPENDED' ? values.reason : null,
+          freezeUntil: values.status === 'SUSPENDED' ? null : null,
         }),
       })
 
@@ -204,6 +281,58 @@ export function GymSubscriptionSettings({ gym }: Props) {
           </p>
         </div>
 
+        <div className="mb-6 space-y-3 rounded-lg border border-border/60 bg-muted/15 p-4">
+          <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+            <div>
+              <p className="text-sm font-semibold">{t('overrides.title')}</p>
+              <p className="text-xs text-muted-foreground">{t('overrides.description')}</p>
+            </div>
+            <div className="flex gap-2">
+              <Button variant="outline" size="sm" onClick={setAllInherit}>
+                {t('overrides.reset')}
+              </Button>
+              <Button size="sm" onClick={saveOverrides} disabled={savingOverrides}>
+                {savingOverrides ? t('overrides.saving') : t('overrides.save')}
+              </Button>
+            </div>
+          </div>
+
+          <div className="grid gap-3 md:grid-cols-2">
+            {FEATURE_KEYS.map((key) => {
+              const overrideValue = overrideDraft[key] ?? null
+              const value = overrideValue === null ? 'inherit' : overrideValue ? 'on' : 'off'
+              const planState = planFeatures?.[key] ? t('overrides.state.on') : t('overrides.state.off')
+              const baseState = baseFeatures[key] ? t('overrides.state.on') : t('overrides.state.off')
+
+              return (
+                <div key={key} className="rounded-lg border border-border/60 bg-card/70 p-3 shadow-sm">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="space-y-1">
+                      <p className="text-sm font-semibold">{t(`overrides.features.${key}`)}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {t('overrides.planState', { state: baseState })}
+                      </p>
+                    </div>
+                    <Select value={value} onValueChange={(val) => handleOverrideChange(key, val as 'inherit' | 'on' | 'off')}>
+                      <SelectTrigger className="w-40">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="inherit">{t('overrides.inherit')}</SelectItem>
+                        <SelectItem value="on">{t('overrides.forceOn')}</SelectItem>
+                        <SelectItem value="off">{t('overrides.forceOff')}</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <p className="mt-2 text-xs font-medium text-foreground">
+                    {t('overrides.effective', { state: planState })}
+                  </p>
+                </div>
+              )
+            })}
+          </div>
+        </div>
+
         <Form {...form}>
           <form className="space-y-4" onSubmit={form.handleSubmit(onSubmit)}>
             {/* Status */}
@@ -228,6 +357,22 @@ export function GymSubscriptionSettings({ gym }: Props) {
                 </FormItem>
               )}
             />
+
+            {selectedStatus === 'SUSPENDED' ? (
+              <FormField
+                control={form.control}
+                name="reason"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>{t('fields.suspensionReason')}</FormLabel>
+                    <FormControl>
+                      <Input placeholder={t('placeholders.suspensionReason')} {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            ) : null}
 
             {/* Plan + Interval */}
             <div className="grid gap-4 md:grid-cols-2">

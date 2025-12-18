@@ -53,6 +53,11 @@ export async function GET(request: NextRequest) {
     const lastDayOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0)
     const firstDayOfLastMonth = new Date(today.getFullYear(), today.getMonth() - 1, 1)
     const lastDayOfLastMonth = new Date(today.getFullYear(), today.getMonth(), 0)
+    const startOfToday = new Date(today)
+    const endOfToday = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 23, 59, 59, 999)
+    const startOfYesterday = new Date(startOfToday)
+    startOfYesterday.setDate(startOfYesterday.getDate() - 1)
+    const endOfYesterday = new Date(startOfToday.getTime() - 1)
 
     const revenueVisible = role !== "GYM_ADMIN"
     let monthlyRevenue = 0
@@ -142,6 +147,14 @@ export async function GET(request: NextRequest) {
       },
     })
 
+    const newMembersToday = await prisma.member.count({
+      where: {
+        gymId,
+        ...(gymVariantId ? { gymVariantId } : {}),
+        createdAt: { gte: startOfToday, lte: endOfToday },
+      },
+    })
+
     const plans = await prisma.membershipPlan.findMany({
       where: {
         gymId,
@@ -152,12 +165,12 @@ export async function GET(request: NextRequest) {
     const planDistribution = await Promise.all(
       plans.map(async (plan: { id: string; name: string }) => {
         const count = await prisma.subscription.count({
-        where: { planId: plan.id, status: "ACTIVE" },
-      })
+          where: { planId: plan.id, status: "ACTIVE" },
+        })
 
-      return {
-        name: plan.name,
-        value: count ?? 0,
+        return {
+          name: plan.name,
+          value: count ?? 0,
         }
       }),
     )
@@ -186,8 +199,15 @@ export async function GET(request: NextRequest) {
 
     const visitorCounter = await prisma.gym.findUnique({
       where: { id: gymId },
-      select: { todayVisitorCount: true, todayVisitorDate: true },
+      select: { todayVisitorCount: true, todayVisitorDate: true, capacity: true, name: true },
     })
+
+    const variantMeta = gymVariantId
+      ? await prisma.gymVariant.findUnique({
+          where: { id: gymVariantId },
+          select: { capacity: true, name: true },
+        })
+      : null
 
     let todayVisitorCount = visitorCounter?.todayVisitorCount ?? 0
     if (visitorCounter) {
@@ -204,10 +224,99 @@ export async function GET(request: NextRequest) {
       }
     }
 
+    const openVisits = await prisma.visit.count({
+      where: { gymId, ...(gymVariantId ? { gymVariantId } : {}), checkOut: null },
+    })
+
+    const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000)
+    const openVisitsPrevious = await prisma.visit.count({
+      where: {
+        gymId,
+        ...(gymVariantId ? { gymVariantId } : {}),
+        checkIn: { lte: oneHourAgo },
+        OR: [{ checkOut: null }, { checkOut: { gt: oneHourAgo } }],
+      },
+    })
+
+    const capacityLimit =
+      (gymVariantId ? variantMeta?.capacity : null) ??
+      (gymVariantId ? null : visitorCounter?.capacity) ??
+      null
+    const capacityPercent =
+      capacityLimit && capacityLimit > 0 ? Math.round((openVisits / capacityLimit) * 100) : null
+
+    const capacityTrendDelta = openVisits - openVisitsPrevious
+    const capacityTrendPercent =
+      capacityLimit && capacityLimit > 0 ? Math.round((capacityTrendDelta / capacityLimit) * 100) : null
+
+    const visitsToday = await prisma.visit.count({
+      where: { gymId, ...(gymVariantId ? { gymVariantId } : {}), checkIn: { gte: startOfToday, lte: endOfToday } },
+    })
+
+    const visitsYesterday = await prisma.visit.count({
+      where: {
+        gymId,
+        ...(gymVariantId ? { gymVariantId } : {}),
+        checkIn: { gte: startOfYesterday, lte: endOfYesterday },
+      },
+    })
+
+    const checkoutsToday = await prisma.visit.count({
+      where: {
+        gymId,
+        ...(gymVariantId ? { gymVariantId } : {}),
+        checkOut: { gte: startOfToday, lte: endOfToday },
+      },
+    })
+
+    const completedVisitsForAverage = await prisma.visit.findMany({
+      where: {
+        gymId,
+        ...(gymVariantId ? { gymVariantId } : {}),
+        checkOut: { gte: startOfToday, lte: endOfToday },
+      },
+      select: { checkIn: true, checkOut: true },
+      take: 2000,
+    })
+
+    const avgVisitDurationMinutes =
+      completedVisitsForAverage.length > 0
+        ? Math.round(
+            completedVisitsForAverage.reduce((sum, visit) => {
+              const end = new Date(visit.checkOut as Date).getTime()
+              const start = new Date(visit.checkIn as Date).getTime()
+              return sum + Math.max(0, end - start)
+            }, 0) /
+              completedVisitsForAverage.length /
+              60000,
+          )
+        : null
+
+    const paymentsToday = revenueVisible
+      ? await prisma.payment.aggregate({
+          where: {
+            gymId,
+            paymentDate: { gte: startOfToday, lte: endOfToday },
+            ...(gymVariantId
+              ? {
+                  subscriptions: {
+                    some: { gymVariantId },
+                  },
+                }
+              : {}),
+          },
+          _sum: { amount: true },
+        })
+      : null
+
+    const visitDelta = visitsToday - visitsYesterday
+    const visitDeltaPercent = visitsYesterday > 0 ? Math.round((visitDelta / visitsYesterday) * 100) : null
+
     return NextResponse.json({
       monthlyRevenue,
       activeMembers: activeMembers ?? 0,
       newMembers: newMembers ?? 0,
+      newMembersToday,
       percentageChange,
       revenueByMonth,
       planDistribution: planDistribution ?? [],
@@ -215,6 +324,31 @@ export async function GET(request: NextRequest) {
       todayVisitorCount,
       canViewRevenue: revenueVisible,
       gymVariantId: gymVariantId ?? null,
+      capacity: {
+        current: openVisits,
+        limit: capacityLimit,
+        percent: capacityPercent,
+        state: capacityLimit && capacityLimit > 0 && openVisits > capacityLimit ? "OVER" : "OK",
+        scope: gymVariantId ? "VARIANT" : "GYM",
+        scopeLabel: gymVariantId ? variantMeta?.name ?? null : visitorCounter?.name ?? null,
+        trend: {
+          direction: capacityTrendDelta > 1 ? "up" : capacityTrendDelta < -1 ? "down" : "flat",
+          delta: capacityTrendDelta,
+          deltaPercent: capacityTrendPercent,
+          previous: openVisitsPrevious,
+          windowMinutes: 60,
+        },
+      },
+      dailySummary: {
+        visitsToday,
+        visitsYesterday,
+        visitDelta,
+        visitDeltaPercent,
+        checkoutsToday,
+        paymentsToday: paymentsToday?._sum.amount ?? null,
+        newMembersToday,
+        averageVisitDurationMinutes: avgVisitDurationMinutes,
+      },
       variantScope: {
         variantId: gymVariantId ?? null,
         variantMode: variantAccess.variantMode,

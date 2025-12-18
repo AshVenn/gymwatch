@@ -1157,7 +1157,7 @@
   },
   "superAdminPartnersPage": {
     "title": "Partners / Clubs",
-    "subtitle": "Manage the clubs shown on the public page with Cloudinary images and localized copy.",
+    "subtitle": "Manage the clubs shown on the public page with images and localized copy.",
     "actions": {
       "create": "Add club",
       "edit": "Edit",
@@ -1195,7 +1195,7 @@
     "upload": {
       "logo": "Logo / badge",
       "cover": "Hero / cover",
-      "hint": "PNG/SVG recommended. Stored on Cloudinary.",
+      "hint": "PNG/SVG recommended.",
       "replace": "Replace",
       "cta": "Upload"
     },
@@ -1228,8 +1228,14 @@
     }
   },
   "superAdminSettings": {
-    "title": "Plan settings",
-    "subtitle": "Adjust pricing, annual discount, and plan limits per tier.",
+    "title": "Super-admin settings",
+    "subtitle": "Security and maintenance utilities for your admin account.",
+    "planSetupMoved": {
+      "title": "Plan setup moved",
+      "subtitle": "Manage pricing, plan caps, and feature flags from the dedicated Plan setup page.",
+      "helper": "Super-admins can update limits and caps globally.",
+      "cta": "Open Plan setup"
+    },
     "maintenance": {
       "title": "Access log cleanup",
       "subtitle": "Remove access logs older than {days} days.",
@@ -1506,6 +1512,7 @@
     "demoBadge": "DEMO",
     "demoPrefix": "Demo",
     "planLine": "Plan {plan} - {interval} - {price}",
+    "suspensionReason": "Suspension: {reason}",
     "status": {
       "active": "Active",
       "suspended": "Suspended",
@@ -1536,6 +1543,7 @@
     "page": "Page {page} / {pageCount}",
     "actions": {
       "overview": "Overview",
+      "members": "View members",
       "team": "Admins",
       "plans": "Plans",
       "subscription": "Subscription",
@@ -1550,7 +1558,9 @@
     },
     "statusChart": {
       "title": "Status breakdown",
-      "description": "Gym subscriptions"
+      "description": "Gym subscriptions",
+      "empty": "No subscription data.",
+      "helper": "Percentages based on active and past subscriptions."
     },
     "upcoming": {
       "empty": "No upcoming expiry.",
@@ -1564,7 +1574,24 @@
       "INCONNU": "Unknown"
     }
   },
+  "superAdminGymMembers": {
+    "title": "Members of {name}",
+    "subtitle": "Paginated list of members for this gym.",
+    "count": "{count, plural, one {# member} other {# members}}",
+    "page": "Page {page} / {pages}",
+    "columns": {
+      "name": "Name",
+      "contact": "Contact",
+      "variant": "Variant",
+      "joined": "Joined"
+    },
+    "missing": "Not provided",
+    "unknown": "Member",
+    "empty": "No members found."
+  },
   "superAdminGymDetail": {
+    "loadingTitle":"",
+    "loadingSubtitle":"",
     "demoPill": "DEMO",
     "unknownLocation": "Unknown location",
     "planPrefix": "Plan",
@@ -1578,6 +1605,25 @@
     "noVariants": "No variants saved",
     "demoUntil": "Demo until {date}",
     "hint": "Use the quick actions from the table to manage the team, plans, and subscription settings for this gym.",
+    "capacity": {
+      "title": "Capacity & limits",
+      "helper": "Includes gym-wide capacity and per-variant caps.",
+      "value": "{value} spots",
+      "unset": "Not set",
+      "gymTotal": "Gym capacity",
+      "noVariantCaps": "No per-variant capacities.",
+      "maxMembers": "Max members: {value}",
+      "maxDaily": "Max daily check-ins: {value}",
+      "unlimited": "Unlimited"
+    },
+    "team": {
+      "title": "Owner & admins",
+      "count": "{count} admin(s)",
+      "owner": "Owner",
+      "noOwner": "No owner assigned",
+      "noAdmins": "No admins yet",
+      "remaining": "+{count} more"
+    },
     "plan": {
       "BASIC": "Basic",
       "PRO": "Pro",
@@ -1625,15 +1671,47 @@
       "title": "Active subscriptions",
       "helper": "Synced daily"
     },
-    "revenue30d": {
-      "title": "Revenue (30 days)",
-      "helper": "Reported payments"
+    "earningsMonth": {
+      "title": "Earnings (month)",
+      "helper": "Payments recorded this month"
+    },
+    "earningsLifetime": {
+      "title": "Lifetime earnings",
+      "helper": "All recorded payments"
     }
   },
   "superAdminGymSubscription": {
     "title": "Subscription settings",
     "description": "Update the plan or capacity.",
     "modulesActive": "Active modules",
+    "overrides": {
+      "title": "Feature overrides",
+      "description": "Force-enable or disable modules for this tenant.",
+      "inherit": "Inherit plan",
+      "forceOn": "Force ON",
+      "forceOff": "Force OFF",
+      "save": "Save overrides",
+      "saving": "Saving...",
+      "saved": "Overrides saved",
+      "reset": "Reset",
+      "planState": "Plan default: {state}",
+      "effective": "Effective: {state}",
+      "state": {
+        "on": "Enabled",
+        "off": "Disabled"
+      },
+      "features": {
+        "accessControl": "Access control",
+        "presenceTracking": "Presence tracking",
+        "courses": "Courses",
+        "qrTools": "QR tools",
+        "qrDownloads": "QR exports",
+        "excelReports": "Excel exports"
+      },
+      "errors": {
+        "saveFailed": "Unable to update overrides"
+      }
+    },
     "variantMode": {
       "mono": "Single site - {count} variant(s)",
       "multi": "Multi-sites - {count} variant(s)"
@@ -1644,10 +1722,12 @@
       "interval": "Billing",
       "expiresAt": "Expiration date",
       "graceDays": "Grace days",
-      "maxAdmins": "Allowed admins"
+      "maxAdmins": "Allowed admins",
+      "suspensionReason": "Suspension reason"
     },
     "placeholders": {
-      "pickDate": "Pick a date"
+      "pickDate": "Pick a date",
+      "suspensionReason": "Why is this gym suspended?"
     },
     "status": {
       "active": "Active",
@@ -1686,6 +1766,7 @@
     "errors": {
       "saveFailed": "Unable to save subscription",
       "invoiceGeneric": "Unable to generate invoice",
+      "reasonRequired": "Provide a suspension reason",
       "exportFailed": "Export failed"
     }
   },
@@ -1825,6 +1906,26 @@
       "effective": "Effective: {perVariant} per site, {perNetwork} network."
     }
   },
+  "superAdminPlanCap": {
+    "label": "Plan cap",
+    "perVariant": "Cap per variant",
+    "perNetwork": "Cap across network",
+    "unlimited": "Unlimited"
+  },
+  "superAdminPlanSetup": {
+    "title": "Plan setup",
+    "subtitle": "Control pricing, annual discounts, feature flags, and plan caps for every tier.",
+    "capsTitle": "Caps & pricing",
+    "capsDescription": "Edit monthly prices, yearly discount, and per-tier caps from one place.",
+    "featuresTitle": "Included features",
+    "featuresDescription": "Quick view of the modules that ship with each tier.",
+    "featuresHelper": "All super-admin overrides apply instantly.",
+    "plans": {
+      "BASIC": "Basic",
+      "PRO": "Pro",
+      "ENTERPRISE": "Enterprise"
+    }
+  },
   "superAdminDemoRequests": {
     "header": {
       "title": "Demo requests",
@@ -1896,6 +1997,12 @@
       "pdf": "PDF report",
       "exporting": "Exporting..."
     },
+    "pulse": {
+      "activationTitle": "Activation rate",
+      "activationSubtitle": "{total} gyms tracked",
+      "expiringTitle": "Expiring soon",
+      "expiringSubtitle": "Within 10 days"
+    },
     "kpis": {
       "totalGyms": "Total gyms",
       "activeSubscribers": "Active subscribers",
@@ -1953,6 +2060,7 @@
   "superAdminLayout": {
     "nav": {
       "overview": "Overview",
+      "planSetup": "Plan setup",
       "gyms": "Gyms",
       "demoRequests": "Demo requests",
       "partners": "Clubs",
@@ -2100,6 +2208,14 @@
         "title": "Visits today",
         "subtitle": "Recorded check-ins"
       },
+      "capacity": {
+        "title": "Capacity",
+        "subtitle": "{percent}% used · {scope}",
+        "unlimited": "Unlimited",
+        "unlimitedSubtitle": "No capacity cap",
+        "defaultScope": "all variants",
+        "trendLabel": "{direction} · {delta} in last {window} min"
+      },
       "activeMembers": {
         "title": "Active members",
         "subtitle": "With a valid subscription"
@@ -2129,6 +2245,28 @@
       "membersLabel": "{count} members",
       "radialFooterLine": "{active} active out of {total} members",
       "radialFooterHint": "Subscription status breakdown"
+    },
+    "dailySummary": {
+      "kicker": "Today only",
+      "title": "Daily summary",
+      "visitsTitle": "Check-ins",
+      "vsYesterday": "{value} vs yesterday",
+      "checkouts": "{value} check-outs",
+      "revenueTitle": "Revenue today",
+      "revenueValue": "{value} MAD",
+      "revenueHint": "Payments recorded today",
+      "revenueLocked": "Restricted",
+      "membersTitle": "New members today",
+      "avgDuration": "Avg stay: {value}",
+      "minutes": "min",
+      "noDuration": "No completed visits yet",
+      "capacityTitle": "Capacity trend",
+      "capacityWindow": "vs last {window} minutes",
+      "capacityScope": "Scope: {scope}",
+      "trendUp": "Up",
+      "trendDown": "Down",
+      "trendFlat": "Stable",
+      "noComparison": "No comparison yet"
     },
     "expiring": {
       "title": "Subscriptions expiring in the next 7 days",
@@ -2191,7 +2329,9 @@
       "gymInfoTitle": "Gym information",
       "gymInfoDesc": "Automatically retrieved from the gym profile.",
       "planLimitsTitle": "Plan limits",
-      "planLimitsDesc": "Caps applied to your subscription offers."
+      "planLimitsDesc": "Caps applied to your subscription offers.",
+      "variantsTitle": "Gym variants",
+      "variantsDesc": "Capacity settings per variant."
     },
     "readonlyNote": "Global settings updates are disabled for owner/admin accounts.",
     "common": {
@@ -2224,6 +2364,21 @@
       "tierUnlimitedVariant": "Unlimited per variant",
       "tierUnlimitedNetwork": "Unlimited network",
       "footer": "Limits apply only to active plans. Contact support for exceptions."
+    },
+    "variants": {
+      "title": "Variants",
+      "desc": "Edit per-variant capacity limits. Only your assigned variant is editable for admin roles.",
+      "capacityLabel": "Capacity (people)",
+      "save": "Save",
+      "saving": "Saving...",
+      "default": "Default",
+      "empty": "No variants found.",
+      "errors": {
+        "updateFailed": "Unable to update variant"
+      },
+      "success": {
+        "updated": "Variant updated"
+      }
     }
   },
   "subscriptionBanner": {
@@ -3358,6 +3513,7 @@
         "deleteError": "Unable to delete member",
         "qrPlanOnly": "Member QR code is reserved for the Pro plan",
         "visitInactive": "Subscription inactive or expired",
+        "checkoutRequired": "Please checkout the ongoing visit for {name} first",
         "visitLimitReached": "{name} has reached the daily limit",
         "visitLastOfDay": "Last visit of the day for {name}{remainingLabel}",
         "visitRecorded": "{name} checked in ({count} visit(s) today){remainingLabel}"
@@ -3382,6 +3538,7 @@
         },
         "actions": {
           "markVisit": "Mark visit",
+          "manualCheckout": "Manual checkout",
           "edit": "Edit",
           "qrCode": "Member QR code",
           "statsExcel": "Excel stats",
@@ -3429,6 +3586,19 @@
       "unlimited": "Unlimited",
       "limitReached": "Daily visit limit reached"
     },
+    "history": {
+      "title": "Recent activity",
+      "subtitle": "Your latest check-ins",
+      "last30Days": "Visits in the last 30 days",
+      "details": "Member details",
+      "email": "Email",
+      "phone": "Phone",
+      "unknown": "Unknown",
+      "recentVisits": "Last 4 visits",
+      "empty": "No visits logged yet.",
+      "checkedOut": "Checked out",
+      "checkedIn": "Checked in"
+    },
     "classes": {
       "title": "Upcoming classes",
       "subtitle": "Bookings linked to this member",
@@ -3448,3 +3618,4 @@
     }
   }
 }
+

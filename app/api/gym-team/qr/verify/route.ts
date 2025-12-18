@@ -7,8 +7,9 @@ import { resolveAccessEventStatus } from "@/lib/access-events"
 import { authOptions } from "@/lib/auth-middleware"
 import { extractQrToken } from "@/lib/qr"
 import { prisma } from "@/lib/prisma"
-import { hasPlanFeature } from "@/lib/subscription-plans"
+import { evaluateCheckInRules, recordOverstayRule } from "@/lib/rules-engine"
 import { markCheckoutForMember, markVisitForMember } from "@/lib/visits"
+import { resolveGymFeatures } from "@/lib/tenant-features"
 
 const scanPayloadSchema = z.object({
   token: z.string(),
@@ -49,7 +50,12 @@ export async function GET(request: NextRequest) {
         qrToken: token,
         ...(sessionGymId && sessionRole !== "SUPER_ADMIN" ? { gymId: sessionGymId } : {}),
       },
-      include: {
+      select: {
+        id: true,
+        firstName: true,
+        lastName: true,
+        email: true,
+        phone: true,
         gym: { select: { id: true, name: true, subscriptionPlan: true } },
         gymVariant: { select: { id: true, name: true, slug: true } },
       },
@@ -63,52 +69,71 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "FORBIDDEN_GYM" }, { status: 403 })
     }
 
-    const visit = await markVisitForMember({
-      gymId: member.gymId,
-      memberId: member.id,
-      markVisit: false,
-    })
-
     const now = new Date()
-    const classes = await prisma.classBooking.findMany({
-      where: {
+    const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000)
+
+    const [visit, classes, recentVisits, visitsLast30Days] = await Promise.all([
+      markVisitForMember({
+        gymId: member.gymId,
         memberId: member.id,
-        status: ClassBookingStatus.CONFIRMED,
-        classSession: {
-          startAt: { gte: now },
-        },
-      },
-      include: {
-        classSession: {
-          select: {
-            id: true,
-            title: true,
-            startAt: true,
-            endAt: true,
-            coach: true,
-            room: true,
-            gymVariant: { select: { id: true, name: true } },
+        markVisit: false,
+      }),
+      prisma.classBooking.findMany({
+        where: {
+          memberId: member.id,
+          status: ClassBookingStatus.CONFIRMED,
+          classSession: {
+            startAt: { gte: now },
           },
         },
-      },
-      orderBy: { classSession: { startAt: "asc" } },
-      take: 5,
-    })
+        include: {
+          classSession: {
+            select: {
+              id: true,
+              title: true,
+              startAt: true,
+              endAt: true,
+              coach: true,
+              room: true,
+              gymVariant: { select: { id: true, name: true } },
+            },
+          },
+        },
+        orderBy: { classSession: { startAt: "asc" } },
+        take: 5,
+      }),
+      prisma.visit.findMany({
+        where: { memberId: member.id },
+        orderBy: { checkIn: "desc" },
+        take: 4,
+        include: { gymVariant: { select: { name: true } } },
+      }),
+      prisma.visit.count({
+        where: { memberId: member.id, checkIn: { gte: thirtyDaysAgo } },
+      }),
+    ])
 
     const isStaff =
       Boolean(sessionGymId && member.gymId === sessionGymId) &&
       (sessionRole === "GYM_OWNER" || sessionRole === "GYM_ADMIN" || sessionRole === "SUPER_ADMIN")
 
+    const memberFeatures = await resolveGymFeatures({
+      gymId: member.gymId,
+      tier: member.gym?.subscriptionPlan ?? null,
+    })
+
     return NextResponse.json({
       context: isStaff ? "staff" : "public",
       features: {
-        accessControl: hasPlanFeature(member.gym?.subscriptionPlan ?? null, "accessControl"),
-        courses: hasPlanFeature(member.gym?.subscriptionPlan ?? null, "courses"),
+        accessControl: memberFeatures.features.accessControl,
+        courses: memberFeatures.features.courses,
       },
       member: {
         id: member.id,
         firstName: member.firstName,
         lastName: member.lastName,
+        email: member.email ?? null,
+        phone: member.phone ?? null,
         variantName: member.gymVariant?.name ?? null,
         gymName: member.gym?.name ?? null,
       },
@@ -127,6 +152,13 @@ export async function GET(request: NextRequest) {
         visitsRemaining: visit.visitsRemaining,
         limitState: visit.limitState,
         overDailyLimit: visit.overDailyLimit,
+        recent: recentVisits.map((entry) => ({
+          id: entry.id,
+          checkIn: entry.checkIn,
+          checkOut: entry.checkOut,
+          variantName: entry.gymVariant?.name ?? null,
+        })),
+        last30Days: visitsLast30Days,
       },
       classes: classes.map((item) => ({
         id: item.classSession.id,
@@ -155,7 +187,8 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
   }
 
-  if (!hasPlanFeature(tier, "accessControl")) {
+  const { features } = await resolveGymFeatures({ gymId, tier })
+  if (!features.accessControl) {
     return NextResponse.json({ error: "Plan Pro ou Enterprise requis" }, { status: 403 })
   }
 
@@ -230,6 +263,17 @@ export async function POST(request: NextRequest) {
         console.error("[access-event][qr-verify-checkout]", error)
       }
 
+      if (checkout.isOverMaxDuration) {
+        await recordOverstayRule({
+          gymId,
+          gymVariantId: checkout.variantId,
+          memberId: checkout.memberId,
+          visitId: checkout.visitId,
+          durationMinutes: checkout.durationMinutes,
+          limitMinutes: checkout.sessionLimitMinutes ?? undefined,
+        })
+      }
+
       return NextResponse.json({
         mode: "CHECK_OUT",
         member: {
@@ -257,17 +301,33 @@ export async function POST(request: NextRequest) {
       allowedVariantId,
     })
 
-    try {
-      const status = resolveAccessEventStatus(visit, "CHECK_IN")
-      await prisma.accessEvent.create({
-        data: {
-          memberId: member.id,
-          status,
-          source: AccessEventSource.QR_SCAN,
-        },
-      })
-    } catch (error) {
-      console.error("[access-event][qr-verify]", error)
+    const status = resolveAccessEventStatus(visit, "CHECK_IN")
+    const rules = await evaluateCheckInRules({
+      gymId,
+      gymVariantId: member.gymVariantId,
+      memberId: member.id,
+      visitId: visit.visitId,
+    })
+
+    if (features.accessControl) {
+      try {
+        await prisma.accessEvent.create({
+          data: {
+            memberId: member.id,
+            status: rules.shouldThrottle ? AccessEventStatus.DENIED_FORBIDDEN : status,
+            source: AccessEventSource.QR_SCAN,
+          },
+        })
+      } catch (error) {
+        console.error("[access-event][qr-verify]", error)
+      }
+    }
+
+    if (rules.shouldThrottle) {
+      return NextResponse.json(
+        { error: "Capacity reached, throttling new entries", code: "CAPACITY_THROTTLED" },
+        { status: 429 },
+      )
     }
 
     return NextResponse.json({

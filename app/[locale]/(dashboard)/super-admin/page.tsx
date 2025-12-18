@@ -219,6 +219,7 @@ export default function SuperAdminOverviewPage() {
   }))
 
   const activeShare = stats.totalGyms ? Math.round((stats.activeGyms / stats.totalGyms) * 100) : 0
+  const expiringSoonCount = stats.expiringGyms?.length ?? 0
 
   const radialStatusData = [
     { name: "Actives", value: stats.activeGyms ?? 0, fill: STATUS_COLORS[0] },
@@ -283,6 +284,30 @@ export default function SuperAdminOverviewPage() {
           </Button>
         </CardContent>
       </Card>
+
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+        <Card className="border-border/60 bg-card/90 backdrop-blur-sm rounded-3xl shadow-md transition-all duration-300 hover:shadow-xl hover:-translate-y-1">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">{t("pulse.activationTitle")}</CardTitle>
+            <Gauge className="h-5 w-5 text-primary" />
+          </CardHeader>
+          <CardContent>
+            <p className="text-3xl font-semibold">{activeShare}%</p>
+            <p className="text-sm text-muted-foreground">{t("pulse.activationSubtitle", { total: stats.totalGyms })}</p>
+          </CardContent>
+        </Card>
+
+        <Card className="border-border/60 bg-card/90 backdrop-blur-sm rounded-3xl shadow-md transition-all duration-300 hover:shadow-xl hover:-translate-y-1">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">{t("pulse.expiringTitle")}</CardTitle>
+            <AlertTriangle className="h-5 w-5 text-amber-500" />
+          </CardHeader>
+          <CardContent>
+            <p className="text-3xl font-semibold">{expiringSoonCount}</p>
+            <p className="text-sm text-muted-foreground">{t("pulse.expiringSubtitle")}</p>
+          </CardContent>
+        </Card>
+      </div>
 
       <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
         <Card className="group border-border/60 bg-card/90 backdrop-blur-sm rounded-3xl shadow-md transition-all duration-300 hover:shadow-xl hover:scale-105">

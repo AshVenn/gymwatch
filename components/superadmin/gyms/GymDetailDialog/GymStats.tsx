@@ -19,37 +19,44 @@ export function GymStats({ gym }: Props) {
     maximumFractionDigits: 0,
   })
 
+  const cards = [
+    {
+      key: 'members',
+      value: gym.memberCount ?? 0,
+      helper: t('members.helper'),
+      title: t('members.title'),
+    },
+    {
+      key: 'activeSubscriptions',
+      value: gym.activeSubscriptions ?? 0,
+      helper: t('activeSubscriptions.helper'),
+      title: t('activeSubscriptions.title'),
+    },
+    {
+      key: 'earningsMonth',
+      value: MAD.format(gym.paymentsCurrentMonth ?? gym.paymentsLast30Days ?? 0),
+      helper: t('earningsMonth.helper'),
+      title: t('earningsMonth.title'),
+    },
+    {
+      key: 'earningsLifetime',
+      value: MAD.format(gym.paymentsTotal ?? gym.paymentsLast30Days ?? 0),
+      helper: t('earningsLifetime.helper'),
+      title: t('earningsLifetime.title'),
+    },
+  ]
+
   return (
-    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-      <Card className="h-full">
-        <CardHeader className="pb-2">
-          <CardDescription>{t('members.title')}</CardDescription>
-          <CardTitle className="text-3xl">{gym.memberCount ?? 0}</CardTitle>
-        </CardHeader>
-        <CardContent className="text-sm text-muted-foreground">
-          {t('members.helper')}
-        </CardContent>
-      </Card>
-
-      <Card className="h-full">
-        <CardHeader className="pb-2">
-          <CardDescription>{t('activeSubscriptions.title')}</CardDescription>
-          <CardTitle className="text-3xl">{gym.activeSubscriptions ?? 0}</CardTitle>
-        </CardHeader>
-        <CardContent className="text-sm text-muted-foreground">
-          {t('activeSubscriptions.helper')}
-        </CardContent>
-      </Card>
-
-      <Card className="h-full sm:col-span-2 lg:col-span-1">
-        <CardHeader className="pb-2">
-          <CardDescription>{t('revenue30d.title')}</CardDescription>
-          <CardTitle className="text-3xl">{MAD.format(gym.paymentsLast30Days ?? 0)}</CardTitle>
-        </CardHeader>
-        <CardContent className="text-sm text-muted-foreground">
-          {t('revenue30d.helper')}
-        </CardContent>
-      </Card>
+    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      {cards.map((card) => (
+        <Card key={card.key} className="h-full">
+          <CardHeader className="pb-2">
+            <CardDescription>{card.title}</CardDescription>
+            <CardTitle className="text-3xl">{card.value}</CardTitle>
+          </CardHeader>
+          <CardContent className="text-sm text-muted-foreground">{card.helper}</CardContent>
+        </Card>
+      ))}
     </div>
   )
 }

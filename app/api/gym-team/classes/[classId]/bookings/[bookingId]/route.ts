@@ -3,7 +3,7 @@ import { getServerSession } from "next-auth"
 import { ClassBookingStatus } from "@prisma/client"
 import { authOptions } from "@/lib/auth-middleware"
 import { prisma } from "@/lib/prisma"
-import { hasPlanFeature } from "@/lib/subscription-plans"
+import { resolveGymFeatures } from "@/lib/tenant-features"
 import { syncClassWaitlist } from "@/lib/class-sessions"
 
 export async function DELETE(_request: NextRequest, { params }: { params: { classId: string; bookingId: string } }) {
@@ -16,7 +16,8 @@ export async function DELETE(_request: NextRequest, { params }: { params: { clas
   if (!gymId) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
   }
-  if (!hasPlanFeature(tier, "courses")) {
+  const { features } = await resolveGymFeatures({ gymId, tier })
+  if (!features.courses) {
     return NextResponse.json({ error: "Plan Enterprise requis" }, { status: 403 })
   }
 

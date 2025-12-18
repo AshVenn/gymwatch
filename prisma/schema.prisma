@@ -65,6 +65,33 @@ enum AccessEventSource {
   MANUAL
 }
 
+enum AccessRuleType {
+  OVERSTAY
+  ENTRY_BURST
+  CAPACITY_RISK
+  STALE_OPEN_VISIT
+}
+
+enum AccessRuleSeverity {
+  INFO
+  WARNING
+  CRITICAL
+}
+
+enum PlanFeatureFlag {
+  accessControl
+  presenceTracking
+  courses
+  qrTools
+  qrDownloads
+  excelReports
+}
+
+enum GymFreezeStatus {
+  ACTIVE
+  LIFTED
+}
+
 enum ClassBookingStatus {
   CONFIRMED
   WAITLISTED
@@ -152,6 +179,9 @@ model Gym {
   subscriptionGracePeriodDays Int                   @default(0)
   maxSessionMinutes           Int                   @default(180)
   maxAdminAccounts            Int                   @default(3)
+  maxMembers                  Int                   @default(-1)
+  maxVariants                 Int                   @default(-1)
+  capacity                    Int                   @default(0)
   lastSettingsUpdateAt        DateTime?
   todayVisitorCount           Int                   @default(0)
   todayVisitorDate            DateTime?             @default(now())
@@ -160,6 +190,8 @@ model Gym {
   planLimitPerVariant         Int?
   planLimitPerNetwork         Int?
   analyticsSnapshot           Json?
+  tenantPlans                 TenantPlan[]
+  ruleEvents                  AccessRuleEvent[]
   users                       User[]
   membershipPlans             MembershipPlan[]
   members                     Member[]
@@ -167,6 +199,7 @@ model Gym {
   payments                    Payment[]
   variants                    GymVariant[]
   visits                      Visit[]
+  featureOverrides            FeatureOverride[]
   classSessions               ClassSession[]
   createdDemoRequests         DemoRequest[]         @relation("DemoRequestCreatedGym")
   createdAt                   DateTime              @default(now())
@@ -181,11 +214,13 @@ model GymVariant {
   slug        String
   isDefault   Boolean  @default(false)
   maxSessionMinutes Int?
+  capacity    Int?     @default(0)
   members     Member[]
   subscriptions Subscription[]
   membershipPlans MembershipPlan[]
   admins      User[]
   visits      Visit[]
+  ruleEvents  AccessRuleEvent[]
   classSessions ClassSession[]
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
@@ -246,6 +281,7 @@ model Member {
   subscriptions Subscription[]
   visits       Visit[]
   accessEvents AccessEvent[]
+  ruleEvents   AccessRuleEvent[]
   classBookings ClassBooking[]
 
   createdAt DateTime @default(now())
@@ -353,13 +389,99 @@ model Visit {
   gymVariant   GymVariant @relation(fields: [gymVariantId], references: [id], onDelete: Cascade)
   checkIn      DateTime   @default(now())
   checkOut     DateTime?
+  overstayMinutes Int?     @default(0)
   createdAt    DateTime   @default(now())
   updatedAt    DateTime   @updatedAt
+  ruleEvents   AccessRuleEvent[]
 
   @@index([gymId])
   @@index([memberId])
   @@index([gymVariantId])
   @@index([checkIn])
+}
+
+model Plan {
+  id                 String             @id @default(cuid())
+  name               String
+  tier               GymPlanTier
+  billingInterval    GymBillingInterval
+  price              Float              @default(0)
+  maxVariants        Int                @default(-1)
+  maxMembers         Int                @default(-1)
+  capacityPerGym     Int                @default(0)
+  capacityPerVariant Int                @default(0)
+  createdAt          DateTime           @default(now())
+  updatedAt          DateTime           @updatedAt
+  tenantPlans        TenantPlan[]
+
+  @@unique([tier, billingInterval])
+}
+
+model TenantPlan {
+  id               String                @id @default(cuid())
+  gymId            String
+  gym              Gym                   @relation(fields: [gymId], references: [id], onDelete: Cascade)
+  planId           String
+  plan             Plan                  @relation(fields: [planId], references: [id], onDelete: Cascade)
+  status           GymSubscriptionStatus @default(ACTIVE)
+  startsAt         DateTime
+  endsAt           DateTime?
+  gracePeriodDays  Int                   @default(0)
+  freezeStatus     GymFreezeStatus?
+  freezeReason     String?
+  freezeUntil      DateTime?
+  createdAt        DateTime              @default(now())
+  updatedAt        DateTime              @updatedAt
+  freezes          TenantPlanFreeze[]
+
+  @@index([gymId, status])
+  @@index([planId])
+}
+
+model TenantPlanFreeze {
+  id           String         @id @default(cuid())
+  tenantPlanId String
+  tenantPlan   TenantPlan     @relation(fields: [tenantPlanId], references: [id], onDelete: Cascade)
+  reason       String
+  requestedUntil DateTime?
+  liftedAt     DateTime?
+  createdById  String?
+  createdAt    DateTime       @default(now())
+}
+
+model AccessRuleEvent {
+  id           String            @id @default(cuid())
+  gymId        String
+  gym          Gym               @relation(fields: [gymId], references: [id], onDelete: Cascade)
+  memberId     String?
+  member       Member?           @relation(fields: [memberId], references: [id], onDelete: SetNull)
+  visitId      String?
+  visit        Visit?            @relation(fields: [visitId], references: [id], onDelete: SetNull)
+  gymVariantId String?
+  gymVariant   GymVariant?       @relation(fields: [gymVariantId], references: [id], onDelete: SetNull)
+  type         AccessRuleType
+  severity     AccessRuleSeverity @default(INFO)
+  note         String?
+  metadata     Json?
+  createdAt    DateTime          @default(now())
+
+  @@index([gymId, createdAt])
+  @@index([memberId])
+  @@index([visitId])
+  @@index([gymVariantId])
+}
+
+model FeatureOverride {
+  id       String          @id @default(cuid())
+  gymId    String
+  gym      Gym             @relation(fields: [gymId], references: [id], onDelete: Cascade)
+  feature  PlanFeatureFlag
+  enabled  Boolean         @default(false)
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
+
+  @@unique([gymId, feature])
+  @@index([gymId])
 }
 
 model ClassSession {

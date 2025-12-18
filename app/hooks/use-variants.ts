@@ -10,6 +10,7 @@ export interface GymVariantOption {
   slug: string
   isDefault: boolean
   maxSessionMinutes?: number | null
+  capacity?: number | null
 }
 
 export function useVariantOptions(options: { allowAll?: boolean } = {}) {

@@ -58,16 +58,16 @@ export function PlanCard({
         }
       : tier === "pro"
         ? {
-            card: "bg-linear-to-br from-primary/90 via-amber-500 to-orange-600 border-primary/30",
+            card: "bg-linear-to-br from-pink-500 via-primary to-primary/85 border-pink-200/50",
             glow:
-              "bg-[radial-gradient(circle_at_25%_20%,rgba(255,255,255,0.20),transparent_55%),radial-gradient(circle_at_75%_30%,rgba(245,158,11,0.35),transparent_55%)]",
+              "bg-[radial-gradient(circle_at_24%_20%,rgba(255,255,255,0.22),transparent_55%),radial-gradient(circle_at_78%_18%,rgba(236,72,153,0.35),transparent_55%),radial-gradient(circle_at_72%_82%,rgba(59,130,246,0.22),transparent_60%)]",
             cta: "bg-white text-slate-900 hover:bg-white/90",
           }
         : {
-            // Basic = primary desaturated / graphite
-            card: "bg-linear-to-br from-primary/80 via-slate-800 to-zinc-900 border-primary/20",
+            // Basic = green anchored to the shared primary stop
+            card: "bg-linear-to-br from-emerald-500 via-primary to-primary/85 border-emerald-200/40",
             glow:
-              "bg-[radial-gradient(circle_at_25%_20%,rgba(255,255,255,0.12),transparent_60%),radial-gradient(circle_at_75%_30%,rgba(148,163,184,0.18),transparent_60%)]",
+              "bg-[radial-gradient(circle_at_26%_18%,rgba(255,255,255,0.18),transparent_55%),radial-gradient(circle_at_76%_26%,rgba(16,185,129,0.32),transparent_55%),radial-gradient(circle_at_72%_78%,rgba(59,130,246,0.18),transparent_60%)]",
             cta: "bg-white text-slate-900 hover:bg-white/90",
           }
 

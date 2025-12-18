@@ -7,7 +7,7 @@ import {
   getSuperAdminGymDetail,
   updateGymFromSuperAdmin,
 } from "@/lib/super-admin"
-import { GymBillingInterval, GymPlanTier, GymSubscriptionStatus } from "@prisma/client"
+import { GymBillingInterval, GymFreezeStatus, GymPlanTier, GymSubscriptionStatus } from "@prisma/client"
 
 const updateGymSchema = z.object({
   name: z.string().min(2).optional(),
@@ -25,6 +25,12 @@ const updateGymSchema = z.object({
   maxAdminAccounts: z.number().int().min(1).max(20).optional(),
   planLimitPerVariant: z.number().int().min(-1).optional(),
   planLimitPerNetwork: z.number().int().min(-1).optional(),
+  capacity: z.number().int().min(0).max(100000).optional(),
+  maxMembers: z.number().int().min(-1).optional(),
+  maxVariants: z.number().int().min(-1).optional(),
+  freezeStatus: z.nativeEnum(GymFreezeStatus).nullable().optional(),
+  freezeReason: z.string().max(255).nullable().optional(),
+  freezeUntil: z.string().nullable().optional(),
 })
 
 async function ensureSuperAdmin() {
@@ -81,6 +87,12 @@ export async function PATCH(
       maxAdminAccounts: payload.maxAdminAccounts,
       planLimitPerVariant: payload.planLimitPerVariant,
       planLimitPerNetwork: payload.planLimitPerNetwork,
+      capacity: payload.capacity,
+      maxMembers: payload.maxMembers,
+      maxVariants: payload.maxVariants,
+      freezeStatus: payload.freezeStatus ?? undefined,
+      freezeReason: payload.freezeReason ?? undefined,
+      freezeUntil: payload.freezeUntil ? new Date(payload.freezeUntil) : null,
     })
 
     return NextResponse.json(updated)

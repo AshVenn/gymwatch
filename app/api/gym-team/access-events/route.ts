@@ -5,11 +5,11 @@ import { AccessEventSource, AccessEventStatus, Prisma } from "@prisma/client"
 
 import { authOptions } from "@/lib/auth-middleware"
 import { prisma } from "@/lib/prisma"
-import { hasPlanFeature } from "@/lib/subscription-plans"
 import { resolveAccessEventStatus } from "@/lib/access-events"
 import { markCheckoutForMember, markVisitForMember } from "@/lib/visits"
 import { resolveVariantAccess } from "@/lib/variant-access"
 import { buildSessionLimitResolver } from "@/lib/session-limits"
+import { resolveGymFeatures } from "@/lib/tenant-features"
 
 const createSchema = z
   .object({
@@ -51,7 +51,8 @@ export async function GET(request: NextRequest) {
   if (!gymId) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
   }
-  if (!hasPlanFeature(tier, "accessControl")) {
+  const { features } = await resolveGymFeatures({ gymId, tier })
+  if (!features.accessControl) {
     return NextResponse.json({ error: "Plan Pro ou Enterprise requis" }, { status: 403 })
   }
   if (role === "GYM_ADMIN" && !gymVariantId) {
@@ -67,8 +68,11 @@ export async function GET(request: NextRequest) {
   const from = params.get("from")
   const to = params.get("to")
 
-  const limitRaw = Number(params.get("limit"))
-  const limit = Number.isFinite(limitRaw) ? Math.min(Math.max(Math.floor(limitRaw), 1), 500) : 200
+  const pageRaw = Number(params.get("page"))
+  const page = Number.isFinite(pageRaw) && pageRaw > 0 ? Math.floor(pageRaw) : 1
+  const pageSizeRaw = Number(params.get("pageSize"))
+  const pageSize = Number.isFinite(pageSizeRaw) ? Math.min(Math.max(Math.floor(pageSizeRaw), 1), 200) : 12
+  const skip = (page - 1) * pageSize
 
   const variantAccess = await resolveVariantAccess({
     gymId,
@@ -130,10 +134,13 @@ export async function GET(request: NextRequest) {
   }
 
   try {
+    const total = await prisma.accessEvent.count({ where })
+
     const events = await prisma.accessEvent.findMany({
       where,
       orderBy: { createdAt: "desc" },
-      take: limit,
+      skip,
+      take: pageSize,
       include: {
         member: {
           select: {
@@ -189,7 +196,7 @@ export async function GET(request: NextRequest) {
     const resolvedLimit =
       uniqueLimit ?? sessionLimitResolver.variantLimit(variantId ?? null) ?? sessionLimitResolver.defaultLimit ?? null
 
-    return NextResponse.json({ events: decoratedEvents, maxSessionMinutes: resolvedLimit })
+    return NextResponse.json({ events: decoratedEvents, maxSessionMinutes: resolvedLimit, total, page, pageSize })
   } catch (error) {
     console.error("[access-events][get]", error)
     return NextResponse.json({ error: "Impossible de charger les acces" }, { status: 500 })
@@ -206,7 +213,8 @@ export async function POST(request: NextRequest) {
   if (!gymId) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
   }
-  if (!hasPlanFeature(tier, "accessControl")) {
+  const { features } = await resolveGymFeatures({ gymId, tier })
+  if (!features.accessControl) {
     return NextResponse.json({ error: "Plan Pro ou Enterprise requis" }, { status: 403 })
   }
   if (role === "GYM_ADMIN" && !gymVariantId) {

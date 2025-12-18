@@ -13,6 +13,7 @@ import {
   DialogDescription,
   DialogTitle,
   DialogTrigger,
+  DialogFooter,
 } from "@/components/ui/dialog"
 import {
   AlertDialog,
@@ -24,13 +25,13 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Card } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
-import { MoreVertical, Plus, Edit2, Trash2, QrCode, FileDown, CheckCircle2, LogIn, LogOut } from "lucide-react"
+import { Plus, Edit2, Trash2, QrCode, FileDown, CheckCircle2, LogIn, LogOut } from "lucide-react"
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import QRCode from "qrcode"
 import type { IScannerProps } from "@yudiel/react-qr-scanner/dist/components/Scanner"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
@@ -69,12 +70,22 @@ interface Plan {
   gymVariant?: { id: string; name: string; slug: string; isDefault?: boolean }
 }
 
+const formatInputDate = (date: Date) => date.toISOString().slice(0, 10)
+const formatTimeInput = (value: Date) => value.toISOString().slice(11, 16)
+const buildDateTimeString = (date: string, time?: string) => {
+  if (!date) return null
+  const base = time ? new Date(`${date}T${time}`) : new Date(date)
+  if (Number.isNaN(base.getTime())) return null
+  return base.toISOString()
+}
+
 export default function MembersPage() {
   const { data: session, status } = useSession()
   const queryClient = useQueryClient()
   const [editingId, setEditingId] = useState<string | null>(null)
 
   const t = useTranslations("dashboard.members")
+  const tPresence = useTranslations("dashboard.presence")
   const locale = useLocale()
 
   const [formData, setFormData] = useState({
@@ -106,6 +117,15 @@ export default function MembersPage() {
   const [visitDialogOpen, setVisitDialogOpen] = useState(false)
   const [visitSearch, setVisitSearch] = useState("")
   const [visitLoading, setVisitLoading] = useState<string | null>(null)
+  const [manualCheckoutDialogOpen, setManualCheckoutDialogOpen] = useState(false)
+  const [checkoutSearch, setCheckoutSearch] = useState("")
+  const [checkoutMember, setCheckoutMember] = useState<Member | null>(null)
+  const [checkoutVisitId, setCheckoutVisitId] = useState<string | null>(null)
+  const [checkoutDate, setCheckoutDate] = useState<string>(formatInputDate(new Date()))
+  const [checkoutTime, setCheckoutTime] = useState<string>(formatTimeInput(new Date()))
+  const [checkoutWindowStart, setCheckoutWindowStart] = useState("")
+  const [checkoutWindowEnd, setCheckoutWindowEnd] = useState("")
+  const [checkoutLoading, setCheckoutLoading] = useState<string | null>(null)
   const {
     variants,
     selectedVariant,
@@ -197,9 +217,8 @@ export default function MembersPage() {
       toast.success(t("toasts.memberDeleted"))
       setMemberToDelete(null)
     },
-    onError: (err) => {
-      const message = err instanceof Error ? err.message : t("toasts.deleteError")
-      toast.error(message)
+    onError: () => {
+      toast.error(t("toasts.deleteError"))
     },
   })
 
@@ -258,6 +277,19 @@ export default function MembersPage() {
       })
       .sort((a, b) => a.firstName.localeCompare(b.firstName))
   }, [members, variantFilter, visitSearch])
+
+  const checkoutOptions = useMemo(() => {
+    const term = checkoutSearch.trim().toLowerCase()
+    return members
+      .filter((member) => {
+        const matchesVariant = !variantFilter || member.gymVariantId === variantFilter
+        if (!matchesVariant) return false
+        if (!term) return true
+        const fullName = `${member.firstName} ${member.lastName}`.toLowerCase()
+        return fullName.includes(term) || (member.email ?? "").toLowerCase().includes(term) || (member.phone ?? "").toLowerCase().includes(term)
+      })
+      .sort((a, b) => a.firstName.localeCompare(b.firstName))
+  }, [checkoutSearch, members, variantFilter])
 
   const availablePlans = useMemo(() => {
     const targetVariant = effectiveMemberVariantId
@@ -509,13 +541,31 @@ export default function MembersPage() {
         typeof (data as any).visitsRemaining === "number" ? Math.max((data as any).visitsRemaining, 0) : null
       const limitState = ((data as any).limitState as string) ?? "OK"
       const limitWarning = limitState === "WARNING"
-      const blocked = limitState === "BLOCKED" || overDailyLimit
+      const openVisitId = typeof (data as any)?.openVisitId === "string" ? (data as any).openVisitId : null
+      const hasOpenVisit = Boolean(openVisitId)
+      const blocked = (limitState === "BLOCKED" || overDailyLimit) && !hasOpenVisit
 
       if (!data.active) {
         toast.error(t("toasts.visitInactive"))
-      } else if (blocked) {
+        return
+      }
+
+      if (hasOpenVisit) {
+        const targetMember = members.find((m) => m.id === memberId)
+        if (targetMember) {
+          openCheckoutDialog(targetMember, openVisitId ?? undefined)
+        }
+        toast.warning(t("toasts.checkoutRequired", { name: fullName }))
+        setVisitDialogOpen(false)
+        return
+      }
+
+      if (blocked) {
         toast.error(t("toasts.visitLimitReached", { name: fullName }))
-      } else if (limitWarning) {
+        return
+      }
+
+      if (limitWarning) {
         const remainingLabel =
           visitsRemaining !== null ? t("visits.remainingLabel", { remaining: visitsRemaining }) : ""
         toast.warning(
@@ -524,23 +574,93 @@ export default function MembersPage() {
             remainingLabel,
           }),
         )
-      } else {
-        const remainingLabel =
-          visitsRemaining !== null ? t("visits.remainingLabel", { remaining: visitsRemaining }) : ""
-        toast.success(
-          t("toasts.visitRecorded", {
-            name: fullName,
-            count: data.todayVisitorCount ?? 0,
-            remainingLabel,
-          }),
-        )
       }
+
+      const remainingLabel =
+        visitsRemaining !== null ? t("visits.remainingLabel", { remaining: visitsRemaining }) : ""
+      toast.success(
+        t("toasts.visitRecorded", {
+          name: fullName,
+          count: data.todayVisitorCount ?? 0,
+          remainingLabel,
+        }),
+      )
       setVisitDialogOpen(false)
     } catch (error) {
       const message = error instanceof Error ? error.message : t("errors.markVisit")
       toast.error(message)
     } finally {
       setVisitLoading(null)
+    }
+  }
+
+  const openCheckoutDialog = (member: Member, visitId?: string | null) => {
+    setCheckoutMember(member)
+    setCheckoutVisitId(visitId ?? null)
+    const now = new Date()
+    setCheckoutDate(formatInputDate(now))
+    setCheckoutTime(formatTimeInput(now))
+    setCheckoutWindowStart("")
+    setCheckoutWindowEnd("")
+  }
+
+  const closeCheckoutDialog = () => {
+    if (checkoutLoading) return
+    setCheckoutMember(null)
+    setCheckoutVisitId(null)
+  }
+
+  const submitManualCheckout = async () => {
+    if (!checkoutMember) return
+    try {
+      setCheckoutLoading(checkoutMember.id)
+      const payload: Record<string, unknown> = { direction: "OUT", memberId: checkoutMember.id }
+      if (checkoutVisitId) payload.visitId = checkoutVisitId
+
+      const checkoutAtIso = buildDateTimeString(checkoutDate, checkoutTime)
+      const windowFromIso = checkoutWindowStart ? buildDateTimeString(checkoutDate, checkoutWindowStart) : null
+      const windowToIso = checkoutWindowEnd ? buildDateTimeString(checkoutDate, checkoutWindowEnd) : null
+
+      if (checkoutAtIso) payload.checkoutAt = checkoutAtIso
+      if (windowFromIso) payload.rangeFrom = windowFromIso
+      if (windowToIso) payload.rangeTo = windowToIso
+
+      const response = await fetch("/api/gym-team/visits", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      })
+
+      const body = await response.json().catch(() => ({}))
+      if (!response.ok) {
+        throw new Error((body as any)?.error || tPresence("errors.checkout"))
+      }
+
+      const segments: string[] = [tPresence("manualCheckout.toasts.base")]
+      if ((body as any)?.memberName)
+        segments.push(tPresence("manualCheckout.toasts.member", { memberName: (body as any).memberName }))
+      if (typeof (body as any)?.durationMinutes === "number")
+        segments.push(tPresence("manualCheckout.toasts.duration", { minutes: (body as any).durationMinutes }))
+
+      if ((body as any)?.isOverMaxDuration) {
+        segments.push(
+          typeof (body as any)?.sessionLimitMinutes === "number"
+            ? tPresence("manualCheckout.toasts.limit", { limit: (body as any).sessionLimitMinutes })
+            : tPresence("manualCheckout.toasts.overstay"),
+        )
+      }
+
+      toast.success(segments.filter(Boolean).join(" "))
+      setCheckoutMember(null)
+      setCheckoutVisitId(null)
+      setCheckoutWindowStart("")
+      setCheckoutWindowEnd("")
+      queryClient.invalidateQueries({ queryKey: membersQueryKey })
+    } catch (error) {
+      const message = error instanceof Error ? error.message : tPresence("errors.checkout")
+      toast.error(message)
+    } finally {
+      setCheckoutLoading(null)
     }
   }
 
@@ -685,6 +805,71 @@ export default function MembersPage() {
                           {visitLoading === member.id
                             ? t("visitsDialog.actions.saving")
                             : t("visitsDialog.actions.submit")}
+                        </Button>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
+            </DialogContent>
+          </Dialog>
+
+          <Dialog open={manualCheckoutDialogOpen} onOpenChange={setManualCheckoutDialogOpen}>
+            <DialogTrigger asChild>
+              <Button
+                variant="outline"
+                onClick={() => setManualCheckoutDialogOpen(true)}
+                className="border-amber-200 bg-amber-50 text-amber-700 hover:bg-amber-100"
+              >
+                <LogOut className="mr-2" size={18} />
+                {tPresence("manualCheckout.trigger")}
+              </Button>
+            </DialogTrigger>
+
+            <DialogContent className="max-w-md sm:max-w-lg w-[95vw]">
+              <DialogHeader>
+                <DialogTitle>{tPresence("manualCheckout.title")}</DialogTitle>
+                <DialogDescription>{tPresence("manualCheckout.description")}</DialogDescription>
+              </DialogHeader>
+              <div className="space-y-3">
+                <Input
+                  placeholder={t("visitsDialog.searchPlaceholder")}
+                  value={checkoutSearch}
+                  onChange={(event) => setCheckoutSearch(event.target.value)}
+                />
+                <div className="max-h-72 overflow-y-auto space-y-2">
+                  {checkoutOptions.length === 0 ? (
+                    <p className="text-sm text-muted-foreground">{t("visitsDialog.empty")}</p>
+                  ) : (
+                    checkoutOptions.map((member) => (
+                      <div
+                        key={member.id}
+                        className="flex items-center justify-between rounded-lg border border-border/60 px-3 py-2"
+                      >
+                        <div className="space-y-0.5">
+                          <p className="font-semibold">
+                            {member.firstName} {member.lastName}
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            {member.email || member.phone || t("visitsDialog.noContact")}
+                          </p>
+                          {member.gymVariant?.name ? (
+                            <p className="text-xs text-muted-foreground">
+                              {t("visitsDialog.variantLabel", {
+                                variant: member.gymVariant.name,
+                              })}
+                            </p>
+                          ) : null}
+                        </div>
+                        <Button
+                          size="sm"
+                          variant="secondary"
+                          onClick={() => {
+                            openCheckoutDialog(member)
+                            setManualCheckoutDialogOpen(false)
+                          }}
+                        >
+                          {tPresence("manualCheckout.trigger")}
                         </Button>
                       </div>
                     ))
@@ -934,64 +1119,101 @@ export default function MembersPage() {
                     <TableCell className="font-medium">{member.firstName}</TableCell>
                     <TableCell>{member.lastName}</TableCell>
                     <TableCell>{member.email || "-"}</TableCell>
-                    <TableCell>{member.phone || "-"}</TableCell>
-                    <TableCell>{new Date(member.createdAt).toLocaleDateString(locale)}</TableCell>
-                    <TableCell>{member.gymVariant?.name ?? "-"}</TableCell>
-                    <TableCell className="text-right">
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="sm">
-                            <MoreVertical size={16} />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem
-                            onSelect={(event) => {
-                              event.preventDefault()
-                              markVisit(member.id)
-                            }}
-                          >
-                            <CheckCircle2 className="mr-2" size={16} />
-                            {t("table.actions.markVisit")}
-                          </DropdownMenuItem>
-                          <DropdownMenuItem onSelect={() => handleEditMember(member)}>
-                            <Edit2 className="mr-2" size={16} />
-                            {t("table.actions.edit")}
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            disabled={!hasQrTools}
-                            onSelect={(event) => {
-                              event.preventDefault()
-                              if (!hasQrTools) {
-                                toast.error(t("toasts.qrPlanOnly"))
-                                return
-                              }
-                              setQrMember(member)
-                            }}
-                          >
-                            <QrCode className="mr-2" size={16} />
-                            {t("table.actions.qrCode")}
-                          </DropdownMenuItem>
-                          {hasExcelReports && (
-                            <DropdownMenuItem
-                              disabled={memberReportLoading === member.id}
-                              onSelect={() => downloadMemberReport(member.id)}
-                            >
-                              <FileDown className="mr-2" size={16} />
-                              {memberReportLoading === member.id
-                                ? t("table.actions.exportPending")
-                                : t("table.actions.statsExcel")}
-                            </DropdownMenuItem>
-                          )}
-                          <DropdownMenuItem className="text-destructive" onSelect={() => handleDeleteMember(member)}>
-                            <Trash2 className="mr-2" size={16} />
-                            {t("table.actions.delete")}
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </TableCell>
-                  </TableRow>
-                ))}
+                  <TableCell>{member.phone || "-"}</TableCell>
+                  <TableCell>{new Date(member.createdAt).toLocaleDateString(locale)}</TableCell>
+                  <TableCell>{member.gymVariant?.name ?? "-"}</TableCell>
+                  <TableCell className="text-right">
+                      <TooltipProvider>
+                        <div className="flex flex-wrap justify-end gap-1.5">
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button
+                                size="icon"
+                                variant="outline"
+                                className="h-9 w-9 rounded-full border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100"
+                                onClick={() => markVisit(member.id)}
+                                disabled={visitLoading === member.id}
+                              >
+                                <CheckCircle2 className="h-4 w-4" />
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>{t("table.actions.markVisit")}</TooltipContent>
+                          </Tooltip>
+
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button
+                                size="icon"
+                                variant="outline"
+                                className="h-9 w-9 rounded-full border-sky-200 bg-sky-50 text-sky-700 hover:bg-sky-100"
+                                onClick={() => handleEditMember(member)}
+                              >
+                                <Edit2 className="h-4 w-4" />
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>{t("table.actions.edit")}</TooltipContent>
+                          </Tooltip>
+
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button
+                                size="icon"
+                                variant="outline"
+                                className="h-9 w-9 rounded-full border-violet-200 bg-violet-50 text-violet-700 hover:bg-violet-100"
+                                disabled={!hasQrTools}
+                                onClick={() => {
+                                  if (!hasQrTools) {
+                                    toast.error(t("toasts.qrPlanOnly"))
+                                    return
+                                  }
+                                  setQrMember(member)
+                                }}
+                              >
+                                <QrCode className="h-4 w-4" />
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>{t("table.actions.qrCode")}</TooltipContent>
+                          </Tooltip>
+
+                          {hasExcelReports ? (
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button
+                                  size="icon"
+                                  variant="outline"
+                                  className="h-9 w-9 rounded-full border-teal-200 bg-teal-50 text-teal-700 hover:bg-teal-100"
+                                  disabled={memberReportLoading === member.id}
+                                  onClick={() => downloadMemberReport(member.id)}
+                                >
+                                  <FileDown className="h-4 w-4" />
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                {memberReportLoading === member.id
+                                  ? t("table.actions.exportPending")
+                                  : t("table.actions.statsExcel")}
+                              </TooltipContent>
+                            </Tooltip>
+                          ) : null}
+
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button
+                                size="icon"
+                                variant="ghost"
+                                className="h-9 w-9 rounded-full text-destructive hover:bg-destructive/10 hover:text-destructive focus-visible:text-destructive"
+                                onClick={() => handleDeleteMember(member)}
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>{t("table.actions.delete")}</TooltipContent>
+                          </Tooltip>
+                        </div>
+                      </TooltipProvider>
+                  </TableCell>
+                </TableRow>
+              ))}
               </TableBody>
             </Table>
           </Card>
@@ -1006,6 +1228,86 @@ export default function MembersPage() {
           />
         </div>
       </div>
+
+      <Dialog open={Boolean(checkoutMember)} onOpenChange={(open) => (!open ? closeCheckoutDialog() : undefined)}>
+        <DialogContent className="max-w-md sm:max-w-lg w-[95vw]">
+          <DialogHeader>
+            <DialogTitle>{tPresence("manualCheckout.title")}</DialogTitle>
+            <DialogDescription>{tPresence("manualCheckout.description")}</DialogDescription>
+          </DialogHeader>
+
+          {checkoutMember ? (
+            <div className="space-y-4 py-2">
+              <div className="rounded-lg border border-border/60 bg-muted/40 px-3 py-2">
+                <p className="font-semibold">
+                  {checkoutMember.firstName} {checkoutMember.lastName}
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  {checkoutMember.email || checkoutMember.phone || t("visitsDialog.noContact")}
+                </p>
+                {checkoutMember.gymVariant?.name ? (
+                  <p className="text-xs text-muted-foreground">{checkoutMember.gymVariant.name}</p>
+                ) : null}
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-2">
+                  <Label htmlFor="checkout-date-member">{tPresence("manualCheckout.checkoutDate")}</Label>
+                  <Input
+                    id="checkout-date-member"
+                    type="date"
+                    value={checkoutDate}
+                    onChange={(event) => setCheckoutDate(event.target.value)}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="checkout-time-member">{tPresence("manualCheckout.checkoutTime")}</Label>
+                  <Input
+                    id="checkout-time-member"
+                    type="time"
+                    value={checkoutTime}
+                    onChange={(event) => setCheckoutTime(event.target.value)}
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-2">
+                  <Label htmlFor="checkout-window-from-member">{tPresence("manualCheckout.windowFrom")}</Label>
+                  <Input
+                    id="checkout-window-from-member"
+                    type="time"
+                    value={checkoutWindowStart}
+                    onChange={(event) => setCheckoutWindowStart(event.target.value)}
+                    placeholder="08:00"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="checkout-window-to-member">{tPresence("manualCheckout.windowTo")}</Label>
+                  <Input
+                    id="checkout-window-to-member"
+                    type="time"
+                    value={checkoutWindowEnd}
+                    onChange={(event) => setCheckoutWindowEnd(event.target.value)}
+                    placeholder="22:00"
+                  />
+                </div>
+              </div>
+            </div>
+          ) : (
+            <p className="text-sm text-muted-foreground">{tPresence("manualCheckout.noOpenVisits")}</p>
+          )}
+
+          <DialogFooter className="mt-2">
+            <Button variant="outline" onClick={closeCheckoutDialog} disabled={Boolean(checkoutLoading)}>
+              {tPresence("manualCheckout.cancel")}
+            </Button>
+            <Button onClick={submitManualCheckout} disabled={!checkoutMember || Boolean(checkoutLoading)}>
+              {checkoutLoading ? tPresence("manualCheckout.submitPending") : tPresence("manualCheckout.submit")}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <Dialog open={Boolean(qrMember)} onOpenChange={(open) => !open && setQrMember(null)}>
         <DialogContent className="max-w-md sm:max-w-lg w-[95vw]">

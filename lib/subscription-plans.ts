@@ -210,9 +210,27 @@ export function getPlanFeatures(tier: GymPlanTier | null | undefined): PlanFeatu
   return FEATURE_MATRIX[tier] ?? EMPTY_FEATURES
 }
 
-export function hasPlanFeature(tier: GymPlanTier | null | undefined, feature: PlanFeatureKey) {
-  const features = getPlanFeatures(tier)
+export function hasPlanFeature(
+  tier: GymPlanTier | null | undefined,
+  feature: PlanFeatureKey,
+  resolvedFeatures?: PlanFeatures,
+) {
+  const features = resolvedFeatures ?? getPlanFeatures(tier)
   return Boolean(features[feature])
+}
+
+export type FeatureOverrideMap = Partial<Record<PlanFeatureKey, boolean>>
+
+export function applyFeatureOverrides(base: PlanFeatures, overrides?: FeatureOverrideMap): PlanFeatures {
+  if (!overrides) return base
+  const next = { ...base }
+  Object.entries(overrides).forEach(([key, value]) => {
+    const flag = key as PlanFeatureKey
+    if (typeof value === "boolean") {
+      next[flag] = value
+    }
+  })
+  return next
 }
 
 export function getPlanCatalogAsList(pricing?: PlanPricingTable): PlanCatalogEntry[] {

@@ -3,10 +3,10 @@ import { getServerSession } from "next-auth"
 import { AccessEventSource, AccessEventStatus } from "@prisma/client"
 import { authOptions } from "@/lib/auth-middleware"
 import { getVisitAnalytics, markCheckoutForMember, markVisitForMember } from "@/lib/visits"
-import { hasPlanFeature } from "@/lib/subscription-plans"
 import { resolveAccessEventStatus } from "@/lib/access-events"
 import { prisma } from "@/lib/prisma"
 import { resolveVariantAccess } from "@/lib/variant-access"
+import { resolveGymFeatures } from "@/lib/tenant-features"
 
 export async function GET(request: NextRequest) {
   const session = await getServerSession(authOptions)
@@ -18,7 +18,9 @@ export async function GET(request: NextRequest) {
   if (!gymId) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
   }
-  if (!hasPlanFeature(tier, "presenceTracking")) {
+  const { features } = await resolveGymFeatures({ gymId, tier })
+
+  if (!features.presenceTracking) {
     return NextResponse.json({ error: "Plan Pro ou Enterprise requis" }, { status: 403 })
   }
   if (role === "GYM_ADMIN" && !gymVariantId) {
@@ -128,7 +130,9 @@ export async function POST(request: NextRequest) {
   if (!gymId) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
   }
-  if (!hasPlanFeature(tier, "presenceTracking")) {
+  const { features } = await resolveGymFeatures({ gymId, tier })
+
+  if (!features.presenceTracking) {
     return NextResponse.json({ error: "Plan Pro ou Enterprise requis" }, { status: 403 })
   }
   if (role === "GYM_ADMIN" && !gymVariantId) {
@@ -179,62 +183,63 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "memberId requis" }, { status: 400 })
   }
 
-  try {
-    if (mode === "OUT") {
-      const checkout = await markCheckoutForMember({
+    try {
+      if (mode === "OUT") {
+        const checkout = await markCheckoutForMember({
+          gymId,
+          memberId: memberIdentifier,
+          visitId: typeof visitId === "string" ? visitId : undefined,
+          checkoutAt: checkoutDate === "INVALID" ? undefined : checkoutDate,
+          allowedVariantId,
+          rangeFrom: fromDate === "INVALID" ? undefined : fromDate,
+          rangeTo: toDate === "INVALID" ? undefined : toDate,
+        })
+
+        const accessStatus = checkout.isOverMaxDuration
+          ? AccessEventStatus.SESSION_OVERSTAY
+          : AccessEventStatus.CHECKED_OUT
+
+        if (features.accessControl) {
+          try {
+            await prisma.accessEvent.create({
+              data: {
+                memberId: checkout.memberId,
+                status: accessStatus,
+                source: AccessEventSource.MANUAL,
+              },
+            })
+          } catch (error) {
+            console.error("[access-events][visits-checkout]", error)
+          }
+        }
+
+        return NextResponse.json({ ...checkout, mode: "CHECK_OUT" })
+      }
+
+      const result = await markVisitForMember({
         gymId,
-        memberId: memberIdentifier,
-        visitId: typeof visitId === "string" ? visitId : undefined,
-        checkoutAt: checkoutDate === "INVALID" ? undefined : checkoutDate,
+        memberId: memberIdentifier!,
+        markVisit,
         allowedVariantId,
-        rangeFrom: fromDate === "INVALID" ? undefined : fromDate,
-        rangeTo: toDate === "INVALID" ? undefined : toDate,
       })
 
-      if (hasPlanFeature(tier, "accessControl")) {
+      if (features.accessControl) {
         try {
-          const accessStatus = checkout.isOverMaxDuration
-            ? AccessEventStatus.SESSION_OVERSTAY
-            : AccessEventStatus.CHECKED_OUT
+          const status = resolveAccessEventStatus(result, "CHECK_IN")
           await prisma.accessEvent.create({
             data: {
-              memberId: checkout.memberId,
-              status: accessStatus,
+              memberId: memberIdentifier,
+              status,
               source: AccessEventSource.MANUAL,
             },
           })
         } catch (error) {
-          console.error("[access-events][visits-checkout]", error)
+          console.error("[access-events][visits]", error)
         }
       }
 
-      return NextResponse.json({ ...checkout, mode: "CHECK_OUT" })
-    }
-
-    const result = await markVisitForMember({
-      gymId,
-      memberId: memberIdentifier!,
-      markVisit,
-      allowedVariantId,
-    })
-
-    if (hasPlanFeature(tier, "accessControl")) {
-      try {
-        const status = resolveAccessEventStatus(result, "CHECK_IN")
-        await prisma.accessEvent.create({
-          data: {
-            memberId: memberIdentifier,
-            status,
-            source: AccessEventSource.MANUAL,
-          },
-        })
-      } catch (error) {
-        console.error("[access-events][visits]", error)
-      }
-    }
-
-    return NextResponse.json({ ...result, mode: "CHECK_IN" })
-  } catch (error) {
+      return NextResponse.json({ ...result, mode: "CHECK_IN" })
+    } catch (error) {
     const message = error instanceof Error ? error.message : "Unable to mark visit"
     const status =
       message === "Member not found"

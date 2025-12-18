@@ -146,17 +146,17 @@ export function SubscriptionBanner() {
     if (planKey === "pro") {
       return {
         wrap:
-          "border border-primary/25 bg-linear-to-br from-primary/90 via-amber-500 to-orange-600 shadow-primary/15 hover:shadow-primary/25",
+          "border border-primary/25 bg-linear-to-br from-pink-500 via-primary to-primary/85 shadow-primary/15 hover:shadow-primary/25",
         glow:
-          "bg-[radial-gradient(circle_at_25%_20%,rgba(255,255,255,0.18),transparent_55%),radial-gradient(circle_at_78%_28%,rgba(245,158,11,0.32),transparent_55%)]",
+          "bg-[radial-gradient(circle_at_24%_20%,rgba(255,255,255,0.22),transparent_55%),radial-gradient(circle_at_78%_18%,rgba(236,72,153,0.32),transparent_55%),radial-gradient(circle_at_72%_82%,rgba(59,130,246,0.18),transparent_60%)]",
       }
     }
 
     return {
       wrap:
-        "border border-primary/20 bg-linear-to-br from-primary/75 via-slate-800 to-zinc-900 shadow-primary/10 hover:shadow-primary/20",
+        "border border-primary/20 bg-linear-to-br from-emerald-500 via-primary to-primary/85 shadow-primary/10 hover:shadow-primary/20",
       glow:
-        "bg-[radial-gradient(circle_at_25%_20%,rgba(255,255,255,0.12),transparent_60%),radial-gradient(circle_at_78%_28%,rgba(148,163,184,0.16),transparent_60%)]",
+        "bg-[radial-gradient(circle_at_26%_18%,rgba(255,255,255,0.18),transparent_55%),radial-gradient(circle_at_76%_26%,rgba(16,185,129,0.28),transparent_55%),radial-gradient(circle_at_72%_78%,rgba(59,130,246,0.18),transparent_60%)]",
     }
   }, [planKey])
 
@@ -176,7 +176,7 @@ export function SubscriptionBanner() {
 
         {/* Primary glow system */}
         <div className={cn("pointer-events-none absolute inset-0 opacity-95 blur-0", planTheme.glow)} />
-        <div className="pointer-events-none absolute inset-0 bg-gradient-to-tr from-white/12 via-transparent to-transparent" />
+        <div className="pointer-events-none absolute inset-0 bg-linear-to-tr from-white/12 via-transparent to-transparent" />
         <div className="pointer-events-none absolute inset-y-0 right-0 w-1/2 bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.14),transparent_65%)] blur-3xl opacity-60" />
         <div className="pointer-events-none absolute top-0 right-0 h-32 w-32 bg-white/10 rounded-full blur-3xl -translate-y-8 translate-x-8" />
 

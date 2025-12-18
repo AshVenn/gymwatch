@@ -2,7 +2,7 @@ import { NextResponse } from "next/server"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth-middleware"
 import { prisma } from "@/lib/prisma"
-import { hasPlanFeature } from "@/lib/subscription-plans"
+import { resolveGymFeatures } from "@/lib/tenant-features"
 
 export async function DELETE(_request: Request, { params }: { params: { eventId?: string } }) {
   const session = await getServerSession(authOptions)
@@ -14,7 +14,8 @@ export async function DELETE(_request: Request, { params }: { params: { eventId?
   if (!gymId) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
   }
-  if (!hasPlanFeature(tier, "accessControl")) {
+  const { features } = await resolveGymFeatures({ gymId, tier })
+  if (!features.accessControl) {
     return NextResponse.json({ error: "Plan Pro ou Enterprise requis" }, { status: 403 })
   }
   if (role === "GYM_ADMIN" && !gymVariantId) {

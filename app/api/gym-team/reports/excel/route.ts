@@ -4,9 +4,9 @@ import { z } from "zod"
 import { utils, write } from "xlsx"
 import { authOptions } from "@/lib/auth-middleware"
 import { prisma } from "@/lib/prisma"
-import { hasPlanFeature } from "@/lib/subscription-plans"
 import { resolveVariantAccess } from "@/lib/variant-access"
 import { formatExportCurrency, formatExportDate, resolveExportLocale } from "@/lib/export-locale"
+import { resolveGymFeatures } from "@/lib/tenant-features"
 
 const querySchema = z.object({
   type: z.enum(["earnings", "top-members", "loyal-members", "member"]),
@@ -79,7 +79,8 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
   }
 
-  if (!hasPlanFeature(tier, "excelReports")) {
+  const { features } = await resolveGymFeatures({ gymId, tier })
+  if (!features.excelReports) {
     return NextResponse.json({ error: "Plan Pro ou Enterprise requis" }, { status: 403 })
   }
 

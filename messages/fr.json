@@ -2622,38 +2622,38 @@
         }
       }
     },
-    "clubs": {
-      "hero": {
-        "eyebrow": "Clubs partenaires",
-        "title": "Les clubs qui utilisent GymWatch",
-        "subtitle": "Logos Cloudinary et contenu traduit",
-        "description": "Découvrez des réseaux multi-salles qui utilisent GymWatch pour le contrôle d’accès, les exports et le support bilingue.",
-        "primaryCta": "Demander une démo",
-        "secondaryCta": "Nous écrire"
+  "clubsPage": {
+    "hero": {
+      "eyebrow": "Clubs partenaires",
+      "title": "Les clubs qui utilisent GymWatch",
+      "subtitle": "Découvrez notre réseau de salles de sport",
+      "description": "Parcourez les salles partenaires qui utilisent GymWatch pour accueillir les membres plus vite, gérer les visites simplement et offrir une expérience moderne.",
+      "primaryCta": "Réserver une démo",
+      "secondaryCta": "Nous contacter"
+    },
+    "highlights": {
+      "asset": "Partenaires de confiance",
+      "assetDesc": "Des clubs réels qui utilisent GymWatch au quotidien.",
+      "localization": "Près de chez vous",
+      "localizationDesc": "Trouvez des clubs par ville et explorez leurs infos."
+    },
+    "grid": {
+      "eyebrow": "Notre réseau",
+      "title": "Clubs mis en avant",
+      "subtitle": "Explorez les clubs partenaires et trouvez celui qui vous correspond.",
+      "count": "{count, plural, one {# club affiché} other {# clubs affichés}}",
+      "empty": {
+        "title": "Aucun club pour le moment",
+        "subtitle": "Revenez bientôt — de nouveaux clubs partenaires arrivent."
       },
-      "highlights": {
-        "asset": "Assets Cloudinary",
-        "assetDesc": "Logos et covers servis via Cloudinary pour des pages rapides.",
-        "localization": "Traductions en base",
-        "localizationDesc": "Noms, villes et descriptions stockés par langue."
-      },
-      "grid": {
-        "eyebrow": "Clubs de confiance",
-        "title": "Clubs mis en avant",
-        "subtitle": "Publiez vos clubs depuis le CMS super-admin avec les traductions en base de données.",
-        "count": "{count, plural, one {# club publié} other {# clubs publiés}}",
-        "empty": {
-          "title": "Aucun club publié",
-          "subtitle": "Publiez un club partenaire depuis l’interface super-admin pour l’afficher ici."
-        },
-        "missingCover": "Aucune cover fournie",
-        "badge": "Club GymWatch",
-        "locationUnknown": "Localisation non renseignée",
-        "fallbackDescription": "Ce club apparaîtra avec sa description traduite et ses visuels Cloudinary.",
-        "slug": "Slug : {slug}",
-        "visit": "Visiter le site"
-      }
+      "missingCover": "Aucune couverture",
+      "badge": "Club partenaire",
+      "locationUnknown": "Lieu non renseigné",
+      "fallbackDescription": "Un club partenaire du réseau GymWatch — plus de détails bientôt.",
+      "slug": "ID club : {slug}",
+      "visit": "Visiter le site"
     }
+  }
   },
   "dashboard": {
     "nav": {

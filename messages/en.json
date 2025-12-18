@@ -2618,38 +2618,38 @@
         }
       }
     },
-    "clubs": {
-      "hero": {
-        "eyebrow": "Partner clubs",
-        "title": "Clubs running GymWatch",
-        "subtitle": "Cloudinary visuals & bilingual content",
-        "description": "Discover networks using GymWatch for access control, exports, and localized marketing assets.",
-        "primaryCta": "Book a demo",
-        "secondaryCta": "Talk to support"
+  "clubsPage": {
+    "hero": {
+      "eyebrow": "Partner clubs",
+      "title": "Clubs using GymWatch",
+      "subtitle": "Discover our trusted partner gyms",
+      "description": "Browse gyms that use GymWatch to welcome members faster, manage visits smoothly, and deliver a modern training experience.",
+      "primaryCta": "Book a demo",
+      "secondaryCta": "Contact us"
+    },
+    "highlights": {
+      "asset": "Trusted partners",
+      "assetDesc": "Real clubs that rely on GymWatch daily.",
+      "localization": "Near you",
+      "localizationDesc": "Find clubs by city and explore what they offer."
+    },
+    "grid": {
+      "eyebrow": "Our network",
+      "title": "Featured clubs",
+      "subtitle": "Explore partner clubs and find the one that matches your training style.",
+      "count": "{count, plural, one {# club listed} other {# clubs listed}}",
+      "empty": {
+        "title": "No clubs available yet",
+        "subtitle": "Check back soon — new partner clubs are being added regularly."
       },
-      "highlights": {
-        "asset": "Cloudinary assets",
-        "assetDesc": "Logos and covers served from Cloudinary for faster pages.",
-        "localization": "Localized copy",
-        "localizationDesc": "Names, cities, and descriptions stored per locale."
-      },
-      "grid": {
-        "eyebrow": "Trusted clubs",
-        "title": "Featured clubs",
-        "subtitle": "Published from the super-admin CMS with translations saved in the database.",
-        "count": "{count, plural, one {# club published} other {# clubs published}}",
-        "empty": {
-          "title": "No clubs published",
-          "subtitle": "Publish a club entry from the super-admin to show it here."
-        },
-        "missingCover": "No cover provided",
-        "badge": "GymWatch club",
-        "locationUnknown": "Location not provided",
-        "fallbackDescription": "This club will appear with its translated description and Cloudinary assets.",
-        "slug": "Slug: {slug}",
-        "visit": "Visit site"
-      }
+      "missingCover": "No cover image",
+      "badge": "Partner club",
+      "locationUnknown": "Location not specified",
+      "fallbackDescription": "A partner club in the GymWatch network — details coming soon.",
+      "slug": "Club ID: {slug}",
+      "visit": "Visit website"
     }
+  }
   },
   "dashboard": {
     "featureAccess": {

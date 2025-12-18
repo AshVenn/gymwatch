@@ -31,7 +31,7 @@ export default async function ClubsPage({ params }: ClubsPageProps) {
   const appLocale = locale as AppLocale
   setRequestLocale(appLocale)
 
-  const t = await getTranslations({ locale: appLocale, namespace: "marketing.clubs" })
+  const t = await getTranslations({ locale: appLocale, namespace: "marketing.clubsPage" })
   const clubs = await getPublishedPartnerClubs(appLocale)
   const isRtl = appLocale === "ar"
 

@@ -2612,38 +2612,38 @@
         }
       }
     },
-    "clubs": {
-      "hero": {
-        "eyebrow": "الأندية الشريكة",
-        "title": "أندية تعمل على GymWatch",
-        "subtitle": "صور Cloudinary ونصوص مترجمة",
-        "description": "تعرف على الأندية والشبكات التي تستخدم GymWatch للتحكم في الدخول والتقارير والأصول المترجمة.",
-        "primaryCta": "احجز عرضاً",
-        "secondaryCta": "تواصل معنا"
+  "clubsPage": {
+    "hero": {
+      "eyebrow": "الأندية الشريكة",
+      "title": "الأندية التي تستخدم GymWatch",
+      "subtitle": "اكتشف شبكة نوادينا الموثوقة",
+      "description": "تصفح الأندية الشريكة التي تعتمد على GymWatch لتسهيل دخول الأعضاء وتنظيم الزيارات وتقديم تجربة تدريب عصرية.",
+      "primaryCta": "احجز عرضًا تجريبيًا",
+      "secondaryCta": "تواصل معنا"
+    },
+    "highlights": {
+      "asset": "شركاء موثوقون",
+      "assetDesc": "أندية حقيقية تستخدم GymWatch يوميًا.",
+      "localization": "قريب منك",
+      "localizationDesc": "اعثر على الأندية حسب المدينة واستكشف معلوماتها."
+    },
+    "grid": {
+      "eyebrow": "شبكتنا",
+      "title": "أندية مميزة",
+      "subtitle": "استكشف الأندية الشريكة واختر الأنسب لأسلوب تدريبك.",
+      "count": "{count, plural, one {نادي واحد} other {# أندية}}",
+      "empty": {
+        "title": "لا توجد أندية بعد",
+        "subtitle": "عد قريبًا — سنضيف أندية شريكة جديدة باستمرار."
       },
-      "highlights": {
-        "asset": "أصول Cloudinary",
-        "assetDesc": "شعارات وصور غلاف مخزنة في Cloudinary لسرعة التحميل.",
-        "localization": "ترجمات مخزنة",
-        "localizationDesc": "الأسماء والمدن والوصف محفوظة لكل لغة."
-      },
-      "grid": {
-        "eyebrow": "أندية موثوقة",
-        "title": "أندية مميزة",
-        "subtitle": "تم النشر من لوحة المشرف العليا مع الترجمات في قاعدة البيانات.",
-        "count": "{count} نادي منشور",
-        "empty": {
-          "title": "لا يوجد أندية منشورة",
-          "subtitle": "انشر ناديًا من لوحة المشرف العليا لعرضه هنا."
-        },
-        "missingCover": "لا توجد صورة غلاف",
-        "badge": "Club GymWatch",
-        "locationUnknown": "الموقع غير محدد",
-        "fallbackDescription": "سيظهر هذا النادي مع وصفه المترجم وأصول Cloudinary.",
-        "slug": "المسار: {slug}",
-        "visit": "زيارة الموقع"
-      }
+      "missingCover": "لا توجد صورة غلاف",
+      "badge": "نادي شريك",
+      "locationUnknown": "الموقع غير محدد",
+      "fallbackDescription": "نادي شريك ضمن شبكة GymWatch — التفاصيل قريبًا.",
+      "slug": "معرّف النادي: {slug}",
+      "visit": "زيارة الموقع"
     }
+  }
   },
   "dashboard": {
     "nav": {

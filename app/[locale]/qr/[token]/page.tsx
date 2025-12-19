@@ -155,6 +155,13 @@ export default async function QrProfilePage({ params }: QrProfilePageProps) {
     profile.subscription.endDate,
     profile.subscription.planDurationDays,
   )
+  const daysRemaining =
+    typeof profile.subscription.daysRemaining === "number"
+      ? Math.max(profile.subscription.daysRemaining, 0)
+      : null
+  const progressIsFull = subscriptionProgress !== null && subscriptionProgress >= 100
+  const progressBarClass = progressIsFull ? "bg-destructive" : "bg-primary"
+  const daysRemainingClass = daysRemaining === 0 ? "text-destructive" : "text-primary"
   const endLabel = formatDate(profile.subscription.endDate, locale)
   const startLabel = formatDate(profile.subscription.startDate, locale)
 
@@ -236,7 +243,7 @@ export default async function QrProfilePage({ params }: QrProfilePageProps) {
                 <div className="space-y-2">
                   <div className="h-2 w-full rounded-full bg-muted">
                     <div
-                      className="h-2 rounded-full bg-primary transition-all"
+                      className={`h-2 rounded-full ${progressBarClass} transition-all`}
                       style={{ width: `${subscriptionProgress}%` }}
                     />
                   </div>
@@ -246,9 +253,9 @@ export default async function QrProfilePage({ params }: QrProfilePageProps) {
                   </div>
                 </div>
               ) : null}
-              {profile.subscription.daysRemaining !== null ? (
-                <p className="text-xs text-muted-foreground">
-                  {t("subscription.daysRemaining", { count: profile.subscription.daysRemaining })}
+              {daysRemaining !== null ? (
+                <p className={`text-xs ${daysRemainingClass}`}>
+                  {t("subscription.daysRemaining", { count: daysRemaining })}
                 </p>
               ) : null}
             </CardContent>

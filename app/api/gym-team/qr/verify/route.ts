@@ -162,7 +162,7 @@ export async function GET(request: NextRequest) {
         endDate: visit.subscriptionEndsAt,
         status: visit.status,
         active: visit.active,
-        daysRemaining: visit.daysRemaining,
+        daysRemaining: typeof visit.daysRemaining === "number" ? Math.max(visit.daysRemaining, 0) : null,
       },
       visits: {
         visitsToday: visit.visitsToday,
@@ -359,7 +359,7 @@ export async function POST(request: NextRequest) {
       },
       status: visit.status,
       active: visit.active,
-      daysRemaining: visit.daysRemaining,
+      daysRemaining: typeof visit.daysRemaining === "number" ? Math.max(visit.daysRemaining, 0) : null,
       alreadyVisited: visit.alreadyVisited,
       visitsToday: visit.visitsToday,
       visitLimit: visit.visitLimit,

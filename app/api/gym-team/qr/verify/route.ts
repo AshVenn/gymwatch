@@ -7,6 +7,7 @@ import { resolveAccessEventStatus } from "@/lib/access-events"
 import { authOptions } from "@/lib/auth-middleware"
 import { extractQrToken } from "@/lib/qr"
 import { prisma } from "@/lib/prisma"
+import { getClientIdentifier, rateLimit } from "@/lib/rate-limit"
 import { evaluateCheckInRules, recordOverstayRule } from "@/lib/rules-engine"
 import { markCheckoutForMember, markVisitForMember } from "@/lib/visits"
 import { resolveGymFeatures } from "@/lib/tenant-features"
@@ -45,6 +46,22 @@ export async function GET(request: NextRequest) {
   }
 
   try {
+    const client = getClientIdentifier(request)
+    const ipLimit = rateLimit({ key: `qr-verify:ip:${client}`, limit: 5, windowMs: 60_000 })
+    if (!ipLimit.ok) {
+      return NextResponse.json(
+        { error: "Too many requests" },
+        { status: 429, headers: { "Retry-After": `${ipLimit.retryAfter}` } },
+      )
+    }
+    const tokenLimit = rateLimit({ key: `qr-verify:ip-token:${client}:${token}`, limit: 3, windowMs: 60_000 })
+    if (!tokenLimit.ok) {
+      return NextResponse.json(
+        { error: "Too many requests" },
+        { status: 429, headers: { "Retry-After": `${tokenLimit.retryAfter}` } },
+      )
+    }
+
     const member = await prisma.member.findFirst({
       where: {
         qrToken: token,

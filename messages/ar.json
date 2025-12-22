@@ -1138,13 +1138,13 @@
       "actions": "إجراءات"
     },
             "actions": {
-          "markVisit": "????? ?????",
-          "manualCheckout": "????? ???? ????",
-          "edit": "?????",
-          "qrCode": "??? QR ?????",
-          "statsExcel": "???????? Excel",
-          "exportPending": "???? ???????...",
-          "delete": "???"
+          "markVisit": "تسجيل زيارة",
+          "manualCheckout": "تسجيل خروج يدوي",
+          "edit": "تعديل",
+          "qrCode": "رمز QR",
+          "statsExcel": "تقرير Excel",
+          "exportPending": "جارٍ التصدير...",
+          "delete": "حذف"
         },
     "details": {
       "title": "تفاصيل الطلب",
@@ -3464,14 +3464,14 @@
           "variant": "الفرع",
           "actions": "إجراءات"
         },
-                "actions": {
-          "markVisit": "????? ?????",
-          "manualCheckout": "????? ???? ????",
-          "edit": "?????",
-          "qrCode": "??? QR ?????",
-          "statsExcel": "???????? Excel",
-          "exportPending": "???? ???????...",
-          "delete": "???"
+        "actions": {
+          "markVisit": "تسجيل زيارة",
+          "manualCheckout": "تسجيل خروج يدوي",
+          "edit": "تعديل",
+          "qrCode": "رمز QR",
+          "statsExcel": "تقرير Excel",
+          "exportPending": "جارٍ التصدير...",
+          "delete": "حذف"
         }
       },
       "deleteDialog": {

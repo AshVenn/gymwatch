@@ -30,13 +30,13 @@ import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Card } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
-import { Plus, Edit2, Trash2, QrCode, FileDown, CheckCircle2, LogIn, LogOut } from "lucide-react"
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
+import { Plus, CheckCircle2, LogIn, LogOut, MoreVertical } from "lucide-react"
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import QRCode from "qrcode"
 import type { IScannerProps } from "@yudiel/react-qr-scanner/dist/components/Scanner"
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
+import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { toast } from "sonner"
-import { PaginationControls, usePagination } from "@/components/dashboard/pagination-controls"
+import { PaginationControls } from "@/components/dashboard/pagination-controls"
 import { usePlanFeatures } from "@/app/hooks/use-plan-features"
 import { useVariantOptions } from "@/app/hooks/use-variants"
 import { VariantSelector } from "@/components/dashboard/variant-selector"
@@ -57,6 +57,7 @@ interface Member {
   lastVisitedAt?: string | null
   gymVariantId?: string
   gymVariant?: { id: string; name: string; slug: string }
+  openVisitId?: string | null
 }
 
 interface Plan {
@@ -68,6 +69,14 @@ interface Plan {
   visitsPerDay: number
   gymVariantId?: string
   gymVariant?: { id: string; name: string; slug: string; isDefault?: boolean }
+}
+
+interface PaginatedMembersResponse {
+  items: Member[]
+  total: number
+  page: number
+  pageSize: number
+  hasMore: boolean
 }
 
 const formatInputDate = (date: Date) => date.toISOString().slice(0, 10)
@@ -114,6 +123,8 @@ export default function MembersPage() {
   const audioRef = useRef<AudioContext | null>(null)
   const [memberReportLoading, setMemberReportLoading] = useState<string | null>(null)
   const [memberToDelete, setMemberToDelete] = useState<Member | null>(null)
+  const [memberSearch, setMemberSearch] = useState("")
+  const [memberPage, setMemberPage] = useState(1)
   const [visitDialogOpen, setVisitDialogOpen] = useState(false)
   const [visitSearch, setVisitSearch] = useState("")
   const [visitLoading, setVisitLoading] = useState<string | null>(null)
@@ -126,6 +137,10 @@ export default function MembersPage() {
   const [checkoutWindowStart, setCheckoutWindowStart] = useState("")
   const [checkoutWindowEnd, setCheckoutWindowEnd] = useState("")
   const [checkoutLoading, setCheckoutLoading] = useState<string | null>(null)
+  const visitListRef = useRef<HTMLDivElement | null>(null)
+  const visitSentinelRef = useRef<HTMLDivElement | null>(null)
+  const checkoutListRef = useRef<HTMLDivElement | null>(null)
+  const checkoutSentinelRef = useRef<HTMLDivElement | null>(null)
   const {
     variants,
     selectedVariant,
@@ -151,7 +166,11 @@ export default function MembersPage() {
         : (defaultVariantId ?? variants[0]?.id ?? null)
       : selectedVariant
 
-  const membersQueryKey = useMemo(() => ["members", gymId, variantFilter] as const, [gymId, variantFilter])
+  const membersQueryKeyBase = useMemo(() => ["members", gymId, variantFilter] as const, [gymId, variantFilter])
+  const membersTableQueryKey = useMemo(
+    () => [...membersQueryKeyBase, "table", memberSearch, memberPage] as const,
+    [memberPage, memberSearch, membersQueryKeyBase],
+  )
   const plansQueryKey = useMemo(() => ["plans", gymId, variantFilter] as const, [gymId, variantFilter])
 
   const saveMemberMutation = useMutation({
@@ -180,7 +199,7 @@ export default function MembersPage() {
       return data
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: membersQueryKey })
+      queryClient.invalidateQueries({ queryKey: ["members"], exact: false })
       setIsOpen(false)
       setFormData({
         firstName: "",
@@ -213,7 +232,7 @@ export default function MembersPage() {
       }
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: membersQueryKey })
+      queryClient.invalidateQueries({ queryKey: ["members"], exact: false })
       toast.success(t("toasts.memberDeleted"))
       setMemberToDelete(null)
     },
@@ -222,27 +241,126 @@ export default function MembersPage() {
     },
   })
 
-  const {
-    data: members = [],
-    isLoading: membersLoading,
-    isError: membersError,
-  } = useQuery<Member[]>({
-    queryKey: membersQueryKey,
+  const memberPageSize = 10
+  const dialogPageSize = 14
+
+  const buildMembersQueryParams = (options: {
+    search?: string
+    page?: number
+    limit?: number
+    openVisit?: boolean
+    includeOpenVisitId?: boolean
+  }) => {
+    const params = new URLSearchParams()
+    if (variantFilter) {
+      params.set("variantId", variantFilter)
+    }
+    const term = options.search?.trim()
+    if (term) {
+      params.set("q", term)
+    }
+    if (options.page) {
+      params.set("page", String(options.page))
+    }
+    if (options.limit) {
+      params.set("limit", String(options.limit))
+    }
+    if (typeof options.openVisit === "boolean") {
+      params.set("openVisit", String(options.openVisit))
+    }
+    if (options.includeOpenVisitId) {
+      params.set("includeOpenVisitId", "true")
+    }
+    return params
+  }
+
+  const fetchMembersPage = async (options: {
+    search?: string
+    page?: number
+    limit?: number
+    openVisit?: boolean
+    includeOpenVisitId?: boolean
+  }) => {
+    const params = buildMembersQueryParams(options)
+    const response = await fetch(`/api/gym-team/members${params.toString() ? `?${params.toString()}` : ""}`)
+
+    if (!response.ok) {
+      throw new Error(t("errors.loadMembers"))
+    }
+
+    const data = await response.json()
+    if (Array.isArray(data)) {
+      return {
+        items: data,
+        total: data.length,
+        page: 1,
+        pageSize: data.length,
+        hasMore: false,
+      } as PaginatedMembersResponse
+    }
+
+    return data as PaginatedMembersResponse
+  }
+
+  useEffect(() => {
+    setMemberPage(1)
+  }, [memberSearch, variantFilter])
+
+  const membersQuery = useQuery<PaginatedMembersResponse>({
+    queryKey: membersTableQueryKey,
+    enabled: status === "authenticated" && !variantsLoading && Boolean(gymId),
+    queryFn: () =>
+      fetchMembersPage({
+        search: memberSearch,
+        page: memberPage,
+        limit: memberPageSize,
+      }),
+    keepPreviousData: true,
+  })
+
+  const members = membersQuery.data?.items ?? []
+  const membersTotal = membersQuery.data?.total ?? 0
+  const membersPageCount = Math.max(1, Math.ceil(membersTotal / memberPageSize))
+  const membersError = membersQuery.isError
+
+  const openVisitCountQuery = useQuery<number>({
+    queryKey: ["members", "open-visit-count", gymId, variantFilter],
     enabled: status === "authenticated" && !variantsLoading && Boolean(gymId),
     queryFn: async () => {
-      const params = new URLSearchParams()
-      if (variantFilter) {
-        params.set("variantId", variantFilter)
-      }
-      const response = await fetch(`/api/gym-team/members${params.toString() ? `?${params.toString()}` : ""}`)
-
-      if (!response.ok) {
-        throw new Error(t("errors.loadMembers"))
-      }
-
-      const data = await response.json()
-      return Array.isArray(data) ? data : []
+      const data = await fetchMembersPage({ page: 1, limit: 1, openVisit: true })
+      return typeof data.total === "number" ? data.total : data.items.length
     },
+  })
+  const hasOpenVisits = (openVisitCountQuery.data ?? 0) > 0
+  const manualCheckoutDisabled = openVisitCountQuery.isFetched && !openVisitCountQuery.isError ? !hasOpenVisits : false
+
+  const manualVisitMembersQuery = useInfiniteQuery<PaginatedMembersResponse>({
+    queryKey: ["members", "manual-visit", gymId, variantFilter, visitSearch],
+    enabled: status === "authenticated" && !variantsLoading && Boolean(gymId) && visitDialogOpen,
+    initialPageParam: 1,
+    queryFn: ({ pageParam }) =>
+      fetchMembersPage({
+        search: visitSearch,
+        page: Number(pageParam ?? 1),
+        limit: dialogPageSize,
+        openVisit: false,
+      }),
+    getNextPageParam: (lastPage) => (lastPage.hasMore ? lastPage.page + 1 : undefined),
+  })
+
+  const manualCheckoutMembersQuery = useInfiniteQuery<PaginatedMembersResponse>({
+    queryKey: ["members", "manual-checkout", gymId, variantFilter, checkoutSearch],
+    enabled: status === "authenticated" && !variantsLoading && Boolean(gymId) && manualCheckoutDialogOpen,
+    initialPageParam: 1,
+    queryFn: ({ pageParam }) =>
+      fetchMembersPage({
+        search: checkoutSearch,
+        page: Number(pageParam ?? 1),
+        limit: dialogPageSize,
+        openVisit: true,
+        includeOpenVisitId: true,
+      }),
+    getNextPageParam: (lastPage) => (lastPage.hasMore ? lastPage.page + 1 : undefined),
   })
 
   const { data: plans = [] } = useQuery<Plan[]>({
@@ -263,38 +381,79 @@ export default function MembersPage() {
     },
   })
 
-  const memberPagination = usePagination(members, 10)
-
-  const visitableMembers = useMemo(() => {
-    const term = visitSearch.trim().toLowerCase()
-    return members
-      .filter((member) => {
-        const matchesVariant = !variantFilter || member.gymVariantId === variantFilter
-        if (!matchesVariant) return false
-        if (!term) return true
-        const fullName = `${member.firstName} ${member.lastName}`.toLowerCase()
-        return fullName.includes(term) || (member.email ?? "").toLowerCase().includes(term)
-      })
-      .sort((a, b) => a.firstName.localeCompare(b.firstName))
-  }, [members, variantFilter, visitSearch])
-
-  const checkoutOptions = useMemo(() => {
-    const term = checkoutSearch.trim().toLowerCase()
-    return members
-      .filter((member) => {
-        const matchesVariant = !variantFilter || member.gymVariantId === variantFilter
-        if (!matchesVariant) return false
-        if (!term) return true
-        const fullName = `${member.firstName} ${member.lastName}`.toLowerCase()
-        return fullName.includes(term) || (member.email ?? "").toLowerCase().includes(term) || (member.phone ?? "").toLowerCase().includes(term)
-      })
-      .sort((a, b) => a.firstName.localeCompare(b.firstName))
-  }, [checkoutSearch, members, variantFilter])
+  const visitableMembers = manualVisitMembersQuery.data?.pages.flatMap((page) => page.items) ?? []
+  const checkoutOptions = manualCheckoutMembersQuery.data?.pages.flatMap((page) => page.items) ?? []
 
   const availablePlans = useMemo(() => {
     const targetVariant = effectiveMemberVariantId
     return (plans ?? []).filter((plan) => (targetVariant ? plan.gymVariantId === targetVariant : true))
   }, [effectiveMemberVariantId, plans])
+
+  useEffect(() => {
+    if (!visitDialogOpen || !visitListRef.current) return
+    visitListRef.current.scrollTop = 0
+  }, [visitDialogOpen, visitSearch])
+
+  useEffect(() => {
+    if (!manualCheckoutDialogOpen || !checkoutListRef.current) return
+    checkoutListRef.current.scrollTop = 0
+  }, [checkoutSearch, manualCheckoutDialogOpen])
+
+  useEffect(() => {
+    if (!visitDialogOpen) return
+    const root = visitListRef.current
+    const target = visitSentinelRef.current
+    if (!root || !target || !manualVisitMembersQuery.hasNextPage) return
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (
+          entries[0]?.isIntersecting &&
+          manualVisitMembersQuery.hasNextPage &&
+          !manualVisitMembersQuery.isFetchingNextPage
+        ) {
+          manualVisitMembersQuery.fetchNextPage()
+        }
+      },
+      { root, rootMargin: "120px" },
+    )
+
+    observer.observe(target)
+    return () => observer.disconnect()
+  }, [
+    manualVisitMembersQuery.fetchNextPage,
+    manualVisitMembersQuery.hasNextPage,
+    manualVisitMembersQuery.isFetchingNextPage,
+    visitDialogOpen,
+  ])
+
+  useEffect(() => {
+    if (!manualCheckoutDialogOpen) return
+    const root = checkoutListRef.current
+    const target = checkoutSentinelRef.current
+    if (!root || !target || !manualCheckoutMembersQuery.hasNextPage) return
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (
+          entries[0]?.isIntersecting &&
+          manualCheckoutMembersQuery.hasNextPage &&
+          !manualCheckoutMembersQuery.isFetchingNextPage
+        ) {
+          manualCheckoutMembersQuery.fetchNextPage()
+        }
+      },
+      { root, rootMargin: "120px" },
+    )
+
+    observer.observe(target)
+    return () => observer.disconnect()
+  }, [
+    manualCheckoutDialogOpen,
+    manualCheckoutMembersQuery.fetchNextPage,
+    manualCheckoutMembersQuery.hasNextPage,
+    manualCheckoutMembersQuery.isFetchingNextPage,
+  ])
 
   const playTone = (frequency: number) => {
     if (typeof window === "undefined") return
@@ -517,7 +676,7 @@ export default function MembersPage() {
     }
   }
 
-  const markVisit = async (memberId: string) => {
+  const markVisit = async (memberId: string, member?: Member) => {
     if (!memberId) return
     try {
       setVisitLoading(memberId)
@@ -551,7 +710,7 @@ export default function MembersPage() {
       }
 
       if (hasOpenVisit) {
-        const targetMember = members.find((m) => m.id === memberId)
+        const targetMember = member ?? members.find((m) => m.id === memberId)
         if (targetMember) {
           openCheckoutDialog(targetMember, openVisitId ?? undefined)
         }
@@ -585,6 +744,7 @@ export default function MembersPage() {
           remainingLabel,
         }),
       )
+      queryClient.invalidateQueries({ queryKey: ["members"], exact: false })
       setVisitDialogOpen(false)
     } catch (error) {
       const message = error instanceof Error ? error.message : t("errors.markVisit")
@@ -655,7 +815,7 @@ export default function MembersPage() {
       setCheckoutVisitId(null)
       setCheckoutWindowStart("")
       setCheckoutWindowEnd("")
-      queryClient.invalidateQueries({ queryKey: membersQueryKey })
+      queryClient.invalidateQueries({ queryKey: ["members"], exact: false })
     } catch (error) {
       const message = error instanceof Error ? error.message : tPresence("errors.checkout")
       toast.error(message)
@@ -737,13 +897,13 @@ export default function MembersPage() {
 
       {(error || membersError) && <div className="text-red-500 font-medium">{error || t("errors.genericMembers")}</div>}
 
-      <div className="flex justify-between items-center gap-4 flex-wrap">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-3xl font-bold">{t("page.title")}</h1>
           <p className="text-muted-foreground mt-2">{t("page.description")}</p>
         </div>
 
-        <div className="flex items-center gap-3 flex-wrap justify-end">
+        <div className="flex w-full flex-col gap-3 sm:w-auto sm:flex-row sm:items-center sm:justify-end">
           <VariantSelector
             variants={variants}
             value={selectedVariant}
@@ -752,11 +912,12 @@ export default function MembersPage() {
             lockedVariantId={lockedVariantId}
             loading={variantsLoading}
             allowAll={allowAllVariants}
+            className="w-full sm:w-auto"
           />
 
           <Dialog open={visitDialogOpen} onOpenChange={setVisitDialogOpen}>
             <DialogTrigger asChild>
-              <Button variant="outline" onClick={() => setVisitDialogOpen(true)}>
+              <Button variant="outline" onClick={() => setVisitDialogOpen(true)} className="w-full sm:w-auto">
                 <CheckCircle2 className="mr-2" size={18} />
                 {t("visitsDialog.trigger")}
               </Button>
@@ -772,14 +933,21 @@ export default function MembersPage() {
                   value={visitSearch}
                   onChange={(e) => setVisitSearch(e.target.value)}
                 />
-                <div className="max-h-72 overflow-y-auto space-y-2">
-                  {visitableMembers.length === 0 ? (
+                <div ref={visitListRef} className="max-h-72 overflow-y-auto space-y-2">
+                  {manualVisitMembersQuery.isLoading ? (
+                    <div className="space-y-2">
+                      <Skeleton className="h-12 w-full rounded-lg" />
+                      <Skeleton className="h-12 w-full rounded-lg" />
+                    </div>
+                  ) : manualVisitMembersQuery.isError ? (
+                    <p className="text-sm text-destructive">{t("errors.loadMembers")}</p>
+                  ) : visitableMembers.length === 0 ? (
                     <p className="text-sm text-muted-foreground">{t("visitsDialog.empty")}</p>
                   ) : (
                     visitableMembers.map((member) => (
                       <div
                         key={member.id}
-                        className="flex items-center justify-between rounded-lg border border-border/60 px-3 py-2"
+                        className="flex flex-col gap-2 rounded-lg border border-border/60 px-3 py-2 sm:flex-row sm:items-center sm:justify-between"
                       >
                         <div>
                           <p className="font-semibold">
@@ -799,8 +967,9 @@ export default function MembersPage() {
                         <Button
                           size="sm"
                           variant="secondary"
+                          className="w-full sm:w-auto"
                           disabled={visitLoading === member.id}
-                          onClick={() => markVisit(member.id)}
+                          onClick={() => markVisit(member.id, member)}
                         >
                           {visitLoading === member.id
                             ? t("visitsDialog.actions.saving")
@@ -809,6 +978,13 @@ export default function MembersPage() {
                       </div>
                     ))
                   )}
+                  {manualVisitMembersQuery.isFetchingNextPage ? (
+                    <div className="space-y-2">
+                      <Skeleton className="h-12 w-full rounded-lg" />
+                      <Skeleton className="h-12 w-full rounded-lg" />
+                    </div>
+                  ) : null}
+                  <div ref={visitSentinelRef} />
                 </div>
               </div>
             </DialogContent>
@@ -817,9 +993,10 @@ export default function MembersPage() {
           <Dialog open={manualCheckoutDialogOpen} onOpenChange={setManualCheckoutDialogOpen}>
             <DialogTrigger asChild>
               <Button
-                variant="outline"
+                variant="default"
                 onClick={() => setManualCheckoutDialogOpen(true)}
-                className="border-amber-200 bg-amber-50 text-amber-700 hover:bg-amber-100"
+                disabled={manualCheckoutDisabled}
+                className="w-full sm:w-auto bg-primary text-primary-foreground shadow-md transition hover:bg-primary/90 disabled:opacity-60"
               >
                 <LogOut className="mr-2" size={18} />
                 {tPresence("manualCheckout.trigger")}
@@ -837,14 +1014,21 @@ export default function MembersPage() {
                   value={checkoutSearch}
                   onChange={(event) => setCheckoutSearch(event.target.value)}
                 />
-                <div className="max-h-72 overflow-y-auto space-y-2">
-                  {checkoutOptions.length === 0 ? (
-                    <p className="text-sm text-muted-foreground">{t("visitsDialog.empty")}</p>
+                <div ref={checkoutListRef} className="max-h-72 overflow-y-auto space-y-2">
+                  {manualCheckoutMembersQuery.isLoading ? (
+                    <div className="space-y-2">
+                      <Skeleton className="h-12 w-full rounded-lg" />
+                      <Skeleton className="h-12 w-full rounded-lg" />
+                    </div>
+                  ) : manualCheckoutMembersQuery.isError ? (
+                    <p className="text-sm text-destructive">{t("errors.loadMembers")}</p>
+                  ) : checkoutOptions.length === 0 ? (
+                    <p className="text-sm text-muted-foreground">{tPresence("manualCheckout.noOpenVisits")}</p>
                   ) : (
                     checkoutOptions.map((member) => (
                       <div
                         key={member.id}
-                        className="flex items-center justify-between rounded-lg border border-border/60 px-3 py-2"
+                        className="flex flex-col gap-2 rounded-lg border border-border/60 px-3 py-2 sm:flex-row sm:items-center sm:justify-between"
                       >
                         <div className="space-y-0.5">
                           <p className="font-semibold">
@@ -864,8 +1048,9 @@ export default function MembersPage() {
                         <Button
                           size="sm"
                           variant="secondary"
+                          className="w-full sm:w-auto"
                           onClick={() => {
-                            openCheckoutDialog(member)
+                            openCheckoutDialog(member, member.openVisitId ?? undefined)
                             setManualCheckoutDialogOpen(false)
                           }}
                         >
@@ -874,6 +1059,13 @@ export default function MembersPage() {
                       </div>
                     ))
                   )}
+                  {manualCheckoutMembersQuery.isFetchingNextPage ? (
+                    <div className="space-y-2">
+                      <Skeleton className="h-12 w-full rounded-lg" />
+                      <Skeleton className="h-12 w-full rounded-lg" />
+                    </div>
+                  ) : null}
+                  <div ref={checkoutSentinelRef} />
                 </div>
               </div>
             </DialogContent>
@@ -881,7 +1073,7 @@ export default function MembersPage() {
 
           <Dialog open={isOpen} onOpenChange={setIsOpen}>
             <DialogTrigger asChild>
-              <Button onClick={handleAddMember}>
+              <Button onClick={handleAddMember} className="w-full sm:w-auto">
                 <Plus className="mr-2" size={20} />
                 {t("form.addMember")}
               </Button>
@@ -1030,7 +1222,7 @@ export default function MembersPage() {
               <p className="text-lg font-semibold">{t("qr.tools.title")}</p>
               <p className="text-sm text-muted-foreground">{t("qr.tools.description")}</p>
             </div>
-            <Button variant="outline" onClick={toggleScanner}>
+            <Button variant="outline" onClick={toggleScanner} className="w-full md:w-auto">
               {scannerEnabled ? t("qr.tools.hideScanner") : t("qr.tools.showScanner")}
             </Button>
           </div>
@@ -1082,152 +1274,125 @@ export default function MembersPage() {
         </div>
       )}
 
-      <div className="rounded-2xl border border-border/70 bg-card">
-        <div className="overflow-x-auto">
-          {memberPagination.data.length > 0 && (
-            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border/60 px-6 py-4 text-sm text-muted-foreground">
-              <span>
-                {t("table.summary.totalCount", {
-                  count: members.length,
-                })}
-              </span>
-              <span className="text-xs uppercase tracking-[0.3em] text-muted-foreground">
-                {t("table.summary.pageLabel", {
-                  page: memberPagination.page,
-                  pages: memberPagination.pageCount,
-                })}
-              </span>
-            </div>
-          )}
-          <Card className="overflow-hidden rounded-3xl border border-border/60 bg-card/90 shadow-md backdrop-blur-sm">
-            <Table>
-              <TableHeader>
-                <TableRow className="border-b border-border/60 bg-muted/30">
-                  <TableHead>{t("table.columns.firstName")}</TableHead>
-                  <TableHead>{t("table.columns.lastName")}</TableHead>
-                  <TableHead>{t("table.columns.email")}</TableHead>
-                  <TableHead>{t("table.columns.phone")}</TableHead>
-                  <TableHead>{t("table.columns.createdAt")}</TableHead>
-                  <TableHead>{t("table.columns.variant")}</TableHead>
-                  <TableHead className="text-right">{t("table.columns.actions")}</TableHead>
-                </TableRow>
-              </TableHeader>
+      <Card className="overflow-hidden rounded-3xl border border-border/60 bg-card/90 shadow-md backdrop-blur-sm">
+        <div className="flex flex-col gap-3 border-b border-border/60 px-4 py-4">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <span className="text-sm text-muted-foreground">
+              {t("table.summary.totalCount", {
+                count: membersTotal,
+              })}
+            </span>
+            <Input
+              type="search"
+              value={memberSearch}
+              onChange={(event) => setMemberSearch(event.target.value)}
+              placeholder={t("visitsDialog.searchPlaceholder")}
+              className="w-full sm:max-w-xs"
+            />
+          </div>
+          {membersTotal > 0 ? (
+            <span className="text-xs uppercase tracking-[0.3em] text-muted-foreground">
+              {t("table.summary.pageLabel", {
+                page: memberPage,
+                pages: membersPageCount,
+              })}
+            </span>
+          ) : null}
+        </div>
 
-              <TableBody>
-                {memberPagination.data.map((member) => (
-                  <TableRow key={member.id}>
-                    <TableCell className="font-medium">{member.firstName}</TableCell>
-                    <TableCell>{member.lastName}</TableCell>
-                    <TableCell>{member.email || "-"}</TableCell>
+        <div className="overflow-x-auto">
+          <Table>
+            <TableHeader>
+              <TableRow className="border-b border-border/60 bg-muted/30">
+                <TableHead>{t("table.columns.firstName")}</TableHead>
+                <TableHead>{t("table.columns.lastName")}</TableHead>
+                <TableHead>{t("table.columns.email")}</TableHead>
+                <TableHead>{t("table.columns.phone")}</TableHead>
+                <TableHead>{t("table.columns.createdAt")}</TableHead>
+                <TableHead>{t("table.columns.variant")}</TableHead>
+                <TableHead className="text-right">{t("table.columns.actions")}</TableHead>
+              </TableRow>
+            </TableHeader>
+
+            <TableBody>
+              {members.map((member) => (
+                <TableRow key={member.id}>
+                  <TableCell className="font-medium">{member.firstName}</TableCell>
+                  <TableCell>{member.lastName}</TableCell>
+                  <TableCell>{member.email || "-"}</TableCell>
                   <TableCell>{member.phone || "-"}</TableCell>
                   <TableCell>{new Date(member.createdAt).toLocaleDateString(locale)}</TableCell>
                   <TableCell>{member.gymVariant?.name ?? "-"}</TableCell>
                   <TableCell className="text-right">
-                      <TooltipProvider>
-                        <div className="flex flex-wrap justify-end gap-1.5">
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <Button
-                                size="icon"
-                                variant="outline"
-                                className="h-9 w-9 rounded-full border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100"
-                                onClick={() => markVisit(member.id)}
-                                disabled={visitLoading === member.id}
-                              >
-                                <CheckCircle2 className="h-4 w-4" />
-                              </Button>
-                            </TooltipTrigger>
-                            <TooltipContent>{t("table.actions.markVisit")}</TooltipContent>
-                          </Tooltip>
-
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <Button
-                                size="icon"
-                                variant="outline"
-                                className="h-9 w-9 rounded-full border-sky-200 bg-sky-50 text-sky-700 hover:bg-sky-100"
-                                onClick={() => handleEditMember(member)}
-                              >
-                                <Edit2 className="h-4 w-4" />
-                              </Button>
-                            </TooltipTrigger>
-                            <TooltipContent>{t("table.actions.edit")}</TooltipContent>
-                          </Tooltip>
-
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <Button
-                                size="icon"
-                                variant="outline"
-                                className="h-9 w-9 rounded-full border-violet-200 bg-violet-50 text-violet-700 hover:bg-violet-100"
-                                disabled={!hasQrTools}
-                                onClick={() => {
-                                  if (!hasQrTools) {
-                                    toast.error(t("toasts.qrPlanOnly"))
-                                    return
-                                  }
-                                  setQrMember(member)
-                                }}
-                              >
-                                <QrCode className="h-4 w-4" />
-                              </Button>
-                            </TooltipTrigger>
-                            <TooltipContent>{t("table.actions.qrCode")}</TooltipContent>
-                          </Tooltip>
-
-                          {hasExcelReports ? (
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <Button
-                                  size="icon"
-                                  variant="outline"
-                                  className="h-9 w-9 rounded-full border-teal-200 bg-teal-50 text-teal-700 hover:bg-teal-100"
-                                  disabled={memberReportLoading === member.id}
-                                  onClick={() => downloadMemberReport(member.id)}
-                                >
-                                  <FileDown className="h-4 w-4" />
-                                </Button>
-                              </TooltipTrigger>
-                              <TooltipContent>
-                                {memberReportLoading === member.id
-                                  ? t("table.actions.exportPending")
-                                  : t("table.actions.statsExcel")}
-                              </TooltipContent>
-                            </Tooltip>
-                          ) : null}
-
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <Button
-                                size="icon"
-                                variant="ghost"
-                                className="h-9 w-9 rounded-full text-destructive hover:bg-destructive/10 hover:text-destructive focus-visible:text-destructive"
-                                onClick={() => handleDeleteMember(member)}
-                              >
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
-                            </TooltipTrigger>
-                            <TooltipContent>{t("table.actions.delete")}</TooltipContent>
-                          </Tooltip>
-                        </div>
-                      </TooltipProvider>
+                    <DropdownMenu modal={false}>
+                    <DropdownMenuTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="text-muted-foreground hover:text-foreground"
+                          aria-label={t("table.columns.actions")}
+                        >
+                          <MoreVertical size={16} />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end" className="w-48 border border-border/60 bg-card text-foreground">
+                        <DropdownMenuItem
+                          disabled={visitLoading === member.id}
+                          onSelect={() => markVisit(member.id, member)}
+                        >
+                          {visitLoading === member.id
+                            ? t("visitsDialog.actions.saving")
+                            : t("table.actions.markVisit")}
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onSelect={() => handleEditMember(member)}>
+                          {t("table.actions.edit")}
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          disabled={!hasQrTools}
+                          onSelect={() => {
+                            if (!hasQrTools) {
+                              toast.error(t("toasts.qrPlanOnly"))
+                              return
+                            }
+                            setQrMember(member)
+                          }}
+                        >
+                          {t("table.actions.qrCode")}
+                        </DropdownMenuItem>
+                        {hasExcelReports ? (
+                          <DropdownMenuItem
+                            disabled={memberReportLoading === member.id}
+                            onSelect={() => downloadMemberReport(member.id)}
+                          >
+                            {memberReportLoading === member.id
+                              ? t("table.actions.exportPending")
+                              : t("table.actions.statsExcel")}
+                          </DropdownMenuItem>
+                        ) : null}
+                        <DropdownMenuItem
+                          className="text-destructive focus:text-destructive"
+                          onSelect={() => handleDeleteMember(member)}
+                        >
+                          {t("table.actions.delete")}
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   </TableCell>
                 </TableRow>
               ))}
-              </TableBody>
-            </Table>
-          </Card>
+            </TableBody>
+          </Table>
         </div>
-        <div className="border-t border-border/70 px-4 py-4">
-          <PaginationControls
-            page={memberPagination.page}
-            pageCount={memberPagination.pageCount}
-            pageSize={memberPagination.pageSize}
-            onPageChange={memberPagination.setPage}
-            totalItems={members.length}
-          />
-        </div>
-      </div>
+
+        <PaginationControls
+          page={memberPage}
+          pageCount={membersPageCount}
+          pageSize={memberPageSize}
+          onPageChange={setMemberPage}
+          totalItems={membersTotal}
+          className="mt-0 rounded-none border-0 border-t border-border/70 bg-transparent px-4 py-4"
+        />
+      </Card>
 
       <Dialog open={Boolean(checkoutMember)} onOpenChange={(open) => (!open ? closeCheckoutDialog() : undefined)}>
         <DialogContent className="max-w-md sm:max-w-lg w-[95vw]">

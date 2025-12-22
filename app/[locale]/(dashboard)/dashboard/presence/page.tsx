@@ -15,6 +15,7 @@ import { VisitFilters } from "@/components/dashboard/visits/filters"
 import { VisitTable } from "@/components/dashboard/visits/visit-table"
 import { usePagination } from "@/components/dashboard/pagination-controls"
 import { VariantSelector } from "@/components/dashboard/variant-selector"
+import { QrScannerTools } from "@/components/dashboard/qr-scanner-tools"
 import { buildFeatureAccessItems, LockedFeatureState } from "@/components/dashboard/feature-access-grid"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -95,7 +96,7 @@ export default function PresencePage() {
   const locale = useLocale()
   const { data: session, status } = useSession()
   const gymId = (session?.user as any)?.gymId as string | undefined
-  const { tier, hasAccessControl, hasPresence, hasCourses, hasExcelReports, hasMultiLocations } = usePlanFeatures()
+  const { tier, hasAccessControl, hasPresence, hasCourses, hasExcelReports, hasMultiLocations, hasQrTools } = usePlanFeatures()
 
   const {
     variants,
@@ -489,7 +490,7 @@ export default function PresencePage() {
           <p className="mt-1 text-sm leading-relaxed text-muted-foreground">{t("subtitle")}</p>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex w-full flex-col gap-3 sm:w-auto sm:flex-row sm:items-center">
           <VariantSelector
             variants={variants}
             value={selectedVariant}
@@ -498,14 +499,15 @@ export default function PresencePage() {
             lockedVariantId={lockedVariantId}
             loading={variantsLoading}
             allowAll={allowAllVariants}
+            className="w-full sm:w-auto"
           />
 
           <Dialog open={manualVisitDialogOpen} onOpenChange={setManualVisitDialogOpen}>
             <DialogTrigger asChild>
               <Button
-                variant="outline"
+                variant="secondary"
                 onClick={() => setManualVisitDialogOpen(true)}
-                className="rounded-2xl border-emerald-200 bg-emerald-50 text-emerald-700 transition-all hover:scale-105 hover:bg-emerald-100"
+                className="w-full sm:w-auto"
               >
                 <CheckCircle2 className="mr-2 h-4 w-4" />
                 {tMembers("visitsDialog.trigger")}
@@ -537,7 +539,7 @@ export default function PresencePage() {
                     manualVisitOptions.map((member) => (
                       <div
                         key={member.id}
-                        className="flex items-center justify-between rounded-lg border border-border/60 px-3 py-2"
+                        className="flex flex-col gap-2 rounded-lg border border-border/60 px-3 py-2 sm:flex-row sm:items-center sm:justify-between"
                       >
                         <div>
                           <p className="font-semibold">
@@ -557,6 +559,7 @@ export default function PresencePage() {
                         <Button
                           size="sm"
                           variant="secondary"
+                          className="w-full sm:w-auto"
                           disabled={manualVisitLoading === member.id}
                           onClick={() => markManualVisit(member.id)}
                         >
@@ -575,10 +578,10 @@ export default function PresencePage() {
           <Dialog open={checkoutDialogOpen} onOpenChange={setCheckoutDialogOpen}>
             <DialogTrigger asChild>
               <Button
-                variant="outline"
+                variant="default"
                 onClick={() => setCheckoutDialogOpen(true)}
                 disabled={!openVisits.length}
-                className="rounded-2xl border-border/60 transition-all hover:scale-105"
+                className="w-full sm:w-auto bg-primary text-primary-foreground shadow-md transition hover:bg-primary/90 disabled:opacity-60"
               >
                 <LogOut className="mr-2 h-4 w-4" />
                 {t("manualCheckout.trigger")}
@@ -686,13 +689,15 @@ export default function PresencePage() {
             variant="outline"
             onClick={() => visitsQuery.refetch()}
             disabled={visitsQuery.isFetching}
-            className="rounded-2xl border-border/60 transition-all hover:scale-105"
+            className="w-full rounded-2xl border-border/60 transition-all hover:scale-105 sm:w-auto"
           >
             <RefreshCw className={`mr-2 h-4 w-4 ${visitsQuery.isFetching ? "animate-spin" : ""}`} />
             {visitsQuery.isFetching ? t("actions.refreshing") : t("actions.refresh")}
           </Button>
         </div>
       </div>
+
+      <QrScannerTools hasQrTools={hasQrTools} />
 
       {multiVariantLocked ? (
         <div className="flex items-start gap-3 rounded-2xl border border-amber-200/70 bg-amber-50/80 px-4 py-3 text-sm text-amber-900 shadow-sm">
@@ -786,14 +791,7 @@ export default function PresencePage() {
         </CardContent>
       </Card>
 
-      <Card className="overflow-hidden rounded-3xl border border-border/60 bg-card/90 shadow-md backdrop-blur-sm">
-        <CardHeader>
-          <CardTitle>{t("table.title")}</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <VisitTable visits={visitPagination.data} pagination={visitTablePagination} />
-        </CardContent>
-      </Card>
+      <VisitTable visits={visitPagination.data} pagination={visitTablePagination} />
     </div>
   )
 }

@@ -1,6 +1,6 @@
 "use client"
 
-import { type ReactNode, useEffect, useMemo, useState } from "react"
+import { type ComponentProps, type ReactNode, useEffect, useMemo, useState } from "react"
 import Image from "next/image"
 import { useSession, signOut } from "next-auth/react"
 import type { LucideIcon } from "lucide-react"
@@ -34,8 +34,10 @@ export const UserRole = {
 
 export type UserRole = (typeof UserRole)[keyof typeof UserRole]
 
+type NavigationHref = ComponentProps<typeof Link>["href"]
+
 export type NavigationItem = {
-  href: string
+  href: NavigationHref
   label: string
   icon: LucideIcon
 }
@@ -198,8 +200,8 @@ export function DashboardShell({
                 <Image
                   src="/GymWatch.svg"
                   alt="GymWatch"
-                  width={32}
-                  height={32}
+                  width={64}
+                  height={64}
                   priority
                   className="dark:invert dark:brightness-200"
                 />
@@ -227,9 +229,13 @@ export function DashboardShell({
                 const isActive =
                   normalizedPathname === item.href ||
                   normalizedPathname.startsWith(`${item.href}/`)
+                const itemKey =
+                  typeof item.href === "string"
+                    ? item.href
+                    : item.href.pathname ?? item.label
                 return (
                   <Link
-                    key={item.href}
+                    key={itemKey}
                     href={item.href}
                     className={cn(
                       "group flex items-center gap-3 rounded-xl px-4 py-3.5 text-sm font-semibold transition-all hover-lift",

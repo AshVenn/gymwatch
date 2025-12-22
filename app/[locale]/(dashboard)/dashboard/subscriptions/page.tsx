@@ -37,6 +37,8 @@ import {
 import { Switch } from "@/components/ui/switch"
 import { useVariantOptions } from "@/app/hooks/use-variants"
 import { VariantSelector } from "@/components/dashboard/variant-selector"
+import { QrScannerTools } from "@/components/dashboard/qr-scanner-tools"
+import { usePlanFeatures } from "@/app/hooks/use-plan-features"
 
 interface Subscription {
   id: string
@@ -105,6 +107,7 @@ export default function SubscriptionsPage() {
     lockedVariantId,
     isLoading: variantsLoading,
   } = useVariantOptions()
+  const { hasQrTools } = usePlanFeatures()
 
   const gymId = session?.user?.gymId
   const variantFilter = selectedVariant === "all" ? null : selectedVariant
@@ -509,7 +512,7 @@ export default function SubscriptionsPage() {
 
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
-      <div className="flex justify-end">
+      <div className="flex w-full flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <VariantSelector
           variants={variants}
           value={selectedVariant}
@@ -517,10 +520,13 @@ export default function SubscriptionsPage() {
           isGymAdmin={isGymAdmin}
           lockedVariantId={lockedVariantId}
           loading={variantsLoading}
+          className="w-full sm:w-auto"
         />
       </div>
 
-        <div className="rounded-3xl border border-border/60 bg-card/90 shadow-md backdrop-blur-sm">
+      <QrScannerTools hasQrTools={hasQrTools} />
+
+      <div className="rounded-3xl border border-border/60 bg-card/90 shadow-md backdrop-blur-sm">
         <SubscriptionSummary metrics={summaryMetrics} />
       </div>
 
@@ -542,10 +548,10 @@ export default function SubscriptionsPage() {
         onQuickFilter={setFilterStatus}
       />
 
-      <div className="flex justify-end">
+      <div className="flex w-full flex-col gap-3 sm:flex-row sm:justify-end">
         <Dialog open={visitDialogOpen} onOpenChange={setVisitDialogOpen}>
           <DialogTrigger asChild>
-            <Button variant="outline" onClick={() => setVisitDialogOpen(true)}>
+            <Button variant="secondary" onClick={() => setVisitDialogOpen(true)} className="w-full sm:w-auto">
               <CheckCircle2 className="mr-2" size={16} />
               {t("visit.button")}
             </Button>
@@ -682,7 +688,7 @@ export default function SubscriptionsPage() {
                     </TableCell>
 
                     <TableCell className="text-right">
-                      <DropdownMenu>
+                      <DropdownMenu modal={false}>
                         <DropdownMenuTrigger asChild>
                           <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground">
                             <MoreVertical size={16} />

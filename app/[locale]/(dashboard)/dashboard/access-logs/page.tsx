@@ -13,6 +13,7 @@ import { AccessLogTable, type AccessLogRow } from "@/components/dashboard/access
 import { buildFeatureAccessItems, LockedFeatureState } from "@/components/dashboard/feature-access-grid"
 import { PaginationControls } from "@/components/dashboard/pagination-controls"
 import { VariantSelector } from "@/components/dashboard/variant-selector"
+import { QrScannerTools } from "@/components/dashboard/qr-scanner-tools"
 import { usePlanFeatures } from "@/app/hooks/use-plan-features"
 import { useVariantOptions } from "@/app/hooks/use-variants"
 import { Badge } from "@/components/ui/badge"
@@ -41,7 +42,7 @@ export default function AccessLogsPage() {
   )
 
   const { data: session, status } = useSession()
-  const { tier, hasAccessControl, hasPresence, hasCourses, hasExcelReports, hasMultiLocations } = usePlanFeatures()
+  const { tier, hasAccessControl, hasPresence, hasCourses, hasExcelReports, hasMultiLocations, hasQrTools } = usePlanFeatures()
   const queryClient = useQueryClient()
   const gymId = (session?.user as any)?.gymId as string | undefined
 
@@ -277,7 +278,7 @@ export default function AccessLogsPage() {
           <h1 className="text-3xl font-bold tracking-tight">{t("title")}</h1>
           <p className="text-sm leading-relaxed text-muted-foreground">{t("subtitle")}</p>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex w-full flex-col gap-3 sm:w-auto sm:flex-row sm:items-center">
           <VariantSelector
             variants={variants}
             value={selectedVariant}
@@ -286,6 +287,7 @@ export default function AccessLogsPage() {
             lockedVariantId={lockedVariantId}
             loading={variantsLoading}
             allowAll={allowAllVariants}
+            className="w-full sm:w-auto"
           />
           <Button
             variant="outline"
@@ -294,7 +296,7 @@ export default function AccessLogsPage() {
               accessLogsQuery.refetch()
             }}
             disabled={accessLogsQuery.isFetching}
-            className="rounded-2xl transition-all hover:scale-105"
+            className="w-full rounded-2xl transition-all hover:scale-105 sm:w-auto"
           >
             <RefreshCw className={`mr-2 h-4 w-4 ${accessLogsQuery.isFetching ? "animate-spin" : ""}`} />
             {accessLogsQuery.isFetching ? t("actions.refreshing") : t("actions.refresh")}
@@ -311,6 +313,8 @@ export default function AccessLogsPage() {
           </div>
         </div>
       ) : null}
+
+      <QrScannerTools hasQrTools={hasQrTools} />
 
       <AccessLogFilters
         search={search}

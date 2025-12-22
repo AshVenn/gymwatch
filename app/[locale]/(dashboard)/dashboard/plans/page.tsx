@@ -6,7 +6,7 @@ import { useLocale, useTranslations } from "next-intl"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Plus, Edit2, Trash2 } from "lucide-react"
+import { MoreVertical, Plus } from "lucide-react"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { toast } from "sonner"
 import { usePagination } from "@/components/dashboard/pagination-controls"
@@ -19,7 +19,7 @@ import { Select,SelectItem,SelectTrigger,SelectValue,SelectContent } from "@/com
 import { Dialog,DialogContent,DialogHeader,DialogTitle } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Switch } from "@/components/ui/switch"
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 
 interface Plan {
   id: string
@@ -450,37 +450,29 @@ export default function PlansPage() {
                   </TableCell>
                   <TableCell>{plan.gymVariant?.name ?? "-"}</TableCell>
                   <TableCell className="text-right">
-                    <TooltipProvider>
-                      <div className="flex justify-end gap-1.5">
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <Button
-                              size="icon"
-                              variant="outline"
-                              className="h-9 w-9 rounded-full border-sky-200 bg-sky-50 text-sky-700 hover:bg-sky-100"
-                              onClick={() => handleEditPlan(plan)}
-                            >
-                              <Edit2 className="h-4 w-4" />
-                            </Button>
-                          </TooltipTrigger>
-                          <TooltipContent>{t("page.table.edit")}</TooltipContent>
-                        </Tooltip>
-
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <Button
-                              size="icon"
-                              variant="ghost"
-                              className="h-9 w-9 rounded-full text-destructive hover:bg-destructive/10 hover:text-destructive focus-visible:text-destructive"
-                              onClick={() => handleDeletePlan(plan.id)}
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </TooltipTrigger>
-                          <TooltipContent>{t("page.table.delete")}</TooltipContent>
-                        </Tooltip>
-                      </div>
-                    </TooltipProvider>
+                    <DropdownMenu modal={false}>
+                      <DropdownMenuTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="text-muted-foreground hover:text-foreground"
+                          aria-label={t("page.table.actions")}
+                        >
+                          <MoreVertical size={16} />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end" className="w-48 border border-border/60 bg-card text-foreground">
+                        <DropdownMenuItem onSelect={() => handleEditPlan(plan)}>
+                          {t("page.table.edit")}
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          className="text-destructive focus:text-destructive"
+                          onSelect={() => handleDeletePlan(plan.id)}
+                        >
+                          {t("page.table.delete")}
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   </TableCell>
                 </TableRow>
               ))}

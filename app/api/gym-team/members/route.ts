@@ -43,7 +43,125 @@ export async function GET(request: NextRequest) {
       gymVariantId = variant.id
     }
 
-    const members = await db.getMembers(session.user.gymId, gymVariantId)
+    const params = request.nextUrl.searchParams
+    const search = params.get("q")?.trim() ?? ""
+    const limitParam = Number(params.get("limit"))
+    const pageParam = Number(params.get("page"))
+    const openVisitParam = params.get("openVisit")
+    const includeOpenVisitId = params.get("includeOpenVisitId") === "true"
+
+    const shouldPaginate =
+      Boolean(search) ||
+      openVisitParam === "true" ||
+      openVisitParam === "false" ||
+      Number.isFinite(limitParam) ||
+      Number.isFinite(pageParam)
+
+    const page = Number.isFinite(pageParam) && pageParam > 0 ? pageParam : 1
+    const take = Number.isFinite(limitParam) && limitParam > 0 ? Math.min(limitParam, 100) : 20
+    const skip = (page - 1) * take
+
+    const where: {
+      gymId: string
+      gymVariantId?: string
+      OR?: Array<Record<string, any>>
+      visits?: Record<string, any>
+    } = {
+      gymId: session.user.gymId,
+      ...(gymVariantId ? { gymVariantId } : {}),
+    }
+
+    if (search) {
+      where.OR = [
+        { firstName: { contains: search, mode: "insensitive" } },
+        { lastName: { contains: search, mode: "insensitive" } },
+        { email: { contains: search, mode: "insensitive" } },
+        { phone: { contains: search, mode: "insensitive" } },
+      ]
+    }
+
+    if (openVisitParam === "true") {
+      where.visits = { some: { checkOut: null } }
+    }
+    if (openVisitParam === "false") {
+      where.visits = { none: { checkOut: null } }
+    }
+
+    const gymVariantInclude = { gymVariant: { select: { id: true, name: true, slug: true } } } as const
+    const openVisitInclude = {
+      visits: {
+        where: { checkOut: null },
+        select: { id: true },
+        orderBy: { checkIn: "desc" as const },
+        take: 1,
+      },
+    } as const
+
+    if (shouldPaginate) {
+      if (includeOpenVisitId) {
+        const [members, total] = await Promise.all([
+          prisma.member.findMany({
+            where,
+            include: { ...gymVariantInclude, ...openVisitInclude },
+            orderBy: [{ firstName: "asc" }, { lastName: "asc" }, { id: "asc" }],
+            skip,
+            take,
+          }),
+          prisma.member.count({ where }),
+        ])
+
+        const items = members.map(({ visits, ...member }) => ({
+          ...member,
+          openVisitId: visits?.[0]?.id ?? null,
+        }))
+
+        return NextResponse.json({
+          items,
+          total,
+          page,
+          pageSize: take,
+          hasMore: page * take < total,
+        })
+      }
+
+      const [members, total] = await Promise.all([
+        prisma.member.findMany({
+          where,
+          include: gymVariantInclude,
+          orderBy: [{ firstName: "asc" }, { lastName: "asc" }, { id: "asc" }],
+          skip,
+          take,
+        }),
+        prisma.member.count({ where }),
+      ])
+
+      return NextResponse.json({
+        items: members,
+        total,
+        page,
+        pageSize: take,
+        hasMore: page * take < total,
+      })
+    }
+
+    if (includeOpenVisitId) {
+      const members = await prisma.member.findMany({
+        where,
+        include: { ...gymVariantInclude, ...openVisitInclude },
+        orderBy: [{ firstName: "asc" }, { lastName: "asc" }, { id: "asc" }],
+      })
+      const items = members.map(({ visits, ...member }) => ({
+        ...member,
+        openVisitId: visits?.[0]?.id ?? null,
+      }))
+      return NextResponse.json(items)
+    }
+
+    const members = await prisma.member.findMany({
+      where,
+      include: gymVariantInclude,
+      orderBy: [{ firstName: "asc" }, { lastName: "asc" }, { id: "asc" }],
+    })
     return NextResponse.json(members)
   } catch {
     return NextResponse.json({ error: "Failed to fetch members" }, { status: 500 })

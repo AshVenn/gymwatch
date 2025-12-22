@@ -433,8 +433,11 @@ export default function DashboardPage() {
             <h1 className="text-3xl font-bold leading-tight tracking-tight">{t("hero.title")}</h1>
             <p className="max-w-2xl text-sm leading-relaxed text-muted-foreground">{t("hero.description")}</p>
 
-            <div className="flex flex-wrap gap-3">
-              <Button className="rounded-2xl shadow-md transition-all hover:scale-105 hover:shadow-lg" asChild>
+            <div className="flex flex-col gap-3 sm:flex-row">
+              <Button
+                className="w-full rounded-2xl shadow-md transition-all hover:scale-105 hover:shadow-lg sm:w-auto"
+                asChild
+              >
                 <Link href="/dashboard/members">
                   <Sparkles className="mr-2 h-4 w-4" />
                   {t("hero.addMember")}
@@ -443,7 +446,7 @@ export default function DashboardPage() {
 
               <Button
                 variant="outline"
-                className="rounded-2xl border-primary/40 bg-card/90 backdrop-blur-sm transition-all hover:scale-105 hover:bg-card"
+                className="w-full rounded-2xl border-primary/40 bg-card/90 backdrop-blur-sm transition-all hover:scale-105 hover:bg-card sm:w-auto"
                 onClick={() => downloadExcel("earnings")}
                 disabled={!hasExcelReports || downloading === "earnings" || !canViewRevenue}
               >
@@ -501,16 +504,17 @@ export default function DashboardPage() {
             lockedVariantId={lockedVariantId}
             loading={variantsLoading}
             allowAll={allowAllVariants}
+            className="w-full md:w-auto"
           />
 
-          <div className="flex flex-wrap gap-2">
-            <Button variant="ghost" className="rounded-2xl" asChild>
+          <div className="flex flex-col gap-2 sm:flex-row">
+            <Button variant="ghost" className="w-full rounded-2xl sm:w-auto" asChild>
               <Link href="/dashboard/presence">
                 {t("quickLinks.presence")}
                 <ArrowUpRight className="ml-2 h-4 w-4" />
               </Link>
             </Button>
-            <Button variant="ghost" className="rounded-2xl" asChild>
+            <Button variant="ghost" className="w-full rounded-2xl sm:w-auto" asChild>
               <Link href="/dashboard/access-logs">
                 {t("quickLinks.accessLogs")}
                 <ArrowUpRight className="ml-2 h-4 w-4" />

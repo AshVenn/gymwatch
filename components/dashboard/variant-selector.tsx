@@ -78,7 +78,7 @@ export function VariantSelector({
         {t('label')}
       </Label>
       <Select value={value} onValueChange={onChange} disabled={loading}>
-        <SelectTrigger className="w-[220px] md:w-[260px]">
+      <SelectTrigger className="w-full sm:w-[220px] md:w-[260px]">
           <SelectValue placeholder={placeholder} />
         </SelectTrigger>
         <SelectContent>

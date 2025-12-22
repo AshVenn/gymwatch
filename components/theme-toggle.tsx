@@ -7,12 +7,13 @@ import { useTheme } from "next-themes"
 import { Button } from "@/components/ui/button"
 
 export function ThemeToggle() {
-  const { theme, setTheme } = useTheme()
+  const { resolvedTheme, setTheme } = useTheme()
   const [mounted, setMounted] = React.useState(false)
 
   React.useEffect(() => setMounted(true), [])
 
-  const isDark = theme === "dark"
+  const isDark = resolvedTheme === "dark"
+  const pressed = mounted ? isDark : undefined
 
   return (
     <Button
@@ -20,7 +21,7 @@ export function ThemeToggle() {
       variant="ghost"
       size="icon"
       aria-label="Basculer entre le mode clair et sombre"
-      aria-pressed={isDark}
+      aria-pressed={pressed}
       onClick={() => setTheme(isDark ? "light" : "dark")}
       className="relative rounded-full border border-border/60"
     >

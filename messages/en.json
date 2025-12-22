@@ -273,6 +273,12 @@
         "support"
       ]
     },
+    "video": {
+      "kicker": "Video demo",
+      "title": "GymWatch in action",
+      "description": "Watch a short walkthrough of the core flows and dashboards.",
+      "cta": "Watch on YouTube"
+    },
     "hero": {
       "badge": "Documentation",
       "title": "GymWatch Documentation",
@@ -440,12 +446,15 @@
       "items": {
         "framework": "Framework & runtime (Next.js / React)",
         "ui": "UI (Tailwind CSS, shadcn/ui, Radix UI, Lucide)",
+        "fonts": "Fonts (Google Fonts and bundled font files)",
         "i18n": "Internationalization (next-intl)",
         "auth": "Authentication (next-auth)",
         "analytics": "Analytics (@vercel/analytics)"
       },
       "fullListTitle": "Full list",
       "fullListBody": "See the full list and license texts here:",
+      "fontsTitle": "Font licenses",
+      "fontsBody": "Font files bundled in the product retain their original licenses. See the license file for details and attribution.",
       "brandTitle": "Brand & assets",
       "brandBody": "The GymWatch name, logo, and visual identity are not open-source.",
       "contactCta": "Contact support",

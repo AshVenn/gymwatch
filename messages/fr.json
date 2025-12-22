@@ -274,6 +274,12 @@
         "support"
       ]
     },
+    "video": {
+      "kicker": "Démo vidéo",
+      "title": "GymWatch en action",
+      "description": "Découvrez un court parcours des flux principaux et des tableaux de bord.",
+      "cta": "Voir sur YouTube"
+    },
     "hero": {
       "badge": "Documentation",
       "title": "Documentation GymWatch",
@@ -441,12 +447,15 @@
       "items": {
         "framework": "Framework & runtime (Next.js / React)",
         "ui": "UI (Tailwind CSS, shadcn/ui, Radix UI, Lucide)",
+        "fonts": "Polices (Google Fonts et polices incluses)",
         "i18n": "Internationalisation (next-intl)",
         "auth": "Authentification (next-auth)",
         "analytics": "Analytics (@vercel/analytics)"
       },
       "fullListTitle": "Liste complète",
       "fullListBody": "Consultez la liste complète et les textes de licences ici :",
+      "fontsTitle": "Licences de polices",
+      "fontsBody": "Les polices incluses sont soumises à leurs licences d’origine. Veuillez consulter le fichier des licences pour plus de détails et d’attributions.",
       "brandTitle": "Marque & contenus",
       "brandBody": "Le nom, le logo et l’identité visuelle GymWatch ne sont pas sous licence open-source.",
       "contactCta": "Contacter le support",

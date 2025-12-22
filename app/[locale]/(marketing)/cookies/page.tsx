@@ -109,7 +109,7 @@ export default async function CookiesPage({ params }: CookiesPageProps) {
 
             <div className="flex flex-wrap gap-3 pt-2">
               <Button asChild variant="outline" className="bg-transparent">
-                <Link href="/privacy">
+                <Link locale={locale} href="/privacy">
                   <span className="inline-flex items-center gap-2">
                     {t("sections.manage.actions.privacy")}
                     <ExternalLink className="h-4 w-4" aria-hidden />

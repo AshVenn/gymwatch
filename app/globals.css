@@ -40,47 +40,30 @@
 }
 
 .dark {
-  /* Light dark mode – no crushed blacks */
   --background: oklch(0.18 0.006 285.823);
   --foreground: oklch(0.965 0.002 286.2);
-
-  /* Surfaces clearly lifted from background */
   --card: oklch(0.22 0.007 285.9);
   --card-foreground: oklch(0.965 0.002 286.2);
-
   --popover: oklch(0.22 0.007 285.9);
   --popover-foreground: oklch(0.965 0.002 286.2);
-
-  /* Brand blue stays premium, not neon */
   --primary: oklch(0.66 0.21 264.376);
   --primary-foreground: oklch(0.99 0.01 254.604);
-
-  /* Secondary & muted are visible layers */
   --secondary: oklch(0.28 0.01 286.033);
   --secondary-foreground: oklch(0.965 0.002 286.2);
-
   --muted: oklch(0.26 0.01 286.033);
   --muted-foreground: oklch(0.74 0.014 286.067);
-
   --accent: oklch(0.28 0.01 286.033);
   --accent-foreground: oklch(0.965 0.002 286.2);
-
   --destructive: oklch(0.7 0.17 22.216);
   --destructive-foreground: oklch(0.985 0.01 22.216);
-
-  /* Borders & inputs: soft but visible */
   --border: oklch(0.34 0.012 286.32);
   --input: oklch(0.32 0.012 286.32);
   --ring: oklch(0.66 0.21 264.376);
-
-  /* Charts */
   --chart-1: oklch(0.66 0.21 264.376);
   --chart-2: oklch(0.72 0.16 162.48);
   --chart-3: oklch(0.8 0.17 70.08);
   --chart-4: oklch(0.68 0.22 303.9);
   --chart-5: oklch(0.72 0.2 16.439);
-
-  /* Sidebar matches cards */
   --sidebar: oklch(0.2 0.006 285.823);
   --sidebar-foreground: oklch(0.965 0.002 286.2);
   --sidebar-primary: oklch(0.66 0.21 264.376);
@@ -111,7 +94,6 @@
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
-  /* Enhanced radius system for modern SaaS feel */
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
@@ -133,31 +115,15 @@
   --color-sidebar-ring: var(--sidebar-ring);
 }
 
-html[dir="rtl"] {
-  scrollbar-gutter: stable both-edges;
-}
-
-[dir="rtl"] body {
-  direction: rtl;
-  --font-sans: var(--font-arabic);
-  --font-mono: var(--font-arabic);
-}
-
-[dir="rtl"] * {
-  letter-spacing: normal;
-}
-
 @layer base {
   * {
     @apply border-border outline-ring/50;
   }
   body {
     @apply bg-background text-foreground antialiased;
-    /* Enhanced typography with better line-height */
     line-height: 1.6;
   }
 
-  /* Typography hierarchy for premium SaaS look */
   h1,
   h2,
   h3,
@@ -171,15 +137,12 @@ html[dir="rtl"] {
   h1 {
     @apply text-4xl md:text-5xl lg:text-6xl;
   }
-
   h2 {
     @apply text-3xl md:text-4xl lg:text-5xl;
   }
-
   h3 {
     @apply text-2xl md:text-3xl;
   }
-
   h4 {
     @apply text-xl md:text-2xl;
   }
@@ -190,7 +153,6 @@ html[dir="rtl"] {
 }
 
 @layer utilities {
-  /* Enhanced animation keyframes with smoother easing */
   @keyframes fade-in {
     from {
       opacity: 0;
@@ -213,13 +175,14 @@ html[dir="rtl"] {
     }
   }
 
-  @keyframes bounce-subtle {
-    0%,
-    100% {
-      transform: translateY(0);
+  @keyframes scale-in {
+    from {
+      transform: scale(0.95);
+      opacity: 0;
     }
-    50% {
-      transform: translateY(-4px);
+    to {
+      transform: scale(1);
+      opacity: 1;
     }
   }
 
@@ -253,48 +216,6 @@ html[dir="rtl"] {
     }
   }
 
-  @keyframes shine {
-    0% {
-      transform: translateX(-100%);
-    }
-    100% {
-      transform: translateX(100%);
-    }
-  }
-
-  /* Added shimmer animation for skeleton loading states */
-  @keyframes shimmer {
-    0% {
-      background-position: -1000px 0;
-    }
-    100% {
-      background-position: 1000px 0;
-    }
-  }
-
-  /* Added scale-in animation for card hover effects */
-  @keyframes scale-in {
-    from {
-      transform: scale(0.95);
-      opacity: 0;
-    }
-    to {
-      transform: scale(1);
-      opacity: 1;
-    }
-  }
-
-  /* Pulse animation for live badges */
-  @keyframes pulse-soft {
-    0%,
-    100% {
-      opacity: 1;
-    }
-    50% {
-      opacity: 0.7;
-    }
-  }
-
   @keyframes pulse-slow {
     0%,
     100% {
@@ -325,7 +246,6 @@ html[dir="rtl"] {
     }
   }
 
-  /* Animation utility classes */
   .animate-fade-in {
     animation: fade-in 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
     opacity: 0;
@@ -340,92 +260,32 @@ html[dir="rtl"] {
     animation: scale-in 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
   }
 
-  .animate-bounce-subtle {
-    animation: bounce-subtle 2s ease-in-out infinite;
-  }
-
   .animate-float-left {
     animation: float-left 3s ease-in-out infinite;
   }
-
   .animate-float-right {
     animation: float-right 3.5s ease-in-out infinite;
   }
-
   .animate-float-up {
     animation: float-up 2.5s ease-in-out infinite;
   }
-
-  .animate-shine {
-    animation: shine 2s ease-in-out;
-  }
-
-  .animate-shimmer {
-    animation: shimmer 2s infinite linear;
-    background: linear-gradient(90deg, oklch(var(--muted)) 0%, oklch(var(--muted) / 0.5) 50%, oklch(var(--muted)) 100%);
-    background-size: 1000px 100%;
-  }
-
-  .animate-pulse-soft {
-    animation: pulse-soft 2s ease-in-out infinite;
-  }
-
   .animate-pulse-slow {
     animation: pulse-slow 8s ease-in-out infinite;
   }
-
   .animate-float-slow {
     animation: float-slow 12s ease-in-out infinite;
   }
-
   .animate-float-slow-reverse {
     animation: float-slow-reverse 15s ease-in-out infinite;
   }
 
-  /* Floating orb background animations */
-  .floating-orb-primary {
-    position: absolute;
-    width: 300px;
-    height: 300px;
-    border-radius: 9999px;
-    background: radial-gradient(circle at center, var(--primary) 0%, transparent 70%);
-    opacity: 0.25;
-    filter: blur(40px);
-    animation: orb-float-primary 15s ease-in-out infinite;
-  }
-
-  .floating-orb-secondary {
-    position: absolute;
-    width: 250px;
-    height: 250px;
-    border-radius: 9999px;
-    background: radial-gradient(circle at center, var(--primary) 0%, transparent 70%);
-    opacity: 0.2;
-    filter: blur(45px);
-    animation: orb-float-secondary 18s ease-in-out infinite reverse;
-  }
-
-  .floating-orb-tertiary {
-    position: absolute;
-    width: 200px;
-    height: 200px;
-    border-radius: 9999px;
-    background: radial-gradient(circle at center, var(--primary) 0%, transparent 70%);
-    opacity: 0.15;
-    filter: blur(50px);
-    animation: orb-float-tertiary 20s ease-in-out infinite;
-  }
-
-  /* Enhanced hover lift with smoother easing */
   .hover-lift {
     transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.3s cubic-bezier(0.16, 1, 0.3, 1);
   }
-
   .hover-lift:hover {
     transform: translateY(-4px);
   }
 
-  /* Glass morphism effect for modern UI */
   .glass {
     background: oklch(var(--card) / 0.7);
     backdrop-filter: blur(12px);
@@ -437,40 +297,24 @@ html[dir="rtl"] {
     backdrop-filter: blur(16px);
   }
 
-  /* Premium button press effect */
   .btn-press {
     transition: transform 0.1s ease;
   }
-
   .btn-press:active {
     transform: scale(0.97);
   }
 
-  /* perspective for 3D effects */
   .perspective {
     perspective: 1000px;
-  }
-
-  /* Added 3D transform utilities for CometCard component */
-  .perspective-distant {
-    perspective: 2000px;
-  }
-
-  .transform-3d {
-    transform-style: preserve-3d;
   }
 
   @media (prefers-reduced-motion: reduce) {
     .animate-fade-in,
     .animate-slide-up,
     .animate-scale-in,
-    .animate-bounce-subtle,
     .animate-float-left,
     .animate-float-right,
     .animate-float-up,
-    .animate-shine,
-    .animate-shimmer,
-    .animate-pulse-soft,
     .animate-pulse-slow,
     .animate-float-slow,
     .animate-float-slow-reverse {
@@ -480,3 +324,4 @@ html[dir="rtl"] {
     }
   }
 }
+  

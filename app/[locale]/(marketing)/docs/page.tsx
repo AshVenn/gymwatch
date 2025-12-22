@@ -1,5 +1,5 @@
 import type { Metadata } from "next"
-import { BookOpen, ShieldCheck, Users, QrCode, Wrench, ArrowRight, Mail } from "lucide-react"
+import { BookOpen, ShieldCheck, Users, QrCode, Wrench, ArrowRight, Mail, Youtube } from "lucide-react"
 import { getTranslations, setRequestLocale } from "next-intl/server"
 
 import { Button } from "@/components/ui/button"
@@ -33,6 +33,7 @@ export default async function DocsPage({ params }: DocsPageProps) {
 
   const supportEmail = process.env.SUPPORT_EMAIL || "contact@gymwatch.ma"
   const supportMailto = `mailto:${supportEmail}`
+  const demoVideoUrl = "https://www.youtube.com"
 
   const sections = [
     {
@@ -127,6 +128,22 @@ export default async function DocsPage({ params }: DocsPageProps) {
   return (
     <div className="min-h-screen bg-background text-foreground">
       <main className="mx-auto flex max-w-5xl flex-col gap-10 px-4 pb-16 pt-12">
+        <section className="rounded-3xl border border-border/60 bg-card/80 p-5 shadow-lg backdrop-blur-sm animate-fade-in">
+          <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+            <div className="space-y-2">
+              <p className="text-xs font-semibold uppercase tracking-[0.3em] text-primary">{t("video.kicker")}</p>
+              <h2 className="text-2xl font-bold tracking-tight">{t("video.title")}</h2>
+              <p className="max-w-2xl text-sm text-muted-foreground">{t("video.description")}</p>
+            </div>
+            <Button asChild variant="secondary" className="w-full sm:w-auto">
+              <a href={demoVideoUrl} target="_blank" rel="noreferrer" className="inline-flex items-center gap-2">
+                <Youtube className="h-4 w-4" aria-hidden />
+                {t("video.cta")}
+              </a>
+            </Button>
+          </div>
+        </section>
+
         {/* Hero */}
         <section className="space-y-4 animate-fade-in">
           <p className="inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-4 py-1 text-[0.7rem] font-semibold uppercase tracking-[0.3em] text-primary">

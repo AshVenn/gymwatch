@@ -74,6 +74,7 @@ export default async function LicensesPage({ params }: LicensesPageProps) {
               <ul className="list-disc space-y-1 pl-5">
                 <li>{t("content.items.framework")}</li>
                 <li>{t("content.items.ui")}</li>
+                <li>{t("content.items.fonts")}</li>
                 <li>{t("content.items.i18n")}</li>
                 <li>{t("content.items.auth")}</li>
                 <li>{t("content.items.analytics")}</li>
@@ -88,6 +89,11 @@ export default async function LicensesPage({ params }: LicensesPageProps) {
                   {licensesFilePath}
                 </a>
               </p>
+            </div>
+
+            <div className="rounded-2xl border border-border/60 bg-background/60 p-4 text-sm text-muted-foreground">
+              <p className="font-semibold text-foreground">{t("content.fontsTitle")}</p>
+              <p className="mt-1">{t("content.fontsBody")}</p>
             </div>
 
             <div className="rounded-2xl border border-border/60 bg-background/60 p-4 text-sm text-muted-foreground">

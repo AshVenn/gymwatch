@@ -177,81 +177,94 @@ export default function RequestDemoForm({ locale, copy }: { locale: AppLocale; c
       <div className="pointer-events-none fixed inset-0 z-0 bg-[radial-gradient(circle_at_30%_20%,rgba(59,130,246,0.08),transparent_52%),radial-gradient(circle_at_70%_80%,rgba(37,99,235,0.08),transparent_55%)]" />
       <div className="pointer-events-none fixed inset-x-0 top-0 z-0 h-56 bg-linear-to-b from-background via-background/70 to-transparent" />
 
-      <main className="relative z-10 mx-auto flex max-w-6xl flex-col gap-10 px-4 py-10">
-        <header className="space-y-4">
+      <main className="relative z-10 mx-auto flex max-w-6xl flex-col gap-10 px-4 py-10 md:px-6 md:py-12">
+        <header className="space-y-5">
           <div className="flex flex-wrap items-center gap-2">
-            <Badge variant="outline" className="border-primary/40 text-primary">
-              <Sparkles className="mr-1 h-3.5 w-3.5" aria-hidden />
+            <Badge
+              variant="outline"
+              className="min-h-11 rounded-full border-primary/30 bg-primary/10 px-4 py-2 text-primary backdrop-blur-sm transition-all duration-200 ease-out"
+            >
+              <Sparkles className="mr-1 h-4.5 w-4.5 md:h-5 md:w-5" aria-hidden />
               {copy.hero.badge}
             </Badge>
-            <Badge variant="secondary" className="gap-2">
-              <BadgeCheck className="h-4 w-4" aria-hidden />
+
+            <Badge
+              variant="secondary"
+              className="min-h-11 gap-2 rounded-full border border-border/30 bg-card/95 px-4 py-2 shadow-sm backdrop-blur-xl transition-all duration-200 ease-out"
+            >
+              <BadgeCheck className="h-4.5 w-4.5 md:h-5 md:w-5" aria-hidden />
               {copy.hero.trustChip}
             </Badge>
           </div>
 
-          <h1 className="text-balance text-4xl font-bold tracking-tight md:text-5xl">{copy.hero.title}</h1>
-          <p className="max-w-3xl text-lg leading-relaxed text-muted-foreground">{copy.hero.subtitle}</p>
+          <div className="space-y-2">
+            <h1 className="text-pretty text-4xl font-bold tracking-tight md:text-5xl">
+              {copy.hero.title}
+            </h1>
+            <p className="max-w-3xl text-lg leading-relaxed text-muted-foreground">{copy.hero.subtitle}</p>
+          </div>
         </header>
 
         <div className="grid gap-6 lg:grid-cols-[1.05fr_0.95fr]">
-          <Card className="border border-primary/20 bg-linear-to-br from-primary/5 via-card to-card shadow-lg">
-            <CardHeader className="space-y-3">
-              <CardTitle className="text-2xl">{copy.left.title}</CardTitle>
+          {/* LEFT */}
+          <Card className="rounded-[20px] border border-primary/20 bg-card/95 shadow-sm backdrop-blur-xl">
+            <CardHeader className="space-y-3 p-6">
+              <CardTitle className="text-pretty text-2xl font-normal">{copy.left.title}</CardTitle>
               <CardDescription className="max-w-xl text-base leading-relaxed">{copy.left.description}</CardDescription>
             </CardHeader>
 
-            <CardContent className="space-y-4">
+            <CardContent className="space-y-5 px-6 pb-6">
               <div className="grid gap-3 sm:grid-cols-2">
-                <div className="flex items-start gap-3 rounded-2xl border border-border/60 bg-background/40 p-4">
-                  <Shield className="mt-0.5 h-5 w-5 text-primary" />
+                <div className="flex items-start gap-3 rounded-[20px] border border-border/30 bg-background/50 p-4 shadow-sm backdrop-blur-sm transition-all duration-200 ease-out hover:scale-[1.01]">
+                  <Shield className="text-primary h-7 w-7 md:h-8 md:w-8" />
                   <div className="space-y-1">
-                    <p className="font-semibold">{copy.left.cards.verify.title}</p>
+                    <p className="font-normal">{copy.left.cards.verify.title}</p>
                     <p className="text-sm text-muted-foreground">{copy.left.cards.verify.desc}</p>
                   </div>
                 </div>
 
-                <div className="flex items-start gap-3 rounded-2xl border border-border/60 bg-background/40 p-4">
-                  <Mail className="mt-0.5 h-5 w-5 text-primary" />
+                <div className="flex items-start gap-3 rounded-[20px] border border-border/30 bg-background/50 p-4 shadow-sm backdrop-blur-sm transition-all duration-200 ease-out hover:scale-[1.01]">
+                  <Mail className="text-primary h-7 w-7 md:h-8 md:w-8" />
                   <div className="space-y-1">
-                    <p className="font-semibold">{copy.left.cards.invite.title}</p>
+                    <p className="font-normal">{copy.left.cards.invite.title}</p>
                     <p className="text-sm text-muted-foreground">{copy.left.cards.invite.desc}</p>
                   </div>
                 </div>
 
-                <div className="flex items-start gap-3 rounded-2xl border border-border/60 bg-background/40 p-4">
-                  <MapPin className="mt-0.5 h-5 w-5 text-primary" />
+                <div className="flex items-start gap-3 rounded-[20px] border border-border/30 bg-background/50 p-4 shadow-sm backdrop-blur-sm transition-all duration-200 ease-out hover:scale-[1.01]">
+                  <MapPin className="text-primary h-7 w-7 md:h-8 md:w-8" />
                   <div className="space-y-1">
-                    <p className="font-semibold">{copy.left.cards.local.title}</p>
+                    <p className="font-normal">{copy.left.cards.local.title}</p>
                     <p className="text-sm text-muted-foreground">{copy.left.cards.local.desc}</p>
                   </div>
                 </div>
 
-                <div className="flex items-start gap-3 rounded-2xl border border-border/60 bg-background/40 p-4">
-                  <Clock3 className="mt-0.5 h-5 w-5 text-primary" />
+                <div className="flex items-start gap-3 rounded-[20px] border border-border/30 bg-background/50 p-4 shadow-sm backdrop-blur-sm transition-all duration-200 ease-out hover:scale-[1.01]">
+                  <Clock3 className="text-primary h-7 w-7 md:h-8 md:w-8" />
                   <div className="space-y-1">
-                    <p className="font-semibold">{copy.left.cards.speed.title}</p>
+                    <p className="font-normal">{copy.left.cards.speed.title}</p>
                     <p className="text-sm text-muted-foreground">{copy.left.cards.speed.desc}</p>
                   </div>
                 </div>
               </div>
 
-              <div className="rounded-2xl border border-border/60 bg-background/40 p-4">
-                <p className="text-sm font-semibold">{copy.left.hint.title}</p>
+              <div className="rounded-[20px] border border-border/30 bg-background/50 p-4 shadow-sm backdrop-blur-sm">
+                <p className="text-sm font-normal">{copy.left.hint.title}</p>
                 <p className="mt-1 text-sm text-muted-foreground">{copy.left.hint.desc}</p>
               </div>
             </CardContent>
           </Card>
 
-          <Card className="border border-border/60 shadow-lg">
-            <CardHeader>
-              <CardTitle>{copy.form.title}</CardTitle>
-              <CardDescription>{copy.form.description}</CardDescription>
+          {/* FORM */}
+          <Card className="rounded-[20px] border border-border/30 bg-card/95 shadow-sm backdrop-blur-xl">
+            <CardHeader className="space-y-2 p-6">
+              <CardTitle className="text-pretty text-xl font-normal">{copy.form.title}</CardTitle>
+              <CardDescription className="text-base">{copy.form.description}</CardDescription>
             </CardHeader>
 
-            <CardContent>
+            <CardContent className="px-6 pb-6">
               <Form {...form}>
-                <form className="space-y-5" onSubmit={form.handleSubmit(handleSubmit)}>
+                <form className="space-y-6" onSubmit={form.handleSubmit(handleSubmit)}>
                   <input
                     type="text"
                     tabIndex={-1}
@@ -266,9 +279,14 @@ export default function RequestDemoForm({ locale, copy }: { locale: AppLocale; c
                     name="gymName"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>{copy.form.fields.gymName.label}</FormLabel>
+                        <FormLabel className="text-sm font-normal">{copy.form.fields.gymName.label}</FormLabel>
                         <FormControl>
-                          <Input required placeholder={copy.form.fields.gymName.placeholder} {...field} />
+                          <Input
+                            required
+                            placeholder={copy.form.fields.gymName.placeholder}
+                            className="h-12 rounded-xl border-border/50 bg-background/50 px-4 py-3 shadow-sm backdrop-blur-sm transition-all duration-200 ease-out focus-visible:ring-2 focus-visible:ring-primary/20"
+                            {...field}
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -281,9 +299,15 @@ export default function RequestDemoForm({ locale, copy }: { locale: AppLocale; c
                       name="gymEmail"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>{copy.form.fields.gymEmail.label}</FormLabel>
+                          <FormLabel className="text-sm font-normal">{copy.form.fields.gymEmail.label}</FormLabel>
                           <FormControl>
-                            <Input required type="email" placeholder={copy.form.fields.gymEmail.placeholder} {...field} />
+                            <Input
+                              required
+                              type="email"
+                              placeholder={copy.form.fields.gymEmail.placeholder}
+                              className="h-12 rounded-xl border-border/50 bg-background/50 px-4 py-3 shadow-sm backdrop-blur-sm transition-all duration-200 ease-out focus-visible:ring-2 focus-visible:ring-primary/20"
+                              {...field}
+                            />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -295,9 +319,14 @@ export default function RequestDemoForm({ locale, copy }: { locale: AppLocale; c
                       name="phone"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>{copy.form.fields.phone.label}</FormLabel>
+                          <FormLabel className="text-sm font-normal">{copy.form.fields.phone.label}</FormLabel>
                           <FormControl>
-                            <Input required placeholder={copy.form.fields.phone.placeholder} {...field} />
+                            <Input
+                              required
+                              placeholder={copy.form.fields.phone.placeholder}
+                              className="h-12 rounded-xl border-border/50 bg-background/50 px-4 py-3 shadow-sm backdrop-blur-sm transition-all duration-200 ease-out focus-visible:ring-2 focus-visible:ring-primary/20"
+                              {...field}
+                            />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -311,9 +340,14 @@ export default function RequestDemoForm({ locale, copy }: { locale: AppLocale; c
                       name="address"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>{copy.form.fields.address.label}</FormLabel>
+                          <FormLabel className="text-sm font-normal">{copy.form.fields.address.label}</FormLabel>
                           <FormControl>
-                            <Input required placeholder={copy.form.fields.address.placeholder} {...field} />
+                            <Input
+                              required
+                              placeholder={copy.form.fields.address.placeholder}
+                              className="h-12 rounded-xl border-border/50 bg-background/50 px-4 py-3 shadow-sm backdrop-blur-sm transition-all duration-200 ease-out focus-visible:ring-2 focus-visible:ring-primary/20"
+                              {...field}
+                            />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -325,9 +359,14 @@ export default function RequestDemoForm({ locale, copy }: { locale: AppLocale; c
                       name="city"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>{copy.form.fields.city.label}</FormLabel>
+                          <FormLabel className="text-sm font-normal">{copy.form.fields.city.label}</FormLabel>
                           <FormControl>
-                            <Input required placeholder={copy.form.fields.city.placeholder} {...field} />
+                            <Input
+                              required
+                              placeholder={copy.form.fields.city.placeholder}
+                              className="h-12 rounded-xl border-border/50 bg-background/50 px-4 py-3 shadow-sm backdrop-blur-sm transition-all duration-200 ease-out focus-visible:ring-2 focus-visible:ring-primary/20"
+                              {...field}
+                            />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -340,9 +379,14 @@ export default function RequestDemoForm({ locale, copy }: { locale: AppLocale; c
                     name="country"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>{copy.form.fields.country.label}</FormLabel>
+                        <FormLabel className="text-sm font-normal">{copy.form.fields.country.label}</FormLabel>
                         <FormControl>
-                          <Input required placeholder={copy.form.fields.country.placeholder} {...field} />
+                          <Input
+                            required
+                            placeholder={copy.form.fields.country.placeholder}
+                            className="h-12 rounded-xl border-border/50 bg-background/50 px-4 py-3 shadow-sm backdrop-blur-sm transition-all duration-200 ease-out focus-visible:ring-2 focus-visible:ring-primary/20"
+                            {...field}
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -355,9 +399,14 @@ export default function RequestDemoForm({ locale, copy }: { locale: AppLocale; c
                       name="adminFirstName"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>{copy.form.fields.adminFirstName.label}</FormLabel>
+                          <FormLabel className="text-sm font-normal">{copy.form.fields.adminFirstName.label}</FormLabel>
                           <FormControl>
-                            <Input required placeholder={copy.form.fields.adminFirstName.placeholder} {...field} />
+                            <Input
+                              required
+                              placeholder={copy.form.fields.adminFirstName.placeholder}
+                              className="h-12 rounded-xl border-border/50 bg-background/50 px-4 py-3 shadow-sm backdrop-blur-sm transition-all duration-200 ease-out focus-visible:ring-2 focus-visible:ring-primary/20"
+                              {...field}
+                            />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -369,9 +418,14 @@ export default function RequestDemoForm({ locale, copy }: { locale: AppLocale; c
                       name="adminLastName"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>{copy.form.fields.adminLastName.label}</FormLabel>
+                          <FormLabel className="text-sm font-normal">{copy.form.fields.adminLastName.label}</FormLabel>
                           <FormControl>
-                            <Input required placeholder={copy.form.fields.adminLastName.placeholder} {...field} />
+                            <Input
+                              required
+                              placeholder={copy.form.fields.adminLastName.placeholder}
+                              className="h-12 rounded-xl border-border/50 bg-background/50 px-4 py-3 shadow-sm backdrop-blur-sm transition-all duration-200 ease-out focus-visible:ring-2 focus-visible:ring-primary/20"
+                              {...field}
+                            />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -384,9 +438,15 @@ export default function RequestDemoForm({ locale, copy }: { locale: AppLocale; c
                     name="adminEmail"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>{copy.form.fields.adminEmail.label}</FormLabel>
+                        <FormLabel className="text-sm font-normal">{copy.form.fields.adminEmail.label}</FormLabel>
                         <FormControl>
-                          <Input required type="email" placeholder={copy.form.fields.adminEmail.placeholder} {...field} />
+                          <Input
+                            required
+                            type="email"
+                            placeholder={copy.form.fields.adminEmail.placeholder}
+                            className="h-12 rounded-xl border-border/50 bg-background/50 px-4 py-3 shadow-sm backdrop-blur-sm transition-all duration-200 ease-out focus-visible:ring-2 focus-visible:ring-primary/20"
+                            {...field}
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -399,18 +459,18 @@ export default function RequestDemoForm({ locale, copy }: { locale: AppLocale; c
                       name="plan"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>{copy.form.fields.plan.label}</FormLabel>
+                          <FormLabel className="text-sm font-normal">{copy.form.fields.plan.label}</FormLabel>
                           <Select onValueChange={field.onChange} value={field.value}>
                             <FormControl>
-                              <SelectTrigger>
+                              <SelectTrigger className="h-12 rounded-xl border-border/50 bg-background/50 px-4 shadow-sm backdrop-blur-sm transition-all duration-200 ease-out focus:ring-2 focus:ring-primary/20">
                                 <SelectValue placeholder={copy.form.fields.plan.placeholder} />
                               </SelectTrigger>
                             </FormControl>
-                            <SelectContent>
+                            <SelectContent className="rounded-2xl border-border/30 bg-background/95 backdrop-blur-xl">
                               {planItems.map((p) => (
-                                <SelectItem key={p.value} value={p.value}>
+                                <SelectItem key={p.value} value={p.value} className="rounded-xl">
                                   <div className="flex flex-col">
-                                    <span className="font-medium">{p.title}</span>
+                                    <span className="font-normal">{p.title}</span>
                                     <span className="text-xs text-muted-foreground">{p.desc}</span>
                                   </div>
                                 </SelectItem>
@@ -422,7 +482,7 @@ export default function RequestDemoForm({ locale, copy }: { locale: AppLocale; c
                       )}
                     />
 
-                    <div className="flex items-center gap-3 rounded-2xl border border-dashed border-border/60 bg-background/30 p-4 text-sm">
+                    <div className="flex min-h-11 items-center gap-3 rounded-[20px] border border-dashed border-border/30 bg-background/50 p-4 text-sm shadow-sm backdrop-blur-sm">
                       <Phone className="h-4 w-4 text-primary" />
                       <span className="text-muted-foreground">{copy.form.sideHint}</span>
                     </div>
@@ -433,11 +493,11 @@ export default function RequestDemoForm({ locale, copy }: { locale: AppLocale; c
                     name="message"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>{copy.form.fields.message.label}</FormLabel>
+                        <FormLabel className="text-sm font-normal">{copy.form.fields.message.label}</FormLabel>
                         <FormControl>
                           <textarea
                             required
-                            className="min-h-30 w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-xs outline-none transition-all duration-200 focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] placeholder:text-muted-foreground"
+                            className="min-h-30 w-full rounded-2xl border border-border/50 bg-background/50 px-4 py-3 text-sm shadow-sm outline-none backdrop-blur-sm transition-all duration-200 ease-out placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-primary/20"
                             placeholder={copy.form.fields.message.placeholder}
                             {...field}
                           />
@@ -447,7 +507,11 @@ export default function RequestDemoForm({ locale, copy }: { locale: AppLocale; c
                     )}
                   />
 
-                  <Button type="submit" className="w-full rounded-xl" disabled={requestDemo.isPending}>
+                  <Button
+                    type="submit"
+                    className="h-12 w-full rounded-2xl px-5 transition-all duration-200 ease-out hover:scale-[1.02] active:scale-[0.98]"
+                    disabled={requestDemo.isPending}
+                  >
                     {requestDemo.isPending ? copy.form.actions.sending : copy.form.actions.submit}
                   </Button>
 

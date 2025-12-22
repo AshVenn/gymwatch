@@ -62,14 +62,14 @@ export default async function PlansPage({ params }: PlansPageProps) {
   }
 
   const currencyFormatter = new Intl.NumberFormat(
-  locale === "fr" ? "fr-MA" : locale === "ar" ? "ar-MA" : "en-US",
-  {
-    style: "currency",
-    currency: "MAD",
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  },
-)
+    locale === "fr" ? "fr-MA" : locale === "ar" ? "ar-MA" : "en-US",
+    {
+      style: "currency",
+      currency: "MAD",
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    },
+  )
 
   const pricingFaqs = [
     {
@@ -96,8 +96,8 @@ export default async function PlansPage({ params }: PlansPageProps) {
     return Math.round(raw)
   }
 
-  const renderPlanCards = (mode: "monthly" | "annual") =>
-    planCatalog.map((plan, index) => {
+  const renderPlanCards = (mode: "monthly" | "annual") => {
+    return planCatalog.map((plan, index) => {
       const annualTotal = plan.annualPrice ?? plan.monthlyPrice * 12
       const annualMonthly = annualTotal / 12
       const rawPrice = mode === "annual" ? annualMonthly : plan.monthlyPrice
@@ -121,20 +121,20 @@ export default async function PlansPage({ params }: PlansPageProps) {
           billingHint={billingHint}
           badges={plan.badges}
           features={plan.features}
-          ctaLabel={t("pricing.start")}                     
+          ctaLabel={t("pricing.start")}
           ctaHref="/request-demo"
           isHighlighted={plan.highlight}
           highlightLabel={plan.highlight ? t("pricing.recommended") : undefined}
           showAnnualSavings={mode === "annual"}
           annualSavingsText={
-            mode === "annual" ? t("pricing.saveAnnual", { discount: DEFAULT_ANNUAL_DISCOUNT }) : undefined 
+            mode === "annual" ? t("pricing.saveAnnual", { discount: DEFAULT_ANNUAL_DISCOUNT }) : undefined
           }
-          perMonthLabel={t("pricing.perMonth")}        
+          perMonthLabel={t("pricing.perMonth")}
           animationDelay={`${0.08 + index * 0.05}s`}
         />
-
       )
     })
+  }
 
   return (
     <div className="min-h-screen bg-background text-foreground">

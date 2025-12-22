@@ -273,6 +273,12 @@
         "الدعم"
       ]
     },
+    "video": {
+      "kicker": "عرض فيديو",
+      "title": "GymWatch في العمل",
+      "description": "شاهد جولة سريعة لأبرز الشاشات والتدفقات الأساسية.",
+      "cta": "شاهد على يوتيوب"
+    },
     "hero": {
       "badge": "التوثيق",
       "title": "توثيق GymWatch",
@@ -440,12 +446,15 @@
       "items": {
         "framework": "الإطار ووقت التشغيل (Next.js / React)",
         "ui": "واجهة المستخدم (Tailwind CSS, shadcn/ui, Radix UI, Lucide)",
+        "fonts": "خطوط (Google Fonts وخطوط مدمجة)",
         "i18n": "تعدد اللغات (next-intl)",
         "auth": "المصادقة (next-auth)",
         "analytics": "التحليلات (@vercel/analytics)"
       },
       "fullListTitle": "القائمة الكاملة",
       "fullListBody": "اطّلع على القائمة الكاملة ونصوص التراخيص هنا:",
+      "fontsTitle": "تراخيص الخطوط",
+      "fontsBody": "الخطوط المضمنة تحتفظ بتراخيصها الأصلية. راجع ملف التراخيص للتفاصيل ونسب الحقوق.",
       "brandTitle": "العلامة والملفات",
       "brandBody": "اسم GymWatch والشعار والهوية البصرية ليست ضمن رخصة المصادر المفتوحة.",
       "contactCta": "تواصل مع الدعم",

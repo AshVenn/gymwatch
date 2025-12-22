@@ -132,71 +132,61 @@ export function SubscriptionBanner() {
   const formatDate = (d: Date) =>
     new Intl.DateTimeFormat(locale, { year: "numeric", month: "2-digit", day: "2-digit" }).format(d)
 
-  // ✅ Primary-anchored 3-tier styling (same logic as your PlanCard)
   const planTheme = useMemo(() => {
     if (planKey === "enterprise") {
       return {
-        wrap:
-          "border border-primary/30 bg-linear-to-br from-primary/95 via-indigo-600 to-sky-600 shadow-primary/20 hover:shadow-primary/30",
-        glow:
-          "bg-[radial-gradient(circle_at_22%_18%,rgba(255,255,255,0.22),transparent_55%),radial-gradient(circle_at_78%_22%,rgba(99,102,241,0.30),transparent_55%),radial-gradient(circle_at_70%_82%,rgba(56,189,248,0.25),transparent_60%)]",
+        wrap: "border border-primary/25 bg-gradient-to-br from-primary via-indigo-600 to-sky-600",
+        overlay: "bg-gradient-to-tr from-white/8 via-transparent to-white/8",
       }
     }
 
     if (planKey === "pro") {
       return {
-        wrap:
-          "border border-primary/25 bg-linear-to-br from-pink-500 via-primary to-primary/85 shadow-primary/15 hover:shadow-primary/25",
-        glow:
-          "bg-[radial-gradient(circle_at_24%_20%,rgba(255,255,255,0.22),transparent_55%),radial-gradient(circle_at_78%_18%,rgba(236,72,153,0.32),transparent_55%),radial-gradient(circle_at_72%_82%,rgba(59,130,246,0.18),transparent_60%)]",
+        wrap: "border border-primary/25 bg-gradient-to-br from-pink-500 via-primary to-primary",
+        overlay: "bg-gradient-to-tr from-white/8 via-transparent to-white/8",
       }
     }
 
     return {
-      wrap:
-        "border border-primary/20 bg-linear-to-br from-emerald-500 via-primary to-primary/85 shadow-primary/10 hover:shadow-primary/20",
-      glow:
-        "bg-[radial-gradient(circle_at_26%_18%,rgba(255,255,255,0.18),transparent_55%),radial-gradient(circle_at_76%_26%,rgba(16,185,129,0.28),transparent_55%),radial-gradient(circle_at_72%_78%,rgba(59,130,246,0.18),transparent_60%)]",
+      wrap: "border border-primary/25 bg-gradient-to-br from-emerald-500 via-primary to-primary",
+      overlay: "bg-gradient-to-tr from-white/8 via-transparent to-white/8",
     }
   }, [planKey])
 
-  // ---------------------------------------------------------
-  // NORMAL banner
-  // ---------------------------------------------------------
+  // Normal banner
   if (!message || !tone) {
     return (
       <div
         dir={isRTL ? "rtl" : "ltr"}
         className={cn(
-          "group relative overflow-hidden rounded-3xl p-5 md:p-6 shadow-xl transition-all duration-300 hover:shadow-2xl",
+          "group relative overflow-hidden rounded-3xl p-5 md:p-6 shadow-lg transition-all duration-250 hover:shadow-xl active:scale-[0.995]",
           planTheme.wrap,
         )}
       >
         <SubscriptionFeaturesDock items={dockItems} currentPlan={currentPlan} upgradeHref={localizedManageHref} />
 
-        {/* Primary glow system */}
-        <div className={cn("pointer-events-none absolute inset-0 opacity-95 blur-0", planTheme.glow)} />
-        <div className="pointer-events-none absolute inset-0 bg-linear-to-tr from-white/12 via-transparent to-transparent" />
-        <div className="pointer-events-none absolute inset-y-0 right-0 w-1/2 bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.14),transparent_65%)] blur-3xl opacity-60" />
-        <div className="pointer-events-none absolute top-0 right-0 h-32 w-32 bg-white/10 rounded-full blur-3xl -translate-y-8 translate-x-8" />
+        <div className={cn("pointer-events-none absolute inset-0", planTheme.overlay)} />
+        <div className="pointer-events-none absolute inset-y-0 right-0 w-1/3 bg-white/5 blur-3xl" />
 
         <div className="relative flex flex-col gap-3 text-white">
-          <div className="flex items-center gap-2 text-xs uppercase tracking-[0.3em] text-white/90 font-semibold">
-            <Sparkles className="h-4 w-4 animate-pulse" />
+          <div className="flex items-center gap-2 text-[11px] uppercase tracking-[0.28em] text-white/90 font-semibold">
+            <Sparkles className="h-4 w-4" />
             {t("brandLine", { plan: planLabel, demoSuffix })}
           </div>
 
-          <p className="text-base md:text-lg font-bold tracking-tight text-white">
+          <p className="text-[17px] md:text-lg font-semibold tracking-tight text-white">
             {t("planInterval", { plan: planLabel, interval: intervalLabel })}
           </p>
 
-          <p className="text-sm text-white/90 leading-relaxed">
-            {isDemo && demoEndsAtRaw ? t("demoActiveUntil", { date: formatDate(new Date(demoEndsAtRaw)) }) : t("thanks")}
+          <p className="text-[15px] text-white/90 leading-relaxed">
+            {isDemo && demoEndsAtRaw
+              ? t("demoActiveUntil", { date: formatDate(new Date(demoEndsAtRaw)) })
+              : t("thanks")}
           </p>
 
           <Link
             href={localizedManageHref}
-            className="mt-2 inline-flex items-center gap-2 text-sm font-semibold text-white hover:text-white/90 transition-all group-hover:gap-3"
+            className="mt-2 inline-flex items-center gap-2 text-[15px] font-semibold text-white hover:text-white/90 transition-all group-hover:gap-3 active:scale-95"
           >
             {t("manage")}
             <Arrow className="h-4 w-4" />
@@ -206,29 +196,26 @@ export function SubscriptionBanner() {
     )
   }
 
-  // ---------------------------------------------------------
-  // WARNING / EXPIRED banner (keep your orange)
-  // ---------------------------------------------------------
+  // Warning/Expired banner
   return (
     <div
       dir={isRTL ? "rtl" : "ltr"}
-      className="relative overflow-hidden rounded-3xl bg-linear-to-br from-orange-50 via-orange-100 to-amber-100 p-5 md:p-6 text-slate-900 shadow-lg transition-all duration-300 hover:shadow-xl"
+      className="relative overflow-hidden rounded-3xl bg-linear-to-br from-orange-50 via-orange-100 to-amber-100 p-5 md:p-6 text-slate-900 shadow-lg transition-all duration-250 hover:shadow-xl"
     >
       <SubscriptionFeaturesDock items={dockItems} currentPlan={currentPlan} upgradeHref={localizedManageHref} />
 
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(255,255,255,0.7),transparent_55%)] blur-2xl opacity-70" />
-      <div className="absolute bottom-0 left-0 h-24 w-24 bg-orange-300/20 rounded-full blur-2xl translate-y-8 -translate-x-8" />
+      <div className="absolute inset-0 bg-linear-to-tr from-white/30 via-transparent to-white/30" />
 
       <div className="relative flex flex-col gap-4">
         <div className="flex items-center justify-between flex-wrap gap-2">
-          <div className="flex items-center gap-2 text-xs uppercase tracking-[0.25em] text-slate-700 font-semibold">
+          <div className="flex items-center gap-2 text-[11px] uppercase tracking-[0.24em] text-slate-700 font-semibold">
             <Sparkles className="h-4 w-4 text-slate-600" />
             {t("planInterval", { plan: planLabel, interval: intervalLabel })}
           </div>
 
           <div
             className={cn(
-              "inline-flex items-center gap-2 rounded-full px-3 md:px-4 py-1.5 text-xs font-bold backdrop-blur-sm shadow-sm",
+              "inline-flex items-center gap-2 rounded-full px-3 md:px-4 py-1.5 text-[13px] font-semibold backdrop-blur-sm shadow-sm",
               tone === "danger"
                 ? "bg-red-100 text-red-800 border border-red-200"
                 : "bg-orange-100 text-orange-800 border border-orange-200",
@@ -239,18 +226,18 @@ export function SubscriptionBanner() {
           </div>
         </div>
 
-        <p className="text-sm md:text-base font-bold leading-relaxed text-slate-900">{message}</p>
+        <p className="text-[15px] md:text-[17px] font-semibold leading-relaxed text-slate-900">{message}</p>
 
-        <div className="flex flex-wrap items-center gap-3 text-sm">
+        <div className="flex flex-wrap items-center gap-2">
           {typeof daysLeft === "number" && daysLeft >= 0 && (
-            <span className="rounded-full border border-slate-400/40 bg-white/80 px-3 md:px-4 py-1.5 text-xs font-bold uppercase tracking-[0.2em] text-slate-700 shadow-sm backdrop-blur-sm">
+            <span className="rounded-full border border-slate-400/40 bg-white/80 px-3 md:px-4 py-1.5 text-[13px] font-semibold uppercase tracking-[0.18em] text-slate-700 shadow-sm backdrop-blur-sm">
               {t("daysLeftBadge", { days: daysLeft })}
             </span>
           )}
 
           <Link
             href={localizedManageHref}
-            className="inline-flex items-center gap-2 rounded-full border border-slate-400/40 bg-white/90 px-4 md:px-5 py-1.5 text-sm font-bold backdrop-blur-sm shadow-sm transition-all hover:bg-white hover:shadow-md hover:scale-105"
+            className="inline-flex items-center gap-2 rounded-full border border-slate-400/40 bg-white/90 px-4 md:px-5 py-1.5 text-[15px] font-semibold backdrop-blur-sm shadow-sm transition-all hover:bg-white hover:shadow-md active:scale-95"
           >
             {t("manage")}
             <Arrow className="h-4 w-4" />

@@ -117,6 +117,7 @@ export default function PlansPage() {
     enabled: status === "authenticated" && Boolean(gymId),
     queryFn: async () => {
       const params = new URLSearchParams()
+      params.set("includeInactive", "true")
       if (variantFilter) {
         params.set("variantId", variantFilter)
       }

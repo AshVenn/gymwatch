@@ -51,6 +51,7 @@ export async function GET(request: NextRequest) {
     const role = (session.user as any).role as string | undefined
     const sessionVariantId = (session.user as any).gymVariantId as string | undefined
     const requestedVariantId = request.nextUrl.searchParams.get("variantId")
+    const includeInactive = request.nextUrl.searchParams.get("includeInactive") === "true"
 
     if (role === "GYM_ADMIN" && !sessionVariantId) {
       return NextResponse.json({ error: "Variant manquant" }, { status: 403 })
@@ -68,7 +69,7 @@ export async function GET(request: NextRequest) {
       gymVariantId = variant.id
     }
 
-    const plans = await db.getPlans(session.user.gymId as string, gymVariantId)
+    const plans = await db.getPlans(session.user.gymId as string, gymVariantId, includeInactive)
 
     return NextResponse.json(plans)
   } catch {

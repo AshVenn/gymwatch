@@ -530,9 +530,10 @@ export default function DashboardPage() {
               <p className="font-semibold">{t("multiVariant.title")}</p>
               <p>
                 {t.rich("multiVariant.body", {
+                  upgrade: t("multiVariant.upgrade"),
                   upgradeLink: (chunks) => (
                     <Link href="/dashboard/settings" className="font-semibold text-amber-900 underline">
-                      {t("multiVariant.upgrade")}
+                      {chunks}
                     </Link>
                   ),
                 })}

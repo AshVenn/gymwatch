@@ -159,7 +159,7 @@ export function SubscriptionBanner() {
       <div
         dir={isRTL ? "rtl" : "ltr"}
         className={cn(
-          "group relative overflow-hidden rounded-3xl p-5 md:p-6 shadow-lg transition-all duration-250 hover:shadow-xl active:scale-[0.995]",
+          "group relative overflow-hidden rounded-3xl p-5 md:p-6 shadow-lg transition-all duration-250 hover:shadow-xl active:scale-[0.995] backdrop-blur-2xl bg-white/10 ring-1 ring-white/20",
           planTheme.wrap,
         )}
       >
@@ -200,11 +200,16 @@ export function SubscriptionBanner() {
   return (
     <div
       dir={isRTL ? "rtl" : "ltr"}
-      className="relative overflow-hidden rounded-3xl bg-linear-to-br from-orange-50 via-orange-100 to-amber-100 p-5 md:p-6 text-slate-900 shadow-lg transition-all duration-250 hover:shadow-xl"
+      className={cn(
+        "relative overflow-hidden rounded-3xl p-5 md:p-6 text-slate-900 shadow-lg transition-all duration-250 hover:shadow-xl backdrop-blur-2xl bg-white/60 ring-1 ring-white/40",
+        tone === "danger"
+          ? "bg-linear-to-br from-rose-50 via-red-100 to-orange-100"
+          : "bg-linear-to-br from-amber-100 via-orange-200 to-rose-100",
+      )}
     >
       <SubscriptionFeaturesDock items={dockItems} currentPlan={currentPlan} upgradeHref={localizedManageHref} />
 
-      <div className="absolute inset-0 bg-linear-to-tr from-white/30 via-transparent to-white/30" />
+      <div className="absolute inset-0 bg-linear-to-tr from-white/45 via-transparent to-white/45" />
 
       <div className="relative flex flex-col gap-4">
         <div className="flex items-center justify-between flex-wrap gap-2">
@@ -218,7 +223,7 @@ export function SubscriptionBanner() {
               "inline-flex items-center gap-2 rounded-full px-3 md:px-4 py-1.5 text-[13px] font-semibold backdrop-blur-sm shadow-sm",
               tone === "danger"
                 ? "bg-red-100 text-red-800 border border-red-200"
-                : "bg-orange-100 text-orange-800 border border-orange-200",
+                : "bg-orange-500 text-white border border-orange-400/70",
             )}
           >
             {tone === "danger" ? <AlertTriangle className="h-4 w-4" /> : <CalendarClock className="h-4 w-4" />}

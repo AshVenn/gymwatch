@@ -2209,7 +2209,7 @@
     },
     "multiVariant": {
       "title": "Vue multi-salles réservée",
-      "body": "Votre plan actuel ne permet pas d’agréger plusieurs variantes. Choisissez une salle ou {upgradeLink} pour débloquer les exports consolidés.",
+      "body": "Votre plan actuel ne permet pas d’agréger plusieurs variantes. Choisissez une salle ou <upgradeLink>{upgrade}</upgradeLink> pour débloquer les exports consolidés.",
       "upgrade": "mettez à niveau"
     },
     "cards": {

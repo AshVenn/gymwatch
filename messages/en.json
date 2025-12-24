@@ -2204,7 +2204,7 @@
     },
     "multiVariant": {
       "title": "Multi-gym view restricted",
-      "body": "Your current plan can’t aggregate multiple variants. Select a gym or {upgradeLink} to unlock consolidated exports.",
+      "body": "Your current plan can’t aggregate multiple variants. Select a gym or <upgradeLink>{upgrade}</upgradeLink> to unlock consolidated exports.",
       "upgrade": "upgrade"
     },
     "cards": {

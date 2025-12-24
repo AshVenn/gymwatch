@@ -73,7 +73,7 @@ export function SubscriptionFeaturesDock({ items, currentPlan, upgradeHref, clas
       </div>
 
       {/* Mobile */}
-      <div className="md:hidden">
+      <div className={cn("absolute top-4 z-10 md:hidden", corner, className)}>
         <MobileFeaturesFab
           items={items}
           currentPlan={currentPlan}
@@ -203,7 +203,6 @@ function MobileFeaturesFab({
   disabledCount: number
 }) {
   const t = useTranslations("dashboard.featureAccess")
-  const fabSide = isRTL ? "left-4" : "right-4"
 
   return (
     <Sheet>
@@ -212,8 +211,6 @@ function MobileFeaturesFab({
           type="button"
           aria-label={t("modulesTitle")}
           className={cn(
-            "fixed bottom-4 z-50",
-            fabSide,
             "grid h-14 w-14 place-items-center rounded-2xl border border-border/40 bg-background/95 shadow-xl backdrop-blur-xl active:scale-95 transition-transform duration-200",
           )}
         >

@@ -93,7 +93,9 @@ export default async function FaqPage({ params }: FaqPageProps) {
 
             <div className="flex flex-wrap gap-3">
               <Button asChild className="transition-transform hover:scale-105 hover:shadow-lg">
-                <Link href="/request-demo">{t("cta.primaryCta")}</Link>
+                <Link locale={locale} href="/request-demo">
+                  {t("cta.primaryCta")}
+                </Link>
               </Button>
 
               {/* ✅ mailto must NOT use typed Link */}

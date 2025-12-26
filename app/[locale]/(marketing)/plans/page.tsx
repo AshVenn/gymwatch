@@ -153,10 +153,14 @@ export default async function PlansPage({ params }: PlansPageProps) {
 
           <div className="flex flex-wrap gap-3">
             <Button asChild className="hover:shadow-lg">
-              <Link href="/request-demo">{t("hero.primaryCta")}</Link>
+              <Link locale={locale} href="/request-demo">
+                {t("hero.primaryCta")}
+              </Link>
             </Button>
             <Button asChild variant="outline">
-              <Link href="/contact">{t("hero.secondaryCta")}</Link>
+              <Link locale={locale} href="/contact">
+                {t("hero.secondaryCta")}
+              </Link>
             </Button>
           </div>
         </section>
@@ -247,7 +251,9 @@ export default async function PlansPage({ params }: PlansPageProps) {
             </div>
 
             <Button asChild variant="ghost" className="text-primary underline-offset-4 hover:underline">
-              <Link href="/faqs">{t("faq.viewAll")}</Link>
+              <Link locale={locale} href="/faqs">
+                {t("faq.viewAll")}
+              </Link>
             </Button>
           </div>
 

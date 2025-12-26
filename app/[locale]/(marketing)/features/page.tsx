@@ -89,11 +89,15 @@ export default async function FeaturesPage({ params }: PageProps) {
 
           <div className="flex flex-wrap gap-3">
             <Button asChild className="transition-all duration-300 hover:scale-[1.02] hover:shadow-lg">
-              <Link href="/plans">{t("hero.actions.comparePlans")}</Link>
+              <Link locale={locale} href="/plans">
+                {t("hero.actions.comparePlans")}
+              </Link>
             </Button>
 
             <Button asChild variant="outline" className="transition-all duration-300 hover:bg-primary/5 bg-transparent">
-              <Link href="/contact">{t("hero.actions.talkToExpert")}</Link>
+              <Link locale={locale} href="/contact">
+                {t("hero.actions.talkToExpert")}
+              </Link>
             </Button>
           </div>
         </section>
@@ -183,10 +187,14 @@ export default async function FeaturesPage({ params }: PageProps) {
 
             <div className="flex shrink-0 flex-wrap gap-3">
               <Button asChild className="transition-all duration-300 hover:scale-[1.02] hover:shadow-lg">
-                <Link href="/request-demo">{t("cta.actions.requestDemo")}</Link>
+                <Link locale={locale} href="/request-demo">
+                  {t("cta.actions.requestDemo")}
+                </Link>
               </Button>
               <Button asChild variant="outline" className="transition-all duration-300 hover:bg-primary/5 bg-transparent">
-                <Link href="/plans">{t("cta.actions.viewPlans")}</Link>
+                <Link locale={locale} href="/plans">
+                  {t("cta.actions.viewPlans")}
+                </Link>
               </Button>
             </div>
           </div>

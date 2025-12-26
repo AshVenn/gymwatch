@@ -157,7 +157,7 @@ export default async function DocsPage({ params }: DocsPageProps) {
 
           <div className="flex flex-wrap gap-3">
             <Button asChild className="group hover:shadow-lg">
-              <Link href="/request-demo">
+              <Link locale={locale} href="/request-demo">
                 <span className="inline-flex items-center gap-2">
                   {t("hero.primaryCta")}
                   <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" aria-hidden />
@@ -166,7 +166,9 @@ export default async function DocsPage({ params }: DocsPageProps) {
             </Button>
 
             <Button asChild variant="outline" className="bg-transparent">
-              <Link href="/contact">{t("hero.secondaryCta")}</Link>
+              <Link locale={locale} href="/contact">
+                {t("hero.secondaryCta")}
+              </Link>
             </Button>
 
             {/* typed Link can't handle mailto */}
@@ -267,10 +269,14 @@ export default async function DocsPage({ params }: DocsPageProps) {
 
             <div className="flex shrink-0 flex-wrap gap-3">
               <Button asChild className="hover:shadow-lg">
-                <Link href="/request-demo">{t("bottom.primary")}</Link>
+                <Link locale={locale} href="/request-demo">
+                  {t("bottom.primary")}
+                </Link>
               </Button>
               <Button asChild variant="outline" className="bg-transparent">
-                <Link href="/features">{t("bottom.secondary")}</Link>
+                <Link locale={locale} href="/features">
+                  {t("bottom.secondary")}
+                </Link>
               </Button>
             </div>
           </div>

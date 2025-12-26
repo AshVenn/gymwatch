@@ -103,10 +103,14 @@ export default async function LicensesPage({ params }: LicensesPageProps) {
 
             <div className="flex flex-wrap gap-3">
               <Button asChild variant="secondary">
-                <Link href="/contact">{t("content.contactCta")}</Link>
+                <Link locale={locale} href="/contact">
+                  {t("content.contactCta")}
+                </Link>
               </Button>
               <Button asChild variant="outline" className="bg-transparent">
-                <Link href="/">{t("content.backHome")}</Link>
+                <Link locale={locale} href="/">
+                  {t("content.backHome")}
+                </Link>
               </Button>
             </div>
           </CardContent>

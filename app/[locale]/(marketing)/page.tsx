@@ -44,7 +44,7 @@ const getCachedPlanPricing = cache(async () => {
 })
 
 type HomePageProps = {
-  params: Promise<{ locale: string }>
+  params: Promise<{ locale: AppLocale }>
 }
 
 type StatItem = { value: string; label: string; detail: string }
@@ -67,7 +67,7 @@ export async function generateMetadata({ params }: HomePageProps): Promise<Metad
   const { locale } = await params
   setRequestLocale(locale)
 
-  return buildMarketingMetadata("home", locale as AppLocale)
+  return buildMarketingMetadata("home", locale)
 }
 
 export default async function HomePage({ params }: HomePageProps) {
@@ -232,7 +232,7 @@ export default async function HomePage({ params }: HomePageProps) {
                   size="lg"
                   className="group h-11 rounded-xl transition-all duration-200 hover:scale-[1.02] hover:shadow-md active:scale-[0.98]"
                 >
-                  <Link href="/request-demo">
+                  <Link locale={locale} href="/request-demo">
                     <span className="inline-flex items-center gap-2">
                       {t("hero.primaryCta")}
                       <ArrowRight
@@ -252,7 +252,9 @@ export default async function HomePage({ params }: HomePageProps) {
                   variant="outline"
                   className="h-11 rounded-xl border-border/60 bg-transparent backdrop-blur-sm transition-all duration-200 hover:scale-[1.02] hover:border-primary/30 hover:bg-primary/5 active:scale-[0.98]"
                 >
-                  <Link href="/login">{t("hero.secondaryCta")}</Link>
+                  <Link locale={locale} href="/login">
+                    {t("hero.secondaryCta")}
+                  </Link>
                 </Button>
               </div>
 
@@ -340,7 +342,9 @@ export default async function HomePage({ params }: HomePageProps) {
               variant="ghost"
               className="h-11 rounded-xl text-primary transition-colors hover:bg-primary/5"
             >
-              <Link href="/features">{t("sections.why.cta")}</Link>
+              <Link locale={locale} href="/features">
+                {t("sections.why.cta")}
+              </Link>
             </Button>
           </div>
 
@@ -383,7 +387,9 @@ export default async function HomePage({ params }: HomePageProps) {
               variant="outline"
               className="h-11 rounded-full border-border/60 bg-transparent backdrop-blur-sm transition-all duration-200 hover:scale-[1.02] hover:border-primary/30 hover:bg-primary/5"
             >
-              <Link href="/features">{t("sections.features.cta")}</Link>
+              <Link locale={locale} href="/features">
+                {t("sections.features.cta")}
+              </Link>
             </Button>
           </div>
 
@@ -523,7 +529,9 @@ export default async function HomePage({ params }: HomePageProps) {
               variant="ghost"
               className="h-11 rounded-xl text-primary transition-colors hover:bg-primary/5"
             >
-              <Link href="/faqs">{t("sections.faq.cta")}</Link>
+              <Link locale={locale} href="/faqs">
+                {t("sections.faq.cta")}
+              </Link>
             </Button>
           </div>
 
@@ -570,7 +578,9 @@ export default async function HomePage({ params }: HomePageProps) {
                   asChild
                   className="h-11 rounded-xl transition-all duration-200 hover:scale-[1.02] hover:shadow-md active:scale-[0.98]"
                 >
-                  <Link href="/request-demo">{t("sections.contact.primaryCta")}</Link>
+                  <Link locale={locale} href="/request-demo">
+                    {t("sections.contact.primaryCta")}
+                  </Link>
                 </Button>
 
                 <Button

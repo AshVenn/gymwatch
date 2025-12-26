@@ -56,7 +56,9 @@ export default async function RessourcesPage({ params }: RessourcesPageProps) {
           <p className="max-w-3xl text-lg text-muted-foreground">{t("hero.description")}</p>
 
           <Button asChild className="hover:shadow-lg">
-            <Link href="/request-demo">{t("hero.primaryCta")}</Link>
+            <Link locale={locale} href="/request-demo">
+              {t("hero.primaryCta")}
+            </Link>
           </Button>
         </section>
 
@@ -100,10 +102,14 @@ export default async function RessourcesPage({ params }: RessourcesPageProps) {
 
             <div className="flex flex-wrap gap-3">
               <Button asChild className="hover:shadow-lg">
-                <Link href="/features">{t("bottom.actions.features")}</Link>
+                <Link locale={locale} href="/features">
+                  {t("bottom.actions.features")}
+                </Link>
               </Button>
               <Button asChild variant="outline">
-                <Link href="/plans">{t("bottom.actions.plans")}</Link>
+                <Link locale={locale} href="/plans">
+                  {t("bottom.actions.plans")}
+                </Link>
               </Button>
             </div>
           </div>

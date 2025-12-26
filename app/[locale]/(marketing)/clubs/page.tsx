@@ -53,12 +53,14 @@ export default async function ClubsPage({ params }: ClubsPageProps) {
 
               <div className={cn("flex flex-wrap gap-3", isRtl ? "justify-end" : "justify-start")}>
                 <Link
+                  locale={appLocale}
                   href="/request-demo"
                   className="inline-flex items-center gap-2 rounded-xl bg-primary px-5 py-3 text-sm font-semibold text-primary-foreground shadow-lg transition hover:scale-[1.02] hover:shadow-xl"
                 >
                   {t("hero.primaryCta")}
                 </Link>
                 <Link
+                  locale={appLocale}
                   href="/contact"
                   className="inline-flex items-center gap-2 rounded-xl border border-border/60 px-5 py-3 text-sm font-semibold text-foreground transition hover:border-primary/40 hover:text-primary"
                 >

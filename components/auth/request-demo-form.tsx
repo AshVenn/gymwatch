@@ -1,7 +1,6 @@
 "use client"
 
 import { useEffect, useMemo } from "react"
-import { useRouter } from "next/navigation"
 import { useSession } from "next-auth/react"
 import { useForm } from "react-hook-form"
 import { z } from "zod"
@@ -10,7 +9,7 @@ import { useMutation } from "@tanstack/react-query"
 import { toast } from "sonner"
 import { Mail, MapPin, Phone, Shield, Sparkles, Clock3, BadgeCheck } from "lucide-react"
 
-import type { AppLocale } from "@/i18n/routing"
+import { useRouter, type AppLocale } from "@/i18n/routing"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
@@ -98,8 +97,8 @@ export default function RequestDemoForm({ locale, copy }: { locale: AppLocale; c
   const dirClass = locale === "ar" ? "rtl text-right" : "ltr text-left"
 
   useEffect(() => {
-    if (status === "authenticated") router.replace("/")
-  }, [router, status])
+    if (status === "authenticated") router.replace("/", { locale })
+  }, [router, status, locale])
 
   // ✅ ALL REQUIRED (including message)
   const schema = useMemo(() => {

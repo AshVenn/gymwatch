@@ -81,7 +81,9 @@ export default async function TermsPage({ params }: TermsPageProps) {
               <p>{t("sections.data.body")}</p>
               <div className="pt-2">
                 <Button asChild variant="outline" className="bg-transparent">
-                  <Link href="/privacy">{t("sections.data.cta")}</Link>
+                  <Link locale={locale} href="/privacy">
+                    {t("sections.data.cta")}
+                  </Link>
                 </Button>
               </div>
             </section>

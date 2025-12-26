@@ -343,6 +343,10 @@ export function MarketingNavbar({ links = [], className }: MarketingNavbarProps)
   }, [session?.user?.role])
 
 
+  const signOutRedirect =
+    routing.localePrefix === "always" || locale !== routing.defaultLocale ? `/${locale}` : "/"
+
+
 
   useEffect(() => {
 
@@ -560,7 +564,10 @@ export function MarketingNavbar({ links = [], className }: MarketingNavbarProps)
 
               <DropdownMenuContent align="end" className="w-52 rounded-xl border-border/70">
 
-                <DropdownMenuItem onClick={() => router.push(dashboardRoute as any)} className="rounded-lg transition-colors">
+                <DropdownMenuItem
+                  onClick={() => router.push(dashboardRoute as any, { locale })}
+                  className="rounded-lg transition-colors"
+                >
 
                   <LayoutDashboard className="mr-2 h-4 w-4" />
 
@@ -570,7 +577,7 @@ export function MarketingNavbar({ links = [], className }: MarketingNavbarProps)
 
                 <DropdownMenuItem
 
-                  onClick={() => signOut({ callbackUrl: "/" })}
+                  onClick={() => signOut({ callbackUrl: signOutRedirect })}
 
                   className="rounded-lg text-destructive transition-colors focus:text-destructive"
 
@@ -596,7 +603,7 @@ export function MarketingNavbar({ links = [], className }: MarketingNavbarProps)
 
                 size="sm"
 
-                onClick={() => router.push("/login")}
+                onClick={() => router.push("/login", { locale })}
 
                 className="rounded-xl transition-all hover:scale-105 hover:text-primary"
 
@@ -614,7 +621,7 @@ export function MarketingNavbar({ links = [], className }: MarketingNavbarProps)
 
                   size="sm"
 
-                  onClick={() => router.push("/request-demo")}
+                  onClick={() => router.push("/request-demo", { locale })}
 
                   className="rounded-xl shadow-md transition-all hover:scale-105 hover:shadow-lg"
 
@@ -738,7 +745,10 @@ export function MarketingNavbar({ links = [], className }: MarketingNavbarProps)
 
               <>
 
-                <Button className="w-full rounded-xl transition hover:scale-105" onClick={() => router.push("/request-demo")}>
+                <Button
+                  className="w-full rounded-xl transition hover:scale-105"
+                  onClick={() => router.push("/request-demo", { locale })}
+                >
 
                   {authCopy.requestDemo}
 
@@ -750,7 +760,7 @@ export function MarketingNavbar({ links = [], className }: MarketingNavbarProps)
 
                   className="w-full rounded-xl transition hover:text-primary"
 
-                  onClick={() => router.push("/login")}
+                  onClick={() => router.push("/login", { locale })}
 
                 >
 
@@ -770,7 +780,7 @@ export function MarketingNavbar({ links = [], className }: MarketingNavbarProps)
 
                   onClick={() => {
 
-                    router.push(dashboardRoute as any)
+                    router.push(dashboardRoute as any, { locale })
 
                     setMenuOpen(false)
 
@@ -792,7 +802,7 @@ export function MarketingNavbar({ links = [], className }: MarketingNavbarProps)
 
                     setMenuOpen(false)
 
-                    signOut({ callbackUrl: "/" })
+                    signOut({ callbackUrl: signOutRedirect })
 
                   }}
 

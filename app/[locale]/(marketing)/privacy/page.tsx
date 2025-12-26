@@ -61,7 +61,9 @@ export default async function PrivacyPage({ params }: PrivacyPageProps) {
 
           <div className="flex flex-wrap gap-3 pt-2">
             <Button asChild className="transition-all duration-300 hover:scale-[1.02] hover:shadow-lg">
-              <Link href="/request-demo">{t("hero.primaryCta")}</Link>
+              <Link locale={locale} href="/request-demo">
+                {t("hero.primaryCta")}
+              </Link>
             </Button>
             <Button asChild variant="outline" className="bg-transparent transition-all duration-300 hover:bg-primary/5">
               <a href={supportMailto}>{t("hero.secondaryCta")}</a>
@@ -210,7 +212,9 @@ export default async function PrivacyPage({ params }: PrivacyPageProps) {
                 <a href={supportMailto}>{t("sections.contact.actions.email")}</a>
               </Button>
               <Button asChild variant="outline" className="bg-transparent transition-all duration-300 hover:bg-primary/5">
-                <Link href="/contact">{t("sections.contact.actions.contactPage")}</Link>
+                <Link locale={locale} href="/contact">
+                  {t("sections.contact.actions.contactPage")}
+                </Link>
               </Button>
             </div>
           </CardContent>

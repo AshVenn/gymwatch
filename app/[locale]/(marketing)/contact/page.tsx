@@ -224,10 +224,14 @@ export default async function ContactPage({ params }: ContactPageProps) {
 
             <div className="flex shrink-0 flex-wrap gap-3">
               <Button asChild className="transition-all duration-300 hover:scale-[1.02] hover:shadow-lg">
-                <Link href="/request-demo">{t("bottom.actions.primary")}</Link>
+                <Link locale={locale} href="/request-demo">
+                  {t("bottom.actions.primary")}
+                </Link>
               </Button>
               <Button asChild variant="outline" className="bg-transparent transition-all duration-300 hover:bg-primary/5">
-                <Link href="/plans">{t("bottom.actions.secondary")}</Link>
+                <Link locale={locale} href="/plans">
+                  {t("bottom.actions.secondary")}
+                </Link>
               </Button>
             </div>
           </div>

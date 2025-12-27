@@ -3230,6 +3230,7 @@
       "selection": {
         "title": "Membres",
         "selected": "{count} sélectionné(s)",
+        "loaded": "{loaded} sur {total} chargés",
         "empty": "Sélectionnez des membres pour prévisualiser les badges."
       },
       "preview": {

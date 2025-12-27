@@ -321,6 +321,19 @@ export default function BadgeBuilderPage() {
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-700">
       <style jsx global>{`
         @media print {
+          body * {
+            visibility: hidden !important;
+          }
+          .badge-print-area,
+          .badge-print-area * {
+            visibility: visible !important;
+          }
+          .badge-print-area {
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 100%;
+          }
           .badge-builder-controls {
             display: none !important;
           }
@@ -382,6 +395,9 @@ export default function BadgeBuilderPage() {
           <CardHeader className="pb-3">
             <CardTitle className="text-base">{t("selection.title")}</CardTitle>
             <p className="text-xs text-muted-foreground">{t("selection.selected", { count: selectedIds.length })}</p>
+            <p className="text-xs text-muted-foreground">
+              {t("selection.loaded", { loaded: memberItems.length, total: totalItems })}
+            </p>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
@@ -545,84 +561,86 @@ export default function BadgeBuilderPage() {
                 </div>
               ) : (
                 <div className="space-y-8">
-                  {pages.map((pageMembers, pageIndex) => (
-                    <div
-                      key={`page-${pageIndex}`}
-                      className="badge-sheet mx-auto overflow-hidden rounded-2xl border border-border/60 bg-white shadow-sm"
-                      style={{
-                        width: `${pageWidthMm}mm`,
-                        height: `${pageHeightMm}mm`,
-                        padding: `${marginMm}mm`,
-                        pageBreakAfter: pageIndex < pages.length - 1 ? "always" : "auto",
-                      }}
-                    >
+                  <div className="badge-print-area space-y-8">
+                    {pages.map((pageMembers, pageIndex) => (
                       <div
-                        className="grid"
+                        key={`page-${pageIndex}`}
+                        className="badge-sheet mx-auto overflow-hidden rounded-2xl border border-border/60 bg-white shadow-sm"
                         style={{
-                          gridTemplateColumns: `repeat(${columns}, ${qrSizeMm}mm)`,
-                          columnGap: `${gapMm}mm`,
-                          rowGap: `${gapMm}mm`,
+                          width: `${pageWidthMm}mm`,
+                          height: `${pageHeightMm}mm`,
+                          padding: `${marginMm}mm`,
+                          pageBreakAfter: pageIndex < pages.length - 1 ? "always" : "auto",
                         }}
                       >
-                        {pageMembers.map((member) => {
-                          const name = `${member.firstName} ${member.lastName}`.trim()
-                          const qrUrl = qrMap[member.id]
-                          const isDragOver = dragOverId === member.id
-                          return (
-                            <div
-                              key={member.id}
-                              draggable={selectedMembers.length > 1}
-                              onDragStart={() => handleDragStart(member.id)}
-                              onDragOver={(event) => {
-                                event.preventDefault()
-                                setDragOverId(member.id)
-                              }}
-                              onDragLeave={() => setDragOverId(null)}
-                              onDrop={(event) => {
-                                event.preventDefault()
-                                handleDrop(member.id)
-                              }}
-                              onDragEnd={() => {
-                                setDraggingId(null)
-                                setDragOverId(null)
-                              }}
-                              className={cn(
-                                "flex flex-col items-center justify-start rounded-xl border border-transparent bg-white/90",
-                                isDragOver ? "border-primary/60 bg-primary/5" : "hover:border-border/60",
-                              )}
-                              style={{ width: `${qrSizeMm}mm` }}
-                            >
-                              <div className="badge-drag-handle flex w-full items-center justify-center text-[10px] text-muted-foreground">
-                                <GripVertical className="h-3.5 w-3.5" />
-                              </div>
+                        <div
+                          className="grid"
+                          style={{
+                            gridTemplateColumns: `repeat(${columns}, ${qrSizeMm}mm)`,
+                            columnGap: `${gapMm}mm`,
+                            rowGap: `${gapMm}mm`,
+                          }}
+                        >
+                          {pageMembers.map((member) => {
+                            const name = `${member.firstName} ${member.lastName}`.trim()
+                            const qrUrl = qrMap[member.id]
+                            const isDragOver = dragOverId === member.id
+                            return (
                               <div
-                                className="flex items-center justify-center"
-                                style={{ width: `${qrSizeMm}mm`, height: `${qrSizeMm}mm` }}
-                              >
-                                {qrUrl ? (
-                                  <img
-                                    src={qrUrl}
-                                    alt={name}
-                                    style={{ width: `${qrSizeMm}mm`, height: `${qrSizeMm}mm` }}
-                                  />
-                                ) : (
-                                  <div className="flex h-full w-full items-center justify-center text-[10px] text-muted-foreground">
-                                    {qrLoading ? "..." : "QR"}
-                                  </div>
+                                key={member.id}
+                                draggable={selectedMembers.length > 1}
+                                onDragStart={() => handleDragStart(member.id)}
+                                onDragOver={(event) => {
+                                  event.preventDefault()
+                                  setDragOverId(member.id)
+                                }}
+                                onDragLeave={() => setDragOverId(null)}
+                                onDrop={(event) => {
+                                  event.preventDefault()
+                                  handleDrop(member.id)
+                                }}
+                                onDragEnd={() => {
+                                  setDraggingId(null)
+                                  setDragOverId(null)
+                                }}
+                                className={cn(
+                                  "flex flex-col items-center justify-start rounded-xl border border-transparent bg-white/90",
+                                  isDragOver ? "border-primary/60 bg-primary/5" : "hover:border-border/60",
                                 )}
-                              </div>
-                              <div
-                                className="mt-1 text-center font-semibold"
-                                style={{ fontSize: `${nameSizeMm}mm` }}
+                                style={{ width: `${qrSizeMm}mm` }}
                               >
-                                {name}
+                                <div className="badge-drag-handle flex w-full items-center justify-center text-[10px] text-muted-foreground">
+                                  <GripVertical className="h-3.5 w-3.5" />
+                                </div>
+                                <div
+                                  className="flex items-center justify-center"
+                                  style={{ width: `${qrSizeMm}mm`, height: `${qrSizeMm}mm` }}
+                                >
+                                  {qrUrl ? (
+                                    <img
+                                      src={qrUrl}
+                                      alt={name}
+                                      style={{ width: `${qrSizeMm}mm`, height: `${qrSizeMm}mm` }}
+                                    />
+                                  ) : (
+                                    <div className="flex h-full w-full items-center justify-center text-[10px] text-muted-foreground">
+                                      {qrLoading ? "..." : "QR"}
+                                    </div>
+                                  )}
+                                </div>
+                                <div
+                                  className="mt-1 text-center font-semibold"
+                                  style={{ fontSize: `${nameSizeMm}mm` }}
+                                >
+                                  {name}
+                                </div>
                               </div>
-                            </div>
-                          )
-                        })}
+                            )
+                          })}
+                        </div>
                       </div>
-                    </div>
-                  ))}
+                    ))}
+                  </div>
                 </div>
               )}
             </CardContent>

@@ -3154,6 +3154,7 @@
       "selection": {
         "title": "الأعضاء",
         "selected": "{count} محدد",
+        "loaded": "تم تحميل {loaded} من {total}",
         "empty": "اختر أعضاء لعرض البطاقات."
       },
       "preview": {

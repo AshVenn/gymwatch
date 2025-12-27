@@ -3226,6 +3226,7 @@
       "selection": {
         "title": "Members",
         "selected": "{count} selected",
+        "loaded": "Loaded {loaded} of {total}",
         "empty": "Select members to preview badges."
       },
       "preview": {

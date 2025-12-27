@@ -51,8 +51,6 @@ export function PaginationControls({
   const t = useTranslations('pagination')
   const isRTL = locale === 'ar'
 
-  if (pageCount <= 1) return null
-
   const start = (page - 1) * pageSize + 1
   const end = Math.min(page * pageSize, totalItems ?? Infinity)
   const safeMaxButtons = Math.max(5, maxPageButtons)
@@ -79,6 +77,8 @@ export function PaginationControls({
     items.push(pageCount)
     return items
   }, [page, pageCount, safeMaxButtons, showPageNumbers, siblings])
+
+  if (pageCount <= 1) return null
 
   return (
     <div

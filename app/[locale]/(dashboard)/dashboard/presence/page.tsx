@@ -13,7 +13,6 @@ import { useVariantOptions } from "@/app/hooks/use-variants"
 import { VisitCharts } from "@/components/dashboard/visits/charts"
 import { VisitFilters } from "@/components/dashboard/visits/filters"
 import { VisitTable } from "@/components/dashboard/visits/visit-table"
-import { usePagination } from "@/components/dashboard/pagination-controls"
 import { VariantSelector } from "@/components/dashboard/variant-selector"
 import { QrScannerTools } from "@/components/dashboard/qr-scanner-tools"
 import { buildFeatureAccessItems, LockedFeatureState } from "@/components/dashboard/feature-access-grid"
@@ -49,6 +48,18 @@ type VisitAnalyticsResponse = {
     isOverMaxDuration: boolean
     sessionLimitMinutes?: number | null
   }>
+  openVisits: Array<{
+    id: string
+    memberId: string
+    memberName: string
+    variantId: string
+    variantName: string
+    checkIn: string
+    checkOut: string | null
+    durationMinutes: number
+    isOverMaxDuration: boolean
+    sessionLimitMinutes?: number | null
+  }>
   summary: {
     total: number
     uniqueMembers: number
@@ -62,6 +73,12 @@ type VisitAnalyticsResponse = {
   }
   range: { from: string; to: string; mode: VisitView }
   maxSessionMinutes: number | null
+  pagination: {
+    page: number
+    pageSize: number
+    pageCount: number
+    total: number
+  }
 }
 
 type MemberForVisit = {
@@ -127,6 +144,8 @@ export default function PresencePage() {
   const [from, setFrom] = useState<string>(lastWeekStr)
   const [to, setTo] = useState<string>(todayStr)
   const [search, setSearch] = useState<string>("")
+  const [visitPage, setVisitPage] = useState(1)
+  const visitPageSize = 12
 
   const [checkoutDialogOpen, setCheckoutDialogOpen] = useState(false)
   const [checkoutVisitId, setCheckoutVisitId] = useState<string>("")
@@ -186,7 +205,7 @@ export default function PresencePage() {
   })
 
   const visitsQuery = useQuery<VisitAnalyticsResponse>({
-    queryKey: ["visits", session?.user?.gymId, variantFilter, view, selectedDate, from, to, search],
+    queryKey: ["visits", session?.user?.gymId, variantFilter, view, selectedDate, from, to, search, visitPage],
     enabled: status === "authenticated" && hasPresence && !variantsLoading,
     queryFn: async () => {
       const params = new URLSearchParams()
@@ -201,7 +220,8 @@ export default function PresencePage() {
         if (to) params.set("to", to)
       }
 
-      params.set("limit", "180")
+      params.set("page", String(visitPage))
+      params.set("pageSize", String(visitPageSize))
 
       const response = await fetch(`/api/gym-team/visits?${params.toString()}`)
       const body = await response.json().catch(() => ({}))
@@ -222,9 +242,27 @@ export default function PresencePage() {
     [visitsQuery.data?.visits],
   )
 
-  const openVisits = useMemo(() => parsedVisits.filter((visit) => !visit.checkOut), [parsedVisits])
+  const parsedOpenVisits = useMemo(
+    () =>
+      (visitsQuery.data?.openVisits ?? []).map((visit) => ({
+        ...visit,
+        checkIn: new Date(visit.checkIn),
+        checkOut: visit.checkOut ? new Date(visit.checkOut) : null,
+        isOverMaxDuration: Boolean(visit.isOverMaxDuration),
+        sessionLimitMinutes: visit.sessionLimitMinutes ?? null,
+      })),
+    [visitsQuery.data?.openVisits],
+  )
+
+  const openVisits = useMemo(() => parsedOpenVisits.filter((visit) => !visit.checkOut), [parsedOpenVisits])
   const summary = visitsQuery.data?.summary ?? defaultSummary
   const charts = visitsQuery.data?.charts ?? { byHour: [], byDay: [], byVariant: [] }
+  const pagination = visitsQuery.data?.pagination ?? {
+    page: visitPage,
+    pageCount: 1,
+    pageSize: visitPageSize,
+    total: parsedVisits.length,
+  }
 
   const selectedOpenVisit = useMemo(
     () => openVisits.find((visit) => visit.id === checkoutVisitId) ?? null,
@@ -327,23 +365,19 @@ export default function PresencePage() {
     setSearch("")
   }
 
-  const visitPagination = usePagination(parsedVisits, 12)
+  useEffect(() => {
+    setVisitPage(1)
+  }, [view, selectedDate, from, to, search, variantFilter])
 
   const visitTablePagination = useMemo(
     () => ({
-      page: visitPagination.page,
-      pageCount: visitPagination.pageCount,
-      pageSize: visitPagination.pageSize,
-      totalItems: parsedVisits.length,
-      onPageChange: visitPagination.setPage,
+      page: pagination.page,
+      pageCount: pagination.pageCount,
+      pageSize: pagination.pageSize,
+      totalItems: pagination.total,
+      onPageChange: setVisitPage,
     }),
-    [
-      parsedVisits.length,
-      visitPagination.page,
-      visitPagination.pageCount,
-      visitPagination.pageSize,
-      visitPagination.setPage,
-    ],
+    [pagination.page, pagination.pageCount, pagination.pageSize, pagination.total],
   )
 
   const manualVisitOptions = useMemo(() => {
@@ -791,7 +825,7 @@ export default function PresencePage() {
         </CardContent>
       </Card>
 
-      <VisitTable visits={visitPagination.data} pagination={visitTablePagination} />
+      <VisitTable visits={parsedVisits} pagination={visitTablePagination} />
     </div>
   )
 }

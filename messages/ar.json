@@ -925,7 +925,7 @@
       }
     }
   },
-  "plans": {
+  "plansPage": {
     "metadata": {
       "title": "الخطط والأسعار | GymWatch",
       "description": "قارن خطط GymWatch (شهري/سنوي)، تعرّف على ما يتضمنه كل plan، وإجابات الأسئلة الشائعة حول التسعير.",
@@ -999,7 +999,7 @@
       }
     }
   },
-  "features": {
+  "featuresPage": {
     "metadata": {
       "title": "ميزات GymWatch",
       "description": "اكتشف GymWatch كنظام SaaS للنوادي الرياضية: نظرة متعددة الفروع، التحكم في الدخول، إدارة الاشتراكات والمدفوعات، وتقارير متقدمة.",
@@ -1120,6 +1120,71 @@
         "viewPlans": "عرض الخطط"
       }
     }
+  },
+    "superAdminMarketingPlans": {
+    "title": "محتوى خطط التسويق",
+    "subtitle": "إدارة محتوى الخطط المعروض في الصفحة الرئيسية وصفحة التسعير.",
+    "actions": {
+      "new": "خطة جديدة",
+      "edit": "تعديل",
+      "delete": "حذف",
+      "cancel": "إلغاء",
+      "create": "إنشاء الخطة",
+      "save": "حفظ التغييرات"
+    },
+    "dialog": {
+      "createTitle": "إنشاء خطة تسويقية",
+      "editTitle": "تعديل الخطة التسويقية"
+    },
+    "fields": {
+      "tier": "فئة الخطة",
+      "order": "الترتيب",
+      "locale": "اللغة",
+      "published": "منشورة",
+      "highlight": "مميزة",
+      "name": "الاسم",
+      "highlightLabel": "وسم التمييز",
+      "description": "الوصف",
+      "badges": "الشارات (واحدة في كل سطر)",
+      "features": "الميزات (واحدة في كل سطر)"
+    },
+    "placeholders": {
+      "name": "اسم الخطة",
+      "highlightLabel": "موصى بها",
+      "description": "وصف مختصر للخطة",
+      "badges": "دعم عبر البريد الإلكتروني",
+      "features": "إدارة الأعضاء"
+    },
+    "status": {
+      "published": "منشورة",
+      "draft": "مسودة",
+      "highlighted": "مميزة",
+      "normal": "عادية"
+    },
+    "translations": {
+      "title": "الترجمات",
+      "hint": "أضف محتوى الخطة لكل لغة. يمكن استخدام الإنجليزية كلغة احتياطية."
+    },
+    "table": {
+      "plan": "الخطة",
+      "status": "الحالة",
+      "order": "الترتيب",
+      "updated": "آخر تحديث",
+      "actions": "إجراءات"
+    },
+    "empty": {
+      "title": "لا توجد خطط تسويقية بعد",
+      "subtitle": "أنشئ محتوى الخطط لعرضه في صفحات التسعير."
+    },
+    "errors": {
+      "missingName": "أضف اسمًا مترجمًا واحدًا على الأقل."
+    },
+    "toasts": {
+      "created": "تم إنشاء الخطة التسويقية.",
+      "updated": "تم تحديث الخطة التسويقية.",
+      "deleted": "تم حذف الخطة التسويقية."
+    },
+    "confirmDelete": "هل تريد حذف هذه الخطة التسويقية؟"
   },
   "superAdminDemoRequestsPage": {
     "title": "طلبات النسخة التجريبية",
@@ -2747,6 +2812,7 @@
     "nav": {
       "dashboard": "لوحة التحكم",
       "members": "الأعضاء",
+      "badges": "البطاقات",
       "accessLogs": "سجلات الدخول",
       "presence": "الحضور",
       "classes": "الدروس",
@@ -3022,6 +3088,8 @@
           "variant": "الفرع",
           "status": "الحالة",
           "source": "المصدر",
+          "limit": "حد الجلسة",
+          "duration": "مدة الجلسة",
           "actions": "إجراءات"
         },
         "status": {
@@ -3045,6 +3113,62 @@
         "limitAlert": "تنبيه حد",
         "badge": "شارة",
         "delete": "حذف"
+      }
+    },
+    "badges": {
+      "title": "مصمم البطاقات",
+      "subtitle": "رتب شارات QR للأعضاء للطباعة.",
+      "locked": {
+        "title": "بطاقات QR غير متاحة",
+        "description": "طباعة البطاقات متاحة ابتداءً من خطة Pro."
+      },
+      "filters": {
+        "searchLabel": "بحث",
+        "searchPlaceholder": "ابحث عن عضو..."
+      },
+      "actions": {
+        "print": "طباعة البطاقات",
+        "printDisabled": "الطباعة غير متاحة",
+        "selectPage": "تحديد الصفحة",
+        "clear": "مسح التحديد",
+        "refresh": "تحديث القائمة",
+        "refreshing": "جارٍ التحديث..."
+      },
+      "layout": {
+        "title": "التخطيط",
+        "pageSize": "حجم الصفحة",
+        "orientation": "الاتجاه",
+        "margin": "الهوامش (مم)",
+        "qrSize": "حجم QR (مم)",
+        "gap": "المسافة (مم)",
+        "nameSize": "حجم الاسم (مم)"
+      },
+      "orientation": {
+        "portrait": "عمودي",
+        "landscape": "أفقي"
+      },
+      "pageSizeOptions": {
+        "a4": "A4",
+        "letter": "Letter"
+      },
+      "selection": {
+        "title": "الأعضاء",
+        "selected": "{count} محدد",
+        "empty": "اختر أعضاء لعرض البطاقات."
+      },
+      "preview": {
+        "title": "معاينة",
+        "helper": "اسحب لإعادة الترتيب. اطبع عند الجاهزية.",
+        "pages": "{count} صفحة"
+      },
+      "list": {
+        "selected": "محدد"
+      },
+      "status": {
+        "loading": "جارٍ تحميل الأعضاء...",
+        "empty": "لا يوجد أعضاء.",
+        "error": "تعذر تحميل الأعضاء.",
+        "unauthenticated": "الوصول مرفوض. يرجى تسجيل الدخول."
       }
     },
     "plans": {

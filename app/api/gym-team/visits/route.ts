@@ -30,8 +30,10 @@ export async function GET(request: NextRequest) {
   const params = request.nextUrl.searchParams
   const view = params.get("view") === "period" ? "period" : "day"
   const search = params.get("q")?.trim() ?? ""
-  const limitParam = Number(params.get("limit"))
-  const limit = Number.isFinite(limitParam) ? limitParam : 120
+  const pageParam = Number(params.get("page"))
+  const pageSizeParam = Number(params.get("pageSize") ?? params.get("limit"))
+  const page = Number.isFinite(pageParam) ? pageParam : 1
+  const pageSize = Number.isFinite(pageSizeParam) ? pageSizeParam : 120
 
   const requestedVariant = params.get("variantId")
   const variantAccess = await resolveVariantAccess({
@@ -103,7 +105,8 @@ export async function GET(request: NextRequest) {
       from,
       to,
       search: search || undefined,
-      limit,
+      page,
+      pageSize,
     })
 
     return NextResponse.json({

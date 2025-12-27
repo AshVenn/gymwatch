@@ -14,6 +14,9 @@ import {
   PLAN_PRICING,
 } from "@/lib/subscription-plans"
 import { getPlanPricing } from "@/lib/plan-settings"
+import { getPublishedMarketingPlans } from "@/lib/marketing-plans"
+
+export const revalidate = 60
 
 const getCachedPlanPricing = cache(async () => {
   try {
@@ -54,11 +57,37 @@ export default async function PlansPage({ params }: PlansPageProps) {
 
   const pricing = await getCachedPlanPricing()
 
-  let planCatalog = getPlanCatalogAsList(pricing)
-  try {
-    const tCatalog = await getTranslations({ locale, namespace: "subscriptionPlans" })
-    planCatalog = getPlanCatalogAsListLocalized(tCatalog, pricing)
-  } catch {
+  const marketingPlans = await getPublishedMarketingPlans(locale)
+  const marketingTiers = new Set(marketingPlans.map((plan) => plan.tier))
+
+  let planCatalog = marketingPlans.map((plan) => ({
+    tier: plan.tier,
+    name: plan.name,
+    description: plan.description ?? "",
+    highlight: plan.highlight,
+    highlightLabel: plan.highlightLabel,
+    badges: plan.badges ?? [],
+    features: plan.features ?? [],
+    monthlyPrice: pricing[plan.tier].MONTHLY,
+    annualPrice: pricing[plan.tier].ANNUAL,
+  }))
+
+  if (planCatalog.length === 0 || marketingTiers.size < 3) {
+    let fallbackCatalog = getPlanCatalogAsList(pricing)
+    try {
+      const tCatalog = await getTranslations({ locale, namespace: "subscriptionPlans" })
+      fallbackCatalog = getPlanCatalogAsListLocalized(tCatalog, pricing)
+    } catch {
+    }
+
+    if (marketingTiers.size < 3) {
+      planCatalog = [
+        ...planCatalog,
+        ...fallbackCatalog.filter((plan) => !marketingTiers.has(plan.tier)),
+      ]
+    } else {
+      planCatalog = fallbackCatalog
+    }
   }
 
   const currencyFormatter = new Intl.NumberFormat(
@@ -124,7 +153,7 @@ export default async function PlansPage({ params }: PlansPageProps) {
           ctaLabel={t("pricing.start")}
           ctaHref="/request-demo"
           isHighlighted={plan.highlight}
-          highlightLabel={plan.highlight ? t("pricing.recommended") : undefined}
+          highlightLabel={plan.highlightLabel ?? (plan.highlight ? t("pricing.recommended") : undefined)}
           showAnnualSavings={mode === "annual"}
           annualSavingsText={
             mode === "annual" ? t("pricing.saveAnnual", { discount: DEFAULT_ANNUAL_DISCOUNT }) : undefined

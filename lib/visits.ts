@@ -76,6 +76,7 @@ export type VisitRow = {
 
 export type VisitAnalytics = {
   visits: VisitRow[]
+  openVisits: VisitRow[]
   summary: {
     total: number
     uniqueMembers: number
@@ -93,6 +94,12 @@ export type VisitAnalytics = {
     mode: "day" | "period"
   }
   maxSessionMinutes: number | null
+  pagination: {
+    page: number
+    pageSize: number
+    pageCount: number
+    total: number
+  }
 }
 
 async function syncGymVisitorCounter(gymId: string, today: Date) {
@@ -438,6 +445,8 @@ export async function getVisitAnalytics({
   from,
   to,
   search,
+  page = 1,
+  pageSize,
   limit = 120,
 }: {
   gymId: string
@@ -447,6 +456,8 @@ export async function getVisitAnalytics({
   from?: Date
   to?: Date
   search?: string
+  page?: number
+  pageSize?: number
   limit?: number
 }): Promise<VisitAnalytics> {
   const now = new Date()
@@ -456,7 +467,10 @@ export async function getVisitAnalytics({
       ? startOfDay(date ?? now)
       : startOfDay(from ?? new Date(now.getTime() - 6 * 24 * 60 * 60 * 1000))
   const rangeEnd = viewMode === "day" ? endOfDay(date ?? now) : endOfDay(to ?? now)
-  const safeLimit = Math.min(Math.max(Math.floor(limit ?? 120), 1), 500)
+  const resolvedPageSize = typeof pageSize === "number" ? pageSize : limit
+  const safePageSize = Math.min(Math.max(Math.floor(resolvedPageSize ?? 120), 1), 500)
+  const safePage = Math.max(1, Math.floor(page ?? 1))
+  const skip = (safePage - 1) * safePageSize
 
   const where: Prisma.VisitWhereInput = {
     gymId,
@@ -475,11 +489,12 @@ export async function getVisitAnalytics({
       : {}),
   }
 
-  const [visits, totalVisits, distinctMembers, openVisits, chartVisits, variantGroups] = await Promise.all([
+  const [visits, totalVisits, distinctMembers, openVisitCount, chartVisits, variantGroups, openVisitEntries] = await Promise.all([
     prisma.visit.findMany({
       where,
       orderBy: { checkIn: "desc" },
-      take: safeLimit,
+      skip,
+      take: safePageSize,
       include: {
         member: {
           select: {
@@ -515,9 +530,31 @@ export async function getVisitAnalytics({
       where,
       _count: { _all: true },
     }),
+    prisma.visit.findMany({
+      where: {
+        gymId,
+        ...(variantId ? { gymVariantId: variantId } : {}),
+        checkOut: null,
+        checkIn: { gte: startOfDay(now) },
+      },
+      orderBy: { checkIn: "desc" },
+      include: {
+        member: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            email: true,
+            gymVariant: { select: { id: true, name: true } },
+          },
+        },
+      },
+    }),
   ])
 
-  const memberIds = Array.from(new Set(visits.map((visit) => visit.memberId)))
+  const memberIds = Array.from(
+    new Set([...visits.map((visit) => visit.memberId), ...openVisitEntries.map((visit) => visit.memberId)]),
+  )
   const sessionLimitResolver = await buildSessionLimitResolver({ gymId, memberIds })
   const detectedLimits = new Set<number>()
   const defaultLimit = sessionLimitResolver.variantLimit(variantId ?? null) ?? sessionLimitResolver.defaultLimit
@@ -591,15 +628,37 @@ export async function getVisitAnalytics({
     }
   })
 
+  const openRows: VisitRow[] = openVisitEntries.map((visit) => {
+    const memberName = `${visit.member.firstName} ${visit.member.lastName}`.trim()
+    const end = visit.checkOut ?? now
+    const durationMinutes = Math.max(0, Math.round((end.getTime() - visit.checkIn.getTime()) / 60000))
+    const sessionLimit = sessionLimitResolver.resolve(visit.memberId, visit.member.gymVariant?.id ?? visit.gymVariantId)
+    const isOverMaxDuration = sessionLimit !== null ? durationMinutes > sessionLimit : false
+    return {
+      id: visit.id,
+      memberId: visit.memberId,
+      memberName,
+      variantId: visit.member.gymVariant?.id ?? visit.gymVariantId,
+      variantName: visit.member.gymVariant?.name ?? "Salle",
+      checkIn: visit.checkIn,
+      checkOut: visit.checkOut,
+      durationMinutes,
+      isOverMaxDuration,
+      sessionLimitMinutes: sessionLimit,
+    }
+  })
+
   const uniqueLimit = detectedLimits.size === 1 ? Array.from(detectedLimits)[0] : null
   const resolvedMaxSessionMinutes = uniqueLimit ?? defaultLimit ?? null
+  const pageCount = Math.max(1, Math.ceil(totalVisits / safePageSize))
 
   return {
     visits: rows,
+    openVisits: openRows,
     summary: {
       total: totalVisits,
       uniqueMembers: distinctMembers.length,
-      currentInside: openVisits,
+      currentInside: openVisitCount,
       averageDurationMinutes,
     },
     charts: {
@@ -613,5 +672,11 @@ export async function getVisitAnalytics({
       mode: viewMode,
     },
     maxSessionMinutes: resolvedMaxSessionMinutes,
+    pagination: {
+      page: Math.min(safePage, pageCount),
+      pageSize: safePageSize,
+      pageCount,
+      total: totalVisits,
+    },
   }
 }

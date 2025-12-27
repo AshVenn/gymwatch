@@ -6,6 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge"
 import { PlanSettingsForm } from "@/components/superadmin/PlanSettingsForm"
 import { PlanModuleList } from "@/components/superadmin/gyms/PlanModules"
+import { MarketingPlansManager } from "@/components/superadmin/MarketingPlansManager"
 import { getPlanFeatures } from "@/lib/subscription-plans"
 
 export default function SuperAdminPlanSetupPage() {
@@ -63,6 +64,8 @@ export default function SuperAdminPlanSetupPage() {
           ))}
         </CardContent>
       </Card>
+
+      <MarketingPlansManager />
     </div>
   )
 }

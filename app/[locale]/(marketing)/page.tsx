@@ -34,6 +34,7 @@ import { getTranslations, setRequestLocale } from "next-intl/server"
 
 import { PlanCard } from "../../../components/pricing/plan-card"
 import { getPlanPricing } from "@/lib/plan-settings"
+import { getPublishedMarketingPlans } from "@/lib/marketing-plans"
 
 const getCachedPlanPricing = cache(async () => {
   try {
@@ -63,6 +64,8 @@ export function generateStaticParams() {
   return ["fr", "ar", "en"].map((locale) => ({ locale }))
 }
 
+export const revalidate = 60
+
 export async function generateMetadata({ params }: HomePageProps): Promise<Metadata> {
   const { locale } = await params
   setRequestLocale(locale)
@@ -78,12 +81,38 @@ export default async function HomePage({ params }: HomePageProps) {
 
   const pricing = await getCachedPlanPricing()
 
-  let planCatalog = getPlanCatalogAsList(pricing)
-  try {
-    const tCatalog = await getTranslations({ locale, namespace: "subscriptionPlans" })
-    planCatalog = getPlanCatalogAsListLocalized(tCatalog, pricing)
-  } catch {
-    // fallback
+  const marketingPlans = await getPublishedMarketingPlans(locale)
+  const marketingTiers = new Set(marketingPlans.map((plan) => plan.tier))
+
+  let planCatalog = marketingPlans.map((plan) => ({
+    tier: plan.tier,
+    name: plan.name,
+    description: plan.description ?? "",
+    highlight: plan.highlight,
+    highlightLabel: plan.highlightLabel,
+    badges: plan.badges ?? [],
+    features: plan.features ?? [],
+    monthlyPrice: pricing[plan.tier].MONTHLY,
+    annualPrice: pricing[plan.tier].ANNUAL,
+  }))
+
+  if (planCatalog.length === 0 || marketingTiers.size < 3) {
+    let fallbackCatalog = getPlanCatalogAsList(pricing)
+    try {
+      const tCatalog = await getTranslations({ locale, namespace: "subscriptionPlans" })
+      fallbackCatalog = getPlanCatalogAsListLocalized(tCatalog, pricing)
+    } catch {
+      // fallback
+    }
+
+    if (marketingTiers.size < 3) {
+      planCatalog = [
+        ...planCatalog,
+        ...fallbackCatalog.filter((plan) => !marketingTiers.has(plan.tier)),
+      ]
+    } else {
+      planCatalog = fallbackCatalog
+    }
   }
 
   const currencyFormatter = new Intl.NumberFormat(locale === "fr" ? "fr-MA" : locale === "ar" ? "ar-MA" : "en-US", {
@@ -159,26 +188,22 @@ export default async function HomePage({ params }: HomePageProps) {
           : t("plans.billing.monthlyHint")
 
       const tierKey = plan.tier.toLowerCase() as "basic" | "pro" | "enterprise"
-      const planName = t(`plans.catalog.${tierKey}.name`)
-      const planDescription = t(`plans.catalog.${tierKey}.description`)
-      const badges = (t.raw(`plans.catalog.${tierKey}.badges`) ?? []) as string[]
-      const planFeatures = (t.raw(`plans.catalog.${tierKey}.features`) ?? []) as string[]
 
       return (
         <PlanCard
           key={`${plan.tier}-${mode}`}
           tier={tierKey}
-          planName={planName}
-          description={planDescription}
+          planName={plan.name}
+          description={plan.description}
           price={price}
           priceLabel={currencyFormatter.format(price)}
           billingHint={billingHint}
-          badges={badges}
-          features={planFeatures}
+          badges={plan.badges}
+          features={plan.features}
           ctaLabel={t("plans.cta")}
           ctaHref="/request-demo"
           isHighlighted={plan.highlight}
-          highlightLabel={plan.highlight ? t("plans.recommended") : undefined}
+          highlightLabel={plan.highlightLabel ?? (plan.highlight ? t("plans.recommended") : undefined)}
           showAnnualSavings={mode === "annual"}
           annualSavingsText={
             mode === "annual" ? t("plans.billing.annualSave", { discount: DEFAULT_ANNUAL_DISCOUNT }) : undefined

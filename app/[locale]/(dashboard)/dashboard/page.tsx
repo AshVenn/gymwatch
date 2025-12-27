@@ -199,7 +199,9 @@ export default function DashboardPage() {
   const [expiringPage, setExpiringPage] = useState(1)
   useEffect(() => setExpiringPage(1), [expiringSoon.length])
 
+  const hideRevenueForAdmin = isGymAdmin
   const canViewRevenue = stats.canViewRevenue !== false
+  const showRevenue = canViewRevenue && !hideRevenueForAdmin
   const percentageChange = stats.percentageChange ?? 0
   const capacityValue =
     capacity.limit && capacity.limit > 0
@@ -247,7 +249,7 @@ export default function DashboardPage() {
     accent: string
     subtitle?: string
     }> = [
-    canViewRevenue
+    showRevenue
       ? {
           title: t("cards.monthlyRevenue.title"),
           value: t("cards.monthlyRevenue.value", { value: (stats.monthlyRevenue ?? 0).toLocaleString() }),
@@ -288,7 +290,7 @@ export default function DashboardPage() {
       accent: "from-amber-500/20 via-amber-500/10 to-amber-500/5",
       subtitle: t("cards.newMembers.subtitle"),
     },
-    canViewRevenue
+    showRevenue
       ? {
           title: t("cards.vsLastMonth.title"),
           value: t("cards.vsLastMonth.value", {
@@ -379,7 +381,7 @@ export default function DashboardPage() {
   ]
 
   const downloadExcel = async (type: "earnings" | "top-members" | "loyal-members") => {
-    if (type === "earnings" && !canViewRevenue) {
+    if (type === "earnings" && !showRevenue) {
       toast.error(t("errors.downloadNotAllowed"))
       return
     }
@@ -444,19 +446,21 @@ export default function DashboardPage() {
                 </Link>
               </Button>
 
-              <Button
-                variant="outline"
-                className="w-full rounded-2xl border-primary/40 bg-card/90 backdrop-blur-sm transition-all hover:scale-105 hover:bg-card sm:w-auto"
-                onClick={() => downloadExcel("earnings")}
-                disabled={!hasExcelReports || downloading === "earnings" || !canViewRevenue}
-              >
-                <Download className="mr-2 h-4 w-4" />
-                {hasExcelReports
-                  ? downloading === "earnings"
-                    ? t("hero.exporting")
-                    : t("hero.exportRevenue")
-                  : t("hero.exportPro")}
-              </Button>
+              {!hideRevenueForAdmin ? (
+                <Button
+                  variant="outline"
+                  className="w-full rounded-2xl border-primary/40 bg-card/90 backdrop-blur-sm transition-all hover:scale-105 hover:bg-card sm:w-auto"
+                  onClick={() => downloadExcel("earnings")}
+                  disabled={!hasExcelReports || downloading === "earnings" || !canViewRevenue}
+                >
+                  <Download className="mr-2 h-4 w-4" />
+                  {hasExcelReports
+                    ? downloading === "earnings"
+                      ? t("hero.exporting")
+                      : t("hero.exportRevenue")
+                    : t("hero.exportPro")}
+                </Button>
+              ) : null}
             </div>
           </div>
 
@@ -467,7 +471,7 @@ export default function DashboardPage() {
               <span className="text-lg font-semibold">{stats.activeMembers.toLocaleString()}</span>
             </div>
 
-            {canViewRevenue ? (
+            {showRevenue ? (
               <div className="flex items-center justify-between text-sm">
                 <span className="text-muted-foreground">{t("miniStats.monthlyRevenue")}</span>
                 <span className="text-lg font-semibold">{stats.monthlyRevenue.toLocaleString()} MAD</span>
@@ -479,16 +483,18 @@ export default function DashboardPage() {
               <span className="text-lg font-semibold">{stats.todayVisitorCount.toLocaleString()}</span>
             </div>
 
-            <div className="flex items-center justify-between rounded-xl bg-linear-to-rrom-muted/70 to-muted/50 px-3 py-2 text-sm backdrop-blur-sm">
-              <span className="flex items-center gap-2 font-semibold">
-                <TrendingUp className={`h-4 w-4 ${percentageChange >= 0 ? "text-emerald-500" : "text-red-500"}`} />
-                {percentageChange >= 0 ? t("miniStats.up") : t("miniStats.down")}
-              </span>
-              <span className={`font-bold ${percentageChange >= 0 ? "text-emerald-600" : "text-red-600"}`}>
-                {percentageChange >= 0 ? "+" : ""}
-                {percentageChange}%
-              </span>
-            </div>
+            {showRevenue ? (
+              <div className="flex items-center justify-between rounded-xl bg-linear-to-rrom-muted/70 to-muted/50 px-3 py-2 text-sm backdrop-blur-sm">
+                <span className="flex items-center gap-2 font-semibold">
+                  <TrendingUp className={`h-4 w-4 ${percentageChange >= 0 ? "text-emerald-500" : "text-red-500"}`} />
+                  {percentageChange >= 0 ? t("miniStats.up") : t("miniStats.down")}
+                </span>
+                <span className={`font-bold ${percentageChange >= 0 ? "text-emerald-600" : "text-red-600"}`}>
+                  {percentageChange >= 0 ? "+" : ""}
+                  {percentageChange}%
+                </span>
+              </div>
+            ) : null}
           </div>
         </div>
       </div>
@@ -568,18 +574,18 @@ export default function DashboardPage() {
             </CardContent>
           </Card>
 
-          <Card className="rounded-2xl border border-border/60 bg-card/80 backdrop-blur-sm shadow-sm">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">{t("dailySummary.revenueTitle")}</CardTitle>
-              <BarChart3 className="h-4 w-4 text-primary" />
-            </CardHeader>
-            <CardContent className="space-y-1">
-              <div className="text-3xl font-bold">{revenueTodayLabel}</div>
-              <p className="text-xs text-muted-foreground">
-                {t("dailySummary.revenueHint")}
-              </p>
-            </CardContent>
-          </Card>
+          {showRevenue ? (
+            <Card className="rounded-2xl border border-border/60 bg-card/80 backdrop-blur-sm shadow-sm">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">{t("dailySummary.revenueTitle")}</CardTitle>
+                <BarChart3 className="h-4 w-4 text-primary" />
+              </CardHeader>
+              <CardContent className="space-y-1">
+                <div className="text-3xl font-bold">{revenueTodayLabel}</div>
+                <p className="text-xs text-muted-foreground">{t("dailySummary.revenueHint")}</p>
+              </CardContent>
+            </Card>
+          ) : null}
 
           <Card className="rounded-2xl border border-border/60 bg-card/80 backdrop-blur-sm shadow-sm">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -647,8 +653,8 @@ export default function DashboardPage() {
       </div>
 
       {/* Charts */}
-      <div className={`grid gap-4 ${canViewRevenue ? "lg:grid-cols-3" : "lg:grid-cols-1"}`}>
-        {canViewRevenue && (
+      <div className={`grid gap-4 ${showRevenue ? "lg:grid-cols-3" : "lg:grid-cols-1"}`}>
+        {showRevenue && (
           <Card className="lg:col-span-2 overflow-hidden rounded-3xl border border-border/60 bg-card/90 shadow-md backdrop-blur-sm">
             <CardHeader className="pb-0">
               <div className="flex items-center justify-between gap-3">
@@ -858,7 +864,7 @@ export default function DashboardPage() {
         <CardContent>
           {hasExcelReports ? (
             <div className="flex flex-wrap gap-3">
-              {canViewRevenue && (
+              {showRevenue && (
                 <Button
                   variant="secondary"
                   className="rounded-2xl"

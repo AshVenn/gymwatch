@@ -1935,6 +1935,71 @@
       "ENTERPRISE": "Enterprise"
     }
   },
+  "superAdminMarketingPlans": {
+    "title": "Marketing plan content",
+    "subtitle": "Manage the plan copy shown on the home and pricing pages.",
+    "actions": {
+      "new": "New plan",
+      "edit": "Edit",
+      "delete": "Delete",
+      "cancel": "Cancel",
+      "create": "Create plan",
+      "save": "Save changes"
+    },
+    "dialog": {
+      "createTitle": "Create marketing plan",
+      "editTitle": "Edit marketing plan"
+    },
+    "fields": {
+      "tier": "Plan tier",
+      "order": "Order",
+      "locale": "Locale",
+      "published": "Published",
+      "highlight": "Highlight",
+      "name": "Name",
+      "highlightLabel": "Highlight label",
+      "description": "Description",
+      "badges": "Badges (one per line)",
+      "features": "Features (one per line)"
+    },
+    "placeholders": {
+      "name": "Plan name",
+      "highlightLabel": "Recommended",
+      "description": "Short plan description",
+      "badges": "Support email",
+      "features": "Member management"
+    },
+    "status": {
+      "published": "Published",
+      "draft": "Draft",
+      "highlighted": "Highlighted",
+      "normal": "Normal"
+    },
+    "translations": {
+      "title": "Translations",
+      "hint": "Add the plan copy per locale. English can be used as a fallback."
+    },
+    "table": {
+      "plan": "Plan",
+      "status": "Status",
+      "order": "Order",
+      "updated": "Updated",
+      "actions": "Actions"
+    },
+    "empty": {
+      "title": "No marketing plans yet",
+      "subtitle": "Create the plan content to populate pricing pages."
+    },
+    "errors": {
+      "missingName": "Add at least one translation name."
+    },
+    "toasts": {
+      "created": "Marketing plan created.",
+      "updated": "Marketing plan updated.",
+      "deleted": "Marketing plan deleted."
+    },
+    "confirmDelete": "Delete this marketing plan?"
+  },
   "superAdminDemoRequests": {
     "header": {
       "title": "Demo requests",
@@ -2996,6 +3061,7 @@
     "nav": {
       "dashboard": "Dashboard",
       "members": "Members",
+      "badges": "Badges",
       "accessLogs": "Access logs",
       "presence": "Presence",
       "classes": "Classes",
@@ -3094,6 +3160,8 @@
           "variant": "Location",
           "status": "Status",
           "source": "Source",
+          "limit": "Session limit",
+          "duration": "Session duration",
           "actions": "Actions"
         },
         "status": {
@@ -3117,6 +3185,62 @@
         "limitAlert": "Limit alert",
         "badge": "Badge",
         "delete": "Delete"
+      }
+    },
+    "badges": {
+      "title": "Badge builder",
+      "subtitle": "Arrange member QR badges on printable sheets.",
+      "locked": {
+        "title": "QR badges unavailable",
+        "description": "Badge printing is available from the Pro plan."
+      },
+      "filters": {
+        "searchLabel": "Search",
+        "searchPlaceholder": "Search members..."
+      },
+      "actions": {
+        "print": "Print badges",
+        "printDisabled": "Printing unavailable",
+        "selectPage": "Select page",
+        "clear": "Clear selection",
+        "refresh": "Refresh list",
+        "refreshing": "Refreshing..."
+      },
+      "layout": {
+        "title": "Layout",
+        "pageSize": "Page size",
+        "orientation": "Orientation",
+        "margin": "Margins (mm)",
+        "qrSize": "QR size (mm)",
+        "gap": "Gap (mm)",
+        "nameSize": "Name size (mm)"
+      },
+      "orientation": {
+        "portrait": "Portrait",
+        "landscape": "Landscape"
+      },
+      "pageSizeOptions": {
+        "a4": "A4",
+        "letter": "Letter"
+      },
+      "selection": {
+        "title": "Members",
+        "selected": "{count} selected",
+        "empty": "Select members to preview badges."
+      },
+      "preview": {
+        "title": "Preview",
+        "helper": "Drag badges to reorder. Print when ready.",
+        "pages": "{count} page(s)"
+      },
+      "list": {
+        "selected": "Selected"
+      },
+      "status": {
+        "loading": "Loading members...",
+        "empty": "No members found.",
+        "error": "Unable to load members.",
+        "unauthenticated": "Access denied. Please sign in."
       }
     },
     "plans": {

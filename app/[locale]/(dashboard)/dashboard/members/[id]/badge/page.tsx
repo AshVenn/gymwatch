@@ -11,6 +11,7 @@ import { AlertTriangle, ArrowLeft, Copy, Download, QrCode, RefreshCw, ShieldChec
 import { useTranslations, useLocale } from 'next-intl'
 
 import { AccessLogTable, type AccessLogRow } from '@/components/dashboard/access-logs/table'
+import { buildLabeledQrDataUrl } from '@/components/dashboard/qr-utils'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -218,10 +219,16 @@ export default function MemberBadgePage() {
     )
   }
 
-  const handleDownload = () => {
+  const handleDownload = async () => {
     if (!qrImage) return
     const anchor = document.createElement('a')
-    anchor.href = qrImage
+    const label = `${member?.firstName ?? ''} ${member?.lastName ?? ''}`.trim()
+    try {
+      const dataUrl = await buildLabeledQrDataUrl(qrImage, label)
+      anchor.href = dataUrl
+    } catch {
+      anchor.href = qrImage
+    }
     anchor.download = `${member?.firstName ?? 'member'}-${member?.lastName ?? ''}-qr.png`
     anchor.click()
   }
@@ -369,6 +376,9 @@ export default function MemberBadgePage() {
                     {t('qr.generating')}
                   </p>
                 )}
+                <p className="text-sm font-semibold">
+                  {member.firstName} {member.lastName}
+                </p>
                 <div className="flex flex-wrap items-center justify-center gap-2">
                   <Button variant="outline" size="sm" onClick={handleCopy}>
                     <Copy className="mr-2 h-4 w-4" />

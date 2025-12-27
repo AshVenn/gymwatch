@@ -145,6 +145,188 @@ async function upsertPlans() {
   return byTier
 }
 
+async function upsertMarketingPlans() {
+  const entries = [
+    {
+      tier: GymPlanTier.BASIC,
+      order: 0,
+      highlight: false,
+      translations: {
+        en: {
+          name: 'Basic',
+          description: 'Core member and subscription management for one club.',
+          highlightLabel: null,
+          badges: ['Member management', 'Payments tracking'],
+          features: [
+            'Member and subscription management',
+            'Payments and invoices tracking',
+            'Visit history and basic dashboards',
+            'Single club setup',
+          ],
+        },
+        fr: {
+          name: 'Basic',
+          description: 'Gestion de base des membres et abonnements pour un seul club.',
+          highlightLabel: null,
+          badges: ['Gestion des membres', 'Suivi des paiements'],
+          features: [
+            'Gestion des membres et abonnements',
+            'Suivi des paiements et factures',
+            'Historique des visites et tableaux de bord essentiels',
+            'Configuration mono-salle',
+          ],
+        },
+        ar: {
+          name: 'أساسي',
+          description: 'إدارة أساسية للأعضاء والاشتراكات لنادٍ واحد.',
+          highlightLabel: null,
+          badges: ['إدارة الأعضاء', 'متابعة المدفوعات'],
+          features: [
+            'إدارة الأعضاء والاشتراكات',
+            'متابعة المدفوعات والفواتير',
+            'سجل الزيارات ولوحات تحكم أساسية',
+            'إعداد نادي واحد',
+          ],
+        },
+      },
+    },
+    {
+      tier: GymPlanTier.PRO,
+      order: 1,
+      highlight: false,
+      translations: {
+        en: {
+          name: 'Pro',
+          description: 'QR access control, attendance tracking, and advanced exports.',
+          highlightLabel: null,
+          badges: ['QR access', 'Excel exports'],
+          features: [
+            'Everything in Basic',
+            'QR access control and scanner tools',
+            'Real-time attendance tracking',
+            'Excel exports for revenue and retention',
+            'QR code downloads',
+          ],
+        },
+        fr: {
+          name: 'Pro',
+          description: 'Contrôle d’accès QR, suivi de présence et exports avancés.',
+          highlightLabel: null,
+          badges: ['Accès QR', 'Exports Excel'],
+          features: [
+            'Tout le plan Basic',
+            'Contrôle d’accès QR et outils de scan',
+            'Suivi de présence en temps réel',
+            'Exports Excel revenus et fidélité',
+            'Téléchargement des QR codes',
+          ],
+        },
+        ar: {
+          name: 'احترافي',
+          description: 'دخول QR، تتبع الحضور، وتقارير متقدمة.',
+          highlightLabel: null,
+          badges: ['دخول QR', 'تقارير Excel'],
+          features: [
+            'كل ما في الخطة الأساسية',
+            'التحكم بالدخول عبر QR وأدوات المسح',
+            'تتبع الحضور في الوقت الفعلي',
+            'تصدير Excel للإيرادات والاحتفاظ',
+            'تنزيل رموز QR',
+          ],
+        },
+      },
+    },
+    {
+      tier: GymPlanTier.ENTERPRISE,
+      order: 2,
+      highlight: true,
+      translations: {
+        en: {
+          name: 'Enterprise',
+          description: 'Multi-site operations with courses, advanced analytics, and full controls.',
+          highlightLabel: 'Enterprise',
+          badges: ['Multi-site', 'Courses', 'Advanced analytics'],
+          features: [
+            'Everything in Pro',
+            'Multi-site management and permissions',
+            'Courses and scheduling',
+            'Advanced access rules and capacity monitoring',
+            'Consolidated analytics across sites',
+          ],
+        },
+        fr: {
+          name: 'Enterprise',
+          description: 'Multi-sites avec cours, analytics avancés et contrôles complets.',
+          highlightLabel: 'Enterprise',
+          badges: ['Multi-sites', 'Cours', 'Analytics avancés'],
+          features: [
+            'Tout le plan Pro',
+            'Gestion multi-sites et permissions',
+            'Cours et planning',
+            'Règles d’accès avancées et suivi des capacités',
+            'Analytics consolidés multi-sites',
+          ],
+        },
+        ar: {
+          name: 'مؤسسات',
+          description: 'إدارة متعددة المواقع مع الدورات وتحليلات متقدمة.',
+          highlightLabel: 'مؤسسات',
+          badges: ['متعدد المواقع', 'الدورات', 'تحليلات متقدمة'],
+          features: [
+            'كل ما في الخطة الاحترافية',
+            'إدارة متعددة المواقع والصلاحيات',
+            'الدورات والجدولة',
+            'قواعد دخول متقدمة ومتابعة السعة',
+            'تحليلات مجمعة عبر المواقع',
+          ],
+        },
+      },
+    },
+  ]
+
+  for (const entry of entries) {
+    const plan = await prisma.marketingPlan.upsert({
+      where: { tier: entry.tier },
+      update: {
+        order: entry.order,
+        isPublished: true,
+        highlight: entry.highlight,
+      },
+      create: {
+        tier: entry.tier,
+        order: entry.order,
+        isPublished: true,
+        highlight: entry.highlight,
+        },
+      })
+
+    const locales = Object.keys(entry.translations || {})
+    for (const locale of locales) {
+      const translation = entry.translations[locale]
+      if (!translation || !translation.name) continue
+      await prisma.marketingPlanTranslation.upsert({
+        where: { planId_locale: { planId: plan.id, locale } },
+        update: {
+          name: translation.name,
+          description: translation.description,
+          highlightLabel: translation.highlightLabel,
+          badges: translation.badges,
+          features: translation.features,
+        },
+        create: {
+          planId: plan.id,
+          locale,
+          name: translation.name,
+          description: translation.description,
+          highlightLabel: translation.highlightLabel,
+          badges: translation.badges,
+          features: translation.features,
+        },
+      })
+    }
+  }
+}
+
 async function attachTenantPlan(gym, planRecord, options = {}) {
   const id = `tenant-plan-${gym.id}`
   return prisma.tenantPlan.upsert({
@@ -672,6 +854,7 @@ async function runSeed() {
   })
 
   const planCatalog = await upsertPlans()
+  await upsertMarketingPlans()
 
   // Super admin (KEEP SAME PASSWORD)
   const adminPassword = await hashPassword('Admin123!')
@@ -1117,15 +1300,19 @@ async function runSeed() {
   await seedAccessEntry({ gym: gym2, variantsById, member: members2[0], attemptAt: buildDate(base, -1, 19, 0), durationMinutes: 55, checkout: true, source: AccessEventSource.QR_SCAN })
   // This one stays checked-in (open session)
   await seedAccessEntry({ gym: gym2, variantsById, member: members2[1], attemptAt: buildDate(base, -2, 12, 0), durationMinutes: 150, checkout: false, source: AccessEventSource.SIMULATOR })
+  await seedAccessEntry({ gym: gym2, variantsById, member: members2[3], attemptAt: buildDate(base, -3, 18, 15), durationMinutes: 65, checkout: true, source: AccessEventSource.MANUAL })
 
   // Enterprise entries
   await seedAccessEntry({ gym: enterpriseGym, variantsById, member: enterpriseMembers[0], attemptAt: buildDate(base, 0, 7, 0), durationMinutes: 60, checkout: true, source: AccessEventSource.QR_SCAN })
   // Overstay candidate (duration bigger than limits) => SESSION_OVERSTAY will be logged after checkout
   await seedAccessEntry({ gym: enterpriseGym, variantsById, member: enterpriseMembers[1], attemptAt: buildDate(base, -1, 18, 0), durationMinutes: 260, checkout: true, source: AccessEventSource.QR_SCAN })
+  await seedAccessEntry({ gym: enterpriseGym, variantsById, member: enterpriseMembers[2], attemptAt: buildDate(base, -2, 9, 30), durationMinutes: 70, checkout: true, source: AccessEventSource.SIMULATOR })
+  await seedAccessEntry({ gym: enterpriseGym, variantsById, member: enterpriseMembers[4], attemptAt: buildDate(base, -3, 14, 0), durationMinutes: 90, checkout: true, source: AccessEventSource.MANUAL })
 
   // Demo entries
   await seedAccessEntry({ gym: demoGym, variantsById, member: membersDemo[0], attemptAt: buildDate(base, -1, 10, 0), durationMinutes: 75, checkout: true, source: AccessEventSource.SIMULATOR })
   await seedAccessEntry({ gym: demoGym, variantsById, member: membersDemo[2], attemptAt: buildDate(base, 0, 7, 0), durationMinutes: 60, checkout: false, source: AccessEventSource.QR_SCAN })
+  await seedAccessEntry({ gym: demoGym, variantsById, member: membersDemo[1], attemptAt: buildDate(base, -2, 16, 0), durationMinutes: 65, checkout: true, source: AccessEventSource.QR_SCAN })
 
   // Extra logs for analytics & pagination
   await seedAccessEntry({ gym: gym1, variantsById, member: members1[2], attemptAt: buildDate(base, -3, 17, 30), durationMinutes: 95, checkout: true, source: AccessEventSource.MANUAL })

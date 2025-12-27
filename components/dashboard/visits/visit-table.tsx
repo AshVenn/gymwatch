@@ -182,6 +182,7 @@ export function VisitTable({ visits, maxSessionMinutes, pagination }: VisitTable
             onPageChange={pagination.onPageChange}
             pageSize={pagination.pageSize}
             totalItems={pagination.totalItems}
+            showPageNumbers
           />
         ) : null}
       </CardContent>

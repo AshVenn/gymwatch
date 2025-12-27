@@ -33,6 +33,8 @@ interface PaginationControlsProps {
   pageSize?: number
   totalItems?: number
   className?: string
+  showPageNumbers?: boolean
+  maxPageButtons?: number
 }
 
 export function PaginationControls({
@@ -42,6 +44,8 @@ export function PaginationControls({
   totalItems,
   pageSize = 10,
   className,
+  showPageNumbers = false,
+  maxPageButtons = 5,
 }: PaginationControlsProps) {
   const locale = useLocale()
   const t = useTranslations('pagination')
@@ -51,6 +55,30 @@ export function PaginationControls({
 
   const start = (page - 1) * pageSize + 1
   const end = Math.min(page * pageSize, totalItems ?? Infinity)
+  const safeMaxButtons = Math.max(5, maxPageButtons)
+  const siblings = Math.max(1, Math.floor((safeMaxButtons - 3) / 2))
+
+  const pageItems = useMemo(() => {
+    if (!showPageNumbers) return []
+    if (pageCount <= safeMaxButtons) {
+      return Array.from({ length: pageCount }, (_, idx) => idx + 1)
+    }
+
+    const items: Array<number | 'ellipsis'> = []
+    const startPage = Math.max(2, page - siblings)
+    const endPage = Math.min(pageCount - 1, page + siblings)
+
+    items.push(1)
+
+    if (startPage > 2) items.push('ellipsis')
+    for (let current = startPage; current <= endPage; current += 1) {
+      items.push(current)
+    }
+    if (endPage < pageCount - 1) items.push('ellipsis')
+
+    items.push(pageCount)
+    return items
+  }, [page, pageCount, safeMaxButtons, showPageNumbers, siblings])
 
   return (
     <div
@@ -76,6 +104,29 @@ export function PaginationControls({
         >
           {t('prev')}
         </Button>
+
+        {showPageNumbers ? (
+          <div className="flex items-center gap-1">
+            {pageItems.map((item, index) =>
+              item === 'ellipsis' ? (
+                <span key={`ellipsis-${index}`} className="px-2 text-muted-foreground">
+                  ...
+                </span>
+              ) : (
+                <Button
+                  key={item}
+                  variant={item === page ? 'secondary' : 'outline'}
+                  size="sm"
+                  className="h-8 w-8 px-0"
+                  aria-current={item === page ? 'page' : undefined}
+                  onClick={() => onPageChange(item)}
+                >
+                  {item}
+                </Button>
+              ),
+            )}
+          </div>
+        ) : null}
 
         <Button
           variant="outline"

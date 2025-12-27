@@ -41,6 +41,7 @@ import { usePlanFeatures } from "@/app/hooks/use-plan-features"
 import { useVariantOptions } from "@/app/hooks/use-variants"
 import { VariantSelector } from "@/components/dashboard/variant-selector"
 import { buildQrUrl, extractQrToken } from "@/lib/qr"
+import { buildLabeledQrDataUrl } from "@/components/dashboard/qr-utils"
 
 const Scanner = dynamic<IScannerProps>(() => import("@yudiel/react-qr-scanner").then((mod) => mod.Scanner), {
   ssr: false,
@@ -612,10 +613,16 @@ export default function MembersPage() {
     }
   }
 
-  const downloadQrImage = () => {
+  const downloadQrImage = async () => {
     if (!qrMember || !qrImage) return
     const anchor = document.createElement("a")
-    anchor.href = qrImage
+    const label = `${qrMember.firstName} ${qrMember.lastName}`.trim()
+    try {
+      const dataUrl = await buildLabeledQrDataUrl(qrImage, label)
+      anchor.href = dataUrl
+    } catch {
+      anchor.href = qrImage
+    }
     anchor.download = `${qrMember.firstName}-${qrMember.lastName}-qr.png`
     anchor.click()
   }
@@ -1497,6 +1504,11 @@ export default function MembersPage() {
             ) : (
               <p className="text-sm text-muted-foreground">{t("qr.dialog.loading")}</p>
             )}
+            {qrMember ? (
+              <p className="text-sm font-semibold text-foreground">
+                {qrMember.firstName} {qrMember.lastName}
+              </p>
+            ) : null}
             {qrMember && (
               <p className="text-xs text-muted-foreground break-all">
                 {t("qr.dialog.tokenLabel", {

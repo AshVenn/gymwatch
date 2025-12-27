@@ -12,7 +12,10 @@ const updateSchema = z.object({
   phone: z.string().optional().or(z.literal("").transform(() => undefined)),
 })
 
-export async function GET(_request: NextRequest, { params }: any) {
+export async function GET(
+  _request: NextRequest,
+  { params }: { params: Promise<{ memberId: string | string[] }> },
+) {
   try {
     const session = await getServerSession(authOptions)
 
@@ -25,7 +28,7 @@ export async function GET(_request: NextRequest, { params }: any) {
       return NextResponse.json({ error: "Variant manquant" }, { status: 403 })
     }
 
-    const rawId = params.memberId
+    const rawId = (await params).memberId
     const memberId = Array.isArray(rawId) ? rawId[0] : rawId
 
     const member = await prisma.member.findFirst({
@@ -73,7 +76,10 @@ export async function GET(_request: NextRequest, { params }: any) {
   }
 }
 
-export async function PUT(request: NextRequest, { params }: any) {
+export async function PUT(
+  request: NextRequest,
+  { params }: { params: Promise<{ memberId: string | string[] }> },
+) {
   try {
     const session = await getServerSession(authOptions)
 
@@ -86,7 +92,7 @@ export async function PUT(request: NextRequest, { params }: any) {
       return NextResponse.json({ error: "Variant manquant" }, { status: 403 })
     }
 
-    const rawId = params.memberId
+    const rawId = (await params).memberId
     const memberId = Array.isArray(rawId) ? rawId[0] : rawId
 
     const payload = updateSchema.parse(await request.json())
@@ -120,7 +126,10 @@ export async function PUT(request: NextRequest, { params }: any) {
   }
 }
 
-export async function DELETE(_request: NextRequest, { params }: any) {
+export async function DELETE(
+  _request: NextRequest,
+  { params }: { params: Promise<{ memberId: string | string[] }> },
+) {
   try {
     const session = await getServerSession(authOptions)
 
@@ -133,7 +142,7 @@ export async function DELETE(_request: NextRequest, { params }: any) {
       return NextResponse.json({ error: "Variant manquant" }, { status: 403 })
     }
 
-    const rawId = params.memberId
+    const rawId = (await params).memberId
     const memberId = Array.isArray(rawId) ? rawId[0] : rawId
 
     const member = await prisma.member.findFirst({

@@ -553,3 +553,33 @@ model PartnerClubTranslation {
   @@unique([partnerId, locale])
   @@index([locale])
 }
+
+model MarketingPlan {
+  id          String   @id @default(cuid())
+  tier        GymPlanTier
+  order       Int      @default(0)
+  isPublished Boolean  @default(true)
+  highlight   Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  translations MarketingPlanTranslation[]
+
+  @@unique([tier])
+}
+
+model MarketingPlanTranslation {
+  id            Int           @id @default(autoincrement())
+  planId        String
+  plan          MarketingPlan @relation(fields: [planId], references: [id], onDelete: Cascade)
+  locale        String
+  name          String
+  description   String?
+  highlightLabel String?
+  badges        String[]      @default([])
+  features      String[]      @default([])
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  @@unique([planId, locale])
+  @@index([locale])
+}

@@ -196,6 +196,14 @@ export type PartnerTranslation = {
   description?: string
 }
 
+export type MarketingPlanTranslation = {
+  name?: string
+  description?: string
+  highlightLabel?: string
+  badges?: string[]
+  features?: string[]
+}
+
 export interface PartnerClubAdmin {
   id: string
   slug: string
@@ -228,6 +236,25 @@ export type PartnerClubInput = {
   order?: number
   isPublished?: boolean
   translations?: Partial<Record<AppLocale, PartnerTranslation>>
+}
+
+export interface MarketingPlanAdmin {
+  id: string
+  tier: GymPlanTier
+  order: number
+  isPublished: boolean
+  highlight: boolean
+  translations: Partial<Record<AppLocale, MarketingPlanTranslation>>
+  createdAt?: string
+  updatedAt?: string
+}
+
+export type MarketingPlanInput = {
+  tier?: GymPlanTier
+  order?: number
+  isPublished?: boolean
+  highlight?: boolean
+  translations?: Partial<Record<AppLocale, MarketingPlanTranslation>>
 }
 
 async function fetchJSON<T>(input: string | URL, init?: RequestInit): Promise<T> {
@@ -409,6 +436,65 @@ export function useUploadPartnerAsset() {
         method: 'POST',
         body: formData,
       })
+    },
+    onError: (error: Error) => {
+      toast.error(error.message)
+    },
+  })
+}
+
+export function useMarketingPlans() {
+  return useQuery<MarketingPlanAdmin[]>({
+    queryKey: ['super-admin', 'marketing-plans'],
+    queryFn: () => fetchJSON('/api/super-admin/marketing-plans'),
+  })
+}
+
+export function useCreateMarketingPlan() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async (payload: MarketingPlanInput) =>
+      fetchJSON('/api/super-admin/marketing-plans', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['super-admin', 'marketing-plans'] })
+    },
+    onError: (error: Error) => {
+      toast.error(error.message)
+    },
+  })
+}
+
+export function useUpdateMarketingPlan() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async (payload: { planId: string; data: MarketingPlanInput }) =>
+      fetchJSON(`/api/super-admin/marketing-plans/${payload.planId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload.data),
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['super-admin', 'marketing-plans'] })
+    },
+    onError: (error: Error) => {
+      toast.error(error.message)
+    },
+  })
+}
+
+export function useDeleteMarketingPlan() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async (planId: string) =>
+      fetchJSON(`/api/super-admin/marketing-plans/${planId}`, {
+        method: 'DELETE',
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['super-admin', 'marketing-plans'] })
     },
     onError: (error: Error) => {
       toast.error(error.message)

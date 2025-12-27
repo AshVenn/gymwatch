@@ -1122,6 +1122,71 @@
       }
     }
   },
+    "superAdminMarketingPlans": {
+    "title": "Contenu des plans marketing",
+    "subtitle": "Gérez le contenu des plans affichés sur la page d’accueil et la page des tarifs.",
+    "actions": {
+      "new": "Nouveau plan",
+      "edit": "Modifier",
+      "delete": "Supprimer",
+      "cancel": "Annuler",
+      "create": "Créer le plan",
+      "save": "Enregistrer les modifications"
+    },
+    "dialog": {
+      "createTitle": "Créer un plan marketing",
+      "editTitle": "Modifier le plan marketing"
+    },
+    "fields": {
+      "tier": "Niveau du plan",
+      "order": "Ordre",
+      "locale": "Langue",
+      "published": "Publié",
+      "highlight": "Mis en avant",
+      "name": "Nom",
+      "highlightLabel": "Libellé de mise en avant",
+      "description": "Description",
+      "badges": "Badges (un par ligne)",
+      "features": "Fonctionnalités (une par ligne)"
+    },
+    "placeholders": {
+      "name": "Nom du plan",
+      "highlightLabel": "Recommandé",
+      "description": "Courte description du plan",
+      "badges": "Support par e-mail",
+      "features": "Gestion des membres"
+    },
+    "status": {
+      "published": "Publié",
+      "draft": "Brouillon",
+      "highlighted": "Mis en avant",
+      "normal": "Normal"
+    },
+    "translations": {
+      "title": "Traductions",
+      "hint": "Ajoutez le contenu du plan par langue. L’anglais peut être utilisé comme langue de secours."
+    },
+    "table": {
+      "plan": "Plan",
+      "status": "Statut",
+      "order": "Ordre",
+      "updated": "Mis à jour",
+      "actions": "Actions"
+    },
+    "empty": {
+      "title": "Aucun plan marketing pour le moment",
+      "subtitle": "Créez le contenu des plans pour alimenter les pages de tarification."
+    },
+    "errors": {
+      "missingName": "Ajoutez au moins un nom traduit."
+    },
+    "toasts": {
+      "created": "Plan marketing créé.",
+      "updated": "Plan marketing mis à jour.",
+      "deleted": "Plan marketing supprimé."
+    },
+    "confirmDelete": "Supprimer ce plan marketing ?"
+  },
   "superAdminDemoRequestsPage": {
     "title": "Demandes de démo",
     "subtitle": "Validez les demandes et provisionnez des comptes démo.",
@@ -2823,6 +2888,7 @@
     "nav": {
       "dashboard": "Tableau de bord",
       "members": "Membres",
+      "badges": "Badges",
       "accessLogs": "Journaux d'accès",
       "presence": "Présence",
       "classes": "Cours",
@@ -3098,6 +3164,8 @@
           "variant": "Variante",
           "status": "Statut",
           "source": "Source",
+          "limit": "Limite de session",
+          "duration": "Durée de session",
           "actions": "Actions"
         },
         "status": {
@@ -3121,6 +3189,62 @@
         "limitAlert": "Alerte limite",
         "badge": "Badge",
         "delete": "Supprimer"
+      }
+    },
+    "badges": {
+      "title": "Générateur de badges",
+      "subtitle": "Organisez les QR codes des membres pour l'impression.",
+      "locked": {
+        "title": "Badges QR indisponibles",
+        "description": "L'impression des badges est disponible à partir du plan Pro."
+      },
+      "filters": {
+        "searchLabel": "Recherche",
+        "searchPlaceholder": "Rechercher des membres..."
+      },
+      "actions": {
+        "print": "Imprimer les badges",
+        "printDisabled": "Impression indisponible",
+        "selectPage": "Sélectionner la page",
+        "clear": "Vider la sélection",
+        "refresh": "Actualiser la liste",
+        "refreshing": "Actualisation..."
+      },
+      "layout": {
+        "title": "Mise en page",
+        "pageSize": "Format de page",
+        "orientation": "Orientation",
+        "margin": "Marges (mm)",
+        "qrSize": "Taille du QR (mm)",
+        "gap": "Espacement (mm)",
+        "nameSize": "Taille du nom (mm)"
+      },
+      "orientation": {
+        "portrait": "Portrait",
+        "landscape": "Paysage"
+      },
+      "pageSizeOptions": {
+        "a4": "A4",
+        "letter": "Lettre"
+      },
+      "selection": {
+        "title": "Membres",
+        "selected": "{count} sélectionné(s)",
+        "empty": "Sélectionnez des membres pour prévisualiser les badges."
+      },
+      "preview": {
+        "title": "Aperçu",
+        "helper": "Glissez pour réordonner. Imprimez quand c'est prêt.",
+        "pages": "{count} page(s)"
+      },
+      "list": {
+        "selected": "Sélectionné"
+      },
+      "status": {
+        "loading": "Chargement des membres...",
+        "empty": "Aucun membre trouvé.",
+        "error": "Impossible de charger les membres.",
+        "unauthenticated": "Accès refusé. Merci de vous connecter."
       }
     },
     "plans": {

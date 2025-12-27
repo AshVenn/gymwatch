@@ -2,7 +2,7 @@
 
 import type React from "react"
 
-import { Activity, Calendar, CalendarClock, KeyRound, Layers, LayoutGrid, Settings, Users } from "lucide-react"
+import { Activity, Calendar, CalendarClock, KeyRound, Layers, LayoutGrid, QrCode, Settings, Users } from "lucide-react"
 import { usePlanFeatures } from "@/app/hooks/use-plan-features"
 import { DashboardShell, type NavigationItem, UserRole } from "@/components/dashboard/dashboard-shell"
 import { SubscriptionBanner } from "@/components/dashboard/subscription-banner"
@@ -15,6 +15,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const navigationItems: NavigationItem[] = [
     { href: "/dashboard", label: tNav("dashboard"), icon: LayoutGrid },
     { href: "/dashboard/members", label: tNav("members"), icon: Users },
+    { href: "/dashboard/badges", label: tNav("badges"), icon: QrCode },
     { href: "/dashboard/subscriptions", label: tNav("subscriptions"), icon: Calendar },
     { href: "/dashboard/access-logs", label: tNav("accessLogs"), icon: KeyRound },
     { href: "/dashboard/presence", label: tNav("presence"), icon: Activity },

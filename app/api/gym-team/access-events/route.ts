@@ -71,7 +71,7 @@ export async function GET(request: NextRequest) {
   const pageRaw = Number(params.get("page"))
   const page = Number.isFinite(pageRaw) && pageRaw > 0 ? Math.floor(pageRaw) : 1
   const pageSizeRaw = Number(params.get("pageSize"))
-  const pageSize = Number.isFinite(pageSizeRaw) ? Math.min(Math.max(Math.floor(pageSizeRaw), 1), 200) : 12
+  const pageSize = Number.isFinite(pageSizeRaw) ? Math.min(Math.max(Math.floor(pageSizeRaw), 1), 200) : 10
   const skip = (page - 1) * pageSize
 
   const variantAccess = await resolveVariantAccess({
@@ -157,9 +157,53 @@ export async function GET(request: NextRequest) {
 
     const memberIds = Array.from(new Set(events.map((event) => event.memberId).filter(Boolean)))
     const sessionLimitResolver = await buildSessionLimitResolver({ gymId, memberIds })
-    const detectedLimits = new Set<number>()
+    const sessionLimitByEvent = new Map<string, number | null>()
+    const limitValues: number[] = []
 
-    let overdueMembers: Set<string> | null = null
+    for (const event of events) {
+      const limit = sessionLimitResolver.resolve(event.memberId, event.member?.gymVariant?.id ?? null)
+      sessionLimitByEvent.set(event.id, limit)
+      if (typeof limit === "number") {
+        limitValues.push(limit)
+      }
+    }
+
+    const checkoutEvents = events.filter(
+      (event) =>
+        Boolean(event.memberId) &&
+        [AccessEventStatus.CHECKED_OUT, AccessEventStatus.SESSION_OVERSTAY].includes(event.status),
+    )
+
+    const checkoutDurations = new Map<string, number>()
+    if (checkoutEvents.length) {
+      await Promise.all(
+        checkoutEvents.map(async (event) => {
+          if (!event.memberId) return
+          const memberVariantId = event.member?.gymVariant?.id ?? null
+          const visit = await prisma.visit.findFirst({
+            where: {
+              gymId,
+              memberId: event.memberId,
+              ...(memberVariantId ? { gymVariantId: memberVariantId } : {}),
+              checkOut: { lte: event.createdAt },
+            },
+            orderBy: { checkOut: "desc" },
+            select: { checkIn: true, checkOut: true },
+          })
+
+          if (visit?.checkOut) {
+            const durationMinutes = Math.max(
+              0,
+              Math.round((visit.checkOut.getTime() - visit.checkIn.getTime()) / 60000),
+            )
+            checkoutDurations.set(event.id, durationMinutes)
+          }
+        }),
+      )
+    }
+
+    const openSessionDurations = new Map<string, number>()
+    const overdueMembers = new Set<string>()
 
     if (memberIds.length) {
       const openVisits = await prisma.visit.findMany({
@@ -173,30 +217,47 @@ export async function GET(request: NextRequest) {
       })
 
       const now = new Date()
-      overdueMembers = new Set(
-        openVisits
-          .filter((visit) => {
-            const limit = sessionLimitResolver.resolve(visit.memberId, visit.gymVariantId)
-            if (limit !== null) {
-              detectedLimits.add(limit)
-            }
-            return limit !== null && (now.getTime() - visit.checkIn.getTime()) / 60000 > limit
-          })
-          .map((visit) => visit.memberId),
-      )
+      openVisits.forEach((visit) => {
+        const durationMinutes = Math.max(
+          0,
+          Math.round((now.getTime() - visit.checkIn.getTime()) / 60000),
+        )
+        openSessionDurations.set(visit.memberId, durationMinutes)
+        const limit = sessionLimitResolver.resolve(visit.memberId, visit.gymVariantId)
+        if (limit !== null && durationMinutes > limit) {
+          overdueMembers.add(visit.memberId)
+        }
+      })
     }
 
-    const decoratedEvents = events.map((event) => ({
-      ...event,
-      sessionOverdue:
-        event.status === AccessEventStatus.SESSION_OVERSTAY || Boolean(overdueMembers?.has(event.memberId)),
-    }))
+    const seenOpenSessionMembers = new Set<string>()
+    const decoratedEvents = events.map((event) => {
+      const memberId = event.memberId
+      const sessionLimitMinutes = sessionLimitByEvent.get(event.id) ?? null
+      let sessionDurationMinutes = checkoutDurations.get(event.id) ?? null
 
-    const uniqueLimit = detectedLimits.size === 1 ? Array.from(detectedLimits)[0] : null
-    const resolvedLimit =
-      uniqueLimit ?? sessionLimitResolver.variantLimit(variantId ?? null) ?? sessionLimitResolver.defaultLimit ?? null
+      if (
+        sessionDurationMinutes === null &&
+        memberId &&
+        openSessionDurations.has(memberId) &&
+        !seenOpenSessionMembers.has(memberId) &&
+        [AccessEventStatus.GRANTED, AccessEventStatus.ALREADY_CHECKED_IN].includes(event.status)
+      ) {
+        sessionDurationMinutes = openSessionDurations.get(memberId) ?? null
+        seenOpenSessionMembers.add(memberId)
+      }
 
-    return NextResponse.json({ events: decoratedEvents, maxSessionMinutes: resolvedLimit, total, page, pageSize })
+      return {
+        ...event,
+        sessionLimitMinutes,
+        sessionDurationMinutes,
+        sessionOverdue: event.status === AccessEventStatus.SESSION_OVERSTAY || overdueMembers.has(event.memberId),
+      }
+    })
+
+    const maxSessionMinutes = limitValues.length ? Math.max(...limitValues) : null
+
+    return NextResponse.json({ events: decoratedEvents, maxSessionMinutes, total, page, pageSize })
   } catch (error) {
     console.error("[access-events][get]", error)
     return NextResponse.json({ error: "Impossible de charger les acces" }, { status: 500 })

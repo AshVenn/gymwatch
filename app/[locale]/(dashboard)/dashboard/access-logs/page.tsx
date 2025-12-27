@@ -141,7 +141,7 @@ export default function AccessLogsPage() {
       if (from) params.set("from", from)
       if (to) params.set("to", to)
       params.set("page", page.toString())
-      params.set("pageSize", "12")
+      params.set("pageSize", "10")
 
       const response = await fetch(`/api/gym-team/access-events?${params.toString()}`)
       const body = await response.json().catch(() => ({}))
@@ -153,7 +153,7 @@ export default function AccessLogsPage() {
           typeof body.maxSessionMinutes === "number" && body.maxSessionMinutes > 0 ? body.maxSessionMinutes : null,
         total: typeof body.total === "number" ? body.total : 0,
         page: typeof body.page === "number" ? body.page : 1,
-        pageSize: typeof body.pageSize === "number" ? body.pageSize : 12,
+        pageSize: typeof body.pageSize === "number" ? body.pageSize : 10,
       }
     },
   })
@@ -180,7 +180,7 @@ export default function AccessLogsPage() {
   const events = useMemo(() => accessLogsQuery.data?.events ?? [], [accessLogsQuery.data?.events])
   const sessionLimit = accessLogsQuery.data?.maxSessionMinutes ?? null
   const totalEvents = accessLogsQuery.data?.total ?? events.length
-  const pageSizeFromApi = accessLogsQuery.data?.pageSize ?? 12
+  const pageSizeFromApi = accessLogsQuery.data?.pageSize ?? 10
   const pageCount = Math.max(1, Math.ceil(totalEvents / pageSizeFromApi))
 
   useEffect(() => {

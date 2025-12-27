@@ -63,6 +63,8 @@ export type AccessLogRow = {
   source: AccessEventSource
   createdAt: string
   sessionOverdue?: boolean
+  sessionLimitMinutes?: number | null
+  sessionDurationMinutes?: number | null
   member?: {
     id: string
     firstName: string
@@ -131,6 +133,8 @@ export function AccessLogTable({ events, onDelete, deletingId }: AccessLogTableP
             <TableHead>{t('columns.variant')}</TableHead>
             <TableHead>{t('columns.status')}</TableHead>
             <TableHead>{t('columns.source')}</TableHead>
+            <TableHead>{t('columns.limit')}</TableHead>
+            <TableHead>{t('columns.duration')}</TableHead>
             <TableHead className="text-right">{t('columns.actions')}</TableHead>
           </TableRow>
         </TableHeader>
@@ -148,6 +152,14 @@ export function AccessLogTable({ events, onDelete, deletingId }: AccessLogTableP
               event.status === AccessEventStatus.DENIED_FORBIDDEN ||
               event.status === AccessEventStatus.DENIED_EXPIRED ||
               event.status === AccessEventStatus.DENIED_INACTIVE
+            const limitLabel =
+              typeof event.sessionLimitMinutes === 'number' ? `${event.sessionLimitMinutes} min` : 'N/A'
+            const durationLabel =
+              typeof event.sessionDurationMinutes === 'number' ? `${event.sessionDurationMinutes} min` : '-'
+            const durationOver =
+              typeof event.sessionLimitMinutes === 'number' &&
+              typeof event.sessionDurationMinutes === 'number' &&
+              event.sessionDurationMinutes > event.sessionLimitMinutes
 
             return (
               <TableRow key={event.id} className={cn(flagged ? 'bg-destructive/5' : undefined)}>
@@ -198,6 +210,10 @@ export function AccessLogTable({ events, onDelete, deletingId }: AccessLogTableP
                   >
                     {sourceLabel}
                   </Badge>
+                </TableCell>
+                <TableCell className="text-xs text-muted-foreground">{limitLabel}</TableCell>
+                <TableCell className={cn('text-xs text-muted-foreground', durationOver && 'text-destructive font-semibold')}>
+                  {durationLabel}
                 </TableCell>
                 <TableCell className="text-right">
                   <div className="flex justify-end gap-2">

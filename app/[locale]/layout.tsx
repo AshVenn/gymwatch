@@ -18,6 +18,7 @@ type LocaleLayoutProps = {
 }
 
 const siteUrl = 'https://www.gymwatch.ma'
+const googleVerificationToken = process.env.GOOGLE_SITE_VERIFICATION?.trim()
 
 function normalizeLocale(locale: string): AppLocale {
   const supported = routing.locales.find((value) => value === locale) as AppLocale | undefined
@@ -46,6 +47,12 @@ export async function generateMetadata({ params }: LocaleLayoutProps): Promise<M
     .split(',')
     .map((k) => k.trim())
     .filter(Boolean)
+
+  const googleVerification = googleVerificationToken?.replace(
+    /^google-site-verification=/,
+    ''
+  )
+  const verification = googleVerification ? { google: googleVerification } : undefined
 
   return {
     metadataBase: new URL(siteUrl),
@@ -78,9 +85,9 @@ export async function generateMetadata({ params }: LocaleLayoutProps): Promise<M
       url: `${siteUrl}/${locale}`,
       images: [
         {
-          url: '/hero-grid.svg',
-          width: 1600,
-          height: 1200,
+          url: '/og_image.jpg',
+          width: 1200,
+          height: 630,
           alt: t('openGraphImageAlt'),
         },
       ],
@@ -91,10 +98,12 @@ export async function generateMetadata({ params }: LocaleLayoutProps): Promise<M
       creator: '@gymwatch',
       title: t('twitterTitle'),
       description: t('twitterDescription'),
-      images: ['/hero-grid.svg'],
+      images: ['/og_image.jpg'],
     },
 
     robots: { index: true, follow: true },
+
+    verification,
 
     icons: { icon: '/GymWatch.svg' },
   }

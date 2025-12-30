@@ -17,7 +17,7 @@ type LocaleLayoutProps = {
   params: Promise<{ locale: string }>
 }
 
-const siteUrl = 'https://www.gymwatch.ma'
+const siteUrl = 'https://gymwatch.ma'
 const googleVerificationToken = process.env.GOOGLE_SITE_VERIFICATION?.trim()
 
 function normalizeLocale(locale: string): AppLocale {

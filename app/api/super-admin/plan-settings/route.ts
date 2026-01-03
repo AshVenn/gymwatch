@@ -1,9 +1,10 @@
 import { NextResponse } from "next/server"
-import { getServerSession } from "next-auth"
 import { z } from "zod"
 
-import { authOptions } from "@/lib/auth-middleware"
 import { getPlanSettings, updatePlanSettings } from "@/lib/plan-settings"
+import { Permissions } from "@/lib/rbac/permissions"
+import { requirePermission, requireSession } from "@/lib/auth/guards"
+import { recordAudit } from "@/lib/audit"
 
 const planSettingsSchema = z.object({
   basicMonthlyPrice: z.coerce.number().min(0),
@@ -18,17 +19,12 @@ const planSettingsSchema = z.object({
   enterprisePlanLimitPerNetwork: z.coerce.number().int().min(-1),
 })
 
-async function assertSuperAdmin() {
-  const session = await getServerSession(authOptions)
-  if (!session?.user || session.user.role !== "SUPER_ADMIN") {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 403 })
-  }
-  return null
-}
-
 export async function GET() {
-  const authError = await assertSuperAdmin()
-  if (authError) return authError
+  const sessionResult = await requireSession()
+  if (!sessionResult.ok) return sessionResult.response
+
+  const permission = requirePermission(sessionResult.user, Permissions.PlatformPlansManage)
+  if (!permission.ok) return permission.response
 
   const { settings, pricing, limits } = await getPlanSettings()
 
@@ -52,12 +48,24 @@ export async function GET() {
 }
 
 export async function PUT(request: Request) {
-  const authError = await assertSuperAdmin()
-  if (authError) return authError
+  const sessionResult = await requireSession()
+  if (!sessionResult.ok) return sessionResult.response
+
+  const permission = requirePermission(sessionResult.user, Permissions.PlatformPlansManage)
+  if (!permission.ok) return permission.response
 
   try {
     const payload = planSettingsSchema.parse(await request.json())
     const { settings, pricing, limits } = await updatePlanSettings(payload)
+
+    await recordAudit({
+      actor: sessionResult.session.user,
+      action: "platform.plan-settings.update",
+      targetType: "plan-settings",
+      targetId: "default",
+      metadata: { updatedFields: Object.keys(payload) },
+      request,
+    })
 
     return NextResponse.json({
       settings: {
@@ -78,9 +86,15 @@ export async function PUT(request: Request) {
     })
   } catch (error) {
     if (error instanceof z.ZodError) {
-      return NextResponse.json({ error: "Invalid payload", details: error.flatten() }, { status: 422 })
+      return NextResponse.json(
+        { code: "INVALID_PAYLOAD", message: "Invalid payload", details: error.flatten() },
+        { status: 422 },
+      )
     }
 
-    return NextResponse.json({ error: "Unable to update plan settings" }, { status: 500 })
+    return NextResponse.json(
+      { code: "PLAN_SETTINGS_UPDATE_FAILED", message: "Unable to update plan settings" },
+      { status: 500 },
+    )
   }
 }

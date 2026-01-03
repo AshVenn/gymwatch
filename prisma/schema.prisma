@@ -15,8 +15,14 @@ datasource db {
 
 enum UserRole {
   SUPER_ADMIN
+  SUPER_MANAGER
   GYM_OWNER
   GYM_ADMIN
+}
+
+enum UserStatus {
+  ACTIVE
+  SUSPENDED
 }
 
 enum GymPlanTier {
@@ -144,6 +150,7 @@ model User {
   email                String          @unique
   password             String
   role                 UserRole
+  status               UserStatus      @default(ACTIVE)
   firstName            String?
   lastName             String?
   gymId                String?
@@ -152,11 +159,34 @@ model User {
   gymVariant           GymVariant?     @relation(fields: [gymVariantId], references: [id], onDelete: SetNull)
   ownedGym             Gym?            @relation("GymOwner")
   resolvedDemoRequests DemoRequest[]   @relation("DemoRequestResolvedBy")
+  auditLogs            AuditLog[]
   preferences          UserPreference?
   sessionVersion       Int             @default(0)
+  lastLoginAt          DateTime?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+model AuditLog {
+  id         String    @id @default(cuid())
+  actorId    String?
+  actor      User?     @relation(fields: [actorId], references: [id], onDelete: SetNull)
+  actorRole  UserRole
+  actorEmail String
+  actorName  String?
+  action     String
+  targetType String?
+  targetId   String?
+  metadata   Json?
+  ip         String?
+  userAgent  String?
+  createdAt  DateTime  @default(now())
+
+  @@index([actorId, createdAt])
+  @@index([action])
+  @@index([targetType, targetId])
+  @@index([createdAt])
 }
 
 model Gym {

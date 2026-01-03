@@ -6,7 +6,7 @@ import { getToken } from "next-auth/jwt"
 import { routing, type AppLocale } from "./i18n/routing"
 
 export const config = {
-  matcher: ["/((?!_next|api|.*\\..*).*)"],
+  matcher: ["/api/seeder/:path*", "/((?!_next|api|.*\\..*).*)"],
 }
 
 const intlMiddleware = createIntlMiddleware(routing)
@@ -14,6 +14,10 @@ const localeMatcher = new RegExp(`^/(${routing.locales.join("|")})(?=/|$)`)
 
 export async function middleware(req: NextRequest) {
   const pathname = req.nextUrl.pathname
+
+  if (pathname.startsWith("/api/seeder")) {
+    return NextResponse.json({ error: "Not Found" }, { status: 404 })
+  }
 
   // ✅ évite la boucle /fr/ -> /fr
   if (routing.locales.some((l) => pathname === `/${l}/`)) {
@@ -62,7 +66,9 @@ export async function middleware(req: NextRequest) {
     return NextResponse.redirect(buildUrl("/login"))
   }
 
-  if (isLoggedIn && (isAdminRoute || isSuperAdminRoute) && token?.role !== "SUPER_ADMIN") {
+  const isPlatformRole = token?.role === "SUPER_ADMIN" || token?.role === "SUPER_MANAGER"
+
+  if (isLoggedIn && (isAdminRoute || isSuperAdminRoute) && !isPlatformRole) {
     return NextResponse.redirect(buildUrl("/dashboard"))
   }
 

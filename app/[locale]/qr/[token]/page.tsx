@@ -301,27 +301,35 @@ export default async function QrProfilePage({ params }: QrProfilePageProps) {
                 </Badge>
               </div>
 
-              <div className="rounded-lg border border-border/60 bg-muted/30 px-3 py-2 text-sm">
-                <p className="font-semibold">{t("history.details")}</p>
-                <div className="mt-2 space-y-1 text-xs text-muted-foreground">
-                  <div className="flex items-center justify-between gap-2">
-                    <span>{t("history.email")}</span>
-                    <span className="font-medium text-foreground">
-                      {profile.member.email ?? t("history.unknown")}
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-between gap-2">
-                    <span>{t("history.phone")}</span>
-                    <span className="font-medium text-foreground">
-                      {profile.member.phone ?? t("history.unknown")}
-                    </span>
+              {profile.context === "staff" ? (
+                <div className="rounded-lg border border-border/60 bg-muted/30 px-3 py-2 text-sm">
+                  <p className="font-semibold">{t("history.details")}</p>
+                  <div className="mt-2 space-y-1 text-xs text-muted-foreground">
+                    <div className="flex items-center justify-between gap-2">
+                      <span>{t("history.email")}</span>
+                      <span className="font-medium text-foreground">
+                        {profile.member.email ?? t("history.unknown")}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between gap-2">
+                      <span>{t("history.phone")}</span>
+                      <span className="font-medium text-foreground">
+                        {profile.member.phone ?? t("history.unknown")}
+                      </span>
+                    </div>
                   </div>
                 </div>
-              </div>
+              ) : (
+                <div className="rounded-lg border border-dashed border-border/60 bg-muted/20 px-3 py-2 text-xs text-muted-foreground">
+                  {t("history.staffOnly")}
+                </div>
+              )}
 
               <div className="space-y-2">
                 <p className="text-sm font-semibold">{t("history.recentVisits")}</p>
-                {recentVisits.length === 0 ? (
+                {profile.context !== "staff" ? (
+                  <p className="text-sm text-muted-foreground">{t("history.staffOnly")}</p>
+                ) : recentVisits.length === 0 ? (
                   <p className="text-sm text-muted-foreground">{t("history.empty")}</p>
                 ) : (
                   <div className="space-y-2">
@@ -359,7 +367,9 @@ export default async function QrProfilePage({ params }: QrProfilePageProps) {
             <p className="text-sm text-muted-foreground">{t("classes.subtitle")}</p>
           </CardHeader>
           <CardContent className="space-y-3">
-            {profile.classes.length === 0 ? (
+            {profile.context !== "staff" ? (
+              <p className="text-sm text-muted-foreground">{t("classes.staffOnly")}</p>
+            ) : profile.classes.length === 0 ? (
               <p className="text-sm text-muted-foreground">{t("classes.empty")}</p>
             ) : (
               profile.classes.map((session) => {

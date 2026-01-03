@@ -251,7 +251,7 @@ export const db = {
     try {
       const updated = await prisma.user.update({
         where: { id: userId },
-        data: { sessionVersion: { increment: 1 } },
+        data: { sessionVersion: { increment: 1 }, lastLoginAt: new Date() },
         select: { sessionVersion: true },
       })
       return updated.sessionVersion ?? 0

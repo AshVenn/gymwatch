@@ -28,6 +28,7 @@ import { cn } from "@/lib/utils"
 
 export const UserRole = {
   SUPER_ADMIN: "SUPER_ADMIN",
+  SUPER_MANAGER: "SUPER_MANAGER",
   GYM_OWNER: "GYM_OWNER",
   GYM_ADMIN: "GYM_ADMIN",
 } as const
@@ -81,7 +82,7 @@ export function DashboardShell({
   const subscriptionPastDue = useMemo(() => {
     if (!session?.user) return false
     const userRole = session.user.role as UserRole
-    if (userRole === UserRole.SUPER_ADMIN) return false
+    if (userRole === UserRole.SUPER_ADMIN || userRole === UserRole.SUPER_MANAGER) return false
     if (
       session.user.subscriptionStatus === "EXPIRED" ||
       session.user.subscriptionStatus === "SUSPENDED"
@@ -150,6 +151,7 @@ export function DashboardShell({
 
   const roleLabels: Record<string, string> = {
     SUPER_ADMIN: tShell("roles.superAdmin"),
+    SUPER_MANAGER: tShell("roles.superManager"),
     ADMIN: tShell("roles.admin"),
     OWNER: tShell("roles.owner"),
     USER: tShell("roles.user"),

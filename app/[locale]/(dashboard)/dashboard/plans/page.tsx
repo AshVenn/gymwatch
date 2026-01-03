@@ -17,6 +17,16 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { Label } from "@/components/ui/label"
 import { Select,SelectItem,SelectTrigger,SelectValue,SelectContent } from "@/components/ui/select"
 import { Dialog,DialogContent,DialogHeader,DialogTitle } from "@/components/ui/dialog"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 import { Input } from "@/components/ui/input"
 import { Switch } from "@/components/ui/switch"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
@@ -84,6 +94,7 @@ export default function PlansPage() {
     maxSessionMinutes: "",
   })
   const [isOpen, setIsOpen] = useState(false)
+  const [deleteTarget, setDeleteTarget] = useState<Plan | null>(null)
   const [error, setError] = useState<string | null>(null)
 
   const effectivePlanVariantId = useMemo(
@@ -307,10 +318,14 @@ export default function PlansPage() {
     savePlanMutation.mutate({ visitsPerDay: parsedVisits, maxSessionMinutes: parsedSessionLimit })
   }
 
-  const handleDeletePlan = (planId: string) => {
-    if (confirm(t("validation.confirmDelete"))) {
-      deletePlanMutation.mutate(planId)
-    }
+  const handleDeletePlan = (plan: Plan) => {
+    setDeleteTarget(plan)
+  }
+
+  const confirmDeletePlan = () => {
+    if (!deleteTarget) return
+    deletePlanMutation.mutate(deleteTarget.id)
+    setDeleteTarget(null)
   }
 
   const renderContent = () => {
@@ -468,7 +483,7 @@ export default function PlansPage() {
                         </DropdownMenuItem>
                         <DropdownMenuItem
                           className="text-destructive focus:text-destructive"
-                          onSelect={() => handleDeletePlan(plan.id)}
+                          onSelect={() => handleDeletePlan(plan)}
                         >
                           {t("page.table.delete")}
                         </DropdownMenuItem>
@@ -497,7 +512,7 @@ export default function PlansPage() {
         ) : null}
 
         <Dialog open={isOpen} onOpenChange={setIsOpen}>
-          <DialogContent className="max-w-md sm:max-w-lg w-[95vw]">
+          <DialogContent className="w-[95vw] max-w-2xl max-h-[85vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>{editingId ? t("page.dialog.editTitle") : t("page.dialog.addTitle")}</DialogTitle>
             </DialogHeader>
@@ -505,60 +520,62 @@ export default function PlansPage() {
             {error && <p className="text-sm text-destructive">{error}</p>}
 
             <div className="space-y-4">
-              <div>
-                <Label htmlFor="plan-variant">{t("page.dialog.variant")}</Label>
-                {isGymAdmin ? (
-                  <p className="text-sm text-muted-foreground">
-                    {variants.find((variant) => variant.id === lockedVariantId)?.name ??
-                      t("page.dialog.assignedVariant")}
-                  </p>
-                ) : (
-                  <Select value={effectivePlanVariantId} onValueChange={(value) => setPlanVariantId(value)}>
-                    <SelectTrigger id="plan-variant">
-                      <SelectValue placeholder={t("page.dialog.variantPlaceholder")} />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {(variants ?? []).map((variant) => (
-                        <SelectItem key={variant.id} value={variant.id}>
-                          {variant.name} {variant.isDefault ? t("page.dialog.default") : ""}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                )}
-              </div>
+              <div className="grid gap-4 md:grid-cols-2">
+                <div className="md:col-span-2">
+                  <Label htmlFor="plan-variant">{t("page.dialog.variant")}</Label>
+                  {isGymAdmin ? (
+                    <p className="text-sm text-muted-foreground">
+                      {variants.find((variant) => variant.id === lockedVariantId)?.name ??
+                        t("page.dialog.assignedVariant")}
+                    </p>
+                  ) : (
+                    <Select value={effectivePlanVariantId} onValueChange={(value) => setPlanVariantId(value)}>
+                      <SelectTrigger id="plan-variant">
+                        <SelectValue placeholder={t("page.dialog.variantPlaceholder")} />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {(variants ?? []).map((variant) => (
+                          <SelectItem key={variant.id} value={variant.id}>
+                            {variant.name} {variant.isDefault ? t("page.dialog.default") : ""}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  )}
+                </div>
 
-              <div>
-                <Label htmlFor="plan-name">{t("page.dialog.name")}</Label>
-                <Input
-                  id="plan-name"
-                  value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  placeholder={t("page.dialog.namePlaceholder")}
-                />
-              </div>
+                <div className="md:col-span-2">
+                  <Label htmlFor="plan-name">{t("page.dialog.name")}</Label>
+                  <Input
+                    id="plan-name"
+                    value={formData.name}
+                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                    placeholder={t("page.dialog.namePlaceholder")}
+                  />
+                </div>
 
-              <div>
-                <Label htmlFor="plan-duration">{t("page.dialog.duration")}</Label>
-                <Input
-                  id="plan-duration"
-                  type="number"
-                  value={formData.durationDays}
-                  onChange={(e) => setFormData({ ...formData, durationDays: e.target.value })}
-                  placeholder="30"
-                />
-              </div>
+                <div>
+                  <Label htmlFor="plan-duration">{t("page.dialog.duration")}</Label>
+                  <Input
+                    id="plan-duration"
+                    type="number"
+                    value={formData.durationDays}
+                    onChange={(e) => setFormData({ ...formData, durationDays: e.target.value })}
+                    placeholder="30"
+                  />
+                </div>
 
-              <div>
-                <Label htmlFor="plan-price">{t("page.dialog.price")}</Label>
-                <Input
-                  id="plan-price"
-                  type="number"
-                  step="0.01"
-                  value={formData.price}
-                  onChange={(e) => setFormData({ ...formData, price: e.target.value })}
-                  placeholder="300"
-                />
+                <div>
+                  <Label htmlFor="plan-price">{t("page.dialog.price")}</Label>
+                  <Input
+                    id="plan-price"
+                    type="number"
+                    step="0.01"
+                    value={formData.price}
+                    onChange={(e) => setFormData({ ...formData, price: e.target.value })}
+                    placeholder="300"
+                  />
+                </div>
               </div>
 
               <div className="space-y-2">
@@ -613,7 +630,7 @@ export default function PlansPage() {
                 <p className="text-xs text-muted-foreground">{t("page.dialog.sessionLimitHelper")}</p>
               </div>
 
-              <div className="flex items-center justify-between">
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                 <Label htmlFor="plan-active" className="text-sm font-medium">
                   {t("page.dialog.active")}
                 </Label>
@@ -634,6 +651,26 @@ export default function PlansPage() {
             </div>
           </DialogContent>
         </Dialog>
+
+        <AlertDialog open={Boolean(deleteTarget)} onOpenChange={(open) => !open && setDeleteTarget(null)}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>{t("page.deleteDialog.title")}</AlertDialogTitle>
+              <AlertDialogDescription>
+                {t("page.deleteDialog.description", { name: deleteTarget?.name ?? "" })}
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>{t("page.deleteDialog.cancel")}</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={confirmDeletePlan}
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              >
+                {t("page.deleteDialog.confirm")}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
     )
   }

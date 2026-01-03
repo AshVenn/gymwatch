@@ -30,7 +30,7 @@ import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Card } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
-import { Plus, CheckCircle2, LogIn, LogOut, MoreVertical } from "lucide-react"
+import { Plus, CheckCircle2, LogIn, LogOut, MoreVertical, Trash2 } from "lucide-react"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import QRCode from "qrcode"
 import type { IScannerProps } from "@yudiel/react-qr-scanner/dist/components/Scanner"
@@ -80,6 +80,14 @@ interface PaginatedMembersResponse {
   hasMore: boolean
 }
 
+type BulkAction = "delete" | "checkout"
+
+type BulkResponse = {
+  action: BulkAction
+  results: Array<{ id: string; ok: boolean; code?: string; message?: string }>
+  summary: { total: number; success: number; failed: number }
+}
+
 const formatInputDate = (date: Date) => date.toISOString().slice(0, 10)
 const formatTimeInput = (value: Date) => value.toISOString().slice(11, 16)
 const buildDateTimeString = (date: string, time?: string) => {
@@ -109,7 +117,7 @@ export default function MembersPage() {
 
   const [isOpen, setIsOpen] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const { hasQrTools, hasQrDownloads, hasExcelReports, hasMultiLocations } = usePlanFeatures()
+  const { hasQrTools, hasQrDownloads, hasExcelReports, hasMultiLocations, hasAccessControl } = usePlanFeatures()
   const [qrMember, setQrMember] = useState<Member | null>(null)
   const [qrImage, setQrImage] = useState<string>("")
   const [scannerEnabled, setScannerEnabled] = useState(false)
@@ -122,8 +130,11 @@ export default function MembersPage() {
   } | null>(null)
   const lastTokenRef = useRef<string | null>(null)
   const audioRef = useRef<AudioContext | null>(null)
+  const selectAllRef = useRef<HTMLInputElement | null>(null)
   const [memberReportLoading, setMemberReportLoading] = useState<string | null>(null)
   const [memberToDelete, setMemberToDelete] = useState<Member | null>(null)
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
+  const [bulkAction, setBulkAction] = useState<BulkAction | null>(null)
   const [memberSearch, setMemberSearch] = useState("")
   const [memberPage, setMemberPage] = useState(1)
   const [visitDialogOpen, setVisitDialogOpen] = useState(false)
@@ -242,6 +253,45 @@ export default function MembersPage() {
     },
   })
 
+  const bulkMutation = useMutation({
+    mutationFn: async (action: BulkAction) => {
+      const ids = Array.from(selectedIds)
+      const response = await fetch("/api/gym-team/members/bulk", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action, ids }),
+      })
+      const payload = await response.json().catch(() => ({}))
+      if (!response.ok) {
+        throw new Error(payload.message || payload.error || t("bulk.toasts.error"))
+      }
+      return payload as BulkResponse
+    },
+    onSuccess: (payload, action) => {
+      queryClient.invalidateQueries({ queryKey: ["members"], exact: false })
+      setSelectedIds(new Set())
+      setBulkAction(null)
+      const summary = payload.summary ?? { total: 0, success: 0, failed: 0 }
+      if (summary.failed > 0) {
+        toast.error(
+          action === "delete"
+            ? t("bulk.toasts.partialDelete", { success: summary.success, failed: summary.failed })
+            : t("bulk.toasts.partialCheckout", { success: summary.success, failed: summary.failed }),
+        )
+      } else {
+        toast.success(
+          action === "delete"
+            ? t("bulk.toasts.deleteSuccess", { count: summary.success })
+            : t("bulk.toasts.checkoutSuccess", { count: summary.success }),
+        )
+      }
+    },
+    onError: (error) => {
+      const message = error instanceof Error ? error.message : t("bulk.toasts.error")
+      toast.error(message)
+    },
+  })
+
   const memberPageSize = 10
   const dialogPageSize = 14
 
@@ -305,7 +355,12 @@ export default function MembersPage() {
 
   useEffect(() => {
     setMemberPage(1)
+    setSelectedIds(new Set())
   }, [memberSearch, variantFilter])
+
+  useEffect(() => {
+    setSelectedIds(new Set())
+  }, [memberPage])
 
   const membersQuery = useQuery<PaginatedMembersResponse>({
     queryKey: membersTableQueryKey,
@@ -323,6 +378,16 @@ export default function MembersPage() {
   const membersTotal = membersQuery.data?.total ?? 0
   const membersPageCount = Math.max(1, Math.ceil(membersTotal / memberPageSize))
   const membersError = membersQuery.isError
+  const pageIds = useMemo(() => members.map((member) => member.id), [members])
+  const allSelected = pageIds.length > 0 && pageIds.every((id) => selectedIds.has(id))
+  const someSelected = pageIds.some((id) => selectedIds.has(id))
+  const selectedCount = selectedIds.size
+
+  useEffect(() => {
+    if (selectAllRef.current) {
+      selectAllRef.current.indeterminate = someSelected && !allSelected
+    }
+  }, [allSelected, someSelected])
 
   const openVisitCountQuery = useQuery<number>({
     queryKey: ["members", "open-visit-count", gymId, variantFilter],
@@ -334,6 +399,49 @@ export default function MembersPage() {
   })
   const hasOpenVisits = (openVisitCountQuery.data ?? 0) > 0
   const manualCheckoutDisabled = openVisitCountQuery.isFetched && !openVisitCountQuery.isError ? !hasOpenVisits : false
+
+  const toggleSelectMember = (id: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev)
+      if (next.has(id)) {
+        next.delete(id)
+      } else {
+        next.add(id)
+      }
+      return next
+    })
+  }
+
+  const toggleSelectAll = () => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev)
+      if (allSelected) {
+        pageIds.forEach((id) => next.delete(id))
+      } else {
+        pageIds.forEach((id) => next.add(id))
+      }
+      return next
+    })
+  }
+
+  const clearSelection = () => setSelectedIds(new Set())
+
+  const openBulkDialog = (actionType: BulkAction) => {
+    if (!selectedCount) {
+      toast.error(t("bulk.toasts.emptySelection"))
+      return
+    }
+    if (actionType === "checkout" && !hasAccessControl) {
+      toast.error(t("bulk.toasts.checkoutLocked"))
+      return
+    }
+    setBulkAction(actionType)
+  }
+
+  const confirmBulkAction = () => {
+    if (!bulkAction || bulkMutation.isPending) return
+    bulkMutation.mutate(bulkAction)
+  }
 
   const manualVisitMembersQuery = useInfiniteQuery<PaginatedMembersResponse>({
     queryKey: ["members", "manual-visit", gymId, variantFilter, visitSearch],
@@ -1297,6 +1405,41 @@ export default function MembersPage() {
               className="w-full sm:max-w-xs"
             />
           </div>
+          {selectedCount > 0 ? (
+            <div className="flex flex-wrap items-center gap-3">
+              <span className="text-sm text-muted-foreground">
+                {t("bulk.selectedCount", { count: selectedCount })}
+              </span>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => openBulkDialog("checkout")}
+                disabled={bulkMutation.isPending || !hasAccessControl}
+                className="gap-2"
+              >
+                <LogOut className="h-4 w-4" />
+                {t("bulk.actions.checkout")}
+              </Button>
+              <Button
+                size="sm"
+                variant="destructive"
+                onClick={() => openBulkDialog("delete")}
+                disabled={bulkMutation.isPending}
+                className="gap-2"
+              >
+                <Trash2 className="h-4 w-4" />
+                {t("bulk.actions.delete")}
+              </Button>
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={clearSelection}
+                disabled={bulkMutation.isPending}
+              >
+                {t("bulk.actions.clear")}
+              </Button>
+            </div>
+          ) : null}
           {membersTotal > 0 ? (
             <span className="text-xs uppercase tracking-[0.3em] text-muted-foreground">
               {t("table.summary.pageLabel", {
@@ -1311,6 +1454,16 @@ export default function MembersPage() {
           <Table>
             <TableHeader>
               <TableRow className="border-b border-border/60 bg-muted/30">
+                <TableHead className="w-10">
+                  <input
+                    ref={selectAllRef}
+                    type="checkbox"
+                    className="h-4 w-4"
+                    checked={allSelected}
+                    onChange={toggleSelectAll}
+                    aria-label={t("bulk.selectAll")}
+                  />
+                </TableHead>
                 <TableHead>{t("table.columns.firstName")}</TableHead>
                 <TableHead>{t("table.columns.lastName")}</TableHead>
                 <TableHead>{t("table.columns.email")}</TableHead>
@@ -1324,6 +1477,17 @@ export default function MembersPage() {
             <TableBody>
               {members.map((member) => (
                 <TableRow key={member.id}>
+                  <TableCell>
+                    <input
+                      type="checkbox"
+                      className="h-4 w-4"
+                      checked={selectedIds.has(member.id)}
+                      onChange={() => toggleSelectMember(member.id)}
+                      aria-label={t("bulk.selectOne", {
+                        name: `${member.firstName} ${member.lastName}`.trim(),
+                      })}
+                    />
+                  </TableCell>
                   <TableCell className="font-medium">{member.firstName}</TableCell>
                   <TableCell>{member.lastName}</TableCell>
                   <TableCell>{member.email || "-"}</TableCell>
@@ -1549,6 +1713,36 @@ export default function MembersPage() {
             <AlertDialogCancel disabled={deleteMemberMutation.isPending}>{t("deleteDialog.cancel")}</AlertDialogCancel>
             <AlertDialogAction onClick={confirmDeleteMember} disabled={deleteMemberMutation.isPending}>
               {deleteMemberMutation.isPending ? t("deleteDialog.pending") : t("deleteDialog.confirm")}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog
+        open={Boolean(bulkAction)}
+        onOpenChange={(open) => {
+          if (!open && !bulkMutation.isPending) {
+            setBulkAction(null)
+          }
+        }}
+      >
+        <AlertDialogContent className="max-w-md sm:max-w-lg w-[95vw]">
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {bulkAction === "delete"
+                ? t("bulk.confirmDelete.title")
+                : t("bulk.confirmCheckout.title")}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {bulkAction === "delete"
+                ? t("bulk.confirmDelete.description", { count: selectedCount })
+                : t("bulk.confirmCheckout.description", { count: selectedCount })}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={bulkMutation.isPending}>{t("bulk.actions.cancel")}</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmBulkAction} disabled={bulkMutation.isPending}>
+              {bulkMutation.isPending ? t("bulk.actions.pending") : t("bulk.actions.confirm")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

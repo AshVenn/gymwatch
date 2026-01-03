@@ -1301,8 +1301,7 @@
   "errors": {
     "missingName": "Ajoutez au moins un nom traduit avant de sauvegarder."
   }
-}
-,
+},
   "superAdminSettings": {
     "title": "Paramètres super-admin",
     "subtitle": "Outils de sécurité et de maintenance pour votre compte admin.",
@@ -1679,6 +1678,7 @@
       "variant": "Variante",
       "status": "Statut"
     },
+    "priceHidden": "Prix masqué",
     "durationDays": "{days} jours",
     "minutes": "{minutes} min",
     "unlimited": "Illimité",
@@ -1848,6 +1848,7 @@
     "demoBadge": "DEMO",
     "demoPrefix": "Démo",
     "planLine": "Plan {plan} - {interval} - {price}",
+    "priceHidden": "Prix masqué",
     "suspensionReason": "Suspension : {reason}",
     "status": {
       "active": "Actif",
@@ -2141,10 +2142,138 @@
       "overview": "Vue d'ensemble",
       "planSetup": "Configuration des plans",
       "gyms": "Gestion des salles",
+      "users": "Utilisateurs plateforme",
+      "audit": "Journal d'audit",
       "demoRequests": "Demandes de démo",
       "partners": "Clubs partenaires",
       "settings": "Paramètres"
     }
+  },
+  "superAdminUsers": {
+    "title": "Comptes plateforme",
+    "subtitle": "Gérez les comptes ADMIN et MANAGER.",
+    "actions": {
+      "create": "Nouveau compte",
+      "cancel": "Annuler",
+      "save": "Enregistrer",
+      "saving": "Enregistrement..."
+    },
+    "filters": {
+      "search": "Recherche",
+      "searchPlaceholder": "Rechercher par nom ou email",
+      "role": "Rôle",
+      "allRoles": "Tous les rôles",
+      "status": "Statut",
+      "allStatuses": "Tous les statuts",
+      "pageSize": "Taille de page"
+    },
+    "table": {
+      "columns": {
+        "name": "Nom",
+        "role": "Rôle",
+        "status": "Statut",
+        "createdAt": "Création",
+        "lastLoginAt": "Dernière connexion",
+        "actions": "Actions"
+      },
+      "nameFallback": "Sans nom",
+      "never": "Jamais",
+      "actions": {
+        "edit": "Éditer",
+        "activate": "Activer",
+        "suspend": "Suspendre",
+        "resetPassword": "Réinitialiser le mot de passe"
+      }
+    },
+    "create": {
+      "title": "Créer un compte",
+      "description": "Créer un compte plateforme."
+    },
+    "edit": {
+      "title": "Modifier le compte",
+      "description": "Mettre à jour les informations du compte."
+    },
+    "fields": {
+      "firstName": "Prénom",
+      "lastName": "Nom",
+      "email": "Email",
+      "password": "Mot de passe",
+      "role": "Rôle",
+      "status": "Statut"
+    },
+    "roles": {
+      "superAdmin": "Super admin",
+      "superManager": "Super manager"
+    },
+    "status": {
+      "active": "Actif",
+      "suspended": "Suspendu"
+    },
+    "errors": {
+      "load": "Impossible de charger les comptes",
+      "create": "Création impossible",
+      "update": "Mise à jour impossible",
+      "resetPassword": "Impossible de réinitialiser le mot de passe"
+    },
+    "toasts": {
+      "created": "Compte créé",
+      "updated": "Compte mis à jour",
+      "resetPassword": "Mot de passe réinitialisé"
+    },
+    "empty": "Aucun compte plateforme"
+  },
+  "superAdminAudit": {
+    "title": "Journal d'audit",
+    "subtitle": "Suivez les actions sensibles réalisées sur la plateforme.",
+    "actions": {
+      "export": "Exporter CSV"
+    },
+    "filters": {
+      "search": "Recherche",
+      "searchPlaceholder": "Action, cible, acteur",
+      "actor": "Acteur",
+      "actorPlaceholder": "Nom ou email",
+      "action": "Action",
+      "actionPlaceholder": "ex: platform.user.update",
+      "target": "Cible",
+      "targetPlaceholder": "Type ou ID",
+      "from": "Du",
+      "to": "Au",
+      "pageSize": "Taille de page"
+    },
+    "table": {
+      "columns": {
+        "date": "Date",
+        "actor": "Acteur",
+        "action": "Action",
+        "target": "Cible"
+      },
+      "actorFallback": "Sans nom",
+      "targetEmpty": "Aucune cible",
+      "targetUnknown": "Cible inconnue"
+    },
+    "roles": {
+      "superAdmin": "Super admin",
+      "superManager": "Super manager"
+    },
+    "details": {
+      "title": "Détails audit",
+      "subtitle": "Informations détaillées",
+      "fields": {
+        "date": "Date",
+        "actor": "Acteur",
+        "role": "Rôle",
+        "ip": "IP",
+        "target": "Cible",
+        "userAgent": "User agent",
+        "metadata": "Métadonnées"
+      },
+      "noMetadata": "Aucune métadonnée"
+    },
+    "errors": {
+      "load": "Impossible de charger les logs d'audit"
+    },
+    "empty": "Aucune action enregistrée"
   },
   "dashOwAdSubscriptions": {
     "errors": {
@@ -2211,7 +2340,8 @@
       "planLabel": "Plan",
       "planPlaceholder": "Sélectionner un plan",
       "startDateLabel": "Date de début",
-      "endPreview": "Fin estimée: {date}",
+      "endDateLabel": "Date de fin",
+      "endPreview": "Fin prévue: {date}",
       "createPaymentTitle": "Créer un paiement",
       "createPaymentDesc": "Désactivez si vous corrigez une erreur de date.",
       "saving": "Mise à jour...",
@@ -2901,6 +3031,7 @@
       "loading": "Chargement...",
       "roles": {
         "superAdmin": "Super admin",
+        "superManager": "Super manager",
         "admin": "Admin",
         "owner": "Propriétaire",
         "user": "Utilisateur"
@@ -3314,6 +3445,12 @@
           "update": "Mettre à jour",
           "create": "Créer"
         },
+        "deleteDialog": {
+          "title": "Supprimer ce plan ?",
+          "description": "Cela supprimera \"{name}\". Les abonnements existants conservent leur historique.",
+          "cancel": "Annuler",
+          "confirm": "Supprimer le plan"
+        },
         "loadError": "Impossible de charger les plans.",
         "table": {
           "name": "Nom du plan",
@@ -3684,6 +3821,36 @@
           "delete": "Supprimer"
         }
       },
+      "bulk": {
+        "selectAll": "Tout selectionner",
+        "selectOne": "Selectionner {name}",
+        "selectedCount": "{count} selectionne(s)",
+        "actions": {
+          "checkout": "Check-out",
+          "delete": "Supprimer",
+          "clear": "Effacer",
+          "cancel": "Annuler",
+          "confirm": "Confirmer",
+          "pending": "Traitement..."
+        },
+        "confirmDelete": {
+          "title": "Supprimer les membres",
+          "description": "{count} membre(s) seront supprimes. Cette action est definitive."
+        },
+        "confirmCheckout": {
+          "title": "Check-out en masse",
+          "description": "Marquer la sortie pour {count} membre(s) selectionne(s)."
+        },
+        "toasts": {
+          "emptySelection": "Aucun membre selectionne",
+          "checkoutLocked": "Le controle d'acces n'est pas active",
+          "error": "Action en masse impossible",
+          "partialDelete": "{success} supprime(s), {failed} en echec",
+          "partialCheckout": "{success} check-out, {failed} en echec",
+          "deleteSuccess": "{count} membre(s) supprime(s)",
+          "checkoutSuccess": "{count} check-out effectue(s)"
+        }
+      },
       "deleteDialog": {
         "title": "Supprimer le membre",
         "descriptionWithName": "Cette action supprimera {firstName} {lastName}. Les abonnements actifs seront conservés.",
@@ -3728,6 +3895,7 @@
       "title": "Activité récente",
       "subtitle": "Vos dernières entrées",
       "last30Days": "Visites sur les 30 derniers jours",
+      "staffOnly": "Details reserves au staff",
       "details": "Détails du membre",
       "email": "Email",
       "phone": "Téléphone",
@@ -3740,6 +3908,7 @@
     "classes": {
       "title": "Cours à venir",
       "subtitle": "Réservations liées à ce membre",
+      "staffOnly": "Details reserves au staff",
       "empty": "Aucun cours réservé"
     },
     "actions": {
@@ -3754,6 +3923,17 @@
       "error": "Échec du scan",
       "fallback": "membre"
     }
+  },
+  "notFound": {
+    "eyebrow": "Route introuvable",
+    "title": "Cette page s'est perdue.",
+    "description": "Le lien est peut-être obsolète ou la page a été déplacée. Choisissez un raccourci pour continuer.",
+    "primaryCta": "Retour à l'accueil",
+    "secondaryCta": "Ouvrir le tableau de bord",
+    "hint": "Astuce : utilisez la navigation principale pour explorer les modules.",
+    "cardTitle": "Retour rapide",
+    "cardDescription": "Accédez au tableau de bord pour gérer les membres et les abonnements.",
+    "cardHint": "Si le lien est partagé, demandez une URL mise à jour."
   }
 }
 

@@ -2,6 +2,7 @@
 
 import { useMemo } from "react"
 import { useLocale, useTranslations } from "next-intl"
+import { useSession } from "next-auth/react"
 
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog"
 import { Badge } from "@/components/ui/badge"
@@ -13,6 +14,8 @@ import { GymStats } from "./GymStats"
 import { GymAnalytics } from "./GymAnalytics"
 import { PlanModuleList } from "../PlanModules"
 import { getPlanFeatures } from "@/lib/subscription-plans"
+import { Permissions } from "@/lib/rbac/permissions"
+import { hasPermission } from "@/lib/rbac/policies"
 
 type Props = {
   gymId: string | null
@@ -33,6 +36,8 @@ const INTERVAL_FALLBACK: Record<string, string> = {
 export function GymDetailDialog({ gymId, onClose }: Props) {
   const t = useTranslations("superAdminGymDetail")
   const locale = useLocale()
+  const { data: session } = useSession()
+  const canViewFinancials = hasPermission(session?.user?.role as any, Permissions.PlatformAnalyticsRevenue)
 
   const open = Boolean(gymId)
   const { data: gym, isLoading } = useSuperAdminGym(gymId)
@@ -65,12 +70,12 @@ export function GymDetailDialog({ gymId, onClose }: Props) {
   }, [gym])
 
   const priceLabel = useMemo(() => {
-    if (!gym) return ""
+    if (!gym || !canViewFinancials || typeof gym.subscriptionPrice !== "number") return ""
     return (gym.subscriptionPrice ?? 0).toLocaleString(locale === "ar" ? "ar-MA" : "fr-MA", {
       style: "currency",
       currency: "MAD",
     })
-  }, [gym, locale])
+  }, [canViewFinancials, gym, locale])
 
   const demoEndsLabel = useMemo(() => {
     if (!gym?.isDemo || !gym.demoEndsAt) return null
@@ -114,7 +119,7 @@ export function GymDetailDialog({ gymId, onClose }: Props) {
 
           <DialogDescription className="text-pretty text-xs sm:text-sm leading-relaxed">
             {gym
-              ? `${gym.city ? gym.city : t("unknownLocation")}${gym.country ? `, ${gym.country}` : ""} - ${t("planPrefix")} ${planLabel} - ${intervalLabel} - ${priceLabel} - ${typeLabel} (${t("variantsCount", { count: variantTotal })})${demoEndsLabel ? ` - ${t("demoUntil", { date: demoEndsLabel })}` : ""}`
+              ? `${gym.city ? gym.city : t("unknownLocation")}${gym.country ? `, ${gym.country}` : ""} - ${t("planPrefix")} ${planLabel} - ${intervalLabel}${priceLabel ? ` - ${priceLabel}` : ""} - ${typeLabel} (${t("variantsCount", { count: variantTotal })})${demoEndsLabel ? ` - ${t("demoUntil", { date: demoEndsLabel })}` : ""}`
               : t("loadingSubtitle", { default: "Fetching gym data..." } as any)}
           </DialogDescription>
 

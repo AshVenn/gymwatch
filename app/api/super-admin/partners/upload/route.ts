@@ -1,24 +1,17 @@
 import { NextResponse } from "next/server"
-import { getServerSession } from "next-auth"
-
-import { authOptions } from "@/lib/auth-middleware"
 import { uploadImageFromFile } from "@/lib/cloudinary"
+import { Permissions } from "@/lib/rbac/permissions"
+import { requirePermission, requireSession } from "@/lib/auth/guards"
+import { recordAudit } from "@/lib/audit"
 
 export const runtime = "nodejs"
 
-async function ensureSuperAdmin() {
-  const session = await getServerSession(authOptions)
-  if (!session?.user || session.user.role !== "SUPER_ADMIN") {
-    return null
-  }
-  return session
-}
-
 export async function POST(req: Request) {
-  const session = await ensureSuperAdmin()
-  if (!session) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 403 })
-  }
+  const sessionResult = await requireSession()
+  if (!sessionResult.ok) return sessionResult.response
+
+  const permission = requirePermission(sessionResult.user, Permissions.PlatformPartnersManage)
+  if (!permission.ok) return permission.response
 
   try {
     const formData = await req.formData()
@@ -27,12 +20,21 @@ export async function POST(req: Request) {
     const publicId = formData.get("publicId")
 
     if (!(file instanceof File)) {
-      return NextResponse.json({ error: "Missing file" }, { status: 400 })
+      return NextResponse.json({ code: "MISSING_FILE", message: "Missing file" }, { status: 400 })
     }
 
     const uploaded = await uploadImageFromFile(file, {
       folder: typeof folder === "string" && folder.trim() ? folder : undefined,
       publicId: typeof publicId === "string" && publicId.trim() ? publicId : undefined,
+    })
+
+    await recordAudit({
+      actor: sessionResult.session.user,
+      action: "platform.partner.upload",
+      targetType: "partner-asset",
+      targetId: uploaded.publicId,
+      metadata: { folder: typeof folder === "string" ? folder : null },
+      request: req,
     })
 
     return NextResponse.json({
@@ -43,10 +45,16 @@ export async function POST(req: Request) {
     })
   } catch (error) {
     if (error instanceof Error && error.name === "CLOUDINARY_MISCONFIGURED") {
-      return NextResponse.json({ error: "Cloudinary configuration missing" }, { status: 500 })
+      return NextResponse.json(
+        { code: "CLOUDINARY_MISCONFIGURED", message: "Cloudinary configuration missing" },
+        { status: 500 },
+      )
     }
 
     console.error("[super-admin][partners][upload]", error)
-    return NextResponse.json({ error: "Unable to upload image" }, { status: 500 })
+    return NextResponse.json(
+      { code: "PARTNER_UPLOAD_FAILED", message: "Unable to upload image" },
+      { status: 500 },
+    )
   }
 }

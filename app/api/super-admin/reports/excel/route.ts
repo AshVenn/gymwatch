@@ -1,11 +1,12 @@
 import { NextRequest, NextResponse } from "next/server"
-import { getServerSession } from "next-auth"
 import { z } from "zod"
 import { utils, write } from "xlsx"
 import type { Prisma } from "@prisma/client"
-import { authOptions } from "@/lib/auth-middleware"
 import { prisma } from "@/lib/prisma"
 import { formatExportCurrency, resolveExportLocale } from "@/lib/export-locale"
+import { Permissions } from "@/lib/rbac/permissions"
+import { requirePermission, requireSession } from "@/lib/auth/guards"
+import { recordAudit } from "@/lib/audit"
 
 const querySchema = z.object({
   scope: z.enum(["global", "gym"]).default("global"),
@@ -78,10 +79,11 @@ function rowsToWorkbook(rows: Array<Array<string | number>>) {
 }
 
 export async function GET(request: NextRequest) {
-  const session = await getServerSession(authOptions)
-  if (!session?.user || session.user.role !== "SUPER_ADMIN") {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 })
-  }
+  const sessionResult = await requireSession()
+  if (!sessionResult.ok) return sessionResult.response
+
+  const permission = requirePermission(sessionResult.user, Permissions.PlatformReportsExport)
+  if (!permission.ok) return permission.response
 
   const parsed = querySchema.safeParse({
     scope: request.nextUrl.searchParams.get("scope") ?? undefined,
@@ -89,7 +91,10 @@ export async function GET(request: NextRequest) {
   })
 
   if (!parsed.success) {
-    return NextResponse.json({ error: "Parametres invalides" }, { status: 400 })
+    return NextResponse.json(
+      { code: "INVALID_QUERY", message: "Parametres invalides", details: parsed.error.flatten() },
+      { status: 400 },
+    )
   }
 
   const { scope, gymId } = parsed.data
@@ -194,6 +199,15 @@ export async function GET(request: NextRequest) {
 
   const filename = `${filenameParts.join("-")}-${Date.now()}.xlsx`
   const payload = rowsToWorkbook(rows)
+
+  await recordAudit({
+    actor: sessionResult.session.user,
+    action: "platform.report.export",
+    targetType: "report",
+    targetId: scope === "gym" && gymId ? gymId : scope,
+    metadata: { format: "xlsx", scope, gymId: gymId ?? null },
+    request,
+  })
 
   return new NextResponse(payload, {
     headers: {

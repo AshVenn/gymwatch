@@ -67,7 +67,9 @@ function LoginClientContent({ localeFromServer }: LoginClientProps) {
 
       const currentSession = await getSession()
       const destination: "/super-admin" | "/dashboard" =
-        currentSession?.user?.role === "SUPER_ADMIN" ? "/super-admin" : "/dashboard"
+        currentSession?.user?.role === "SUPER_ADMIN" || currentSession?.user?.role === "SUPER_MANAGER"
+          ? "/super-admin"
+          : "/dashboard"
 
       toast.success(t("toasts.loginSuccess"))
       router.replace(destination, { locale: localeFromServer })

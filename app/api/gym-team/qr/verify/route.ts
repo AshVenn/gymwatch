@@ -140,25 +140,21 @@ export async function GET(request: NextRequest) {
       tier: member.gym?.subscriptionPlan ?? null,
     })
 
-    return NextResponse.json({
+    const baseResponse = {
       context: isStaff ? "staff" : "public",
-      features: {
-        accessControl: memberFeatures.features.accessControl,
-        courses: memberFeatures.features.courses,
-      },
       member: {
         id: member.id,
         firstName: member.firstName,
         lastName: member.lastName,
-        email: member.email ?? null,
-        phone: member.phone ?? null,
+        email: isStaff ? member.email ?? null : null,
+        phone: isStaff ? member.phone ?? null : null,
         variantName: member.gymVariant?.name ?? null,
         gymName: member.gym?.name ?? null,
       },
       subscription: {
-        planName: visit.planName,
-        planDurationDays: visit.planDurationDays,
-        startDate: visit.subscriptionStartsAt,
+        planName: isStaff ? visit.planName : null,
+        planDurationDays: isStaff ? visit.planDurationDays : null,
+        startDate: isStaff ? visit.subscriptionStartsAt : null,
         endDate: visit.subscriptionEndsAt,
         status: visit.status,
         active: visit.active,
@@ -170,24 +166,40 @@ export async function GET(request: NextRequest) {
         visitsRemaining: visit.visitsRemaining,
         limitState: visit.limitState,
         overDailyLimit: visit.overDailyLimit,
-        recent: recentVisits.map((entry) => ({
-          id: entry.id,
-          checkIn: entry.checkIn,
-          checkOut: entry.checkOut,
-          variantName: entry.gymVariant?.name ?? null,
-        })),
+        recent: isStaff
+          ? recentVisits.map((entry) => ({
+              id: entry.id,
+              checkIn: entry.checkIn,
+              checkOut: entry.checkOut,
+              variantName: entry.gymVariant?.name ?? null,
+            }))
+          : [],
         last30Days: visitsLast30Days,
       },
-      classes: classes.map((item) => ({
-        id: item.classSession.id,
-        title: item.classSession.title,
-        startAt: item.classSession.startAt,
-        endAt: item.classSession.endAt,
-        coach: item.classSession.coach,
-        room: item.classSession.room,
-        variantName: item.classSession.gymVariant?.name ?? null,
-      })),
-    })
+      classes: isStaff
+        ? classes.map((item) => ({
+            id: item.classSession.id,
+            title: item.classSession.title,
+            startAt: item.classSession.startAt,
+            endAt: item.classSession.endAt,
+            coach: item.classSession.coach,
+            room: item.classSession.room,
+            variantName: item.classSession.gymVariant?.name ?? null,
+          }))
+        : [],
+    }
+
+    if (isStaff) {
+      return NextResponse.json({
+        ...baseResponse,
+        features: {
+          accessControl: memberFeatures.features.accessControl,
+          courses: memberFeatures.features.courses,
+        },
+      })
+    }
+
+    return NextResponse.json(baseResponse)
   } catch (error) {
     console.error("[access-event][qr-profile]", error)
     return NextResponse.json({ error: "Unable to resolve member" }, { status: 500 })

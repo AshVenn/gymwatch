@@ -3,6 +3,7 @@ import { useState } from "react"
 import Link from "next/link"
 import { toast } from "sonner"
 import { useLocale, useTranslations } from "next-intl"
+import { useSession } from "next-auth/react"
 import { useSuperAdminStats } from "./hooks"
 
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
@@ -28,6 +29,8 @@ import {
 } from "recharts"
 
 import { ChartContainer, ChartTooltip, ChartTooltipContent, type ChartConfig } from "@/components/ui/chart"
+import { Permissions } from "@/lib/rbac/permissions"
+import { hasPermission } from "@/lib/rbac/policies"
 
 const STATUS_COLORS = ["var(--color-active)", "var(--color-suspended)", "var(--color-expired)"] as const
 
@@ -39,6 +42,10 @@ export default function SuperAdminOverviewPage() {
   const { data: stats, isLoading, isError } = useSuperAdminStats()
   const locale = useLocale()
   const [downloading, setDownloading] = useState<"excel" | "pdf" | null>(null)
+  const { data: session } = useSession()
+  const role = session?.user?.role as string | undefined
+  const canViewRevenue = hasPermission(role as any, Permissions.PlatformAnalyticsRevenue)
+  const canExportReports = hasPermission(role as any, Permissions.PlatformReportsExport)
 
   const currencyFormatter = new Intl.NumberFormat(locale === "ar" ? "ar-MA" : locale === "en" ? "en-US" : "fr-MA", {
     style: "currency",
@@ -258,32 +265,34 @@ export default function SuperAdminOverviewPage() {
         <p className="text-muted-foreground text-lg leading-relaxed">{t("header.subtitle")}</p>
       </div>
 
-      <Card className="border-border/60 bg-card/90 backdrop-blur-sm rounded-3xl shadow-lg transition-all duration-300 hover:shadow-xl">
-        <CardHeader>
-          <CardTitle className="text-xl">{t("exports.title")}</CardTitle>
-          <CardDescription className="text-base">{t("exports.subtitle")}</CardDescription>
-        </CardHeader>
-        <CardContent className="flex flex-wrap gap-3">
-          <Button
-            variant="outline"
-            onClick={() => downloadReport("excel")}
-            disabled={downloading === "excel"}
-            className="gap-2 rounded-xl border-border/60 transition-all duration-200 hover:border-primary/40 hover:bg-primary/5 hover:scale-105"
-          >
-            <Download size={16} />
-            {downloading === "excel" ? t("exports.exporting") : t("exports.excel")}
-          </Button>
-          <Button
-            variant="outline"
-            onClick={() => downloadReport("pdf")}
-            disabled={downloading === "pdf"}
-            className="gap-2 rounded-xl border-border/60 transition-all duration-200 hover:border-primary/40 hover:bg-primary/5 hover:scale-105"
-          >
-            <Download size={16} />
-            {downloading === "pdf" ? t("exports.exporting") : t("exports.pdf")}
-          </Button>
-        </CardContent>
-      </Card>
+      {canExportReports ? (
+        <Card className="border-border/60 bg-card/90 backdrop-blur-sm rounded-3xl shadow-lg transition-all duration-300 hover:shadow-xl">
+          <CardHeader>
+            <CardTitle className="text-xl">{t("exports.title")}</CardTitle>
+            <CardDescription className="text-base">{t("exports.subtitle")}</CardDescription>
+          </CardHeader>
+          <CardContent className="flex flex-wrap gap-3">
+            <Button
+              variant="outline"
+              onClick={() => downloadReport("excel")}
+              disabled={downloading === "excel"}
+              className="gap-2 rounded-xl border-border/60 transition-all duration-200 hover:border-primary/40 hover:bg-primary/5 hover:scale-105"
+            >
+              <Download size={16} />
+              {downloading === "excel" ? t("exports.exporting") : t("exports.excel")}
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => downloadReport("pdf")}
+              disabled={downloading === "pdf"}
+              className="gap-2 rounded-xl border-border/60 transition-all duration-200 hover:border-primary/40 hover:bg-primary/5 hover:scale-105"
+            >
+              <Download size={16} />
+              {downloading === "pdf" ? t("exports.exporting") : t("exports.pdf")}
+            </Button>
+          </CardContent>
+        </Card>
+      ) : null}
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
         <Card className="border-border/60 bg-card/90 backdrop-blur-sm rounded-3xl shadow-md transition-all duration-300 hover:shadow-xl hover:-translate-y-1">
@@ -309,7 +318,7 @@ export default function SuperAdminOverviewPage() {
         </Card>
       </div>
 
-      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+      <div className={`grid grid-cols-1 gap-6 sm:grid-cols-2 ${canViewRevenue ? "lg:grid-cols-4" : "lg:grid-cols-3"}`}>
         <Card className="group border-border/60 bg-card/90 backdrop-blur-sm rounded-3xl shadow-md transition-all duration-300 hover:shadow-xl hover:scale-105">
           <CardHeader className="pb-3">
             <CardDescription className="text-sm font-medium">{t("kpis.totalGyms")}</CardDescription>
@@ -340,65 +349,69 @@ export default function SuperAdminOverviewPage() {
           </CardHeader>
         </Card>
 
-        <Card className="group border-border/60 bg-card/90 backdrop-blur-sm rounded-3xl shadow-md transition-all duration-300 hover:shadow-xl hover:scale-105">
-          <CardHeader className="pb-3">
-            <CardDescription className="text-sm font-medium">{t("kpis.monthlyRevenue")}</CardDescription>
-            <CardTitle className="flex items-center gap-3 text-4xl">
-              <Activity className="h-7 w-7 text-primary transition-transform duration-300 group-hover:scale-110" />
-              <span className="text-2xl">{currencyFormatter.format(stats.monthlyRevenue)}</span>
-            </CardTitle>
-          </CardHeader>
-        </Card>
+        {canViewRevenue ? (
+          <Card className="group border-border/60 bg-card/90 backdrop-blur-sm rounded-3xl shadow-md transition-all duration-300 hover:shadow-xl hover:scale-105">
+            <CardHeader className="pb-3">
+              <CardDescription className="text-sm font-medium">{t("kpis.monthlyRevenue")}</CardDescription>
+              <CardTitle className="flex items-center gap-3 text-4xl">
+                <Activity className="h-7 w-7 text-primary transition-transform duration-300 group-hover:scale-110" />
+                <span className="text-2xl">{currencyFormatter.format(stats.monthlyRevenue ?? 0)}</span>
+              </CardTitle>
+            </CardHeader>
+          </Card>
+        ) : null}
       </div>
 
-      <div className="grid gap-6 md:grid-cols-1 lg:grid-cols-3">
-        <Card className="border-border/60 bg-card/90 backdrop-blur-sm rounded-3xl shadow-lg lg:col-span-2">
-          <CardHeader className="pb-0">
-            <CardTitle className="text-xl">{t("charts.revenue.title")}</CardTitle>
-            <CardDescription className="text-base">{t("charts.revenue.subtitle")}</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <ChartContainer config={revenueChartConfig}>
-              <ResponsiveContainer width="100%" height={320}>
-                <LineChart data={revenueChartData} margin={{ top: 24, left: 24, right: 24 }}>
-                  <CartesianGrid vertical={false} strokeDasharray="3 3" />
-                  <XAxis
-                    dataKey="month"
-                    tickLine={false}
-                    axisLine={false}
-                    tickMargin={8}
-                    tickFormatter={(value) => monthLabelLookup.get(String(value)) ?? String(value)}
-                  />
-                  <YAxis />
-                  <ChartTooltip cursor={false} content={<ChartTooltipContent hideLabel />} />
-                  <Line
-                    dataKey="revenue"
-                    type="monotone"
-                    stroke="oklch(0.488 0.243 264.376)"
-                    strokeWidth={2}
-                    connectNulls
-                    dot={({ payload, ...props }) => (
-                      <Dot
-                        key={payload.month}
-                        r={5}
-                        cx={props.cx}
-                        cy={props.cy}
-                        fill="oklch(0.488 0.243 264.376)"
-                        stroke="oklch(0.488 0.243 264.376)"
-                      />
-                    )}
-                  />
-                </LineChart>
-              </ResponsiveContainer>
-            </ChartContainer>
-          </CardContent>
-          <CardFooter className="text-sm text-muted-foreground">
-            <TrendingUp className="mr-2 h-4 w-4 text-primary" />
-            {t("charts.revenue.footer")}
-          </CardFooter>
-        </Card>
+      <div className={`grid gap-6 md:grid-cols-1 ${canViewRevenue ? "lg:grid-cols-3" : "lg:grid-cols-2"}`}>
+        {canViewRevenue ? (
+          <Card className="border-border/60 bg-card/90 backdrop-blur-sm rounded-3xl shadow-lg lg:col-span-2">
+            <CardHeader className="pb-0">
+              <CardTitle className="text-xl">{t("charts.revenue.title")}</CardTitle>
+              <CardDescription className="text-base">{t("charts.revenue.subtitle")}</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <ChartContainer config={revenueChartConfig}>
+                <ResponsiveContainer width="100%" height={320}>
+                  <LineChart data={revenueChartData} margin={{ top: 24, left: 24, right: 24 }}>
+                    <CartesianGrid vertical={false} strokeDasharray="3 3" />
+                    <XAxis
+                      dataKey="month"
+                      tickLine={false}
+                      axisLine={false}
+                      tickMargin={8}
+                      tickFormatter={(value) => monthLabelLookup.get(String(value)) ?? String(value)}
+                    />
+                    <YAxis />
+                    <ChartTooltip cursor={false} content={<ChartTooltipContent hideLabel />} />
+                    <Line
+                      dataKey="revenue"
+                      type="monotone"
+                      stroke="oklch(0.488 0.243 264.376)"
+                      strokeWidth={2}
+                      connectNulls
+                      dot={({ payload, ...props }) => (
+                        <Dot
+                          key={payload.month}
+                          r={5}
+                          cx={props.cx}
+                          cy={props.cy}
+                          fill="oklch(0.488 0.243 264.376)"
+                          stroke="oklch(0.488 0.243 264.376)"
+                        />
+                      )}
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
+              </ChartContainer>
+            </CardContent>
+            <CardFooter className="text-sm text-muted-foreground">
+              <TrendingUp className="mr-2 h-4 w-4 text-primary" />
+              {t("charts.revenue.footer")}
+            </CardFooter>
+          </Card>
+        ) : null}
 
-        <Card className="border-border/60 bg-card/90 backdrop-blur-sm rounded-3xl shadow-lg">
+        <Card className={`border-border/60 bg-card/90 backdrop-blur-sm rounded-3xl shadow-lg ${canViewRevenue ? "" : "lg:col-span-1"}`}>
           <CardHeader className="pb-0">
             <CardTitle className="text-xl">{t("charts.status.title")}</CardTitle>
             <CardDescription className="text-base">{t("charts.status.subtitle")}</CardDescription>
@@ -439,7 +452,7 @@ export default function SuperAdminOverviewPage() {
 
           <CardContent className="flex flex-1 items-center pb-0">
             <ChartContainer config={radialStatusConfig} className="mx-auto w-full max-w-[320px]">
-              <div className="relative h-[260px]">
+              <div className="relative h-65">
                 <ResponsiveContainer width="100%" height="100%">
                   <RadialBarChart
                     data={radialStatusData}

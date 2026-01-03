@@ -1,9 +1,10 @@
 import { NextResponse } from "next/server"
-import { getServerSession } from "next-auth"
 import { z } from "zod"
-import { authOptions } from "@/lib/auth-middleware"
 import { prisma } from "@/lib/prisma"
 import { hashPassword, verifyPassword } from "@/lib/auth"
+import { Permissions } from "@/lib/rbac/permissions"
+import { requirePermission, requireSession } from "@/lib/auth/guards"
+import { recordAudit } from "@/lib/audit"
 
 const passwordSchema = z
   .object({
@@ -17,23 +18,26 @@ const passwordSchema = z
   })
 
 export async function POST(request: Request) {
-  const session = await getServerSession(authOptions)
+  const sessionResult = await requireSession()
+  if (!sessionResult.ok) return sessionResult.response
 
-  if (!session?.user || session.user.role !== "SUPER_ADMIN") {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 403 })
-  }
+  const permission = requirePermission(sessionResult.user, Permissions.PlatformSettingsManage)
+  if (!permission.ok) return permission.response
 
   try {
     const payload = passwordSchema.parse(await request.json())
 
-    const user = await prisma.user.findUnique({ where: { id: session.user.id } })
+    const user = await prisma.user.findUnique({ where: { id: sessionResult.user.id } })
     if (!user) {
-      return NextResponse.json({ error: "User not found" }, { status: 404 })
+      return NextResponse.json({ code: "NOT_FOUND", message: "User not found" }, { status: 404 })
     }
 
     const isValid = await verifyPassword(payload.currentPassword, user.password)
     if (!isValid) {
-      return NextResponse.json({ error: "Mot de passe actuel invalide" }, { status: 401 })
+      return NextResponse.json(
+        { code: "INVALID_PASSWORD", message: "Mot de passe actuel invalide" },
+        { status: 401 },
+      )
     }
 
     const hashed = await hashPassword(payload.newPassword)
@@ -45,15 +49,26 @@ export async function POST(request: Request) {
       },
     })
 
+    await recordAudit({
+      actor: sessionResult.session.user,
+      action: "platform.account.password.update",
+      targetType: "user",
+      targetId: user.id,
+      request,
+    })
+
     return NextResponse.json({ success: true, sessionRevoked: true })
   } catch (error) {
     if (error instanceof z.ZodError) {
       return NextResponse.json(
-        { error: "Invalid payload", details: error.flatten() },
+        { code: "INVALID_PAYLOAD", message: "Invalid payload", details: error.flatten() },
         { status: 422 },
       )
     }
 
-    return NextResponse.json({ error: "Unable to update password" }, { status: 500 })
+    return NextResponse.json(
+      { code: "PASSWORD_UPDATE_FAILED", message: "Unable to update password" },
+      { status: 500 },
+    )
   }
 }

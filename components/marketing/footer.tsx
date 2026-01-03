@@ -20,9 +20,9 @@ export async function MarketingFooter({ locale }: { locale: AppLocale }) {
             <Image
               src="/GymWatch.svg"
               alt="GymWatch"
-              width={520}
-              height={520}
-              className="h-12 w-auto sm:h-14 dark:invert dark:brightness-200"
+              width={72}
+              height={48}
+              className="h-12 w-[72px] sm:h-14 sm:w-[84px] dark:invert dark:brightness-200"
               priority={false}
             />
 

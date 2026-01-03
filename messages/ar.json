@@ -1555,7 +1555,8 @@
     "demoBadge": "تجريبي",
     "demoPrefix": "تجريبي",
     "planLine": "الخطة {plan} - {interval} - {price}",
-    "status": {
+    "priceHidden": "السعر مخفي",
+"status": {
       "active": "نشطة",
       "suspended": "معلّقة",
       "expired": "منتهية"
@@ -1912,7 +1913,8 @@
       "planLabel": "الخطة",
       "planPlaceholder": "اختر خطة",
       "startDateLabel": "تاريخ البداية",
-      "endPreview": "النهاية المتوقعة: {date}",
+      "endDateLabel": "تاريخ الانتهاء",
+      "endPreview": "تاريخ الانتهاء المتوقع: {date}",
       "createPaymentTitle": "إنشاء دفعة",
       "createPaymentDesc": "عطّل هذا الخيار إذا كنت تصحّح خطأ في التاريخ.",
       "saving": "جارٍ التحديث...",
@@ -1947,12 +1949,140 @@
   "superAdminLayout": {
     "nav": {
       "overview": "نظرة عامة",
-      "gyms": "إدارة القاعات",
-      "demoRequests": "طلبات التجربة",
-      "settings": "الإعدادات",
+      "planSetup": "إعداد الخطط",
+      "gyms": "إدارة القاعات الرياضية",
+      "users": "مستخدمو المنصة",
+      "audit": "سجل التدقيق",
+      "demoRequests": "طلبات العرض التجريبي",
       "partners": "الأندية الشريكة",
-      "planSetup": "إعداد الخطط"
+      "settings": "الإعدادات"
     }
+  },
+  "superAdminUsers": {
+    "title": "حسابات المنصة",
+    "subtitle": "إدارة حسابات ADMIN و MANAGER.",
+    "actions": {
+      "create": "حساب جديد",
+      "cancel": "إلغاء",
+      "save": "حفظ",
+      "saving": "جارٍ الحفظ..."
+    },
+    "filters": {
+      "search": "بحث",
+      "searchPlaceholder": "البحث بالاسم أو البريد الإلكتروني",
+      "role": "الدور",
+      "allRoles": "جميع الأدوار",
+      "status": "الحالة",
+      "allStatuses": "جميع الحالات",
+      "pageSize": "حجم الصفحة"
+    },
+    "table": {
+      "columns": {
+        "name": "الاسم",
+        "role": "الدور",
+        "status": "الحالة",
+        "createdAt": "تاريخ الإنشاء",
+        "lastLoginAt": "آخر تسجيل دخول",
+        "actions": "الإجراءات"
+      },
+      "nameFallback": "بدون اسم",
+      "never": "أبدًا",
+      "actions": {
+        "edit": "تعديل",
+        "activate": "تفعيل",
+        "suspend": "تعليق",
+        "resetPassword": "إعادة تعيين كلمة المرور"
+      }
+    },
+    "create": {
+      "title": "إنشاء حساب",
+      "description": "إنشاء حساب للمنصة."
+    },
+    "edit": {
+      "title": "تعديل الحساب",
+      "description": "تحديث معلومات الحساب."
+    },
+    "fields": {
+      "firstName": "الاسم الأول",
+      "lastName": "اسم العائلة",
+      "email": "البريد الإلكتروني",
+      "password": "كلمة المرور",
+      "role": "الدور",
+      "status": "الحالة"
+    },
+    "roles": {
+      "superAdmin": "مشرف عام",
+      "superManager": "مدير عام"
+    },
+    "status": {
+      "active": "نشط",
+      "suspended": "موقوف"
+    },
+    "errors": {
+      "load": "تعذر تحميل الحسابات",
+      "create": "تعذر إنشاء الحساب",
+      "update": "تعذر تحديث الحساب",
+      "resetPassword": "تعذر إعادة تعيين كلمة المرور"
+    },
+    "toasts": {
+      "created": "تم إنشاء الحساب",
+      "updated": "تم تحديث الحساب",
+      "resetPassword": "تمت إعادة تعيين كلمة المرور"
+    },
+    "empty": "لا توجد حسابات منصة"
+  },
+  "superAdminAudit": {
+    "title": "سجل التدقيق",
+    "subtitle": "تتبع الإجراءات الحساسة المنفذة على المنصة.",
+    "actions": {
+      "export": "تصدير CSV"
+    },
+    "filters": {
+      "search": "بحث",
+      "searchPlaceholder": "إجراء، هدف، فاعل",
+      "actor": "الفاعل",
+      "actorPlaceholder": "الاسم أو البريد الإلكتروني",
+      "action": "الإجراء",
+      "actionPlaceholder": "مثال: platform.user.update",
+      "target": "الهدف",
+      "targetPlaceholder": "النوع أو المعرّف",
+      "from": "من",
+      "to": "إلى",
+      "pageSize": "حجم الصفحة"
+    },
+    "table": {
+      "columns": {
+        "date": "التاريخ",
+        "actor": "الفاعل",
+        "action": "الإجراء",
+        "target": "الهدف"
+      },
+      "actorFallback": "بدون اسم",
+      "targetEmpty": "لا يوجد هدف",
+      "targetUnknown": "هدف غير معروف"
+    },
+    "roles": {
+      "superAdmin": "مشرف عام",
+      "superManager": "مدير عام"
+    },
+    "details": {
+      "title": "تفاصيل التدقيق",
+      "subtitle": "معلومات تفصيلية",
+      "fields": {
+        "date": "التاريخ",
+        "actor": "الفاعل",
+        "role": "الدور",
+        "ip": "عنوان IP",
+        "target": "الهدف",
+        "userAgent": "وكيل المستخدم",
+        "metadata": "البيانات الوصفية"
+      },
+      "noMetadata": "لا توجد بيانات وصفية"
+    },
+    "errors": {
+      "load": "تعذر تحميل سجلات التدقيق"
+    },
+    "empty": "لا توجد إجراءات مسجلة"
   },
   "superAdminGymAnalytics": {
     "expiry": {
@@ -2039,7 +2169,7 @@
       "maxSession": "مدة الجلسة",
       "variant": "الفرع",
       "status": "الحالة"
-    },
+    },    "priceHidden": "السعر مخفي",
     "durationDays": "{days} يوم",
     "minutes": "{minutes} دقيقة",
     "unlimited": "غير محدود",
@@ -2825,7 +2955,8 @@
       "loading": "جارٍ التحميل...",
       "roles": {
         "superAdmin": "مشرف عام",
-        "admin": "مشرف",
+                "superManager": "مدير عام",
+"admin": "مشرف",
         "owner": "المالك",
         "user": "مستخدم"
       },
@@ -3238,6 +3369,42 @@
           "update": "تحديث",
           "create": "إنشاء"
         },
+        "bulk": {
+          "selectAll": "تحديد الكل",
+          "selectOne": "تحديد {name}",
+          "selectedCount": "تم تحديد {count}",
+          "actions": {
+            "checkout": "تسجيل الخروج",
+            "delete": "حذف",
+            "clear": "مسح",
+            "cancel": "إلغاء",
+            "confirm": "تأكيد",
+            "pending": "جارٍ المعالجة..."
+          },
+          "confirmDelete": {
+            "title": "حذف الأعضاء",
+            "description": "سيتم حذف {count} عضو/أعضاء. هذا الإجراء نهائي."
+          },
+          "confirmCheckout": {
+            "title": "تسجيل الخروج الجماعي",
+            "description": "تسجيل الخروج لـ {count} عضو/أعضاء محددين."
+          },
+          "toasts": {
+            "emptySelection": "لم يتم تحديد أي عضو",
+            "checkoutLocked": "نظام التحكم في الدخول غير مفعّل",
+            "error": "تعذر تنفيذ الإجراء الجماعي",
+            "partialDelete": "تم حذف {success}، وفشل {failed}",
+            "partialCheckout": "تم تسجيل خروج {success}، وفشل {failed}",
+            "deleteSuccess": "تم حذف {count} عضو/أعضاء",
+            "checkoutSuccess": "تم تنفيذ تسجيل الخروج لـ {count}"
+          }
+        },
+        "deleteDialog": {
+          "title": "حذف الخطة؟",
+          "description": "سيتم حذف {name}. الاشتراكات الحالية ستحتفظ بسجلها.",
+          "cancel": "إلغاء",
+          "confirm": "حذف الخطة"
+        },
         "loadError": "تعذّر تحميل الخطط.",
         "table": {
           "name": "اسم الخطة",
@@ -3607,14 +3774,6 @@
           "exportPending": "جارٍ التصدير...",
           "delete": "حذف"
         }
-      },
-      "deleteDialog": {
-        "title": "حذف عضو",
-        "descriptionWithName": "سيتم حذف {firstName} {lastName}. ستبقى الاشتراكات النشطة محفوظة.",
-        "descriptionFallback": "يرجى تأكيد حذف العضو.",
-        "cancel": "إلغاء",
-        "pending": "جارٍ الحذف...",
-        "confirm": "حذف"
       }
     }
   },
@@ -3648,24 +3807,26 @@
       "unlimited": "غير محدود",
       "limitReached": "تم بلوغ الحد اليومي"
     },
-    "history": {
-      "title": "النشاط الأخير",
-      "subtitle": "آخر عمليات الدخول",
-      "last30Days": "الزيارات آخر 30 يومًا",
-      "details": "بيانات العضو",
-      "email": "البريد الإلكتروني",
-      "phone": "الهاتف",
-      "unknown": "غير معروف",
-      "recentVisits": "آخر 4 زيارات",
-      "empty": "لا توجد زيارات مسجلة بعد.",
-      "checkedOut": "تم تسجيل الخروج",
-      "checkedIn": "تم تسجيل الدخول"
-    },
-    "classes": {
-      "title": "الحصص القادمة",
-      "subtitle": "الحجوزات المرتبطة بهذا العضو",
-      "empty": "لا توجد حصص قادمة"
-    },
+  "history": {
+    "title": "النشاط الأخير",
+    "subtitle": "آخر عمليات الدخول الخاصة بك",
+    "last30Days": "الزيارات خلال آخر 30 يومًا",
+    "staffOnly": "تفاصيل مخصّصة للطاقم",
+    "details": "تفاصيل العضو",
+    "email": "البريد الإلكتروني",
+    "phone": "الهاتف",
+    "unknown": "غير معروف",
+    "recentVisits": "آخر 4 زيارات",
+    "empty": "لا توجد زيارات مسجلة.",
+    "checkedOut": "تم تسجيل الخروج",
+    "checkedIn": "تم تسجيل الدخول"
+  },
+  "classes": {
+    "title": "الدروس القادمة",
+    "subtitle": "الحجوزات المرتبطة بهذا العضو",
+    "staffOnly": "تفاصيل مخصّصة للطاقم",
+    "empty": "لا توجد دروس محجوزة"
+  },
     "actions": {
       "staffTitle": "إجراءات الطاقم",
       "description": "أنت مسجل كطاقم لهذه القاعة. استخدم الأزرار لتأكيد المسح.",
@@ -3713,13 +3874,16 @@
     "missing": "غير متوفر",
     "unknown": "عضو",
     "empty": "لا يوجد أعضاء."
+  },
+  "notFound": {
+    "eyebrow": "الصفحة غير موجودة",
+    "title": "هذه الصفحة ضاعت عن الطريق.",
+    "description": "قد يكون الرابط قديما أو تم نقل الصفحة. اختر اختصارا للمتابعة.",
+    "primaryCta": "العودة للرئيسية",
+    "secondaryCta": "فتح لوحة التحكم",
+    "hint": "معلومة: استخدم التنقل الرئيسي لاستكشاف الميزات.",
+    "cardTitle": "عودة سريعة",
+    "cardDescription": "انتقل إلى لوحة التحكم لمتابعة إدارة الأعضاء والاشتراكات.",
+    "cardHint": "إذا كان الرابط مشاركا فاطلب رابطا محدثا."
   }
 }
-
-
-
-
-
-
-
-

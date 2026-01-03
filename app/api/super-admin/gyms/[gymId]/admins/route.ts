@@ -1,8 +1,9 @@
 import { NextResponse } from "next/server"
-import { getServerSession } from "next-auth"
 import { z, ZodError } from "zod"
-import { authOptions } from "@/lib/auth-middleware"
 import { createGymAdminAccount } from "@/lib/super-admin"
+import { Permissions } from "@/lib/rbac/permissions"
+import { requirePermission, requireSession } from "@/lib/auth/guards"
+import { recordAudit } from "@/lib/audit"
 
 const adminSchema = z.object({
   email: z.string().email(),
@@ -12,40 +13,53 @@ const adminSchema = z.object({
   gymVariantId: z.string().optional(),
 })
 
-async function ensureSuperAdmin() {
-  const session = await getServerSession(authOptions)
-  if (!session?.user || session.user.role !== "SUPER_ADMIN") {
-    return null
-  }
-  return session
-}
-
 export async function POST(
   req: Request,
   { params }: any,
 ) {
-  const session = await ensureSuperAdmin()
-  if (!session) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 403 })
-  }
+  const sessionResult = await requireSession()
+  if (!sessionResult.ok) return sessionResult.response
+
+  const permission = requirePermission(sessionResult.user, Permissions.PlatformGymsWrite)
+  if (!permission.ok) return permission.response
 
   try {
     const body = adminSchema.parse(await req.json())
     const admin = await createGymAdminAccount(params.gymId, body)
+
+    await recordAudit({
+      actor: sessionResult.session.user,
+      action: "platform.gym.admin.create",
+      targetType: "gym",
+      targetId: params.gymId,
+      metadata: {
+        adminId: admin.id,
+        email: admin.email,
+        variantId: body.gymVariantId ?? null,
+      },
+      request: req,
+    })
+
     return NextResponse.json(admin, { status: 201 })
   } catch (error) {
     if (error instanceof ZodError) {
       return NextResponse.json(
-        { error: "Invalid payload", details: error.flatten() },
+        { code: "INVALID_PAYLOAD", message: "Invalid payload", details: error.flatten() },
         { status: 422 },
       )
     }
 
     if (error instanceof Error && error.message === "MAX_ADMINS_REACHED") {
-      return NextResponse.json({ error: "Admin limit reached" }, { status: 409 })
+      return NextResponse.json(
+        { code: "MAX_ADMINS_REACHED", message: "Admin limit reached" },
+        { status: 409 },
+      )
     }
 
     console.error("[super-admin][gyms][admins][POST]", error)
-    return NextResponse.json({ error: "Unable to create admin" }, { status: 500 })
+    return NextResponse.json(
+      { code: "ADMIN_CREATE_FAILED", message: "Unable to create admin" },
+      { status: 500 },
+    )
   }
 }

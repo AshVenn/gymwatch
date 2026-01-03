@@ -1,11 +1,12 @@
 import { NextResponse } from "next/server"
-import { getServerSession } from "next-auth"
 import { z, ZodError } from "zod"
 import { revalidatePath } from "next/cache"
 
-import { authOptions } from "@/lib/auth-middleware"
 import { deletePartnerClub, updatePartnerClub } from "@/lib/partners"
 import { routing } from "@/i18n/routing"
+import { Permissions } from "@/lib/rbac/permissions"
+import { requirePermission, requireSession } from "@/lib/auth/guards"
+import { recordAudit } from "@/lib/audit"
 
 const translationSchema = z.object({
   name: z.string().min(2).optional(),
@@ -33,14 +34,6 @@ const partnerSchema = z.object({
   translations: translationsSchema.optional(),
 })
 
-async function ensureSuperAdmin() {
-  const session = await getServerSession(authOptions)
-  if (!session?.user || session.user.role !== "SUPER_ADMIN") {
-    return null
-  }
-  return session
-}
-
 function revalidatePartnersPage() {
   for (const locale of routing.locales) {
     revalidatePath(`/${locale}/clubs`)
@@ -56,15 +49,19 @@ export async function PATCH(
   req: Request,
   { params }: { params: { partnerId: string } },
 ) {
-  const session = await ensureSuperAdmin()
-  if (!session) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 403 })
-  }
+  const sessionResult = await requireSession()
+  if (!sessionResult.ok) return sessionResult.response
+
+  const permission = requirePermission(sessionResult.user, Permissions.PlatformPartnersManage)
+  if (!permission.ok) return permission.response
 
   try {
     const payload = partnerSchema.parse(await req.json())
     if (!hasAtLeastOneTranslation(payload.translations)) {
-      return NextResponse.json({ error: "Missing translation" }, { status: 422 })
+      return NextResponse.json(
+        { code: "MISSING_TRANSLATION", message: "Missing translation" },
+        { status: 422 },
+      )
     }
 
     const updated = await updatePartnerClub(params.partnerId, {
@@ -81,26 +78,50 @@ export async function PATCH(
 
     revalidatePartnersPage()
 
+    await recordAudit({
+      actor: sessionResult.session.user,
+      action: "platform.partner.update",
+      targetType: "partner",
+      targetId: updated.id,
+      metadata: { updatedFields: Object.keys(payload), isPublished: updated.isPublished },
+      request: req,
+    })
+
     return NextResponse.json(updated)
   } catch (error) {
     if (error instanceof ZodError) {
-      return NextResponse.json({ error: "Invalid payload", details: error.flatten() }, { status: 422 })
+      return NextResponse.json(
+        { code: "INVALID_PAYLOAD", message: "Invalid payload", details: error.flatten() },
+        { status: 422 },
+      )
     }
 
     if (error instanceof Error) {
       if (error.name === "SLUG_TAKEN") {
-        return NextResponse.json({ error: "Slug already exists" }, { status: 409 })
+        return NextResponse.json(
+          { code: "SLUG_TAKEN", message: "Slug already exists" },
+          { status: 409 },
+        )
       }
       if (error.name === "MISSING_TRANSLATION") {
-        return NextResponse.json({ error: "At least one translation is required" }, { status: 422 })
+        return NextResponse.json(
+          { code: "MISSING_TRANSLATION", message: "At least one translation is required" },
+          { status: 422 },
+        )
       }
       if (error.name === "NOT_FOUND") {
-        return NextResponse.json({ error: "Partner club not found" }, { status: 404 })
+        return NextResponse.json(
+          { code: "NOT_FOUND", message: "Partner club not found" },
+          { status: 404 },
+        )
       }
     }
 
     console.error("[super-admin][partners][PATCH]", error)
-    return NextResponse.json({ error: "Unable to update partner club" }, { status: 500 })
+    return NextResponse.json(
+      { code: "PARTNER_UPDATE_FAILED", message: "Unable to update partner club" },
+      { status: 500 },
+    )
   }
 }
 
@@ -108,20 +129,34 @@ export async function DELETE(
   _req: Request,
   { params }: { params: { partnerId: string } },
 ) {
-  const session = await ensureSuperAdmin()
-  if (!session) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 403 })
-  }
+  const sessionResult = await requireSession()
+  if (!sessionResult.ok) return sessionResult.response
+
+  const permission = requirePermission(sessionResult.user, Permissions.PlatformPartnersManage)
+  if (!permission.ok) return permission.response
 
   try {
     await deletePartnerClub(params.partnerId)
     revalidatePartnersPage()
+    await recordAudit({
+      actor: sessionResult.session.user,
+      action: "platform.partner.delete",
+      targetType: "partner",
+      targetId: params.partnerId,
+      request: _req,
+    })
     return NextResponse.json({ success: true })
   } catch (error) {
     if (error instanceof Error && error.name === "NOT_FOUND") {
-      return NextResponse.json({ error: "Partner club not found" }, { status: 404 })
+      return NextResponse.json(
+        { code: "NOT_FOUND", message: "Partner club not found" },
+        { status: 404 },
+      )
     }
     console.error("[super-admin][partners][DELETE]", error)
-    return NextResponse.json({ error: "Unable to delete partner club" }, { status: 500 })
+    return NextResponse.json(
+      { code: "PARTNER_DELETE_FAILED", message: "Unable to delete partner club" },
+      { status: 500 },
+    )
   }
 }

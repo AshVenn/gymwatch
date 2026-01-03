@@ -1,22 +1,15 @@
 import { NextRequest, NextResponse } from "next/server"
-import { getServerSession } from "next-auth"
 import { DemoRequestStatus } from "@prisma/client"
-import { authOptions } from "@/lib/auth-middleware"
 import { prisma } from "@/lib/prisma"
-
-async function ensureSuperAdmin() {
-  const session = await getServerSession(authOptions)
-  if (!session?.user || session.user.role !== "SUPER_ADMIN") {
-    return null
-  }
-  return session
-}
+import { Permissions } from "@/lib/rbac/permissions"
+import { requirePermission, requireSession } from "@/lib/auth/guards"
 
 export async function GET(request: NextRequest) {
-  const session = await ensureSuperAdmin()
-  if (!session) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 403 })
-  }
+  const sessionResult = await requireSession()
+  if (!sessionResult.ok) return sessionResult.response
+
+  const permission = requirePermission(sessionResult.user, Permissions.PlatformDemoRequestsManage)
+  if (!permission.ok) return permission.response
 
   try {
     const statusParam = request.nextUrl.searchParams.get("status")
@@ -52,7 +45,7 @@ export async function GET(request: NextRequest) {
   } catch (error) {
     console.error("[super-admin][demo-requests][GET]", error)
     return NextResponse.json(
-      { error: "Unable to list demo requests" },
+      { code: "DEMO_REQUESTS_LIST_FAILED", message: "Unable to list demo requests" },
       { status: 500 },
     )
   }

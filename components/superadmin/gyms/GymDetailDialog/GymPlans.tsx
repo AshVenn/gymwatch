@@ -2,6 +2,7 @@
 
 import type { SuperAdminGymDetail } from '@/app/[locale]/(dashboard)/super-admin/hooks'
 import { useLocale, useTranslations } from 'next-intl'
+import { useSession } from 'next-auth/react'
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import {
@@ -13,6 +14,8 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import { Badge } from '@/components/ui/badge'
+import { Permissions } from '@/lib/rbac/permissions'
+import { hasPermission } from '@/lib/rbac/policies'
 
 type Props = {
   gym: SuperAdminGymDetail
@@ -21,6 +24,8 @@ type Props = {
 export function GymPlans({ gym }: Props) {
   const t = useTranslations('superAdminGymPlans')
   const locale = useLocale()
+  const { data: session } = useSession()
+  const canViewFinancials = hasPermission(session?.user?.role as any, Permissions.PlatformAnalyticsRevenue)
 
   const MAD = new Intl.NumberFormat(
     locale === 'ar' ? 'ar-MA' : 'fr-MA',
@@ -45,7 +50,7 @@ export function GymPlans({ gym }: Props) {
               <TableRow>
                 <TableHead>{t('table.name')}</TableHead>
                 <TableHead>{t('table.duration')}</TableHead>
-                <TableHead>{t('table.price')}</TableHead>
+                {canViewFinancials ? <TableHead>{t('table.price')}</TableHead> : null}
                 <TableHead>{t('table.visitsPerDay')}</TableHead>
                 <TableHead>{t('table.maxSession')}</TableHead>
                 <TableHead>{t('table.variant')}</TableHead>
@@ -62,7 +67,9 @@ export function GymPlans({ gym }: Props) {
                     {t('durationDays', { days: plan.durationDays })}
                   </TableCell>
 
-                  <TableCell>{MAD.format(plan.price)}</TableCell>
+                  {canViewFinancials ? (
+                    <TableCell>{plan.price != null ? MAD.format(plan.price) : t('priceHidden')}</TableCell>
+                  ) : null}
 
                   <TableCell>
                     {plan.visitsPerDay != null && plan.visitsPerDay < 0

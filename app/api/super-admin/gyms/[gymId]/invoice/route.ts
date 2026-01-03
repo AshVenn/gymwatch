@@ -1,17 +1,18 @@
 import { NextRequest, NextResponse } from "next/server"
-import { getServerSession } from "next-auth"
 import { PDFDocument, rgb } from "pdf-lib"
 import fontkit from "@pdf-lib/fontkit"
 import reshaper from "arabic-persian-reshaper"
 import { z } from "zod"
 
-import { authOptions } from "@/lib/auth-middleware"
 import { formatExportCurrency, resolveExportLocale, formatExportDate } from "@/lib/export-locale"
 import { updateGymFromSuperAdmin, getSuperAdminGymDetail } from "@/lib/super-admin"
 import { GymBillingInterval, GymPlanTier, GymSubscriptionStatus } from "@prisma/client"
 import { resolvePlanPrice } from "@/lib/plan-settings"
 import { promises as fs } from "fs"
 import path from "path"
+import { Permissions } from "@/lib/rbac/permissions"
+import { requirePermission, requireSession } from "@/lib/auth/guards"
+import { recordAudit } from "@/lib/audit"
 
 export const runtime = "nodejs"
 
@@ -385,18 +386,20 @@ function createDrawer(pdf: PDFDocument, locale: ExportLocale, latinFont: any, ar
   return { drawTitle, drawLine, gap }
 }
 
-async function ensureSuperAdmin() {
-  const session = await getServerSession(authOptions)
-  if (!session?.user || session.user.role !== "SUPER_ADMIN") return null
-  return session
-}
-
 export async function POST(request: NextRequest, { params }: { params: { gymId: string } }) {
-  const session = await ensureSuperAdmin()
-  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 403 })
+  const sessionResult = await requireSession()
+  if (!sessionResult.ok) return sessionResult.response
+
+  const permission = requirePermission(sessionResult.user, Permissions.PlatformInvoicesDownload)
+  if (!permission.ok) return permission.response
 
   const parsed = payloadSchema.safeParse(await request.json())
-  if (!parsed.success) return NextResponse.json({ error: "Invalid payload" }, { status: 400 })
+  if (!parsed.success) {
+    return NextResponse.json(
+      { code: "INVALID_PAYLOAD", message: "Invalid payload", details: parsed.error.flatten() },
+      { status: 400 },
+    )
+  }
 
   const payload = parsed.data
   const locale = resolveExportLocale(payload.locale) as ExportLocale
@@ -456,6 +459,21 @@ export async function POST(request: NextRequest, { params }: { params: { gymId: 
   drawer.drawLine(wording.amount, safeText(formatExportCurrency(amount, valueLocale)))
 
   const pdfBytes = await pdf.save()
+
+  await recordAudit({
+    actor: sessionResult.session.user,
+    action: "platform.gym.invoice",
+    targetType: "gym",
+    targetId: params.gymId,
+    metadata: {
+      subscriptionPlan: payload.subscriptionPlan,
+      billingInterval: payload.billingInterval,
+      subscriptionStatus: payload.subscriptionStatus,
+      applyUpdate,
+      locale,
+    },
+    request,
+  })
 
   return new NextResponse(Buffer.from(pdfBytes), {
     headers: {

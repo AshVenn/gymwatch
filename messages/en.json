@@ -1348,8 +1348,7 @@
     "adminFirstName": "Admin",
     "adminLastName": "Demo"
   }
-}
-,
+},
   "superAdminCreateGym": {
     "title": "New gym",
     "description": "Register a gym and its owner.",
@@ -1521,6 +1520,7 @@
     "demoBadge": "DEMO",
     "demoPrefix": "Demo",
     "planLine": "Plan {plan} - {interval} - {price}",
+    "priceHidden": "Price hidden",
     "suspensionReason": "Suspension: {reason}",
     "status": {
       "active": "Active",
@@ -1661,6 +1661,7 @@
       "variant": "Variant",
       "status": "Status"
     },
+    "priceHidden": "Price hidden",
     "durationDays": "{days} days",
     "minutes": "{minutes} min",
     "unlimited": "Unlimited",
@@ -2136,10 +2137,138 @@
       "overview": "Overview",
       "planSetup": "Plan setup",
       "gyms": "Gyms",
+      "users": "Platform users",
+      "audit": "Audit log",
       "demoRequests": "Demo requests",
       "partners": "Clubs",
       "settings": "Settings"
     }
+  },
+  "superAdminUsers": {
+    "title": "Platform users",
+    "subtitle": "Manage ADMIN and MANAGER accounts.",
+    "actions": {
+      "create": "New account",
+      "cancel": "Cancel",
+      "save": "Save",
+      "saving": "Saving..."
+    },
+    "filters": {
+      "search": "Search",
+      "searchPlaceholder": "Search by name or email",
+      "role": "Role",
+      "allRoles": "All roles",
+      "status": "Status",
+      "allStatuses": "All statuses",
+      "pageSize": "Page size"
+    },
+    "table": {
+      "columns": {
+        "name": "Name",
+        "role": "Role",
+        "status": "Status",
+        "createdAt": "Created",
+        "lastLoginAt": "Last login",
+        "actions": "Actions"
+      },
+      "nameFallback": "Unnamed",
+      "never": "Never",
+      "actions": {
+        "edit": "Edit",
+        "activate": "Activate",
+        "suspend": "Suspend",
+        "resetPassword": "Reset password"
+      }
+    },
+    "create": {
+      "title": "Create account",
+      "description": "Create a platform account."
+    },
+    "edit": {
+      "title": "Edit account",
+      "description": "Update account details."
+    },
+    "fields": {
+      "firstName": "First name",
+      "lastName": "Last name",
+      "email": "Email",
+      "password": "Password",
+      "role": "Role",
+      "status": "Status"
+    },
+    "roles": {
+      "superAdmin": "Super admin",
+      "superManager": "Super manager"
+    },
+    "status": {
+      "active": "Active",
+      "suspended": "Suspended"
+    },
+    "errors": {
+      "load": "Unable to load accounts",
+      "create": "Unable to create account",
+      "update": "Unable to update account",
+      "resetPassword": "Unable to reset password"
+    },
+    "toasts": {
+      "created": "Account created",
+      "updated": "Account updated",
+      "resetPassword": "Password reset"
+    },
+    "empty": "No platform accounts"
+  },
+  "superAdminAudit": {
+    "title": "Audit log",
+    "subtitle": "Track sensitive platform actions.",
+    "actions": {
+      "export": "Export CSV"
+    },
+    "filters": {
+      "search": "Search",
+      "searchPlaceholder": "Action, target, actor",
+      "actor": "Actor",
+      "actorPlaceholder": "Name or email",
+      "action": "Action",
+      "actionPlaceholder": "e.g. platform.user.update",
+      "target": "Target",
+      "targetPlaceholder": "Type or ID",
+      "from": "From",
+      "to": "To",
+      "pageSize": "Page size"
+    },
+    "table": {
+      "columns": {
+        "date": "Date",
+        "actor": "Actor",
+        "action": "Action",
+        "target": "Target"
+      },
+      "actorFallback": "Unnamed",
+      "targetEmpty": "No target",
+      "targetUnknown": "Unknown target"
+    },
+    "roles": {
+      "superAdmin": "Super admin",
+      "superManager": "Super manager"
+    },
+    "details": {
+      "title": "Audit details",
+      "subtitle": "Detailed information",
+      "fields": {
+        "date": "Date",
+        "actor": "Actor",
+        "role": "Role",
+        "ip": "IP",
+        "target": "Target",
+        "userAgent": "User agent",
+        "metadata": "Metadata"
+      },
+      "noMetadata": "No metadata"
+    },
+    "errors": {
+      "load": "Unable to load audit logs"
+    },
+    "empty": "No actions recorded"
   },
   "dashOwAdSubscriptions": {
     "errors": {
@@ -2206,7 +2335,8 @@
       "planLabel": "Plan",
       "planPlaceholder": "Select a plan",
       "startDateLabel": "Start date",
-      "endPreview": "Estimated end: {date}",
+      "endDateLabel": "End date",
+      "endPreview": "Expected end: {date}",
       "createPaymentTitle": "Create a payment",
       "createPaymentDesc": "Disable if you’re fixing a date mistake.",
       "saving": "Updating...",
@@ -3074,6 +3204,7 @@
       "loading": "Loading...",
       "roles": {
         "superAdmin": "Super admin",
+        "superManager": "Super manager",
         "admin": "Admin",
         "owner": "Owner",
         "user": "User"
@@ -3309,6 +3440,12 @@
           "saving": "Saving...",
           "update": "Update",
           "create": "Create"
+        },
+        "deleteDialog": {
+          "title": "Delete plan?",
+          "description": "This will remove \"{name}\". Existing subscriptions keep their history.",
+          "cancel": "Cancel",
+          "confirm": "Delete plan"
         },
         "loadError": "Unable to load plans.",
         "table": {
@@ -3680,6 +3817,36 @@
           "delete": "Delete"
         }
       },
+      "bulk": {
+        "selectAll": "Select all",
+        "selectOne": "Select {name}",
+        "selectedCount": "{count} selected",
+        "actions": {
+          "checkout": "Bulk check-out",
+          "delete": "Delete",
+          "clear": "Clear",
+          "cancel": "Cancel",
+          "confirm": "Confirm",
+          "pending": "Processing..."
+        },
+        "confirmDelete": {
+          "title": "Delete members",
+          "description": "{count} member(s) will be deleted. This action is permanent."
+        },
+        "confirmCheckout": {
+          "title": "Bulk check-out",
+          "description": "Check-out {count} selected member(s)."
+        },
+        "toasts": {
+          "emptySelection": "No members selected",
+          "checkoutLocked": "Access control is not enabled",
+          "error": "Bulk action failed",
+          "partialDelete": "{success} deleted, {failed} failed",
+          "partialCheckout": "{success} checked out, {failed} failed",
+          "deleteSuccess": "{count} member(s) deleted",
+          "checkoutSuccess": "{count} check-out(s) completed"
+        }
+      },
       "deleteDialog": {
         "title": "Delete member",
         "descriptionWithName": "This action will delete {firstName} {lastName}. Active subscriptions will remain.",
@@ -3724,6 +3891,7 @@
       "title": "Recent activity",
       "subtitle": "Your latest check-ins",
       "last30Days": "Visits in the last 30 days",
+      "staffOnly": "Details available to staff only",
       "details": "Member details",
       "email": "Email",
       "phone": "Phone",
@@ -3736,6 +3904,7 @@
     "classes": {
       "title": "Upcoming classes",
       "subtitle": "Bookings linked to this member",
+      "staffOnly": "Details available to staff only",
       "empty": "No upcoming classes booked"
     },
     "actions": {
@@ -3750,6 +3919,17 @@
       "error": "Scan failed",
       "fallback": "member"
     }
+  },
+  "notFound": {
+    "eyebrow": "Route not found",
+    "title": "This page took a wrong turn.",
+    "description": "The link may be outdated or the page was moved. Choose a shortcut to keep going.",
+    "primaryCta": "Back to home",
+    "secondaryCta": "Open dashboard",
+    "hint": "Tip: use the main navigation to explore features.",
+    "cardTitle": "Quick way back",
+    "cardDescription": "Head to the dashboard to keep managing members and subscriptions.",
+    "cardHint": "If the link is shared, ask the sender for an updated URL."
   }
 }
 

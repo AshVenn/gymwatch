@@ -88,11 +88,18 @@ export default function SubscriptionsPage() {
   const [filterStatus, setFilterStatus] = useState<string>("ALL")
   const [sortBy, setSortBy] = useState<SortOption>("NEXT_EXPIRY")
   const [renewingId, setRenewingId] = useState<string | null>(null)
-  const [renewalForm, setRenewalForm] = useState<{ planId: string; startDate: string; createPayment: boolean }>({
+  const [renewalForm, setRenewalForm] = useState<{
+    planId: string
+    startDate: string
+    endDate: string
+    createPayment: boolean
+  }>({
     planId: "",
     startDate: new Date().toISOString().split("T")[0],
+    endDate: "",
     createPayment: true,
   })
+  const [endDateTouched, setEndDateTouched] = useState(false)
 
   const [visitDialogOpen, setVisitDialogOpen] = useState(false)
   const [visitSearch, setVisitSearch] = useState("")
@@ -171,7 +178,8 @@ export default function SubscriptionsPage() {
   }, [plans, variantFilter])
 
   useEffect(() => {
-    setRenewalForm((prev) => ({ ...prev, planId: "" }))
+    setRenewalForm((prev) => ({ ...prev, planId: "", endDate: "" }))
+    setEndDateTouched(false)
   }, [variantFilter])
 
   const deleteSubscriptionMutation = useMutation({
@@ -204,6 +212,7 @@ export default function SubscriptionsPage() {
         body: JSON.stringify({
           planId: renewalForm.planId,
           startDate: renewalForm.startDate || new Date().toISOString().split("T")[0],
+          endDate: renewalForm.endDate || null,
           createPayment: renewalForm.createPayment,
         }),
       })
@@ -215,7 +224,13 @@ export default function SubscriptionsPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: subscriptionQueryKey })
       setRenewingId(null)
-      setRenewalForm({ planId: "", startDate: new Date().toISOString().split("T")[0], createPayment: true })
+      setRenewalForm({
+        planId: "",
+        startDate: new Date().toISOString().split("T")[0],
+        endDate: "",
+        createPayment: true,
+      })
+      setEndDateTouched(false)
       toast.success(t("toasts.updated"))
     },
     onError: (err) => {
@@ -482,14 +497,24 @@ export default function SubscriptionsPage() {
   }
 
   const selectedPlan = plans.find((plan) => plan.id === renewalForm.planId)
-  const endPreview =
-    selectedPlan && renewalForm.startDate
-      ? (() => {
-          const end = new Date(renewalForm.startDate)
-          if (selectedPlan.durationDays) end.setDate(end.getDate() + selectedPlan.durationDays)
-          return end
-        })()
-      : null
+  const expectedEndDate = useMemo(() => {
+    if (!selectedPlan || !renewalForm.startDate) return null
+    const end = new Date(renewalForm.startDate)
+    const duration = typeof selectedPlan.durationDays === "number" ? selectedPlan.durationDays : 0
+    if (duration) end.setDate(end.getDate() + duration)
+    return Number.isNaN(end.getTime()) ? null : end
+  }, [selectedPlan, renewalForm.startDate])
+
+  const expectedEndDateValue = expectedEndDate ? expectedEndDate.toISOString().split("T")[0] : ""
+
+  useEffect(() => {
+    if (!renewingId || !expectedEndDateValue) return
+    setRenewalForm((prev) => {
+      if (endDateTouched && prev.endDate) return prev
+      if (prev.endDate === expectedEndDateValue) return prev
+      return { ...prev, endDate: expectedEndDateValue }
+    })
+  }, [endDateTouched, expectedEndDateValue, renewingId])
 
   if (isLoading || variantsLoading) {
     return (
@@ -737,8 +762,10 @@ export default function SubscriptionsPage() {
                               setRenewalForm({
                                 planId: "",
                                 startDate: new Date().toISOString().split("T")[0],
+                                endDate: "",
                                 createPayment: true,
                               })
+                              setEndDateTouched(false)
                             }}
                           >
                             <RotateCcw className="mr-2" size={16} />
@@ -755,7 +782,15 @@ export default function SubscriptionsPage() {
                         </DropdownMenuContent>
                       </DropdownMenu>
                       {renewingId === sub.id ? (
-                        <Dialog open onOpenChange={(open) => !open && setRenewingId(null)}>
+                        <Dialog
+                          open
+                          onOpenChange={(open) => {
+                            if (!open) {
+                              setRenewingId(null)
+                              setEndDateTouched(false)
+                            }
+                          }}
+                        >
                           <DialogContent className="border-border/60 bg-card text-foreground">
                             <DialogHeader>
                               <DialogTitle>{t("renew.title")}</DialogTitle>
@@ -768,7 +803,10 @@ export default function SubscriptionsPage() {
                                 </Label>
                                 <Select
                                   value={renewalForm.planId}
-                                  onValueChange={(value) => setRenewalForm({ ...renewalForm, planId: value })}
+                                  onValueChange={(value) => {
+                                    setEndDateTouched(false)
+                                    setRenewalForm({ ...renewalForm, planId: value })
+                                  }}
                                 >
                                   <SelectTrigger id="renew-plan" className="mt-1">
                                     <SelectValue placeholder={t("renew.planPlaceholder")} />
@@ -789,19 +827,33 @@ export default function SubscriptionsPage() {
                                 </Select>
                               </div>
 
-                              <div className="space-y-2">
-                                <Label className="text-foreground">{t("renew.startDateLabel")}</Label>
-                                <Input
-                                  type="date"
-                                  value={renewalForm.startDate}
-                                  onChange={(e) => setRenewalForm({ ...renewalForm, startDate: e.target.value })}
-                                />
-                                {endPreview && (
-                                  <p className="text-xs text-muted-foreground">
-                                    {t("renew.endPreview", { date: dateFormatter.format(endPreview) })}
-                                  </p>
-                                )}
+                              <div className="grid gap-3 sm:grid-cols-2">
+                                <div className="space-y-2">
+                                  <Label className="text-foreground">{t("renew.startDateLabel")}</Label>
+                                  <Input
+                                    type="date"
+                                    value={renewalForm.startDate}
+                                    onChange={(e) => setRenewalForm({ ...renewalForm, startDate: e.target.value })}
+                                  />
+                                </div>
+
+                                <div className="space-y-2">
+                                  <Label className="text-foreground">{t("renew.endDateLabel")}</Label>
+                                  <Input
+                                    type="date"
+                                    value={renewalForm.endDate}
+                                    onChange={(e) => {
+                                      setEndDateTouched(true)
+                                      setRenewalForm({ ...renewalForm, endDate: e.target.value })
+                                    }}
+                                  />
+                                </div>
                               </div>
+                              {expectedEndDate && (
+                                <p className="text-xs text-muted-foreground">
+                                  {t("renew.endPreview", { date: dateFormatter.format(expectedEndDate) })}
+                                </p>
+                              )}
 
                               <div className="flex items-center justify-between rounded-md border border-border/60 p-3">
                                 <div className="space-y-0.5">

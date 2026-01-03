@@ -524,7 +524,7 @@ export default function PresencePage() {
           <p className="mt-1 text-sm leading-relaxed text-muted-foreground">{t("subtitle")}</p>
         </div>
 
-        <div className="flex w-full flex-col gap-3 sm:w-auto sm:flex-row sm:items-center">
+        <div className="flex w-full flex-col gap-3 sm:w-auto sm:flex-row sm:flex-wrap sm:items-center">
           <VariantSelector
             variants={variants}
             value={selectedVariant}

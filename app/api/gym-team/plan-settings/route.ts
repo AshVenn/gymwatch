@@ -19,25 +19,16 @@ const planSettingsSchema = z.object({
 })
 
 export async function GET() {
-  const { settings, pricing, limits } = await getPlanSettings()
+  const session = await getServerSession(authOptions)
+  const gymId = (session?.user as any)?.gymId as string | undefined
 
-  return NextResponse.json({
-    settings: {
-      basicMonthlyPrice: settings.basicMonthlyPrice,
-      proMonthlyPrice: settings.proMonthlyPrice,
-      enterpriseMonthlyPrice: settings.enterpriseMonthlyPrice,
-      annualDiscountPercent: settings.annualDiscountPercent,
-      basicPlanLimitPerVariant: settings.basicPlanLimitPerVariant,
-      basicPlanLimitPerNetwork: settings.basicPlanLimitPerNetwork,
-      proPlanLimitPerVariant: settings.proPlanLimitPerVariant,
-      proPlanLimitPerNetwork: settings.proPlanLimitPerNetwork,
-      enterprisePlanLimitPerVariant: settings.enterprisePlanLimitPerVariant,
-      enterprisePlanLimitPerNetwork: settings.enterprisePlanLimitPerNetwork,
-      updatedAt: settings.updatedAt,
-    },
-    pricing,
-    limits,
-  })
+  if (!session?.user || !gymId) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+  }
+
+  const { limits } = await getPlanSettings()
+
+  return NextResponse.json({ limits })
 }
 
 export async function PUT(request: Request) {

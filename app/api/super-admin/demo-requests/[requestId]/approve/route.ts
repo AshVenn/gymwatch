@@ -1,11 +1,12 @@
 import { NextRequest, NextResponse } from "next/server"
-import { getServerSession } from "next-auth"
 import { GymBillingInterval, GymPlanTier, GymSubscriptionStatus, DemoRequestStatus } from "@prisma/client"
 import { z, ZodError } from "zod"
 
-import { authOptions } from "@/lib/auth-middleware"
 import { prisma } from "@/lib/prisma"
 import { createGymForSuperAdmin } from "@/lib/super-admin"
+import { Permissions } from "@/lib/rbac/permissions"
+import { requirePermission, requireSession } from "@/lib/auth/guards"
+import { recordAudit } from "@/lib/audit"
 
 const approveSchema = z.object({
   name: z.string().min(2),
@@ -50,19 +51,12 @@ const approveSchema = z.object({
   resolutionNote: z.string().max(1000).optional(),
 })
 
-async function ensureSuperAdmin() {
-  const session = await getServerSession(authOptions)
-  if (!session?.user || session.user.role !== "SUPER_ADMIN") {
-    return null
-  }
-  return session
-}
-
 export async function POST(request: NextRequest, { params }: { params: { requestId: string } }) {
-  const session = await ensureSuperAdmin()
-  if (!session) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 403 })
-  }
+  const sessionResult = await requireSession()
+  if (!sessionResult.ok) return sessionResult.response
+
+  const permission = requirePermission(sessionResult.user, Permissions.PlatformDemoRequestsManage)
+  if (!permission.ok) return permission.response
 
   try {
     const body = approveSchema.parse(await request.json())
@@ -72,11 +66,17 @@ export async function POST(request: NextRequest, { params }: { params: { request
     })
 
     if (!demoRequest) {
-      return NextResponse.json({ error: "Request not found" }, { status: 404 })
+      return NextResponse.json(
+        { code: "NOT_FOUND", message: "Request not found" },
+        { status: 404 },
+      )
     }
 
     if (demoRequest.status === DemoRequestStatus.RESOLVED) {
-      return NextResponse.json({ error: "Request already resolved" }, { status: 409 })
+      return NextResponse.json(
+        { code: "ALREADY_RESOLVED", message: "Request already resolved" },
+        { status: 409 },
+      )
     }
 
     const subscriptionExpiresAt = body.subscriptionExpiresAt
@@ -110,23 +110,36 @@ export async function POST(request: NextRequest, { params }: { params: { request
       data: {
         status: DemoRequestStatus.RESOLVED,
         resolvedAt: new Date(),
-        resolvedById: session.user.id,
+        resolvedById: sessionResult.user.id,
         resolutionNote: body.resolutionNote ?? null,
         createdGymId: created.id,
       },
+    })
+
+    await recordAudit({
+      actor: sessionResult.session.user,
+      action: "platform.demo-request.approve",
+      targetType: "demo-request",
+      targetId: params.requestId,
+      metadata: {
+        createdGymId: created.id,
+        plan: created.subscriptionPlan,
+        isDemo: created.isDemo,
+      },
+      request,
     })
 
     return NextResponse.json(created, { status: 201 })
   } catch (error) {
     if (error instanceof ZodError) {
       return NextResponse.json(
-        { error: "Invalid payload", details: error.flatten() },
+        { code: "INVALID_PAYLOAD", message: "Invalid payload", details: error.flatten() },
         { status: 422 },
       )
     }
     console.error("[super-admin][demo-requests][approve]", error)
     return NextResponse.json(
-      { error: "Unable to approve request" },
+      { code: "DEMO_REQUEST_APPROVE_FAILED", message: "Unable to approve request" },
       { status: 500 },
     )
   }

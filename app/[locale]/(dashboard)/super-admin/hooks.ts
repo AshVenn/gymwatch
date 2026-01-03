@@ -33,7 +33,7 @@ export interface SuperAdminStats {
   suspendedGyms: number
   totalMembers: number
   totalSubscribers: number
-  monthlyRevenue: number
+  monthlyRevenue: number | null
   statusBreakdown: { status: GymSubscriptionStatus; value: number }[]
   revenueTrend: { month: string; revenue: number }[]
   expiringGyms: {
@@ -57,7 +57,7 @@ export interface SuperAdminGym {
   country: string | null
   subscriptionPlan: GymPlanTier
   billingInterval: GymBillingInterval
-  subscriptionPrice: number
+  subscriptionPrice: number | null
   subscriptionStatus: GymSubscriptionStatus
   subscriptionExpiresAt: string | null
   isDemo?: boolean
@@ -105,9 +105,9 @@ export interface SuperAdminGym {
 }
 
 export interface SuperAdminGymDetail extends SuperAdminGym {
-  paymentsLast30Days: number
-  paymentsCurrentMonth?: number
-  paymentsTotal?: number
+  paymentsLast30Days: number | null
+  paymentsCurrentMonth?: number | null
+  paymentsTotal?: number | null
   variantCount?: number
   planLimitPerVariant?: number | null
   planLimitPerNetwork?: number | null
@@ -125,7 +125,7 @@ export interface SuperAdminGymDetail extends SuperAdminGym {
     id: string
     name: string
     durationDays: number
-    price: number
+    price: number | null
     isActive: boolean
     visitsPerDay?: number
     maxSessionMinutes?: number | null

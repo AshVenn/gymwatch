@@ -1,34 +1,41 @@
 import { NextResponse } from "next/server"
-import { getServerSession } from "next-auth"
-import { authOptions } from "@/lib/auth-middleware"
 import { convertDemoGym } from "@/lib/super-admin"
-
-async function ensureSuperAdmin() {
-  const session = await getServerSession(authOptions)
-  if (!session?.user || session.user.role !== "SUPER_ADMIN") {
-    return null
-  }
-  return session
-}
+import { Permissions } from "@/lib/rbac/permissions"
+import { requirePermission, requireSession } from "@/lib/auth/guards"
+import { recordAudit } from "@/lib/audit"
 
 export async function POST(_req: Request, { params }: { params: { gymId: string } }) {
-  const session = await ensureSuperAdmin()
-  if (!session) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 403 })
-  }
+  const sessionResult = await requireSession()
+  if (!sessionResult.ok) return sessionResult.response
+
+  const permission = requirePermission(sessionResult.user, Permissions.PlatformGymsWrite)
+  if (!permission.ok) return permission.response
 
   try {
     const updated = await convertDemoGym(params.gymId)
+    await recordAudit({
+      actor: sessionResult.session.user,
+      action: "platform.gym.convert-demo",
+      targetType: "gym",
+      targetId: params.gymId,
+      request: _req,
+    })
     return NextResponse.json(updated)
   } catch (error) {
     if (error instanceof Error) {
       if (error.message === "NOT_FOUND") {
-        return NextResponse.json({ error: "Not found" }, { status: 404 })
+        return NextResponse.json({ code: "NOT_FOUND", message: "Not found" }, { status: 404 })
       }
       if (error.message === "NOT_DEMO") {
-        return NextResponse.json({ error: "Not a demo gym" }, { status: 400 })
+        return NextResponse.json(
+          { code: "NOT_DEMO", message: "Not a demo gym" },
+          { status: 400 },
+        )
       }
     }
-    return NextResponse.json({ error: "Unable to convert gym" }, { status: 500 })
+    return NextResponse.json(
+      { code: "GYM_CONVERT_FAILED", message: "Unable to convert gym" },
+      { status: 500 },
+    )
   }
 }

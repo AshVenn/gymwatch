@@ -338,7 +338,9 @@ export function MarketingNavbar({ links = [], className }: MarketingNavbarProps)
 
     if (!session?.user?.role) return "/dashboard"
 
-    return session.user.role === "SUPER_ADMIN" ? "/super-admin" : "/dashboard"
+    return session.user.role === "SUPER_ADMIN" || session.user.role === "SUPER_MANAGER"
+      ? "/super-admin"
+      : "/dashboard"
 
   }, [session?.user?.role])
 

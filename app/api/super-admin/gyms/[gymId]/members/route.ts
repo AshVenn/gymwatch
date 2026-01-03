@@ -1,22 +1,15 @@
 import { NextResponse } from "next/server"
-import { getServerSession } from "next-auth"
 
-import { authOptions } from "@/lib/auth-middleware"
 import { prisma } from "@/lib/prisma"
-
-async function ensureSuperAdmin() {
-  const session = await getServerSession(authOptions)
-  if (!session?.user || session.user.role !== "SUPER_ADMIN") {
-    return null
-  }
-  return session
-}
+import { Permissions } from "@/lib/rbac/permissions"
+import { requirePermission, requireSession } from "@/lib/auth/guards"
 
 export async function GET(request: Request, { params }: { params: { gymId: string } }) {
-  const session = await ensureSuperAdmin()
-  if (!session) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 403 })
-  }
+  const sessionResult = await requireSession()
+  if (!sessionResult.ok) return sessionResult.response
+
+  const permission = requirePermission(sessionResult.user, Permissions.PlatformGymsRead)
+  if (!permission.ok) return permission.response
 
   const url = new URL(request.url)
   const page = Math.max(parseInt(url.searchParams.get("page") ?? "1", 10), 1)

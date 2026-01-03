@@ -1,41 +1,41 @@
 import { NextResponse } from "next/server"
-import { getServerSession } from "next-auth"
 import { PlanFeatureFlag } from "@prisma/client"
 import { z } from "zod"
 
-import { authOptions } from "@/lib/auth-middleware"
 import { prisma } from "@/lib/prisma"
 import { applyFeatureOverrides, getPlanFeatures } from "@/lib/subscription-plans"
 import { resolveGymFeatures } from "@/lib/tenant-features"
+import { Permissions } from "@/lib/rbac/permissions"
+import { requirePermission, requireSession } from "@/lib/auth/guards"
+import { recordAudit } from "@/lib/audit"
 
 const payloadSchema = z.object({
   overrides: z.record(z.nativeEnum(PlanFeatureFlag), z.boolean().nullable()).default({}),
 })
 
-async function ensureSuperAdmin() {
-  const session = await getServerSession(authOptions)
-  if (!session?.user || session.user.role !== "SUPER_ADMIN") {
-    return null
-  }
-  return session
-}
-
 export async function PUT(request: Request, { params }: { params: { gymId: string } }) {
-  const session = await ensureSuperAdmin()
-  if (!session) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 403 })
-  }
+  const sessionResult = await requireSession()
+  if (!sessionResult.ok) return sessionResult.response
+
+  const permission = requirePermission(sessionResult.user, Permissions.PlatformGymsWrite)
+  if (!permission.ok) return permission.response
 
   const gymId = params.gymId
   if (!gymId) {
-    return NextResponse.json({ error: "Gym requis" }, { status: 400 })
+    return NextResponse.json(
+      { code: "GYM_REQUIRED", message: "Gym requis" },
+      { status: 400 },
+    )
   }
 
   let parsed: z.infer<typeof payloadSchema>
   try {
     parsed = payloadSchema.parse(await request.json())
   } catch (error) {
-    return NextResponse.json({ error: "Payload invalide" }, { status: 400 })
+    return NextResponse.json(
+      { code: "INVALID_PAYLOAD", message: "Payload invalide" },
+      { status: 400 },
+    )
   }
 
   try {
@@ -65,6 +65,17 @@ export async function PUT(request: Request, { params }: { params: { gymId: strin
       tier: gym?.subscriptionPlan ?? null,
     })
 
+    await recordAudit({
+      actor: sessionResult.session.user,
+      action: "platform.gym.feature-overrides.update",
+      targetType: "gym",
+      targetId: gymId,
+      metadata: {
+        overrides: parsed.overrides,
+      },
+      request,
+    })
+
     return NextResponse.json({
       overrides,
       features,
@@ -74,6 +85,9 @@ export async function PUT(request: Request, { params }: { params: { gymId: strin
     })
   } catch (error) {
     console.error("[super-admin][feature-overrides][put]", error)
-    return NextResponse.json({ error: "Mise a jour impossible" }, { status: 500 })
+    return NextResponse.json(
+      { code: "FEATURE_OVERRIDE_FAILED", message: "Mise a jour impossible" },
+      { status: 500 },
+    )
   }
 }

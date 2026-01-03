@@ -450,6 +450,7 @@ function effectiveSessionLimitMinutes(gym, variant) {
 async function clearDatabase() {
   console.log('Clearing database...')
   await prisma.accessRuleEvent.deleteMany()
+  await prisma.auditLog.deleteMany()
   await prisma.tenantPlanFreeze.deleteMany()
   await prisma.tenantPlan.deleteMany()
   await prisma.plan.deleteMany()
@@ -860,7 +861,7 @@ async function runSeed() {
   const adminPassword = await hashPassword('Admin123!')
   const superAdmin = await prisma.user.upsert({
     where: { email: 'admin@gymwatch.com' },
-    update: { password: adminPassword },
+    update: { password: adminPassword, role: UserRole.SUPER_ADMIN },
     create: {
       email: 'admin@gymwatch.com',
       password: adminPassword,
@@ -870,6 +871,20 @@ async function runSeed() {
     },
   })
   await ensurePreference(superAdmin.id)
+
+  const managerPassword = await hashPassword('Manager123!')
+  const superManager = await prisma.user.upsert({
+    where: { email: 'manager@gymwatch.com' },
+    update: { password: managerPassword, role: UserRole.SUPER_MANAGER },
+    create: {
+      email: 'manager@gymwatch.com',
+      password: managerPassword,
+      role: UserRole.SUPER_MANAGER,
+      firstName: 'Platform',
+      lastName: 'Manager',
+    },
+  })
+  await ensurePreference(superManager.id)
 
   const now = new Date()
   const todayStart = startOfDay(now)
@@ -1375,6 +1390,91 @@ async function runSeed() {
   })
 
   await seedPartnerClubs()
+
+  const adminName = `${superAdmin.firstName || ''} ${superAdmin.lastName || ''}`.trim() || null
+  const managerName = `${superManager.firstName || ''} ${superManager.lastName || ''}`.trim() || null
+
+  await prisma.auditLog.createMany({
+    data: [
+      {
+        actorId: superAdmin.id,
+        actorRole: UserRole.SUPER_ADMIN,
+        actorEmail: superAdmin.email,
+        actorName: adminName,
+        action: 'platform.user.create',
+        targetType: 'user',
+        targetId: superManager.id,
+        metadata: { role: UserRole.SUPER_MANAGER },
+        createdAt: now,
+      },
+      {
+        actorId: superAdmin.id,
+        actorRole: UserRole.SUPER_ADMIN,
+        actorEmail: superAdmin.email,
+        actorName: adminName,
+        action: 'platform.gym.create',
+        targetType: 'gym',
+        targetId: gym1.id,
+        metadata: { name: gym1.name },
+        createdAt: now,
+      },
+      {
+        actorId: superAdmin.id,
+        actorRole: UserRole.SUPER_ADMIN,
+        actorEmail: superAdmin.email,
+        actorName: adminName,
+        action: 'platform.gym.create',
+        targetType: 'gym',
+        targetId: gym2.id,
+        metadata: { name: gym2.name },
+        createdAt: now,
+      },
+      {
+        actorId: superAdmin.id,
+        actorRole: UserRole.SUPER_ADMIN,
+        actorEmail: superAdmin.email,
+        actorName: adminName,
+        action: 'platform.gym.create',
+        targetType: 'gym',
+        targetId: enterpriseGym.id,
+        metadata: { name: enterpriseGym.name },
+        createdAt: now,
+      },
+      {
+        actorId: superAdmin.id,
+        actorRole: UserRole.SUPER_ADMIN,
+        actorEmail: superAdmin.email,
+        actorName: adminName,
+        action: 'platform.gym.create',
+        targetType: 'gym',
+        targetId: demoGym.id,
+        metadata: { name: demoGym.name, isDemo: demoGym.isDemo },
+        createdAt: now,
+      },
+      {
+        actorId: superManager.id,
+        actorRole: UserRole.SUPER_MANAGER,
+        actorEmail: superManager.email,
+        actorName: managerName,
+        action: 'platform.gym.update',
+        targetType: 'gym',
+        targetId: gym2.id,
+        metadata: { status: gym2.subscriptionStatus },
+        createdAt: now,
+      },
+      {
+        actorId: superAdmin.id,
+        actorRole: UserRole.SUPER_ADMIN,
+        actorEmail: superAdmin.email,
+        actorName: adminName,
+        action: 'platform.audit.seed',
+        targetType: 'seed',
+        targetId: 'initial',
+        metadata: { gyms: 4, members: allMembers.length },
+        createdAt: now,
+      },
+    ],
+  })
 
   return {
     gymsSeeded: 4,

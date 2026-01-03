@@ -45,9 +45,13 @@ export const authOptions: NextAuthOptions = {
           throw new Error("INVALID_CREDENTIALS")
         }
 
+        if (user.status === "SUSPENDED") {
+          throw new Error("USER_SUSPENDED")
+        }
+
         const gym = user.gymId ? await db.getGymById(user.gymId) : null
 
-        if (user.role !== "SUPER_ADMIN") {
+        if (user.role !== "SUPER_ADMIN" && user.role !== "SUPER_MANAGER") {
           if (!gym) {
             throw new Error("GYM_NOT_FOUND")
           }
@@ -73,12 +77,14 @@ export const authOptions: NextAuthOptions = {
         }
 
         const sessionVersion = await db.touchUserSession(user.id)
+        const lastLoginAt = new Date().toISOString()
 
         return {
           id: user.id,
           email: user.email,
           name: `${user.firstName ?? ""} ${user.lastName ?? ""}`.trim(),
           role: user.role,
+          status: user.status,
           gymId: user.gymId ?? undefined,
           subscriptionStatus: gym?.subscriptionStatus ?? null,
           subscriptionPlan: gym?.subscriptionPlan ?? null,
@@ -88,6 +94,7 @@ export const authOptions: NextAuthOptions = {
           demoEndsAt: gym?.demoEndsAt?.toISOString() ?? null,
           gymVariantId,
           sessionVersion,
+          lastLoginAt,
         } as any
       },
     }),
@@ -104,7 +111,9 @@ export const authOptions: NextAuthOptions = {
   callbacks: {
     async jwt({ token, user }) {
       if (user) {
+        ;(token as any).userId = (user as any).id
         ;(token as any).role = (user as any).role
+        ;(token as any).status = (user as any).status
         ;(token as any).gymId = (user as any).gymId
         ;(token as any).subscriptionStatus = (user as any).subscriptionStatus
         ;(token as any).subscriptionPlan = (user as any).subscriptionPlan
@@ -114,6 +123,7 @@ export const authOptions: NextAuthOptions = {
         ;(token as any).demoEndsAt = (user as any).demoEndsAt
         ;(token as any).gymVariantId = (user as any).gymVariantId
         ;(token as any).sessionVersion = (user as any).sessionVersion
+        ;(token as any).lastLoginAt = (user as any).lastLoginAt
         ;(token as any).sessionRevoked = false
       } else if (token.sub) {
         const latestVersion = await db.getUserSessionVersion(token.sub)
@@ -129,7 +139,9 @@ export const authOptions: NextAuthOptions = {
         if ((token as any).sessionRevoked) {
           return null
         }
+        ;(session.user as any).id = token.sub ?? (token as any).userId ?? undefined
         ;(session.user as any).role = (token as any).role
+        ;(session.user as any).status = (token as any).status
         ;(session.user as any).gymId = (token as any).gymId
         ;(session.user as any).subscriptionStatus = (token as any).subscriptionStatus
         ;(session.user as any).subscriptionPlan = (token as any).subscriptionPlan
@@ -138,6 +150,7 @@ export const authOptions: NextAuthOptions = {
         ;(session.user as any).isDemo = (token as any).isDemo
         ;(session.user as any).demoEndsAt = (token as any).demoEndsAt
         ;(session.user as any).gymVariantId = (token as any).gymVariantId
+        ;(session.user as any).lastLoginAt = (token as any).lastLoginAt
       }
       return session
     },

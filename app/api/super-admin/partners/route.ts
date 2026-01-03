@@ -1,11 +1,12 @@
 import { NextResponse } from "next/server"
-import { getServerSession } from "next-auth"
 import { z, ZodError } from "zod"
 import { revalidatePath } from "next/cache"
 
-import { authOptions } from "@/lib/auth-middleware"
 import { createPartnerClub, listPartnerClubsForAdmin } from "@/lib/partners"
 import { routing } from "@/i18n/routing"
+import { Permissions } from "@/lib/rbac/permissions"
+import { requirePermission, requireSession } from "@/lib/auth/guards"
+import { recordAudit } from "@/lib/audit"
 
 const translationSchema = z.object({
   name: z.string().min(2).optional(),
@@ -33,14 +34,6 @@ const partnerSchema = z.object({
   translations: translationsSchema,
 })
 
-async function ensureSuperAdmin() {
-  const session = await getServerSession(authOptions)
-  if (!session?.user || session.user.role !== "SUPER_ADMIN") {
-    return null
-  }
-  return session
-}
-
 function revalidatePartnersPage() {
   for (const locale of routing.locales) {
     revalidatePath(`/${locale}/clubs`)
@@ -52,30 +45,38 @@ function hasAtLeastOneTranslation(translations?: Record<string, { name?: string 
 }
 
 export async function GET() {
-  const session = await ensureSuperAdmin()
-  if (!session) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 403 })
-  }
+  const sessionResult = await requireSession()
+  if (!sessionResult.ok) return sessionResult.response
+
+  const permission = requirePermission(sessionResult.user, Permissions.PlatformPartnersManage)
+  if (!permission.ok) return permission.response
 
   try {
     const partners = await listPartnerClubsForAdmin()
     return NextResponse.json(partners)
   } catch (error) {
     console.error("[super-admin][partners][GET]", error)
-    return NextResponse.json({ error: "Unable to list partner clubs" }, { status: 500 })
+    return NextResponse.json(
+      { code: "PARTNERS_LIST_FAILED", message: "Unable to list partner clubs" },
+      { status: 500 },
+    )
   }
 }
 
 export async function POST(req: Request) {
-  const session = await ensureSuperAdmin()
-  if (!session) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 403 })
-  }
+  const sessionResult = await requireSession()
+  if (!sessionResult.ok) return sessionResult.response
+
+  const permission = requirePermission(sessionResult.user, Permissions.PlatformPartnersManage)
+  if (!permission.ok) return permission.response
 
   try {
     const payload = partnerSchema.parse(await req.json())
     if (!hasAtLeastOneTranslation(payload.translations)) {
-      return NextResponse.json({ error: "Missing translation" }, { status: 422 })
+      return NextResponse.json(
+        { code: "MISSING_TRANSLATION", message: "Missing translation" },
+        { status: 422 },
+      )
     }
 
     const created = await createPartnerClub({
@@ -92,22 +93,43 @@ export async function POST(req: Request) {
 
     revalidatePartnersPage()
 
+    await recordAudit({
+      actor: sessionResult.session.user,
+      action: "platform.partner.create",
+      targetType: "partner",
+      targetId: created.id,
+      metadata: { slug: created.slug, isPublished: created.isPublished },
+      request: req,
+    })
+
     return NextResponse.json(created, { status: 201 })
   } catch (error) {
     if (error instanceof ZodError) {
-      return NextResponse.json({ error: "Invalid payload", details: error.flatten() }, { status: 422 })
+      return NextResponse.json(
+        { code: "INVALID_PAYLOAD", message: "Invalid payload", details: error.flatten() },
+        { status: 422 },
+      )
     }
 
     if (error instanceof Error) {
       if (error.name === "SLUG_TAKEN") {
-        return NextResponse.json({ error: "Slug already exists" }, { status: 409 })
+        return NextResponse.json(
+          { code: "SLUG_TAKEN", message: "Slug already exists" },
+          { status: 409 },
+        )
       }
       if (error.name === "MISSING_TRANSLATION") {
-        return NextResponse.json({ error: "At least one translation is required" }, { status: 422 })
+        return NextResponse.json(
+          { code: "MISSING_TRANSLATION", message: "At least one translation is required" },
+          { status: 422 },
+        )
       }
     }
 
     console.error("[super-admin][partners][POST]", error)
-    return NextResponse.json({ error: "Unable to create partner club" }, { status: 500 })
+    return NextResponse.json(
+      { code: "PARTNER_CREATE_FAILED", message: "Unable to create partner club" },
+      { status: 500 },
+    )
   }
 }

@@ -1,6 +1,7 @@
 'use client'
 
 import { useTranslations } from 'next-intl'
+import { useSession } from 'next-auth/react'
 import {
   BarChart3,
   ClipboardList,
@@ -30,6 +31,8 @@ import {
 } from '@/components/ui/tooltip'
 import { Skeleton } from '@/components/ui/skeleton'
 import { cn } from '@/lib/utils'
+import { Permissions } from '@/lib/rbac/permissions'
+import { hasPermission } from '@/lib/rbac/policies'
 import { PlanModuleBadges } from './PlanModules'
 import { getPlanFeatures } from '@/lib/subscription-plans'
 
@@ -86,12 +89,15 @@ export function GymsTable({
   onAction,
 }: Props) {
   const t = useTranslations('superAdminGymsTable')
+  const { data: session } = useSession()
+  const canViewFinancials = hasPermission(session?.user?.role as any, Permissions.PlatformAnalyticsRevenue)
 
   const ROW_ACTIONS: Array<{
     type: GymAction
     icon: React.ComponentType<{ size?: number }>
     label: string
     tone?: 'destructive'
+    permission?: string
   }> = [
     { type: 'overview', icon: BarChart3, label: t('actions.overview') },
     { type: 'members', icon: User2, label: t('actions.members') },
@@ -99,8 +105,18 @@ export function GymsTable({
     { type: 'plans', icon: ClipboardList, label: t('actions.plans') },
     { type: 'subscription', icon: FileCog, label: t('actions.subscription') },
     { type: 'edit', icon: PenSquare, label: t('actions.edit') },
-    { type: 'delete', icon: Trash2, label: t('actions.delete'), tone: 'destructive' },
+    {
+      type: 'delete',
+      icon: Trash2,
+      label: t('actions.delete'),
+      tone: 'destructive',
+      permission: Permissions.PlatformGymsDelete,
+    },
   ]
+
+  const allowedActions = ROW_ACTIONS.filter((action) =>
+    action.permission ? hasPermission(session?.user?.role as any, action.permission as any) : true,
+  )
 
   if (isLoading) {
     return (
@@ -195,10 +211,13 @@ export function GymsTable({
                     {t('planLine', {
                       plan: t(`plan.${planKey}`),
                       interval: t(`interval.${intervalKey}`),
-                      price: gym.subscriptionPrice.toLocaleString('fr-MA', {
-                        style: 'currency',
-                        currency: 'MAD',
-                      }),
+                      price:
+                        canViewFinancials && typeof gym.subscriptionPrice === 'number'
+                          ? gym.subscriptionPrice.toLocaleString('fr-MA', {
+                              style: 'currency',
+                              currency: 'MAD',
+                            })
+                          : t('priceHidden'),
                     })}
                   </p>
                   {gym.subscriptionStatus === 'SUSPENDED' && gym.freezeReason ? (
@@ -280,7 +299,7 @@ export function GymsTable({
                 <TableCell>
                   <TooltipProvider>
                     <div className="flex justify-end gap-1">
-                      {ROW_ACTIONS.map(({ type, icon: Icon, label, tone }) => (
+                      {allowedActions.map(({ type, icon: Icon, label, tone }) => (
                         <Tooltip key={type}>
                           <TooltipTrigger asChild>
                             <Button

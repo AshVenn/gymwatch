@@ -1,12 +1,14 @@
 import { NextResponse } from "next/server"
-import { getServerSession } from "next-auth"
 import { z, ZodError } from "zod"
-import { authOptions } from "@/lib/auth-middleware"
 import {
   createGymForSuperAdmin,
   listGymsForSuperAdmin,
 } from "@/lib/super-admin"
 import { GymBillingInterval, GymPlanTier, GymSubscriptionStatus } from "@prisma/client"
+import { Permissions } from "@/lib/rbac/permissions"
+import { hasPermission } from "@/lib/rbac/policies"
+import { requirePermission, requireSession } from "@/lib/auth/guards"
+import { recordAudit } from "@/lib/audit"
 
 const createGymSchema = z.object({
   name: z.string().min(2),
@@ -54,37 +56,52 @@ const createGymSchema = z.object({
   }),
 })
 
-async function ensureSuperAdmin() {
-  const session = await getServerSession(authOptions)
-  if (!session?.user || session.user.role !== "SUPER_ADMIN") {
-    return null
-  }
-  return session
-}
-
 export async function GET() {
-  const session = await ensureSuperAdmin()
-  if (!session) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 403 })
-  }
+  const sessionResult = await requireSession()
+  if (!sessionResult.ok) return sessionResult.response
+
+  const permission = requirePermission(sessionResult.user, Permissions.PlatformGymsRead)
+  if (!permission.ok) return permission.response
 
   try {
     const gyms = await listGymsForSuperAdmin()
+    const canViewFinancials = hasPermission(
+      sessionResult.user.role ?? null,
+      Permissions.PlatformAnalyticsRevenue,
+    )
+
+    if (!canViewFinancials) {
+      const redacted = gyms.map((gym) => ({
+        ...gym,
+        subscriptionPrice: null,
+        analyticsSnapshot: undefined,
+      }))
+      return NextResponse.json(redacted)
+    }
+
     return NextResponse.json(gyms)
   } catch (error) {
     console.error("[super-admin][gyms][GET]", error)
-    return NextResponse.json({ error: "Unable to list gyms" }, { status: 500 })
+    return NextResponse.json(
+      { code: "GYMS_LIST_FAILED", message: "Unable to list gyms" },
+      { status: 500 },
+    )
   }
 }
 
 export async function POST(req: Request) {
-  const session = await ensureSuperAdmin()
-  if (!session) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 403 })
-  }
+  const sessionResult = await requireSession()
+  if (!sessionResult.ok) return sessionResult.response
+
+  const permission = requirePermission(sessionResult.user, Permissions.PlatformGymsWrite)
+  if (!permission.ok) return permission.response
 
   try {
     const payload = createGymSchema.parse(await req.json())
+    const canViewFinancials = hasPermission(
+      sessionResult.user.role ?? null,
+      Permissions.PlatformAnalyticsRevenue,
+    )
     const created = await createGymForSuperAdmin({
       name: payload.name,
       email: payload.email,
@@ -99,7 +116,7 @@ export async function POST(req: Request) {
         ? new Date(payload.subscriptionExpiresAt)
         : undefined,
       subscriptionGracePeriodDays: payload.subscriptionGracePeriodDays,
-      analyticsSnapshot: payload.analyticsSnapshot,
+      analyticsSnapshot: canViewFinancials ? payload.analyticsSnapshot : undefined,
       maxAdminAccounts: payload.maxAdminAccounts,
       planLimitPerVariant: payload.planLimitPerVariant,
       planLimitPerNetwork: payload.planLimitPerNetwork,
@@ -110,15 +127,31 @@ export async function POST(req: Request) {
       owner: payload.owner,
     })
 
+    await recordAudit({
+      actor: sessionResult.session.user,
+      action: "platform.gym.create",
+      targetType: "gym",
+      targetId: created.id,
+      metadata: {
+        plan: created.subscriptionPlan,
+        billingInterval: created.billingInterval,
+        isDemo: created.isDemo,
+      },
+      request: req,
+    })
+
     return NextResponse.json(created, { status: 201 })
   } catch (error) {
     if (error instanceof ZodError) {
       return NextResponse.json(
-        { error: "Invalid payload", details: error.flatten() },
+        { code: "INVALID_PAYLOAD", message: "Invalid payload", details: error.flatten() },
         { status: 422 },
       )
     }
     console.error("[super-admin][gyms][POST]", error)
-    return NextResponse.json({ error: "Unable to create gym" }, { status: 500 })
+    return NextResponse.json(
+      { code: "GYM_CREATE_FAILED", message: "Unable to create gym" },
+      { status: 500 },
+    )
   }
 }

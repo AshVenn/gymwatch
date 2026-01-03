@@ -1,0 +1,26 @@
+export const Permissions = {
+  PlatformUsersRead: "platform:users:read",
+  PlatformUsersWrite: "platform:users:write",
+  PlatformGymsRead: "platform:gyms:read",
+  PlatformGymsWrite: "platform:gyms:write",
+  PlatformGymsDelete: "platform:gyms:delete",
+  PlatformAnalyticsRevenue: "platform:analytics:revenue",
+  PlatformAuditRead: "platform:audit:read",
+  PlatformInvoicesDownload: "platform:invoices:download",
+  PlatformReportsExport: "platform:reports:export",
+  PlatformSettingsManage: "platform:settings:manage",
+  PlatformPlansManage: "platform:plans:manage",
+  PlatformMarketingManage: "platform:marketing:manage",
+  PlatformPartnersManage: "platform:partners:manage",
+  PlatformDemoRequestsManage: "platform:demo-requests:manage",
+  GymMembersRead: "gym:members:read",
+  GymMembersWrite: "gym:members:write",
+  GymMembersBulk: "gym:members:bulk",
+  GymVisitsManage: "gym:visits:manage",
+  GymPlansManage: "gym:plans:manage",
+  GymVariantsManage: "gym:variants:manage",
+  GymSubscriptionsManage: "gym:subscriptions:manage",
+  GymReportsExport: "gym:reports:export",
+} as const
+
+export type Permission = (typeof Permissions)[keyof typeof Permissions]

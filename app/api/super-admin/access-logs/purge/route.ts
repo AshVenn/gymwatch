@@ -1,17 +1,10 @@
 import { NextResponse } from "next/server"
-import { getServerSession } from "next-auth"
 
-import { authOptions } from "@/lib/auth-middleware"
 import { prisma } from "@/lib/prisma"
 import { getSystemSettings, updateSystemSettings } from "@/lib/settings"
-
-async function ensureSuperAdmin() {
-  const session = await getServerSession(authOptions)
-  if (!session?.user || session.user.role !== "SUPER_ADMIN") {
-    return null
-  }
-  return session
-}
+import { Permissions } from "@/lib/rbac/permissions"
+import { requirePermission, requireSession } from "@/lib/auth/guards"
+import { recordAudit } from "@/lib/audit"
 
 async function purgeFromDatabase(cutoff: Date) {
   const [{ exists }] = await prisma.$queryRaw<{ exists: boolean }[]>`
@@ -35,10 +28,11 @@ async function purgeFromDatabase(cutoff: Date) {
 }
 
 export async function POST() {
-  const session = await ensureSuperAdmin()
-  if (!session) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 403 })
-  }
+  const sessionResult = await requireSession()
+  if (!sessionResult.ok) return sessionResult.response
+
+  const permission = requirePermission(sessionResult.user, Permissions.PlatformSettingsManage)
+  if (!permission.ok) return permission.response
 
   try {
     const settings = await getSystemSettings()
@@ -50,6 +44,14 @@ export async function POST() {
     const { deleted, tableMissing } = await purgeFromDatabase(cutoff)
     const updatedSettings = await updateSystemSettings({ lastPurgeAt: new Date() })
 
+    await recordAudit({
+      actor: sessionResult.session.user,
+      action: "platform.access-logs.purge",
+      targetType: "access-log",
+      targetId: "access-event",
+      metadata: { deleted, retentionDays },
+    })
+
     return NextResponse.json({
       deleted,
       lastPurgeAt: updatedSettings.lastPurgeAt,
@@ -58,6 +60,9 @@ export async function POST() {
     })
   } catch (error) {
     console.error("[access-logs][purge]", error)
-    return NextResponse.json({ error: "Unable to purge access logs" }, { status: 500 })
+    return NextResponse.json(
+      { code: "ACCESS_LOG_PURGE_FAILED", message: "Unable to purge access logs" },
+      { status: 500 },
+    )
   }
 }

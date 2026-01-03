@@ -1,6 +1,5 @@
 // app/api/super-admin/reports/pdf/route.ts
 import { NextRequest, NextResponse } from "next/server"
-import { getServerSession } from "next-auth"
 import { z } from "zod"
 import { PDFDocument, rgb } from "pdf-lib"
 import fontkit from "@pdf-lib/fontkit"
@@ -9,9 +8,11 @@ import { promises as fs } from "fs"
 import path from "path"
 import reshaper from "arabic-persian-reshaper"
 
-import { authOptions } from "@/lib/auth-middleware"
 import { prisma } from "@/lib/prisma"
 import { formatExportCurrency, formatExportDate, resolveExportLocale } from "@/lib/export-locale"
+import { Permissions } from "@/lib/rbac/permissions"
+import { requirePermission, requireSession } from "@/lib/auth/guards"
+import { recordAudit } from "@/lib/audit"
 
 export const runtime = "nodejs"
 export const dynamic = "force-dynamic"
@@ -471,10 +472,11 @@ function createDrawer(pdf: PDFDocument, locale: ExportLocale, latinFont: any, ar
 // -------------------------
 export async function GET(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions)
-    if (!session?.user || session.user.role !== "SUPER_ADMIN") {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 })
-    }
+    const sessionResult = await requireSession()
+    if (!sessionResult.ok) return sessionResult.response
+
+    const permission = requirePermission(sessionResult.user, Permissions.PlatformReportsExport)
+    if (!permission.ok) return permission.response
 
     const parsed = querySchema.safeParse({
       scope: request.nextUrl.searchParams.get("scope") ?? undefined,
@@ -653,6 +655,15 @@ export async function GET(request: NextRequest) {
     const pdfBytes = await pdf.save()
     const filename = `super-admin-${scope}-${Date.now()}.pdf`
     const body = Buffer.from(pdfBytes)
+
+    await recordAudit({
+      actor: sessionResult.session.user,
+      action: "platform.report.export",
+      targetType: "report",
+      targetId: scope === "gym" && gymId ? gymId : scope,
+      metadata: { format: "pdf", scope, gymId: gymId ?? null },
+      request,
+    })
 
     return new NextResponse(body, {
       status: 200,

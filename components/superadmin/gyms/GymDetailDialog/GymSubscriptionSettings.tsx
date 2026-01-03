@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import type { SuperAdminGymDetail } from '@/app/[locale]/(dashboard)/super-admin/hooks'
 import { useLocale, useTranslations } from 'next-intl'
+import { useSession } from 'next-auth/react'
 import { useQueryClient } from '@tanstack/react-query'
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -18,6 +19,8 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { PlanModuleBadges } from '../PlanModules'
 import { getPlanFeatures, type PlanFeatureKey } from '@/lib/subscription-plans'
 import { toast } from 'sonner'
+import { Permissions } from '@/lib/rbac/permissions'
+import { hasPermission } from '@/lib/rbac/policies'
 
 type Props = {
   gym: SuperAdminGymDetail
@@ -48,6 +51,8 @@ export function GymSubscriptionSettings({ gym }: Props) {
   const t = useTranslations('superAdminGymSubscription')
   const locale = useLocale()
   const queryClient = useQueryClient()
+  const { data: session } = useSession()
+  const canExportReports = hasPermission(session?.user?.role as any, Permissions.PlatformReportsExport)
 
   const form = useForm<SubscriptionValues>({
     resolver: zodResolver(schema),
@@ -471,30 +476,32 @@ export function GymSubscriptionSettings({ gym }: Props) {
             </div>
 
             {/* Exports */}
-            <div className="rounded-lg border border-dashed border-border/60 p-4">
-              <p className="text-sm font-semibold">{t('exports.title')}</p>
-              <div className="mt-2 flex flex-wrap gap-3">
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={() => downloadReport('excel')}
-                  disabled={downloading === 'excel'}
-                >
-                  {downloading === 'excel' ? t('exports.loading') : t('exports.excel')}
-                </Button>
+            {canExportReports ? (
+              <div className="rounded-lg border border-dashed border-border/60 p-4">
+                <p className="text-sm font-semibold">{t('exports.title')}</p>
+                <div className="mt-2 flex flex-wrap gap-3">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => downloadReport('excel')}
+                    disabled={downloading === 'excel'}
+                  >
+                    {downloading === 'excel' ? t('exports.loading') : t('exports.excel')}
+                  </Button>
 
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={() => downloadReport('pdf')}
-                  disabled={downloading === 'pdf'}
-                >
-                  {downloading === 'pdf' ? t('exports.loading') : t('exports.pdf')}
-                </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => downloadReport('pdf')}
+                    disabled={downloading === 'pdf'}
+                  >
+                    {downloading === 'pdf' ? t('exports.loading') : t('exports.pdf')}
+                  </Button>
+                </div>
               </div>
-            </div>
+            ) : null}
 
             <div className="flex flex-col gap-3 sm:flex-row sm:justify-end sm:flex-wrap">
               <Button type="submit" className="w-full sm:w-auto" disabled={saving || processingInvoice !== null}>

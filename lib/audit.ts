@@ -1,4 +1,4 @@
-import type { UserRole } from "@prisma/client"
+import { Prisma, type UserRole } from "@prisma/client"
 import { prisma } from "@/lib/prisma"
 
 type AuditActor = {
@@ -44,6 +44,13 @@ export async function recordAudit(options: AuditOptions) {
   const actorName = options.actor.name?.trim() || null
   const { ip, userAgent } = extractRequestMeta(options.request)
 
+  const metadata =
+    options.metadata === undefined
+      ? undefined
+      : options.metadata === null
+        ? Prisma.DbNull
+        : (options.metadata as Prisma.InputJsonValue)
+
   try {
     return await prisma.auditLog.create({
       data: {
@@ -54,7 +61,7 @@ export async function recordAudit(options: AuditOptions) {
         action: options.action,
         targetType: options.targetType ?? null,
         targetId: options.targetId ?? null,
-        metadata: options.metadata ?? undefined,
+        metadata,
         ip,
         userAgent,
       },

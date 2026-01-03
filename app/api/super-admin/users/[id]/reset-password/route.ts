@@ -8,9 +8,13 @@ import { Permissions } from "@/lib/rbac/permissions"
 import { requirePermission, requireSession } from "@/lib/auth/guards"
 import { recordAudit } from "@/lib/audit"
 
-const PLATFORM_ROLES = [UserRole.SUPER_ADMIN, UserRole.SUPER_MANAGER]
+const PLATFORM_ROLES = new Set<UserRole>([UserRole.SUPER_ADMIN, UserRole.SUPER_MANAGER])
 
-export async function POST(request: NextRequest, { params }: { params: { id: string } }) {
+export async function POST(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> },
+) {
+  const { id } = await params
   const sessionResult = await requireSession()
   if (!sessionResult.ok) return sessionResult.response
 
@@ -18,11 +22,11 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
   if (!permission.ok) return permission.response
 
   const target = await prisma.user.findUnique({
-    where: { id: params.id },
+    where: { id },
     select: { id: true, role: true },
   })
 
-  if (!target || !PLATFORM_ROLES.includes(target.role)) {
+  if (!target || !PLATFORM_ROLES.has(target.role)) {
     return NextResponse.json({ code: "NOT_FOUND", message: "User not found" }, { status: 404 })
   }
 

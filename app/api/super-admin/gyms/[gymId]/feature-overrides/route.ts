@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server"
+import { NextRequest, NextResponse } from "next/server"
 import { PlanFeatureFlag } from "@prisma/client"
 import { z } from "zod"
 
@@ -13,14 +13,17 @@ const payloadSchema = z.object({
   overrides: z.record(z.nativeEnum(PlanFeatureFlag), z.boolean().nullable()).default({}),
 })
 
-export async function PUT(request: Request, { params }: { params: { gymId: string } }) {
+export async function PUT(
+  request: NextRequest,
+  { params }: { params: Promise<{ gymId: string }> },
+) {
+  const { gymId } = await params
   const sessionResult = await requireSession()
   if (!sessionResult.ok) return sessionResult.response
 
   const permission = requirePermission(sessionResult.user, Permissions.PlatformGymsWrite)
   if (!permission.ok) return permission.response
 
-  const gymId = params.gymId
   if (!gymId) {
     return NextResponse.json(
       { code: "GYM_REQUIRED", message: "Gym requis" },

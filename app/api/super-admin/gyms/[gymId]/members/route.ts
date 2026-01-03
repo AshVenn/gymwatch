@@ -1,10 +1,14 @@
-import { NextResponse } from "next/server"
+import { NextRequest, NextResponse } from "next/server"
 
 import { prisma } from "@/lib/prisma"
 import { Permissions } from "@/lib/rbac/permissions"
 import { requirePermission, requireSession } from "@/lib/auth/guards"
 
-export async function GET(request: Request, { params }: { params: { gymId: string } }) {
+export async function GET(
+  request: NextRequest,
+  { params }: { params: Promise<{ gymId: string }> },
+) {
+  const { gymId } = await params
   const sessionResult = await requireSession()
   if (!sessionResult.ok) return sessionResult.response
 
@@ -19,7 +23,7 @@ export async function GET(request: Request, { params }: { params: { gymId: strin
 
   const [members, total] = await Promise.all([
     prisma.member.findMany({
-      where: { gymId: params.gymId },
+      where: { gymId },
       orderBy: { createdAt: "desc" },
       skip,
       take: pageSize,
@@ -33,7 +37,7 @@ export async function GET(request: Request, { params }: { params: { gymId: strin
         gymVariant: { select: { id: true, name: true, slug: true } },
       },
     }),
-    prisma.member.count({ where: { gymId: params.gymId } }),
+    prisma.member.count({ where: { gymId } }),
   ])
 
   return NextResponse.json({ members, total, page, pageSize })

@@ -1,12 +1,17 @@
 import { NextRequest, NextResponse } from "next/server"
-import { getServerSession } from "next-auth"
 import { z } from "zod"
 import { utils, write } from "xlsx"
-import { authOptions } from "@/lib/auth-middleware"
 import { prisma } from "@/lib/prisma"
-import { resolveVariantAccess } from "@/lib/variant-access"
 import { formatExportCurrency, formatExportDate, resolveExportLocale } from "@/lib/export-locale"
 import { resolveGymFeatures } from "@/lib/tenant-features"
+import {
+  jsonError,
+  requireGymScope,
+  requirePermission,
+  requireSession,
+  requireVariantAccess,
+} from "@/lib/auth/guards"
+import { Permissions } from "@/lib/rbac/permissions"
 
 const querySchema = z.object({
   type: z.enum(["earnings", "top-members", "loyal-members", "member"]),
@@ -69,19 +74,22 @@ function rowsToWorkbook(rows: Array<Array<string | number>>) {
 }
 
 export async function GET(request: NextRequest) {
-  const session = await getServerSession(authOptions)
-  const gymId = (session?.user as any)?.gymId as string | undefined
-  const role = (session?.user as any)?.role as string | undefined
-  const tier = (session?.user as any)?.subscriptionPlan ?? null
-  const sessionVariantId = (session?.user as any)?.gymVariantId as string | undefined
+  const sessionResult = await requireSession()
+  if (!sessionResult.ok) return sessionResult.response
 
-  if (!gymId) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-  }
+  const permission = requirePermission(sessionResult.user, Permissions.GymReportsExport)
+  if (!permission.ok) return permission.response
 
-  const { features } = await resolveGymFeatures({ gymId, tier })
+  const scope = requireGymScope(sessionResult.user)
+  if (!scope.ok) return scope.response
+
+  const role = (sessionResult.user as any)?.role as string | undefined
+  const tier = sessionResult.user.subscriptionPlan ?? null
+  const sessionVariantId = sessionResult.user.gymVariantId ?? null
+
+  const { features } = await resolveGymFeatures({ gymId: scope.gymId, tier })
   if (!features.excelReports) {
-    return NextResponse.json({ error: "Plan Pro ou Enterprise requis" }, { status: 403 })
+    return jsonError(403, "EXCEL_REPORTS_REQUIRED", "Plan Pro ou Enterprise requis")
   }
 
   const parsed = querySchema.safeParse({
@@ -92,26 +100,14 @@ export async function GET(request: NextRequest) {
   const locale = resolveExportLocale(request.nextUrl.searchParams.get("locale"))
   const wording = labels[locale]
 
-  const variantAccess = await resolveVariantAccess({
-    gymId,
+  const variantAccess = await requireVariantAccess({
+    gymId: scope.gymId,
     tier,
     role,
     requestedVariantId,
     sessionVariantId,
   })
-
-  if (!variantAccess.ok) {
-    return NextResponse.json(
-      {
-        error: variantAccess.message,
-        code: variantAccess.code,
-        variantMode: variantAccess.variantMode,
-        defaultVariantId: variantAccess.defaultVariantId,
-        multiLocationAllowed: variantAccess.multiLocationAllowed,
-      },
-      { status: variantAccess.status },
-    )
-  }
+  if (!variantAccess.ok) return variantAccess.response
 
   const gymVariantId = variantAccess.variantId
 
@@ -140,7 +136,7 @@ export async function GET(request: NextRequest) {
       const end = new Date(now.getFullYear(), now.getMonth() - i + 1, 0, 23, 59, 59, 999)
       const agg = await prisma.payment.aggregate({
         where: {
-          gymId,
+          gymId: scope.gymId,
           paymentDate: { gte: start, lte: end },
           ...(gymVariantId ? { subscriptions: { some: { gymVariantId } } } : {}),
         },
@@ -152,7 +148,7 @@ export async function GET(request: NextRequest) {
     const aggregated = await prisma.subscription.groupBy({
       by: ["memberId"],
       where: {
-        gymId,
+        gymId: scope.gymId,
         ...(gymVariantId ? { gymVariantId } : {}),
       },
       _sum: { pricePaid: true },
@@ -181,7 +177,7 @@ export async function GET(request: NextRequest) {
     const member = await prisma.member.findFirst({
       where: {
         id: memberId,
-        gymId,
+        gymId: scope.gymId,
         ...(gymVariantId ? { gymVariantId } : {}),
       },
       include: {

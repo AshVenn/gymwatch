@@ -1,4 +1,4 @@
-﻿import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+﻿import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import type { FeatureOverrideMap, PlanFeatures, PlanLimitsTable, PlanPricingTable } from '@/lib/subscription-plans'
 import type { AppLocale } from '@/i18n/routing'
@@ -334,7 +334,7 @@ export function useSuperAdminGymMembers(gymId?: string | null, page = 1, pageSiz
   return useQuery<{ members: GymMemberSummary[]; total: number; page: number; pageSize: number }>({
     queryKey: ['super-admin', 'gym-members', gymId, page, pageSize],
     enabled: Boolean(gymId),
-    keepPreviousData: true,
+    placeholderData: keepPreviousData,
     queryFn: () =>
       fetchJSON(
         `/api/super-admin/gyms/${gymId}/members?page=${encodeURIComponent(page)}&pageSize=${encodeURIComponent(pageSize)}`,

@@ -1121,7 +1121,7 @@
       }
     }
   },
-    "superAdminMarketingPlans": {
+  "superAdminMarketingPlans": {
     "title": "محتوى خطط التسويق",
     "subtitle": "إدارة محتوى الخطط المعروض في الصفحة الرئيسية وصفحة التسعير.",
     "actions": {
@@ -1211,15 +1211,15 @@
       "resolution": "تاريخ الحل",
       "actions": "إجراءات"
     },
-            "actions": {
-          "markVisit": "تسجيل زيارة",
-          "manualCheckout": "تسجيل خروج يدوي",
-          "edit": "تعديل",
-          "qrCode": "رمز QR",
-          "statsExcel": "تقرير Excel",
-          "exportPending": "جارٍ التصدير...",
-          "delete": "حذف"
-        },
+    "actions": {
+      "markVisit": "تسجيل زيارة",
+      "manualCheckout": "تسجيل خروج يدوي",
+      "edit": "تعديل",
+      "qrCode": "رمز QR",
+      "statsExcel": "تقرير Excel",
+      "exportPending": "جارٍ التصدير...",
+      "delete": "حذف"
+    },
     "details": {
       "title": "تفاصيل الطلب",
       "sentOn": "أُرسل بتاريخ {date}",
@@ -1556,7 +1556,7 @@
     "demoPrefix": "تجريبي",
     "planLine": "الخطة {plan} - {interval} - {price}",
     "priceHidden": "السعر مخفي",
-"status": {
+    "status": {
       "active": "نشطة",
       "suspended": "معلّقة",
       "expired": "منتهية"
@@ -2169,7 +2169,8 @@
       "maxSession": "مدة الجلسة",
       "variant": "الفرع",
       "status": "الحالة"
-    },    "priceHidden": "السعر مخفي",
+    },
+    "priceHidden": "السعر مخفي",
     "durationDays": "{days} يوم",
     "minutes": "{minutes} دقيقة",
     "unlimited": "غير محدود",
@@ -2955,8 +2956,8 @@
       "loading": "جارٍ التحميل...",
       "roles": {
         "superAdmin": "مشرف عام",
-                "superManager": "مدير عام",
-"admin": "مشرف",
+        "superManager": "مدير عام",
+        "admin": "مشرف",
         "owner": "المالك",
         "user": "مستخدم"
       },
@@ -3369,36 +3370,6 @@
           "update": "تحديث",
           "create": "إنشاء"
         },
-        "bulk": {
-          "selectAll": "تحديد الكل",
-          "selectOne": "تحديد {name}",
-          "selectedCount": "تم تحديد {count}",
-          "actions": {
-            "checkout": "تسجيل الخروج",
-            "delete": "حذف",
-            "clear": "مسح",
-            "cancel": "إلغاء",
-            "confirm": "تأكيد",
-            "pending": "جارٍ المعالجة..."
-          },
-          "confirmDelete": {
-            "title": "حذف الأعضاء",
-            "description": "سيتم حذف {count} عضو/أعضاء. هذا الإجراء نهائي."
-          },
-          "confirmCheckout": {
-            "title": "تسجيل الخروج الجماعي",
-            "description": "تسجيل الخروج لـ {count} عضو/أعضاء محددين."
-          },
-          "toasts": {
-            "emptySelection": "لم يتم تحديد أي عضو",
-            "checkoutLocked": "نظام التحكم في الدخول غير مفعّل",
-            "error": "تعذر تنفيذ الإجراء الجماعي",
-            "partialDelete": "تم حذف {success}، وفشل {failed}",
-            "partialCheckout": "تم تسجيل خروج {success}، وفشل {failed}",
-            "deleteSuccess": "تم حذف {count} عضو/أعضاء",
-            "checkoutSuccess": "تم تنفيذ تسجيل الخروج لـ {count}"
-          }
-        },
         "deleteDialog": {
           "title": "حذف الخطة؟",
           "description": "سيتم حذف {name}. الاشتراكات الحالية ستحتفظ بسجلها.",
@@ -3774,6 +3745,52 @@
           "exportPending": "جارٍ التصدير...",
           "delete": "حذف"
         }
+      },
+      "bulk": {
+        "selectAll": "تحديد الكل",
+        "selectOne": "تحديد {name}",
+        "selectedCount": "تم تحديد {count}",
+        "actions": {
+          "checkin": "تسجيل الدخول",
+          "checkout": "تسجيل الخروج",
+          "delete": "حذف",
+          "clear": "مسح",
+          "cancel": "إلغاء",
+          "confirm": "تأكيد",
+          "pending": "جاري المعالجة..."
+        },
+        "confirmDelete": {
+          "title": "حذف الأعضاء",
+          "description": "سيتم حذف {count} عضو. هذا الإجراء نهائي."
+        },
+        "confirmCheckout": {
+          "title": "تسجيل خروج جماعي",
+          "description": "تسجيل خروج {count} عضو محدد."
+        },
+        "confirmCheckin": {
+          "title": "تسجيل دخول جماعي",
+          "description": "تسجيل دخول {count} عضو محدد."
+        },
+        "toasts": {
+          "emptySelection": "لم يتم اختيار أي عضو",
+          "checkoutLocked": "نظام التحكم في الدخول غير مفعل",
+          "presenceLocked": "ميزة تتبع الحضور غير مفعلة",
+          "error": "فشل تنفيذ العملية الجماعية",
+          "partialDelete": "تم حذف {success}، وفشل {failed}",
+          "partialCheckout": "تم تسجيل خروج {success}، وفشل {failed}",
+          "partialCheckin": "تم تسجيل دخول {success}، وفشل {failed}",
+          "deleteSuccess": "تم حذف {count} عضو",
+          "checkoutSuccess": "تم تنفيذ {count} عملية خروج",
+          "checkinSuccess": "تم تنفيذ {count} عملية دخول"
+        }
+      },
+      "deleteDialog": {
+        "title": "حذف العضو",
+        "descriptionWithName": "سيؤدي هذا الإجراء إلى حذف {firstName} {lastName}. سيتم الاحتفاظ بالاشتراكات النشطة.",
+        "descriptionFallback": "يرجى تأكيد حذف العضو.",
+        "cancel": "إلغاء",
+        "pending": "جارٍ الحذف...",
+        "confirm": "حذف"
       }
     }
   },
@@ -3807,26 +3824,26 @@
       "unlimited": "غير محدود",
       "limitReached": "تم بلوغ الحد اليومي"
     },
-  "history": {
-    "title": "النشاط الأخير",
-    "subtitle": "آخر عمليات الدخول الخاصة بك",
-    "last30Days": "الزيارات خلال آخر 30 يومًا",
-    "staffOnly": "تفاصيل مخصّصة للطاقم",
-    "details": "تفاصيل العضو",
-    "email": "البريد الإلكتروني",
-    "phone": "الهاتف",
-    "unknown": "غير معروف",
-    "recentVisits": "آخر 4 زيارات",
-    "empty": "لا توجد زيارات مسجلة.",
-    "checkedOut": "تم تسجيل الخروج",
-    "checkedIn": "تم تسجيل الدخول"
-  },
-  "classes": {
-    "title": "الدروس القادمة",
-    "subtitle": "الحجوزات المرتبطة بهذا العضو",
-    "staffOnly": "تفاصيل مخصّصة للطاقم",
-    "empty": "لا توجد دروس محجوزة"
-  },
+    "history": {
+      "title": "النشاط الأخير",
+      "subtitle": "آخر عمليات الدخول الخاصة بك",
+      "last30Days": "الزيارات خلال آخر 30 يومًا",
+      "staffOnly": "تفاصيل مخصّصة للطاقم",
+      "details": "تفاصيل العضو",
+      "email": "البريد الإلكتروني",
+      "phone": "الهاتف",
+      "unknown": "غير معروف",
+      "recentVisits": "آخر 4 زيارات",
+      "empty": "لا توجد زيارات مسجلة.",
+      "checkedOut": "تم تسجيل الخروج",
+      "checkedIn": "تم تسجيل الدخول"
+    },
+    "classes": {
+      "title": "الدروس القادمة",
+      "subtitle": "الحجوزات المرتبطة بهذا العضو",
+      "staffOnly": "تفاصيل مخصّصة للطاقم",
+      "empty": "لا توجد دروس محجوزة"
+    },
     "actions": {
       "staffTitle": "إجراءات الطاقم",
       "description": "أنت مسجل كطاقم لهذه القاعة. استخدم الأزرار لتأكيد المسح.",

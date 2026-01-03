@@ -191,9 +191,8 @@ export function AccessLogTable({ events, onDelete, deletingId }: AccessLogTableP
                         {t('overdue')}
                       </Badge>
                     ) : null}
-                    {[AccessEventStatus.DENIED_DAILY_LIMIT, AccessEventStatus.SESSION_OVERSTAY].includes(
-                      event.status,
-                    ) ? (
+                    {event.status === AccessEventStatus.DENIED_DAILY_LIMIT ||
+                    event.status === AccessEventStatus.SESSION_OVERSTAY ? (
                       <Badge
                         variant="outline"
                         className="border border-destructive/60 bg-destructive/5 px-2 py-0.5 text-[11px] font-semibold text-destructive"

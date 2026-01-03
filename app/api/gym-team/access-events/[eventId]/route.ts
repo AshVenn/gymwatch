@@ -1,28 +1,35 @@
-import { NextResponse } from "next/server"
-import { getServerSession } from "next-auth"
-import { authOptions } from "@/lib/auth-middleware"
+import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 import { resolveGymFeatures } from "@/lib/tenant-features"
+import { jsonError, requireGymScope, requirePermission, requireSession } from "@/lib/auth/guards"
+import { Permissions } from "@/lib/rbac/permissions"
 
-export async function DELETE(_request: Request, { params }: { params: { eventId?: string } }) {
-  const session = await getServerSession(authOptions)
-  const gymId = (session?.user as any)?.gymId as string | undefined
-  const role = (session?.user as any)?.role as string | undefined
-  const gymVariantId = (session?.user as any)?.gymVariantId as string | undefined
-  const tier = (session?.user as any)?.subscriptionPlan ?? null
+export async function DELETE(
+  _request: NextRequest,
+  { params }: { params: Promise<{ eventId: string }> },
+) {
+  const { eventId } = await params
+  const sessionResult = await requireSession()
+  if (!sessionResult.ok) return sessionResult.response
 
-  if (!gymId) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-  }
-  const { features } = await resolveGymFeatures({ gymId, tier })
+  const permission = requirePermission(sessionResult.user, Permissions.GymVisitsManage)
+  if (!permission.ok) return permission.response
+
+  const scope = requireGymScope(sessionResult.user)
+  if (!scope.ok) return scope.response
+
+  const role = sessionResult.user.role as string | undefined
+  const gymVariantId = sessionResult.user.gymVariantId ?? undefined
+  const tier = sessionResult.user.subscriptionPlan ?? null
+
+  const { features } = await resolveGymFeatures({ gymId: scope.gymId, tier })
   if (!features.accessControl) {
-    return NextResponse.json({ error: "Plan Pro ou Enterprise requis" }, { status: 403 })
+    return jsonError(403, "ACCESS_CONTROL_REQUIRED", "Plan Pro ou Enterprise requis")
   }
   if (role === "GYM_ADMIN" && !gymVariantId) {
-    return NextResponse.json({ error: "Variant manquant" }, { status: 403 })
+    return jsonError(403, "MISSING_VARIANT", "Variant manquant")
   }
 
-  const eventId = Array.isArray(params?.eventId) ? params.eventId[0] : params.eventId
   if (!eventId) {
     return NextResponse.json({ error: "Identifiant manquant" }, { status: 400 })
   }
@@ -32,7 +39,7 @@ export async function DELETE(_request: Request, { params }: { params: { eventId?
     include: { member: { select: { id: true, gymId: true, gymVariantId: true } } },
   })
 
-  if (!event || !event.member || event.member.gymId !== gymId) {
+  if (!event || !event.member || event.member.gymId !== scope.gymId) {
     return NextResponse.json({ error: "Accès introuvable" }, { status: 404 })
   }
 

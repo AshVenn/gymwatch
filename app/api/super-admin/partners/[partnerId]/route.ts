@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server"
+import { NextRequest, NextResponse } from "next/server"
 import { z, ZodError } from "zod"
 import { revalidatePath } from "next/cache"
 
@@ -9,7 +9,7 @@ import { requirePermission, requireSession } from "@/lib/auth/guards"
 import { recordAudit } from "@/lib/audit"
 
 const translationSchema = z.object({
-  name: z.string().min(2).optional(),
+  name: z.string().min(2),
   city: z.string().optional(),
   country: z.string().optional(),
   tagline: z.string().optional(),
@@ -46,9 +46,10 @@ function hasAtLeastOneTranslation(translations?: Record<string, { name?: string 
 }
 
 export async function PATCH(
-  req: Request,
-  { params }: { params: { partnerId: string } },
+  req: NextRequest,
+  { params }: { params: Promise<{ partnerId: string }> },
 ) {
+  const { partnerId } = await params
   const sessionResult = await requireSession()
   if (!sessionResult.ok) return sessionResult.response
 
@@ -64,7 +65,7 @@ export async function PATCH(
       )
     }
 
-    const updated = await updatePartnerClub(params.partnerId, {
+    const updated = await updatePartnerClub(partnerId, {
       slug: payload.slug,
       websiteUrl: payload.websiteUrl,
       logoUrl: payload.logoUrl,
@@ -75,6 +76,12 @@ export async function PATCH(
       isPublished: payload.isPublished,
       translations: payload.translations ?? {},
     })
+    if (!updated) {
+      return NextResponse.json(
+        { code: "NOT_FOUND", message: "Partner club not found" },
+        { status: 404 },
+      )
+    }
 
     revalidatePartnersPage()
 
@@ -126,9 +133,10 @@ export async function PATCH(
 }
 
 export async function DELETE(
-  _req: Request,
-  { params }: { params: { partnerId: string } },
+  _req: NextRequest,
+  { params }: { params: Promise<{ partnerId: string }> },
 ) {
+  const { partnerId } = await params
   const sessionResult = await requireSession()
   if (!sessionResult.ok) return sessionResult.response
 
@@ -136,13 +144,13 @@ export async function DELETE(
   if (!permission.ok) return permission.response
 
   try {
-    await deletePartnerClub(params.partnerId)
+    await deletePartnerClub(partnerId)
     revalidatePartnersPage()
     await recordAudit({
       actor: sessionResult.session.user,
       action: "platform.partner.delete",
       targetType: "partner",
-      targetId: params.partnerId,
+      targetId: partnerId,
       request: _req,
     })
     return NextResponse.json({ success: true })

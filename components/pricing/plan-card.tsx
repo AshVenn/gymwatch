@@ -1,5 +1,6 @@
 "use client"
 
+import type { ComponentProps } from "react"
 import { CheckCircle2 } from "lucide-react"
 import { Link } from "@/i18n/routing"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -16,7 +17,7 @@ type PlanCardProps = {
   badges: string[]
   features: string[]
   ctaLabel: string
-  ctaHref: string
+  ctaHref: ComponentProps<typeof Link>["href"]
   isHighlighted?: boolean
   highlightLabel?: string
   showAnnualSavings?: boolean

@@ -225,7 +225,7 @@ export async function markVisitForMember({
   const limitState: VisitResult["limitState"] =
     overDailyLimit
       ? "OPEN_VISIT"
-      : visitLimit !== null && markAttempted && visitsRemaining <= 0
+      : visitLimit !== null && markAttempted && visitsRemaining !== null && visitsRemaining <= 0
         ? "WARNING"
         : "OK"
 

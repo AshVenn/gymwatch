@@ -1,15 +1,20 @@
 import { NextRequest, NextResponse } from "next/server"
-import { getServerSession } from "next-auth"
 import { z } from "zod"
 import { AccessEventSource, AccessEventStatus, Prisma } from "@prisma/client"
 
-import { authOptions } from "@/lib/auth-middleware"
 import { prisma } from "@/lib/prisma"
 import { resolveAccessEventStatus } from "@/lib/access-events"
 import { markCheckoutForMember, markVisitForMember } from "@/lib/visits"
-import { resolveVariantAccess } from "@/lib/variant-access"
 import { buildSessionLimitResolver } from "@/lib/session-limits"
 import { resolveGymFeatures } from "@/lib/tenant-features"
+import {
+  jsonError,
+  requireGymScope,
+  requirePermission,
+  requireSession,
+  requireVariantAccess,
+} from "@/lib/auth/guards"
+import { Permissions } from "@/lib/rbac/permissions"
 
 const createSchema = z
   .object({
@@ -42,21 +47,22 @@ function parseSource(value: string | null): AccessEventSource | null {
 }
 
 export async function GET(request: NextRequest) {
-  const session = await getServerSession(authOptions)
-  const gymId = (session?.user as any)?.gymId as string | undefined
-  const role = (session?.user as any)?.role as string | undefined
-  const gymVariantId = (session?.user as any)?.gymVariantId as string | undefined
-  const tier = (session?.user as any)?.subscriptionPlan ?? null
+  const sessionResult = await requireSession()
+  if (!sessionResult.ok) return sessionResult.response
 
-  if (!gymId) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-  }
-  const { features } = await resolveGymFeatures({ gymId, tier })
+  const permission = requirePermission(sessionResult.user, Permissions.GymVisitsManage)
+  if (!permission.ok) return permission.response
+
+  const scope = requireGymScope(sessionResult.user)
+  if (!scope.ok) return scope.response
+
+  const role = sessionResult.user.role as string | undefined
+  const gymVariantId = sessionResult.user.gymVariantId ?? null
+  const tier = sessionResult.user.subscriptionPlan ?? null
+
+  const { features } = await resolveGymFeatures({ gymId: scope.gymId, tier })
   if (!features.accessControl) {
-    return NextResponse.json({ error: "Plan Pro ou Enterprise requis" }, { status: 403 })
-  }
-  if (role === "GYM_ADMIN" && !gymVariantId) {
-    return NextResponse.json({ error: "Variant manquant" }, { status: 403 })
+    return jsonError(403, "ACCESS_CONTROL_REQUIRED", "Plan Pro ou Enterprise requis")
   }
 
   const params = request.nextUrl.searchParams
@@ -74,26 +80,14 @@ export async function GET(request: NextRequest) {
   const pageSize = Number.isFinite(pageSizeRaw) ? Math.min(Math.max(Math.floor(pageSizeRaw), 1), 200) : 10
   const skip = (page - 1) * pageSize
 
-  const variantAccess = await resolveVariantAccess({
-    gymId,
+  const variantAccess = await requireVariantAccess({
+    gymId: scope.gymId,
     tier,
     role,
     requestedVariantId: requestedVariant,
     sessionVariantId: gymVariantId,
   })
-
-  if (!variantAccess.ok) {
-    return NextResponse.json(
-      {
-        error: variantAccess.message,
-        code: variantAccess.code,
-        variantMode: variantAccess.variantMode,
-        defaultVariantId: variantAccess.defaultVariantId,
-        multiLocationAllowed: variantAccess.multiLocationAllowed,
-      },
-      { status: variantAccess.status },
-    )
-  }
+  if (!variantAccess.ok) return variantAccess.response
 
   const variantId = variantAccess.variantId
 
@@ -119,7 +113,7 @@ export async function GET(request: NextRequest) {
     ...(memberFilter ? { memberId: memberFilter } : {}),
     ...(from || to ? { createdAt } : {}),
     member: {
-      gymId,
+      gymId: scope.gymId,
       ...(variantId ? { gymVariantId: variantId } : {}),
       ...(search
         ? {
@@ -156,7 +150,7 @@ export async function GET(request: NextRequest) {
     })
 
     const memberIds = Array.from(new Set(events.map((event) => event.memberId).filter(Boolean)))
-    const sessionLimitResolver = await buildSessionLimitResolver({ gymId, memberIds })
+    const sessionLimitResolver = await buildSessionLimitResolver({ gymId: scope.gymId, memberIds })
     const sessionLimitByEvent = new Map<string, number | null>()
     const limitValues: number[] = []
 
@@ -171,7 +165,8 @@ export async function GET(request: NextRequest) {
     const checkoutEvents = events.filter(
       (event) =>
         Boolean(event.memberId) &&
-        [AccessEventStatus.CHECKED_OUT, AccessEventStatus.SESSION_OVERSTAY].includes(event.status),
+        (event.status === AccessEventStatus.CHECKED_OUT ||
+          event.status === AccessEventStatus.SESSION_OVERSTAY),
     )
 
     const checkoutDurations = new Map<string, number>()
@@ -182,7 +177,7 @@ export async function GET(request: NextRequest) {
           const memberVariantId = event.member?.gymVariant?.id ?? null
           const visit = await prisma.visit.findFirst({
             where: {
-              gymId,
+              gymId: scope.gymId,
               memberId: event.memberId,
               ...(memberVariantId ? { gymVariantId: memberVariantId } : {}),
               checkOut: { lte: event.createdAt },
@@ -208,7 +203,7 @@ export async function GET(request: NextRequest) {
     if (memberIds.length) {
       const openVisits = await prisma.visit.findMany({
         where: {
-          gymId,
+          gymId: scope.gymId,
           ...(variantId ? { gymVariantId: variantId } : {}),
           memberId: { in: memberIds as string[] },
           checkOut: null,
@@ -241,7 +236,8 @@ export async function GET(request: NextRequest) {
         memberId &&
         openSessionDurations.has(memberId) &&
         !seenOpenSessionMembers.has(memberId) &&
-        [AccessEventStatus.GRANTED, AccessEventStatus.ALREADY_CHECKED_IN].includes(event.status)
+        (event.status === AccessEventStatus.GRANTED ||
+          event.status === AccessEventStatus.ALREADY_CHECKED_IN)
       ) {
         sessionDurationMinutes = openSessionDurations.get(memberId) ?? null
         seenOpenSessionMembers.add(memberId)
@@ -265,28 +261,32 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
-  const session = await getServerSession(authOptions)
-  const gymId = (session?.user as any)?.gymId as string | undefined
-  const role = (session?.user as any)?.role as string | undefined
-  const gymVariantId = (session?.user as any)?.gymVariantId as string | undefined
-  const tier = (session?.user as any)?.subscriptionPlan ?? null
+  const sessionResult = await requireSession()
+  if (!sessionResult.ok) return sessionResult.response
 
-  if (!gymId) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-  }
-  const { features } = await resolveGymFeatures({ gymId, tier })
+  const permission = requirePermission(sessionResult.user, Permissions.GymVisitsManage)
+  if (!permission.ok) return permission.response
+
+  const scope = requireGymScope(sessionResult.user)
+  if (!scope.ok) return scope.response
+
+  const role = sessionResult.user.role as string | undefined
+  const gymVariantId = sessionResult.user.gymVariantId ?? null
+  const tier = sessionResult.user.subscriptionPlan ?? null
+
+  const { features } = await resolveGymFeatures({ gymId: scope.gymId, tier })
   if (!features.accessControl) {
-    return NextResponse.json({ error: "Plan Pro ou Enterprise requis" }, { status: 403 })
-  }
-  if (role === "GYM_ADMIN" && !gymVariantId) {
-    return NextResponse.json({ error: "Variant manquant" }, { status: 403 })
+    return jsonError(403, "ACCESS_CONTROL_REQUIRED", "Plan Pro ou Enterprise requis")
   }
 
   try {
     const payload = createSchema.parse(await request.json())
     const shouldMarkVisit = payload.markVisit ?? false
     const direction = payload.direction === "OUT" ? "OUT" : "IN"
-    const variantGuard = role === "GYM_ADMIN" ? gymVariantId : undefined
+    const variantGuard = role === "GYM_ADMIN" ? gymVariantId ?? undefined : undefined
+    if (role === "GYM_ADMIN" && !variantGuard) {
+      return jsonError(403, "MISSING_VARIANT", "Variant manquant")
+    }
 
     const parseDate = (value?: string | null): Date | undefined | "INVALID" => {
       if (!value) return undefined
@@ -318,7 +318,7 @@ export async function POST(request: NextRequest) {
         ? await prisma.member.findFirst({
             where: {
               id: payload.memberId,
-              gymId,
+              gymId: scope.gymId,
               ...(variantGuard ? { gymVariantId: variantGuard } : {}),
             },
             include: memberInclude,
@@ -329,7 +329,7 @@ export async function POST(request: NextRequest) {
       member = await prisma.member.findFirst({
         where: {
           qrToken: payload.token,
-          gymId,
+          gymId: scope.gymId,
           ...(variantGuard ? { gymVariantId: variantGuard } : {}),
         },
         include: memberInclude,
@@ -340,7 +340,7 @@ export async function POST(request: NextRequest) {
       const visitLookup = await prisma.visit.findFirst({
         where: {
           id: payload.visitId,
-          gymId,
+          gymId: scope.gymId,
           ...(variantGuard ? { gymVariantId: variantGuard } : {}),
         },
         select: { memberId: true },
@@ -350,7 +350,7 @@ export async function POST(request: NextRequest) {
         member = await prisma.member.findFirst({
           where: {
             id: visitLookup.memberId,
-            gymId,
+            gymId: scope.gymId,
             ...(variantGuard ? { gymVariantId: variantGuard } : {}),
           },
           include: memberInclude,
@@ -364,13 +364,13 @@ export async function POST(request: NextRequest) {
 
     if (direction === "OUT") {
       const checkout = await markCheckoutForMember({
-        gymId,
+        gymId: scope.gymId,
         memberId: member.id,
         visitId: payload.visitId,
-        checkoutAt: checkoutAt === "INVALID" ? undefined : checkoutAt,
+        checkoutAt,
         allowedVariantId: variantGuard,
-        rangeFrom: rangeFrom === "INVALID" ? undefined : rangeFrom,
-        rangeTo: rangeTo === "INVALID" ? undefined : rangeTo,
+        rangeFrom,
+        rangeTo,
       })
       const status = checkout.isOverMaxDuration ? AccessEventStatus.SESSION_OVERSTAY : AccessEventStatus.CHECKED_OUT
       const event = await prisma.accessEvent.create({
@@ -396,7 +396,7 @@ export async function POST(request: NextRequest) {
     }
 
     const visit = await markVisitForMember({
-      gymId,
+      gymId: scope.gymId,
       memberId: member.id,
       markVisit: shouldMarkVisit,
       allowedVariantId: variantGuard,

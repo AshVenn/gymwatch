@@ -51,7 +51,11 @@ const approveSchema = z.object({
   resolutionNote: z.string().max(1000).optional(),
 })
 
-export async function POST(request: NextRequest, { params }: { params: { requestId: string } }) {
+export async function POST(
+  request: NextRequest,
+  { params }: { params: Promise<{ requestId: string }> },
+) {
+  const { requestId } = await params
   const sessionResult = await requireSession()
   if (!sessionResult.ok) return sessionResult.response
 
@@ -62,7 +66,7 @@ export async function POST(request: NextRequest, { params }: { params: { request
     const body = approveSchema.parse(await request.json())
 
     const demoRequest = await prisma.demoRequest.findUnique({
-      where: { id: params.requestId },
+      where: { id: requestId },
     })
 
     if (!demoRequest) {
@@ -106,7 +110,7 @@ export async function POST(request: NextRequest, { params }: { params: { request
     })
 
     await prisma.demoRequest.update({
-      where: { id: params.requestId },
+      where: { id: requestId },
       data: {
         status: DemoRequestStatus.RESOLVED,
         resolvedAt: new Date(),
@@ -120,7 +124,7 @@ export async function POST(request: NextRequest, { params }: { params: { request
       actor: sessionResult.session.user,
       action: "platform.demo-request.approve",
       targetType: "demo-request",
-      targetId: params.requestId,
+      targetId: requestId,
       metadata: {
         createdGymId: created.id,
         plan: created.subscriptionPlan,

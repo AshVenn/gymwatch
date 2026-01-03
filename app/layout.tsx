@@ -7,7 +7,7 @@ import './globals.css'
 
 type RootLayoutProps = {
   children: ReactNode
-  params?: { locale?: string } | Promise<{ locale?: string }>
+  params?: Promise<{ locale?: string }>
 }
 
 // --- Local Fonts ---
@@ -38,7 +38,7 @@ const arabicFont = localFont({
 const rtlLocales = new Set<AppLocale>(['ar'])
 
 export default async function RootLayout({ children, params }: RootLayoutProps) {
-  const resolvedParams = await Promise.resolve(params)
+  const resolvedParams = params ? await params : undefined
   const localeFromParams = resolvedParams?.locale
   const localeFromHeader = (await headers()).get('x-next-intl-locale')
 

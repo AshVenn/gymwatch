@@ -2,8 +2,9 @@
 
 import { useEffect, useState } from "react"
 import { useLocale, useTranslations } from "next-intl"
-import { useQuery } from "@tanstack/react-query"
+import { keepPreviousData, useQuery } from "@tanstack/react-query"
 import { Download, Eye } from "lucide-react"
+import { useSession } from "next-auth/react"
 
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -14,6 +15,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Skeleton } from "@/components/ui/skeleton"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { PaginationControls } from "@/components/dashboard/pagination-controls"
+import { useRouter } from "@/i18n/routing"
+import { Permissions } from "@/lib/rbac/permissions"
+import { hasPermission } from "@/lib/rbac/policies"
 
 type AuditEntry = {
   id: string
@@ -39,6 +43,9 @@ type AuditResponse = {
 export default function SuperAdminAuditPage() {
   const t = useTranslations("superAdminAudit")
   const locale = useLocale()
+  const { data: session, status } = useSession()
+  const router = useRouter()
+  const canAccess = hasPermission(session?.user?.role as any, Permissions.PlatformAuditRead)
 
   const [query, setQuery] = useState("")
   const [actor, setActor] = useState("")
@@ -53,6 +60,25 @@ export default function SuperAdminAuditPage() {
   useEffect(() => {
     setPage(1)
   }, [query, actor, action, target, from, to, pageSize])
+
+  useEffect(() => {
+    if (status === "authenticated" && !canAccess) {
+      router.replace("/super-admin")
+    }
+  }, [canAccess, router, status])
+
+  if (status === "loading") {
+    return (
+      <div className="space-y-4">
+        <Skeleton className="h-10 w-64" />
+        <Skeleton className="h-8 w-full" />
+      </div>
+    )
+  }
+
+  if (status === "authenticated" && !canAccess) {
+    return null
+  }
 
   const buildParams = (extra?: Record<string, string>) => {
     const params = new URLSearchParams()
@@ -81,7 +107,7 @@ export default function SuperAdminAuditPage() {
       }
       return payload as AuditResponse
     },
-    keepPreviousData: true,
+    placeholderData: keepPreviousData,
   })
 
   const exportCsv = () => {

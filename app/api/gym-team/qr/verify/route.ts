@@ -11,6 +11,8 @@ import { getClientIdentifier, rateLimit } from "@/lib/rate-limit"
 import { evaluateCheckInRules, recordOverstayRule } from "@/lib/rules-engine"
 import { markCheckoutForMember, markVisitForMember } from "@/lib/visits"
 import { resolveGymFeatures } from "@/lib/tenant-features"
+import { jsonError, requireGymScope, requirePermission, requireSession } from "@/lib/auth/guards"
+import { Permissions } from "@/lib/rbac/permissions"
 
 const scanPayloadSchema = z.object({
   token: z.string(),
@@ -207,19 +209,26 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
-  const session = await getServerSession(authOptions)
-  const gymId = (session?.user as any)?.gymId as string | undefined
-  const role = (session?.user as any)?.role as string | undefined
-  const gymVariantId = (session?.user as any)?.gymVariantId as string | undefined
-  const tier = (session?.user as any)?.subscriptionPlan ?? null
+  const sessionResult = await requireSession()
+  if (!sessionResult.ok) return sessionResult.response
 
-  if (!gymId) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+  const permission = requirePermission(sessionResult.user, Permissions.GymVisitsManage)
+  if (!permission.ok) return permission.response
+
+  const scope = requireGymScope(sessionResult.user)
+  if (!scope.ok) return scope.response
+
+  const role = (sessionResult.user as any)?.role as string | undefined
+  const gymVariantId = sessionResult.user.gymVariantId ?? undefined
+  const tier = sessionResult.user.subscriptionPlan ?? null
+
+  if (role === "GYM_ADMIN" && !gymVariantId) {
+    return jsonError(403, "MISSING_VARIANT", "Variant manquant")
   }
 
-  const { features } = await resolveGymFeatures({ gymId, tier })
+  const { features } = await resolveGymFeatures({ gymId: scope.gymId, tier })
   if (!features.accessControl) {
-    return NextResponse.json({ error: "Plan Pro ou Enterprise requis" }, { status: 403 })
+    return jsonError(403, "ACCESS_CONTROL_REQUIRED", "Plan Pro ou Enterprise requis")
   }
 
   const body = scanPayloadSchema.safeParse(await request.json())
@@ -257,7 +266,7 @@ export async function POST(request: NextRequest) {
   const member = await prisma.member.findFirst({
     where: {
       qrToken: token,
-      gymId,
+      gymId: scope.gymId,
       ...(role === "GYM_ADMIN" && gymVariantId ? { gymVariantId } : {}),
     },
     select: { id: true, gymVariantId: true, firstName: true, lastName: true },
@@ -270,7 +279,7 @@ export async function POST(request: NextRequest) {
   try {
     if (mode === "OUT") {
       const checkout = await markCheckoutForMember({
-        gymId,
+        gymId: scope.gymId,
         memberId: member.id,
         allowedVariantId,
         checkoutAt: checkoutDate ?? undefined,
@@ -295,7 +304,7 @@ export async function POST(request: NextRequest) {
 
       if (checkout.isOverMaxDuration) {
         await recordOverstayRule({
-          gymId,
+          gymId: scope.gymId,
           gymVariantId: checkout.variantId,
           memberId: checkout.memberId,
           visitId: checkout.visitId,
@@ -325,7 +334,7 @@ export async function POST(request: NextRequest) {
     }
 
     const visit = await markVisitForMember({
-      gymId,
+      gymId: scope.gymId,
       memberId: member.id,
       markVisit,
       allowedVariantId,
@@ -333,7 +342,7 @@ export async function POST(request: NextRequest) {
 
     const status = resolveAccessEventStatus(visit, "CHECK_IN")
     const rules = await evaluateCheckInRules({
-      gymId,
+      gymId: scope.gymId,
       gymVariantId: member.gymVariantId,
       memberId: member.id,
       visitId: visit.visitId,

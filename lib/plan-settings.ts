@@ -42,12 +42,12 @@ const DEFAULT_PLAN_SETTINGS: PlanSettingsRecord = {
   proMonthlyPrice: PLAN_PRICING.PRO.MONTHLY,
   enterpriseMonthlyPrice: PLAN_PRICING.ENTERPRISE.MONTHLY,
   annualDiscountPercent: DEFAULT_ANNUAL_DISCOUNT,
-  basicPlanLimitPerVariant: DEFAULT_PLAN_LIMITS.BASIC.perVariant,
-  basicPlanLimitPerNetwork: DEFAULT_PLAN_LIMITS.BASIC.perNetwork,
-  proPlanLimitPerVariant: DEFAULT_PLAN_LIMITS.PRO.perVariant,
-  proPlanLimitPerNetwork: DEFAULT_PLAN_LIMITS.PRO.perNetwork,
-  enterprisePlanLimitPerVariant: DEFAULT_PLAN_LIMITS.ENTERPRISE.perVariant,
-  enterprisePlanLimitPerNetwork: DEFAULT_PLAN_LIMITS.ENTERPRISE.perNetwork,
+  basicPlanLimitPerVariant: normalizeLimitValue(DEFAULT_PLAN_LIMITS.BASIC.perVariant),
+  basicPlanLimitPerNetwork: normalizeLimitValue(DEFAULT_PLAN_LIMITS.BASIC.perNetwork),
+  proPlanLimitPerVariant: normalizeLimitValue(DEFAULT_PLAN_LIMITS.PRO.perVariant),
+  proPlanLimitPerNetwork: normalizeLimitValue(DEFAULT_PLAN_LIMITS.PRO.perNetwork),
+  enterprisePlanLimitPerVariant: normalizeLimitValue(DEFAULT_PLAN_LIMITS.ENTERPRISE.perVariant),
+  enterprisePlanLimitPerNetwork: normalizeLimitValue(DEFAULT_PLAN_LIMITS.ENTERPRISE.perNetwork),
 }
 
 let cache: CachedPlanSettings | null = null
@@ -58,7 +58,7 @@ function clampNumber(value: number | null | undefined, fallback: number, min = 0
   return typeof max === "number" ? Math.min(aboveMin, max) : aboveMin
 }
 
-function clampLimit(value: number | null | undefined, fallback: number) {
+function clampLimit(value: number | null | undefined, fallback: number | null | undefined) {
   return normalizeLimitValue(value ?? fallback)
 }
 

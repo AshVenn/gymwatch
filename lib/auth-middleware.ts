@@ -135,10 +135,11 @@ export const authOptions: NextAuthOptions = {
     },
 
     async session({ session, token }) {
+      if ((token as any).sessionRevoked) {
+        return { ...session, user: undefined }
+      }
+
       if (session.user) {
-        if ((token as any).sessionRevoked) {
-          return null
-        }
         ;(session.user as any).id = token.sub ?? (token as any).userId ?? undefined
         ;(session.user as any).role = (token as any).role
         ;(session.user as any).status = (token as any).status

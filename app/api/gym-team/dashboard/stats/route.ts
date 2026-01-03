@@ -1,49 +1,34 @@
 import { NextRequest, NextResponse } from "next/server"
-import { getServerSession } from "next-auth"
-import { authOptions } from "@/lib/auth-middleware"
 import { prisma } from "@/lib/prisma"
 import { daysUntilExpiry } from "@/lib/subscription-status"
-import { resolveVariantAccess } from "@/lib/variant-access"
+import { requireGymScope, requirePermission, requireSession, requireVariantAccess } from "@/lib/auth/guards"
+import { Permissions } from "@/lib/rbac/permissions"
 
 export async function GET(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions)
+    const sessionResult = await requireSession()
+    if (!sessionResult.ok) return sessionResult.response
 
-    const gymId = (session?.user as any)?.gymId as string | undefined
-    const role = (session?.user as any)?.role as string | undefined
-    const sessionVariantId = (session?.user as any)?.gymVariantId as string | undefined
-    const tier = (session?.user as any)?.subscriptionPlan ?? null
+    const permission = requirePermission(sessionResult.user, Permissions.GymMembersRead)
+    if (!permission.ok) return permission.response
 
-    if (!gymId) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-    }
+    const scope = requireGymScope(sessionResult.user)
+    if (!scope.ok) return scope.response
 
-    if (role === "GYM_ADMIN" && !sessionVariantId) {
-      return NextResponse.json({ error: "Variant manquant" }, { status: 403 })
-    }
+    const role = sessionResult.user.role as string | undefined
+    const sessionVariantId = sessionResult.user.gymVariantId ?? null
+    const tier = sessionResult.user.subscriptionPlan ?? null
 
     const searchParams = request.nextUrl.searchParams
     const requestedVariantId = searchParams.get("variantId")
-    const variantAccess = await resolveVariantAccess({
-      gymId,
+    const variantAccess = await requireVariantAccess({
+      gymId: scope.gymId,
       tier,
       role,
       requestedVariantId,
       sessionVariantId,
     })
-
-    if (!variantAccess.ok) {
-      return NextResponse.json(
-        {
-          error: variantAccess.message,
-          code: variantAccess.code,
-          variantMode: variantAccess.variantMode,
-          defaultVariantId: variantAccess.defaultVariantId,
-          multiLocationAllowed: variantAccess.multiLocationAllowed,
-        },
-        { status: variantAccess.status },
-      )
-    }
+    if (!variantAccess.ok) return variantAccess.response
 
     const gymVariantId = variantAccess.variantId
 
@@ -67,7 +52,7 @@ export async function GET(request: NextRequest) {
     if (revenueVisible) {
       const currentAgg = await prisma.payment.aggregate({
         where: {
-          gymId,
+          gymId: scope.gymId,
           paymentDate: { gte: firstDayOfMonth, lte: lastDayOfMonth },
           ...(gymVariantId
             ? {
@@ -82,7 +67,7 @@ export async function GET(request: NextRequest) {
 
       const lastAgg = await prisma.payment.aggregate({
         where: {
-          gymId,
+          gymId: scope.gymId,
           paymentDate: { gte: firstDayOfLastMonth, lte: lastDayOfLastMonth },
           ...(gymVariantId
             ? {
@@ -111,7 +96,7 @@ export async function GET(request: NextRequest) {
 
         const agg = await prisma.payment.aggregate({
           where: {
-            gymId,
+            gymId: scope.gymId,
             paymentDate: { gte: start, lte: end },
             ...(gymVariantId
               ? {
@@ -133,7 +118,7 @@ export async function GET(request: NextRequest) {
 
     const activeMembers = await prisma.subscription.count({
       where: {
-        gymId,
+        gymId: scope.gymId,
         ...(gymVariantId ? { gymVariantId } : {}),
         status: { in: ["ACTIVE", "EXPIRES_TODAY"] },
       },
@@ -141,7 +126,7 @@ export async function GET(request: NextRequest) {
 
     const newMembers = await prisma.member.count({
       where: {
-        gymId,
+        gymId: scope.gymId,
         ...(gymVariantId ? { gymVariantId } : {}),
         createdAt: { gte: firstDayOfMonth, lte: lastDayOfMonth },
       },
@@ -149,7 +134,7 @@ export async function GET(request: NextRequest) {
 
     const newMembersToday = await prisma.member.count({
       where: {
-        gymId,
+        gymId: scope.gymId,
         ...(gymVariantId ? { gymVariantId } : {}),
         createdAt: { gte: startOfToday, lte: endOfToday },
       },
@@ -157,7 +142,7 @@ export async function GET(request: NextRequest) {
 
     const plans = await prisma.membershipPlan.findMany({
       where: {
-        gymId,
+        gymId: scope.gymId,
         ...(gymVariantId ? { gymVariantId } : {}),
       },
     })
@@ -180,7 +165,7 @@ export async function GET(request: NextRequest) {
 
     const expiringSubs = await prisma.subscription.findMany({
       where: {
-        gymId,
+        gymId: scope.gymId,
         ...(gymVariantId ? { gymVariantId } : {}),
         endDate: { gt: today, lte: expiringSoonDate },
         status: { in: ["ACTIVE", "EXPIRES_TODAY"] },
@@ -198,7 +183,7 @@ export async function GET(request: NextRequest) {
     }))
 
     const visitorCounter = await prisma.gym.findUnique({
-      where: { id: gymId },
+      where: { id: scope.gymId },
       select: { todayVisitorCount: true, todayVisitorDate: true, capacity: true, name: true },
     })
 
@@ -216,7 +201,7 @@ export async function GET(request: NextRequest) {
         : null
       if (!storedDate || storedDate.setHours(0, 0, 0, 0) !== today.getTime()) {
         const updated = await prisma.gym.update({
-          where: { id: gymId },
+          where: { id: scope.gymId },
           data: { todayVisitorCount: 0, todayVisitorDate: today },
           select: { todayVisitorCount: true },
         })
@@ -225,13 +210,13 @@ export async function GET(request: NextRequest) {
     }
 
     const openVisits = await prisma.visit.count({
-      where: { gymId, ...(gymVariantId ? { gymVariantId } : {}), checkOut: null },
+      where: { gymId: scope.gymId, ...(gymVariantId ? { gymVariantId } : {}), checkOut: null },
     })
 
     const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000)
     const openVisitsPrevious = await prisma.visit.count({
       where: {
-        gymId,
+        gymId: scope.gymId,
         ...(gymVariantId ? { gymVariantId } : {}),
         checkIn: { lte: oneHourAgo },
         OR: [{ checkOut: null }, { checkOut: { gt: oneHourAgo } }],
@@ -250,12 +235,16 @@ export async function GET(request: NextRequest) {
       capacityLimit && capacityLimit > 0 ? Math.round((capacityTrendDelta / capacityLimit) * 100) : null
 
     const visitsToday = await prisma.visit.count({
-      where: { gymId, ...(gymVariantId ? { gymVariantId } : {}), checkIn: { gte: startOfToday, lte: endOfToday } },
+      where: {
+        gymId: scope.gymId,
+        ...(gymVariantId ? { gymVariantId } : {}),
+        checkIn: { gte: startOfToday, lte: endOfToday },
+      },
     })
 
     const visitsYesterday = await prisma.visit.count({
       where: {
-        gymId,
+        gymId: scope.gymId,
         ...(gymVariantId ? { gymVariantId } : {}),
         checkIn: { gte: startOfYesterday, lte: endOfYesterday },
       },
@@ -263,7 +252,7 @@ export async function GET(request: NextRequest) {
 
     const checkoutsToday = await prisma.visit.count({
       where: {
-        gymId,
+        gymId: scope.gymId,
         ...(gymVariantId ? { gymVariantId } : {}),
         checkOut: { gte: startOfToday, lte: endOfToday },
       },
@@ -271,7 +260,7 @@ export async function GET(request: NextRequest) {
 
     const completedVisitsForAverage = await prisma.visit.findMany({
       where: {
-        gymId,
+        gymId: scope.gymId,
         ...(gymVariantId ? { gymVariantId } : {}),
         checkOut: { gte: startOfToday, lte: endOfToday },
       },
@@ -295,7 +284,7 @@ export async function GET(request: NextRequest) {
     const paymentsToday = revenueVisible
       ? await prisma.payment.aggregate({
           where: {
-            gymId,
+            gymId: scope.gymId,
             paymentDate: { gte: startOfToday, lte: endOfToday },
             ...(gymVariantId
               ? {

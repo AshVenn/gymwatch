@@ -1,10 +1,10 @@
 // app/api/plans/[planId]/route.ts
-import { getServerSession } from 'next-auth/next'
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
-import { authOptions } from '@/lib/auth-middleware'
 import { prisma } from '@/lib/prisma'
 import { resolveGymPlanLimits } from '@/lib/plan-settings'
+import { jsonError, requireGymScope, requirePermission, requireSession } from '@/lib/auth/guards'
+import { Permissions } from '@/lib/rbac/permissions'
 
 function normalizeVisitsPerDay(raw: unknown) {
   if (raw === undefined || raw === null) {
@@ -42,15 +42,19 @@ function normalizeSessionLimit(raw: unknown, { allowUndefined = false }: { allow
 
 export async function PUT(request: NextRequest, { params }: any) {
   try {
-    const session = await getServerSession(authOptions)
+    const sessionResult = await requireSession()
+    if (!sessionResult.ok) return sessionResult.response
 
-    if (!session?.user?.gymId) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
-    const role = (session.user as any).role as string | undefined
-    const sessionVariantId = (session.user as any).gymVariantId as string | undefined
+    const permission = requirePermission(sessionResult.user, Permissions.GymPlansManage)
+    if (!permission.ok) return permission.response
+
+    const scope = requireGymScope(sessionResult.user)
+    if (!scope.ok) return scope.response
+
+    const role = (sessionResult.user as any).role as string | undefined
+    const sessionVariantId = sessionResult.user.gymVariantId ?? undefined
     if (role === 'GYM_ADMIN' && !sessionVariantId) {
-      return NextResponse.json({ error: 'Variant manquant' }, { status: 403 })
+      return jsonError(403, 'MISSING_VARIANT', 'Variant manquant')
     }
 
     const payload = await request.json()
@@ -70,7 +74,7 @@ export async function PUT(request: NextRequest, { params }: any) {
 
     const planRecord = await prisma.membershipPlan.findUnique({ where: { id: params.planId } })
 
-    if (!planRecord || planRecord.gymId !== session.user.gymId) {
+    if (!planRecord || planRecord.gymId !== scope.gymId) {
       return NextResponse.json({ error: 'Plan not found' }, { status: 404 })
     }
     if (role === 'GYM_ADMIN' && sessionVariantId && planRecord.gymVariantId !== sessionVariantId) {
@@ -79,7 +83,7 @@ export async function PUT(request: NextRequest, { params }: any) {
 
     if (isActive === true && planRecord.isActive === false) {
       const gym = await prisma.gym.findUnique({
-        where: { id: session.user.gymId as string },
+        where: { id: scope.gymId },
         select: { subscriptionPlan: true, planLimitPerVariant: true, planLimitPerNetwork: true },
       })
       if (!gym) {
@@ -91,9 +95,9 @@ export async function PUT(request: NextRequest, { params }: any) {
       })
       const [variantActivePlans, networkActivePlans] = await Promise.all([
         prisma.membershipPlan.count({
-          where: { gymId: session.user.gymId as string, gymVariantId: planRecord.gymVariantId, isActive: true },
+          where: { gymId: scope.gymId, gymVariantId: planRecord.gymVariantId, isActive: true },
         }),
-        prisma.membershipPlan.count({ where: { gymId: session.user.gymId as string, isActive: true } }),
+        prisma.membershipPlan.count({ where: { gymId: scope.gymId, isActive: true } }),
       ])
 
       if (!limits.unlimitedPerVariant && variantActivePlans >= limits.perVariant!) {
@@ -137,19 +141,23 @@ export async function PUT(request: NextRequest, { params }: any) {
 
 export async function DELETE(request: NextRequest, { params }: any) {
   try {
-    const session = await getServerSession(authOptions)
+    const sessionResult = await requireSession()
+    if (!sessionResult.ok) return sessionResult.response
 
-    if (!session?.user?.gymId) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
-    const role = (session.user as any).role as string | undefined
-    const sessionVariantId = (session.user as any).gymVariantId as string | undefined
+    const permission = requirePermission(sessionResult.user, Permissions.GymPlansManage)
+    if (!permission.ok) return permission.response
+
+    const scope = requireGymScope(sessionResult.user)
+    if (!scope.ok) return scope.response
+
+    const role = (sessionResult.user as any).role as string | undefined
+    const sessionVariantId = sessionResult.user.gymVariantId ?? undefined
     if (role === 'GYM_ADMIN' && !sessionVariantId) {
-      return NextResponse.json({ error: 'Variant manquant' }, { status: 403 })
+      return jsonError(403, 'MISSING_VARIANT', 'Variant manquant')
     }
 
     const planRecord = await prisma.membershipPlan.findUnique({ where: { id: params.planId } })
-    if (!planRecord || planRecord.gymId !== session.user.gymId) {
+    if (!planRecord || planRecord.gymId !== scope.gymId) {
       return NextResponse.json({ error: 'Plan not found' }, { status: 404 })
     }
     if (role === 'GYM_ADMIN' && sessionVariantId && planRecord.gymVariantId !== sessionVariantId) {

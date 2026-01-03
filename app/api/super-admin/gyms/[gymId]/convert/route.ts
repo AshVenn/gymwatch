@@ -1,10 +1,14 @@
-import { NextResponse } from "next/server"
+import { NextRequest, NextResponse } from "next/server"
 import { convertDemoGym } from "@/lib/super-admin"
 import { Permissions } from "@/lib/rbac/permissions"
 import { requirePermission, requireSession } from "@/lib/auth/guards"
 import { recordAudit } from "@/lib/audit"
 
-export async function POST(_req: Request, { params }: { params: { gymId: string } }) {
+export async function POST(
+  _req: NextRequest,
+  { params }: { params: Promise<{ gymId: string }> },
+) {
+  const { gymId } = await params
   const sessionResult = await requireSession()
   if (!sessionResult.ok) return sessionResult.response
 
@@ -12,12 +16,12 @@ export async function POST(_req: Request, { params }: { params: { gymId: string 
   if (!permission.ok) return permission.response
 
   try {
-    const updated = await convertDemoGym(params.gymId)
+    const updated = await convertDemoGym(gymId)
     await recordAudit({
       actor: sessionResult.session.user,
       action: "platform.gym.convert-demo",
       targetType: "gym",
-      targetId: params.gymId,
+      targetId: gymId,
       request: _req,
     })
     return NextResponse.json(updated)

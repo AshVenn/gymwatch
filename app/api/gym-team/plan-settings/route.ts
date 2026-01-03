@@ -1,9 +1,9 @@
 import { NextResponse } from "next/server"
-import { getServerSession } from "next-auth"
 import { z } from "zod"
 
-import { authOptions } from "@/lib/auth-middleware"
 import { getPlanSettings, updatePlanSettings } from "@/lib/plan-settings"
+import { jsonError, requireGymScope, requirePermission, requireSession } from "@/lib/auth/guards"
+import { Permissions } from "@/lib/rbac/permissions"
 
 const planSettingsSchema = z.object({
   basicMonthlyPrice: z.coerce.number().min(0),
@@ -19,12 +19,14 @@ const planSettingsSchema = z.object({
 })
 
 export async function GET() {
-  const session = await getServerSession(authOptions)
-  const gymId = (session?.user as any)?.gymId as string | undefined
+  const sessionResult = await requireSession()
+  if (!sessionResult.ok) return sessionResult.response
 
-  if (!session?.user || !gymId) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-  }
+  const permission = requirePermission(sessionResult.user, Permissions.GymPlansManage)
+  if (!permission.ok) return permission.response
+
+  const scope = requireGymScope(sessionResult.user)
+  if (!scope.ok) return scope.response
 
   const { limits } = await getPlanSettings()
 
@@ -32,10 +34,11 @@ export async function GET() {
 }
 
 export async function PUT(request: Request) {
-  const session = await getServerSession(authOptions)
-  if (!session?.user || session.user.role !== "SUPER_ADMIN") {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 403 })
-  }
+  const sessionResult = await requireSession()
+  if (!sessionResult.ok) return sessionResult.response
+
+  const permission = requirePermission(sessionResult.user, Permissions.PlatformPlansManage)
+  if (!permission.ok) return permission.response
 
   try {
     const payload = planSettingsSchema.parse(await request.json())
@@ -60,15 +63,9 @@ export async function PUT(request: Request) {
     })
   } catch (error) {
     if (error instanceof z.ZodError) {
-      return NextResponse.json(
-        { error: "Invalid payload", details: error.flatten() },
-        { status: 422 },
-      )
+      return jsonError(422, "INVALID_PAYLOAD", "Invalid payload", error.flatten())
     }
 
-    return NextResponse.json(
-      { error: "Unable to update plan settings" },
-      { status: 500 },
-    )
+    return jsonError(500, "PLAN_SETTINGS_UPDATE_FAILED", "Unable to update plan settings")
   }
 }

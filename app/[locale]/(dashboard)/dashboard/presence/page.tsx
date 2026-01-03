@@ -1,9 +1,9 @@
 "use client"
 
 import Link from "next/link"
-import { useEffect, useMemo, useState } from "react"
+import { useEffect, useMemo, useRef, useState } from "react"
 import { useSession } from "next-auth/react"
-import { useMutation, useQuery } from "@tanstack/react-query"
+import { useInfiniteQuery, useMutation, useQuery } from "@tanstack/react-query"
 import { Activity, AlertTriangle, CheckCircle2, Clock3, LogOut, RefreshCw, Users } from "lucide-react"
 import { useLocale, useTranslations } from "next-intl"
 import { toast } from "sonner"
@@ -90,6 +90,14 @@ type MemberForVisit = {
   gymVariant?: { id: string; name: string; slug: string } | null
 }
 
+type PaginatedMembersResponse = {
+  items: MemberForVisit[]
+  total: number
+  page: number
+  pageSize: number
+  hasMore: boolean
+}
+
 const formatInputDate = (date: Date) => date.toISOString().slice(0, 10)
 const formatTimeInput = (value: Date) => value.toISOString().slice(11, 16)
 const buildDateTimeString = (date: string, time?: string) => {
@@ -156,6 +164,8 @@ export default function PresencePage() {
   const [manualVisitDialogOpen, setManualVisitDialogOpen] = useState(false)
   const [manualVisitSearch, setManualVisitSearch] = useState("")
   const [manualVisitLoading, setManualVisitLoading] = useState<string | null>(null)
+  const manualVisitListRef = useRef<HTMLDivElement | null>(null)
+  const manualVisitSentinelRef = useRef<HTMLDivElement | null>(null)
 
   const planLabel = tier === "ENTERPRISE" ? "Enterprise" : tier === "PRO" ? "Pro" : "Basic"
 
@@ -189,19 +199,33 @@ export default function PresencePage() {
           ? null
           : (defaultVariantId ?? variants[0]?.id ?? null)
 
-  const manualVisitMembers = useQuery<MemberForVisit[]>({
-    queryKey: ["manual-visit-members", gymId, variantFilter],
+  const manualVisitMembersQuery = useInfiniteQuery<PaginatedMembersResponse>({
+    queryKey: ["manual-visit-members", gymId, variantFilter, manualVisitSearch],
     enabled: status === "authenticated" && hasPresence && manualVisitDialogOpen && Boolean(gymId) && !variantsLoading,
-    queryFn: async () => {
+    initialPageParam: 1,
+    queryFn: async ({ pageParam }) => {
       const params = new URLSearchParams()
       if (variantFilter) params.set("variantId", variantFilter)
+      if (manualVisitSearch.trim()) params.set("q", manualVisitSearch.trim())
+      params.set("page", String(pageParam ?? 1))
+      params.set("limit", "20")
       const response = await fetch(`/api/gym-team/members${params.toString() ? `?${params.toString()}` : ""}`)
       if (!response.ok) {
         throw new Error(tMembers("errors.loadMembers"))
       }
       const data = await response.json()
-      return Array.isArray(data) ? data : []
+      if (Array.isArray(data)) {
+        return {
+          items: data,
+          total: data.length,
+          page: 1,
+          pageSize: data.length,
+          hasMore: false,
+        }
+      }
+      return data as PaginatedMembersResponse
     },
+    getNextPageParam: (lastPage) => (lastPage.hasMore ? lastPage.page + 1 : undefined),
   })
 
   const visitsQuery = useQuery<VisitAnalyticsResponse>({
@@ -381,22 +405,35 @@ export default function PresencePage() {
   )
 
   const manualVisitOptions = useMemo(() => {
-    const list = manualVisitMembers.data ?? []
-    const term = manualVisitSearch.trim().toLowerCase()
-    return list
-      .filter((member) => {
-        const matchesVariant = !variantFilter || member.gymVariant?.id === variantFilter
-        if (!matchesVariant) return false
-        if (!term) return true
-        const fullName = `${member.firstName} ${member.lastName}`.toLowerCase()
-        return (
-          fullName.includes(term) ||
-          (member.email ?? "").toLowerCase().includes(term) ||
-          (member.phone ?? "").toLowerCase().includes(term)
-        )
-      })
-      .sort((a, b) => a.firstName.localeCompare(b.firstName))
-  }, [manualVisitMembers.data, manualVisitSearch, variantFilter])
+    const list = manualVisitMembersQuery.data?.pages.flatMap((page) => page.items) ?? []
+    return list.sort((a, b) => a.firstName.localeCompare(b.firstName))
+  }, [manualVisitMembersQuery.data?.pages])
+
+  useEffect(() => {
+    if (!manualVisitDialogOpen) return
+    const root = manualVisitListRef.current
+    const sentinel = manualVisitSentinelRef.current
+    if (!root || !sentinel) return
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const [entry] = entries
+        if (!entry.isIntersecting) return
+        if (manualVisitMembersQuery.hasNextPage && !manualVisitMembersQuery.isFetchingNextPage) {
+          manualVisitMembersQuery.fetchNextPage()
+        }
+      },
+      { root, rootMargin: "80px" },
+    )
+
+    observer.observe(sentinel)
+    return () => observer.disconnect()
+  }, [
+    manualVisitDialogOpen,
+    manualVisitMembersQuery.hasNextPage,
+    manualVisitMembersQuery.isFetchingNextPage,
+    manualVisitMembersQuery.fetchNextPage,
+  ])
 
   const markManualVisit = async (memberId: string) => {
     if (!memberId) return
@@ -559,13 +596,13 @@ export default function PresencePage() {
                   value={manualVisitSearch}
                   onChange={(event) => setManualVisitSearch(event.target.value)}
                 />
-                <div className="max-h-72 overflow-y-auto space-y-2">
-                  {manualVisitMembers.isLoading ? (
+                <div ref={manualVisitListRef} className="max-h-72 overflow-y-auto space-y-2">
+                  {manualVisitMembersQuery.isLoading ? (
                     <div className="space-y-2">
                       <Skeleton className="h-12 w-full rounded-lg" />
                       <Skeleton className="h-12 w-full rounded-lg" />
                     </div>
-                  ) : manualVisitMembers.isError ? (
+                  ) : manualVisitMembersQuery.isError ? (
                     <p className="text-sm text-destructive">{tMembers("errors.loadMembers")}</p>
                   ) : manualVisitOptions.length === 0 ? (
                     <p className="text-sm text-muted-foreground">{tMembers("visitsDialog.empty")}</p>
@@ -604,6 +641,12 @@ export default function PresencePage() {
                       </div>
                     ))
                   )}
+                  <div ref={manualVisitSentinelRef} className="h-1" />
+                  {manualVisitMembersQuery.isFetchingNextPage ? (
+                    <div className="space-y-2">
+                      <Skeleton className="h-12 w-full rounded-lg" />
+                    </div>
+                  ) : null}
                 </div>
               </div>
             </DialogContent>

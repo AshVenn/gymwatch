@@ -1,4 +1,4 @@
-import { AccessEventStatus, AccessRuleSeverity, AccessRuleType } from "@prisma/client"
+import { AccessEventStatus, AccessRuleSeverity, AccessRuleType, type Prisma } from "@prisma/client"
 import { prisma } from "./prisma"
 
 type RuleContext = {
@@ -21,6 +21,8 @@ async function recordRuleEvent(
   note?: string,
   metadata?: Record<string, unknown>,
 ) {
+  const jsonMetadata = metadata === undefined ? undefined : (metadata as Prisma.InputJsonValue)
+
   try {
     await prisma.accessRuleEvent.create({
       data: {
@@ -31,7 +33,7 @@ async function recordRuleEvent(
         memberId: context.memberId ?? null,
         visitId: context.visitId ?? null,
         note: note ?? null,
-        metadata: metadata ?? undefined,
+        metadata: jsonMetadata,
       },
     })
   } catch (error) {

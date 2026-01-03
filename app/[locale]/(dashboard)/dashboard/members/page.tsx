@@ -5,6 +5,7 @@ import { useEffect, useMemo, useRef, useState } from "react"
 import dynamic from "next/dynamic"
 import { useTranslations, useLocale } from "next-intl"
 import { Button } from "@/components/ui/button"
+import { Checkbox } from "@/components/ui/checkbox"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import {
   Dialog,
@@ -34,7 +35,7 @@ import { Plus, CheckCircle2, LogIn, LogOut, MoreVertical, Trash2 } from "lucide-
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import QRCode from "qrcode"
 import type { IScannerProps } from "@yudiel/react-qr-scanner/dist/components/Scanner"
-import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
+import { keepPreviousData, useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { toast } from "sonner"
 import { PaginationControls } from "@/components/dashboard/pagination-controls"
 import { usePlanFeatures } from "@/app/hooks/use-plan-features"
@@ -80,7 +81,7 @@ interface PaginatedMembersResponse {
   hasMore: boolean
 }
 
-type BulkAction = "delete" | "checkout"
+type BulkAction = "delete" | "checkout" | "checkin"
 
 type BulkResponse = {
   action: BulkAction
@@ -117,7 +118,7 @@ export default function MembersPage() {
 
   const [isOpen, setIsOpen] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const { hasQrTools, hasQrDownloads, hasExcelReports, hasMultiLocations, hasAccessControl } = usePlanFeatures()
+  const { hasQrTools, hasQrDownloads, hasExcelReports, hasMultiLocations, hasPresence } = usePlanFeatures()
   const [qrMember, setQrMember] = useState<Member | null>(null)
   const [qrImage, setQrImage] = useState<string>("")
   const [scannerEnabled, setScannerEnabled] = useState(false)
@@ -130,7 +131,6 @@ export default function MembersPage() {
   } | null>(null)
   const lastTokenRef = useRef<string | null>(null)
   const audioRef = useRef<AudioContext | null>(null)
-  const selectAllRef = useRef<HTMLInputElement | null>(null)
   const [memberReportLoading, setMemberReportLoading] = useState<string | null>(null)
   const [memberToDelete, setMemberToDelete] = useState<Member | null>(null)
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
@@ -276,13 +276,17 @@ export default function MembersPage() {
         toast.error(
           action === "delete"
             ? t("bulk.toasts.partialDelete", { success: summary.success, failed: summary.failed })
-            : t("bulk.toasts.partialCheckout", { success: summary.success, failed: summary.failed }),
+            : action === "checkout"
+              ? t("bulk.toasts.partialCheckout", { success: summary.success, failed: summary.failed })
+              : t("bulk.toasts.partialCheckin", { success: summary.success, failed: summary.failed }),
         )
       } else {
         toast.success(
           action === "delete"
             ? t("bulk.toasts.deleteSuccess", { count: summary.success })
-            : t("bulk.toasts.checkoutSuccess", { count: summary.success }),
+            : action === "checkout"
+              ? t("bulk.toasts.checkoutSuccess", { count: summary.success })
+              : t("bulk.toasts.checkinSuccess", { count: summary.success }),
         )
       }
     },
@@ -371,7 +375,7 @@ export default function MembersPage() {
         page: memberPage,
         limit: memberPageSize,
       }),
-    keepPreviousData: true,
+    placeholderData: keepPreviousData,
   })
 
   const members = membersQuery.data?.items ?? []
@@ -382,12 +386,6 @@ export default function MembersPage() {
   const allSelected = pageIds.length > 0 && pageIds.every((id) => selectedIds.has(id))
   const someSelected = pageIds.some((id) => selectedIds.has(id))
   const selectedCount = selectedIds.size
-
-  useEffect(() => {
-    if (selectAllRef.current) {
-      selectAllRef.current.indeterminate = someSelected && !allSelected
-    }
-  }, [allSelected, someSelected])
 
   const openVisitCountQuery = useQuery<number>({
     queryKey: ["members", "open-visit-count", gymId, variantFilter],
@@ -400,25 +398,25 @@ export default function MembersPage() {
   const hasOpenVisits = (openVisitCountQuery.data ?? 0) > 0
   const manualCheckoutDisabled = openVisitCountQuery.isFetched && !openVisitCountQuery.isError ? !hasOpenVisits : false
 
-  const toggleSelectMember = (id: string) => {
+  const toggleSelectMember = (id: string, checked: boolean) => {
     setSelectedIds((prev) => {
       const next = new Set(prev)
-      if (next.has(id)) {
-        next.delete(id)
-      } else {
+      if (checked) {
         next.add(id)
+      } else {
+        next.delete(id)
       }
       return next
     })
   }
 
-  const toggleSelectAll = () => {
+  const toggleSelectAll = (checked: boolean) => {
     setSelectedIds((prev) => {
       const next = new Set(prev)
-      if (allSelected) {
-        pageIds.forEach((id) => next.delete(id))
-      } else {
+      if (checked) {
         pageIds.forEach((id) => next.add(id))
+      } else {
+        pageIds.forEach((id) => next.delete(id))
       }
       return next
     })
@@ -431,8 +429,8 @@ export default function MembersPage() {
       toast.error(t("bulk.toasts.emptySelection"))
       return
     }
-    if (actionType === "checkout" && !hasAccessControl) {
-      toast.error(t("bulk.toasts.checkoutLocked"))
+    if ((actionType === "checkout" || actionType === "checkin") && !hasPresence) {
+      toast.error(t("bulk.toasts.presenceLocked"))
       return
     }
     setBulkAction(actionType)
@@ -1413,8 +1411,18 @@ export default function MembersPage() {
               <Button
                 size="sm"
                 variant="outline"
+                onClick={() => openBulkDialog("checkin")}
+                disabled={bulkMutation.isPending || !hasPresence}
+                className="gap-2"
+              >
+                <LogIn className="h-4 w-4" />
+                {t("bulk.actions.checkin")}
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
                 onClick={() => openBulkDialog("checkout")}
-                disabled={bulkMutation.isPending || !hasAccessControl}
+                disabled={bulkMutation.isPending || !hasPresence}
                 className="gap-2"
               >
                 <LogOut className="h-4 w-4" />
@@ -1455,12 +1463,9 @@ export default function MembersPage() {
             <TableHeader>
               <TableRow className="border-b border-border/60 bg-muted/30">
                 <TableHead className="w-10">
-                  <input
-                    ref={selectAllRef}
-                    type="checkbox"
-                    className="h-4 w-4"
-                    checked={allSelected}
-                    onChange={toggleSelectAll}
+                  <Checkbox
+                    checked={allSelected ? true : someSelected ? "indeterminate" : false}
+                    onCheckedChange={(value) => toggleSelectAll(value === true)}
                     aria-label={t("bulk.selectAll")}
                   />
                 </TableHead>
@@ -1478,11 +1483,9 @@ export default function MembersPage() {
               {members.map((member) => (
                 <TableRow key={member.id}>
                   <TableCell>
-                    <input
-                      type="checkbox"
-                      className="h-4 w-4"
+                    <Checkbox
                       checked={selectedIds.has(member.id)}
-                      onChange={() => toggleSelectMember(member.id)}
+                      onCheckedChange={(value) => toggleSelectMember(member.id, value === true)}
                       aria-label={t("bulk.selectOne", {
                         name: `${member.firstName} ${member.lastName}`.trim(),
                       })}
@@ -1731,12 +1734,16 @@ export default function MembersPage() {
             <AlertDialogTitle>
               {bulkAction === "delete"
                 ? t("bulk.confirmDelete.title")
-                : t("bulk.confirmCheckout.title")}
+                : bulkAction === "checkout"
+                  ? t("bulk.confirmCheckout.title")
+                  : t("bulk.confirmCheckin.title")}
             </AlertDialogTitle>
             <AlertDialogDescription>
               {bulkAction === "delete"
                 ? t("bulk.confirmDelete.description", { count: selectedCount })
-                : t("bulk.confirmCheckout.description", { count: selectedCount })}
+                : bulkAction === "checkout"
+                  ? t("bulk.confirmCheckout.description", { count: selectedCount })
+                  : t("bulk.confirmCheckin.description", { count: selectedCount })}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

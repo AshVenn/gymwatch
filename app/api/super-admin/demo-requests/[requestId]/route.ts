@@ -12,7 +12,11 @@ const updateSchema = z.object({
   resolutionNote: z.string().max(1000).optional(),
 })
 
-export async function GET(_request: NextRequest, { params }: { params: { requestId: string } }) {
+export async function GET(
+  _request: NextRequest,
+  { params }: { params: Promise<{ requestId: string }> },
+) {
+  const { requestId } = await params
   const sessionResult = await requireSession()
   if (!sessionResult.ok) return sessionResult.response
 
@@ -20,7 +24,7 @@ export async function GET(_request: NextRequest, { params }: { params: { request
   if (!permission.ok) return permission.response
 
   const request = await prisma.demoRequest.findUnique({
-    where: { id: params.requestId },
+    where: { id: requestId },
     include: {
       resolvedBy: { select: { id: true, email: true } },
     },
@@ -33,7 +37,11 @@ export async function GET(_request: NextRequest, { params }: { params: { request
   return NextResponse.json(request)
 }
 
-export async function PATCH(request: NextRequest, { params }: { params: { requestId: string } }) {
+export async function PATCH(
+  request: NextRequest,
+  { params }: { params: Promise<{ requestId: string }> },
+) {
+  const { requestId } = await params
   const sessionResult = await requireSession()
   if (!sessionResult.ok) return sessionResult.response
 
@@ -49,7 +57,7 @@ export async function PATCH(request: NextRequest, { params }: { params: { reques
         : { resolvedAt: new Date(), resolvedById: sessionResult.user.id }
 
     const updated = await prisma.demoRequest.update({
-      where: { id: params.requestId },
+      where: { id: requestId },
       data: {
         status: body.status,
         resolutionNote: body.resolutionNote ?? null,
@@ -61,7 +69,7 @@ export async function PATCH(request: NextRequest, { params }: { params: { reques
       actor: sessionResult.session.user,
       action: "platform.demo-request.update",
       targetType: "demo-request",
-      targetId: params.requestId,
+      targetId: requestId,
       metadata: { status: updated.status },
       request,
     })

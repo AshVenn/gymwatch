@@ -1,13 +1,13 @@
 import { NextRequest, NextResponse } from "next/server"
-import { getServerSession } from "next-auth"
 import { PDFDocument, rgb } from "pdf-lib"
 import fontkit from "@pdf-lib/fontkit"
 import reshaper from "arabic-persian-reshaper"
-import { authOptions } from "@/lib/auth-middleware"
 import { prisma } from "@/lib/prisma"
 import { formatExportCurrency, formatExportDate, resolveExportLocale } from "@/lib/export-locale"
 import path from "path"
 import { promises as fs } from "fs"
+import { jsonError, requireGymScope, requirePermission, requireSession } from "@/lib/auth/guards"
+import { Permissions } from "@/lib/rbac/permissions"
 
 export const runtime = "nodejs"
 
@@ -287,15 +287,25 @@ async function loadFonts(pdf: PDFDocument, locale: ExportLocale) {
 }
 
 // ---------------- Route ----------------
-export async function GET(request: NextRequest, { params }: { params: { subscriptionId: string } }) {
-  const session = await getServerSession(authOptions)
-  const gymId = (session?.user as any)?.gymId as string | undefined
-  const role = (session?.user as any)?.role as string | undefined
-  const sessionVariantId = (session?.user as any)?.gymVariantId as string | undefined
+export async function GET(
+  request: NextRequest,
+  { params }: { params: Promise<{ subscriptionId: string }> },
+) {
+  const { subscriptionId } = await params
+  const sessionResult = await requireSession()
+  if (!sessionResult.ok) return sessionResult.response
 
-  if (!gymId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+  const permission = requirePermission(sessionResult.user, Permissions.GymReportsExport)
+  if (!permission.ok) return permission.response
+
+  const scope = requireGymScope(sessionResult.user)
+  if (!scope.ok) return scope.response
+
+  const role = sessionResult.user.role as string | undefined
+  const sessionVariantId = sessionResult.user.gymVariantId ?? undefined
+
   if (role === "GYM_ADMIN" && !sessionVariantId) {
-    return NextResponse.json({ error: "Variant manquant" }, { status: 403 })
+    return jsonError(403, "MISSING_VARIANT", "Variant manquant")
   }
 
   const queryLocale = request.nextUrl.searchParams.get("locale")
@@ -307,7 +317,7 @@ export async function GET(request: NextRequest, { params }: { params: { subscrip
   const valueLocale: ExportLocale = isRTL ? "en" : resolvedLocale
 
   const subscription = await prisma.subscription.findFirst({
-    where: { id: params.subscriptionId, gymId },
+    where: { id: subscriptionId, gymId: scope.gymId },
     include: {
       gym: { select: { name: true, city: true, country: true, address: true } },
       member: {

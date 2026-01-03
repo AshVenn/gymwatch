@@ -1,10 +1,16 @@
 import { NextRequest, NextResponse } from "next/server"
-import { getServerSession } from "next-auth"
 import { z } from "zod"
-import { authOptions } from "@/lib/auth-middleware"
 import { db } from "@/lib/db"
 import { prisma } from "@/lib/prisma"
 import { computeSubscriptionStatus } from "@/lib/subscription-status"
+import {
+  jsonError,
+  requireGymScope,
+  requirePermission,
+  requireSession,
+  requireVariantAccess,
+} from "@/lib/auth/guards"
+import { Permissions } from "@/lib/rbac/permissions"
 
 const createMemberSchema = z.object({
   firstName: z.string().min(1),
@@ -18,30 +24,26 @@ const createMemberSchema = z.object({
 
 export async function GET(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions)
+    const sessionResult = await requireSession()
+    if (!sessionResult.ok) return sessionResult.response
 
-    if (!session?.user?.gymId) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-    }
+    const permission = requirePermission(sessionResult.user, Permissions.GymMembersRead)
+    if (!permission.ok) return permission.response
 
-    const role = (session.user as any).role as string | undefined
-    const sessionVariantId = (session.user as any).gymVariantId as string | undefined
+    const scope = requireGymScope(sessionResult.user)
+    if (!scope.ok) return scope.response
+
     const requestedVariantId = request.nextUrl.searchParams.get("variantId")
-    if (role === "GYM_ADMIN" && !sessionVariantId) {
-      return NextResponse.json({ error: "Variant manquant" }, { status: 403 })
-    }
+    const variantAccess = await requireVariantAccess({
+      gymId: scope.gymId,
+      tier: sessionResult.user.subscriptionPlan ?? null,
+      role: sessionResult.user.role ?? null,
+      requestedVariantId,
+      sessionVariantId: sessionResult.user.gymVariantId ?? null,
+    })
+    if (!variantAccess.ok) return variantAccess.response
 
-    let gymVariantId = role === "GYM_ADMIN" ? sessionVariantId : undefined
-    if (role === "GYM_OWNER" && requestedVariantId && requestedVariantId !== "all") {
-      const variant = await prisma.gymVariant.findFirst({
-        where: { id: requestedVariantId, gymId: session.user.gymId },
-        select: { id: true },
-      })
-      if (!variant) {
-        return NextResponse.json({ error: "Variant invalide" }, { status: 400 })
-      }
-      gymVariantId = variant.id
-    }
+    const gymVariantId = variantAccess.variantId
 
     const params = request.nextUrl.searchParams
     const search = params.get("q")?.trim() ?? ""
@@ -67,7 +69,7 @@ export async function GET(request: NextRequest) {
       OR?: Array<Record<string, any>>
       visits?: Record<string, any>
     } = {
-      gymId: session.user.gymId,
+      gymId: scope.gymId,
       ...(gymVariantId ? { gymVariantId } : {}),
     }
 
@@ -170,19 +172,22 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions)
+    const sessionResult = await requireSession()
+    if (!sessionResult.ok) return sessionResult.response
 
-    if (!session?.user?.gymId) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-    }
+    const permission = requirePermission(sessionResult.user, Permissions.GymMembersWrite)
+    if (!permission.ok) return permission.response
+
+    const scope = requireGymScope(sessionResult.user)
+    if (!scope.ok) return scope.response
 
     const payload = createMemberSchema.parse(await request.json())
-    const gymId = session.user.gymId
-    const role = (session.user as any).role as string | undefined
-    const sessionVariantId = (session.user as any).gymVariantId as string | undefined
+    const gymId = scope.gymId
+    const role = sessionResult.user.role as string | undefined
+    const sessionVariantId = sessionResult.user.gymVariantId ?? undefined
 
     if (role === "GYM_ADMIN" && !sessionVariantId) {
-      return NextResponse.json({ error: "Variant manquant" }, { status: 403 })
+      return jsonError(403, "MISSING_VARIANT", "Variant manquant")
     }
 
     let targetVariantId = role === "GYM_ADMIN" ? sessionVariantId : payload.gymVariantId

@@ -39,7 +39,7 @@ export async function requireSession(): Promise<
 export function requireRole(
   user: AuthUser,
   roles: UserRole[],
-): GuardPass<Record<string, never>> | GuardFail {
+): GuardPass<{}> | GuardFail {
   if (!user.role || !roles.includes(user.role)) {
     return { ok: false, response: jsonError(403, "FORBIDDEN_ROLE", "Forbidden") }
   }
@@ -49,7 +49,7 @@ export function requireRole(
 export function requirePermission(
   user: AuthUser,
   permission: Permission | Permission[],
-): GuardPass<Record<string, never>> | GuardFail {
+): GuardPass<{}> | GuardFail {
   const allowed = Array.isArray(permission)
     ? hasAnyPermission(user.role ?? null, permission)
     : hasPermission(user.role ?? null, permission)

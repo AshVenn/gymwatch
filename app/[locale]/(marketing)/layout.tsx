@@ -8,15 +8,16 @@ export default async function MarketingLayout({
   params,
 }: {
   children: ReactNode
-  params: Promise<{ locale: AppLocale }>
+  params: Promise<{ locale: string }>
 }) {
   const { locale } = await params
+  const resolvedLocale = locale as AppLocale
 
   return (
     <>
       <MarketingNavbar />
       <main>{children}</main>
-      <MarketingFooter locale={locale} />
+      <MarketingFooter locale={resolvedLocale} />
     </>
   )
 }

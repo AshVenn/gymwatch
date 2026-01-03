@@ -3822,6 +3822,7 @@
         "selectOne": "Select {name}",
         "selectedCount": "{count} selected",
         "actions": {
+          "checkin": "Bulk check-in",
           "checkout": "Bulk check-out",
           "delete": "Delete",
           "clear": "Clear",
@@ -3837,14 +3838,21 @@
           "title": "Bulk check-out",
           "description": "Check-out {count} selected member(s)."
         },
+        "confirmCheckin": {
+          "title": "Bulk check-in",
+          "description": "Check-in {count} selected member(s)."
+        },
         "toasts": {
           "emptySelection": "No members selected",
           "checkoutLocked": "Access control is not enabled",
+          "presenceLocked": "Presence tracking is not enabled",
           "error": "Bulk action failed",
           "partialDelete": "{success} deleted, {failed} failed",
           "partialCheckout": "{success} checked out, {failed} failed",
+          "partialCheckin": "{success} checked in, {failed} failed",
           "deleteSuccess": "{count} member(s) deleted",
-          "checkoutSuccess": "{count} check-out(s) completed"
+          "checkoutSuccess": "{count} check-out(s) completed",
+          "checkinSuccess": "{count} check-in(s) completed"
         }
       },
       "deleteDialog": {

@@ -1,44 +1,49 @@
 // app/api/subscriptions/route.ts
 import { NextRequest, NextResponse } from "next/server"
-import { getServerSession } from "next-auth"
-import { authOptions } from "@/lib/auth-middleware"
 import { prisma } from "@/lib/prisma"
 import { computeSubscriptionStatus, daysUntilExpiry } from "@/lib/subscription-status"
+import {
+  jsonError,
+  requireGymScope,
+  requirePermission,
+  requireSession,
+  requireVariantAccess,
+} from "@/lib/auth/guards"
+import { Permissions } from "@/lib/rbac/permissions"
 
 export async function GET(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions)
-    const gymId = (session?.user as any)?.gymId as string | undefined
-    const role = (session?.user as any)?.role as string | undefined
-    const sessionVariantId = (session?.user as any)?.gymVariantId as string | undefined
+    const sessionResult = await requireSession()
+    if (!sessionResult.ok) return sessionResult.response
 
-    if (!gymId) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-    }
-    if (role === "GYM_ADMIN" && !sessionVariantId) {
-      return NextResponse.json({ error: "Variant manquant" }, { status: 403 })
-    }
+    const permission = requirePermission(sessionResult.user, Permissions.GymSubscriptionsManage)
+    if (!permission.ok) return permission.response
+
+    const scope = requireGymScope(sessionResult.user)
+    if (!scope.ok) return scope.response
+
+    const role = sessionResult.user.role as string | undefined
+    const sessionVariantId = sessionResult.user.gymVariantId ?? null
 
     const searchParams = request.nextUrl.searchParams
     const search = searchParams.get("search")?.toLowerCase() ?? ""
     const status = searchParams.get("status") as string | null
     const requestedVariantId = searchParams.get("variantId")
 
-    let gymVariantId = role === "GYM_ADMIN" ? sessionVariantId : undefined
-    if (role === "GYM_OWNER" && requestedVariantId && requestedVariantId !== "all") {
-      const variant = await prisma.gymVariant.findFirst({
-        where: { id: requestedVariantId, gymId },
-        select: { id: true },
-      })
-      if (!variant) {
-        return NextResponse.json({ error: "Variant invalide" }, { status: 400 })
-      }
-      gymVariantId = variant.id
-    }
+    const variantAccess = await requireVariantAccess({
+      gymId: scope.gymId,
+      tier: sessionResult.user.subscriptionPlan ?? null,
+      role,
+      requestedVariantId,
+      sessionVariantId,
+    })
+    if (!variantAccess.ok) return variantAccess.response
+
+    const gymVariantId = variantAccess.variantId
 
     const subscriptions = await prisma.subscription.findMany({
       where: {
-        gymId,
+        gymId: scope.gymId,
         ...(gymVariantId ? { gymVariantId } : {}),
         ...(status ? { status: status as any } : {}),
       },
@@ -100,22 +105,25 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions)
-    const gymId = (session?.user as any)?.gymId as string | undefined
-    const role = (session?.user as any)?.role as string | undefined
-    const sessionVariantId = (session?.user as any)?.gymVariantId as string | undefined
+    const sessionResult = await requireSession()
+    if (!sessionResult.ok) return sessionResult.response
 
-    if (!gymId) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-    }
+    const permission = requirePermission(sessionResult.user, Permissions.GymSubscriptionsManage)
+    if (!permission.ok) return permission.response
+
+    const scope = requireGymScope(sessionResult.user)
+    if (!scope.ok) return scope.response
+
+    const role = sessionResult.user.role as string | undefined
+    const sessionVariantId = sessionResult.user.gymVariantId ?? undefined
     if (role === "GYM_ADMIN" && !sessionVariantId) {
-      return NextResponse.json({ error: "Variant manquant" }, { status: 403 })
+      return jsonError(403, "MISSING_VARIANT", "Variant manquant")
     }
 
     const { memberId, planId, startDate } = await request.json()
 
     const member = await prisma.member.findFirst({
-      where: { id: memberId, gymId },
+      where: { id: memberId, gymId: scope.gymId },
       select: { id: true, gymVariantId: true, firstName: true, lastName: true },
     })
 
@@ -131,7 +139,7 @@ export async function POST(request: NextRequest) {
       select: { id: true, durationDays: true, price: true, gymId: true, gymVariantId: true, name: true },
     })
 
-    if (!plan || plan.gymId !== gymId) {
+    if (!plan || plan.gymId !== scope.gymId) {
       return NextResponse.json({ error: "Plan not found" }, { status: 404 })
     }
 
@@ -148,7 +156,7 @@ export async function POST(request: NextRequest) {
     const subscription = await prisma.subscription.create({
       data: {
         memberId,
-        gymId,
+        gymId: scope.gymId,
         gymVariantId: member.gymVariantId,
         planId,
         startDate: start,
@@ -160,7 +168,7 @@ export async function POST(request: NextRequest) {
 
     const payment = await prisma.payment.create({
       data: {
-        gymId,
+        gymId: scope.gymId,
         amount: plan.price,
         currency: "MAD",
         paymentDate: start,

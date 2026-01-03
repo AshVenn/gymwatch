@@ -1,21 +1,22 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth/next'
-import { authOptions } from '@/lib/auth-middleware'
 import { prisma } from '@/lib/prisma'
 import { getSystemSettings } from '@/lib/settings'
+import { requireSession } from '@/lib/auth/guards'
 
 const THEMES = ['light', 'dark', 'system']
 
 export async function GET() {
   try {
-    const session = await getServerSession(authOptions)
+    const sessionResult = await requireSession()
+    if (!sessionResult.ok) return sessionResult.response
 
-    if (!session?.user?.email) {
+    const userEmail = sessionResult.session.user?.email
+    if (!userEmail) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     const user = await prisma.user.findUnique({
-      where: { email: session.user.email },
+      where: { email: userEmail },
       select: { id: true, preferences: true },
     })
 
@@ -39,14 +40,16 @@ export async function GET() {
 
 export async function PUT(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions)
+    const sessionResult = await requireSession()
+    if (!sessionResult.ok) return sessionResult.response
 
-    if (!session?.user?.email) {
+    const userEmail = sessionResult.session.user?.email
+    if (!userEmail) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     const user = await prisma.user.findUnique({
-      where: { email: session.user.email },
+      where: { email: userEmail },
       select: { id: true, preferences: true },
     })
 

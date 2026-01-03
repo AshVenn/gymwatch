@@ -3821,36 +3821,44 @@
           "delete": "Supprimer"
         }
       },
-      "bulk": {
-        "selectAll": "Tout selectionner",
-        "selectOne": "Selectionner {name}",
-        "selectedCount": "{count} selectionne(s)",
-        "actions": {
-          "checkout": "Check-out",
-          "delete": "Supprimer",
-          "clear": "Effacer",
-          "cancel": "Annuler",
-          "confirm": "Confirmer",
-          "pending": "Traitement..."
-        },
-        "confirmDelete": {
-          "title": "Supprimer les membres",
-          "description": "{count} membre(s) seront supprimes. Cette action est definitive."
-        },
-        "confirmCheckout": {
-          "title": "Check-out en masse",
-          "description": "Marquer la sortie pour {count} membre(s) selectionne(s)."
-        },
-        "toasts": {
-          "emptySelection": "Aucun membre selectionne",
-          "checkoutLocked": "Le controle d'acces n'est pas active",
-          "error": "Action en masse impossible",
-          "partialDelete": "{success} supprime(s), {failed} en echec",
-          "partialCheckout": "{success} check-out, {failed} en echec",
-          "deleteSuccess": "{count} membre(s) supprime(s)",
-          "checkoutSuccess": "{count} check-out effectue(s)"
-        }
+    "bulk": {
+      "selectAll": "Tout sélectionner",
+      "selectOne": "Sélectionner {name}",
+      "selectedCount": "{count} sélectionné(s)",
+      "actions": {
+        "checkin": "Check-in",
+        "checkout": "Check-out",
+        "delete": "Supprimer",
+        "clear": "Effacer",
+        "cancel": "Annuler",
+        "confirm": "Confirmer",
+        "pending": "Traitement..."
       },
+      "confirmDelete": {
+        "title": "Supprimer les membres",
+        "description": "{count} membre(s) seront supprimé(s). Cette action est définitive."
+      },
+      "confirmCheckout": {
+        "title": "Check-out en masse",
+        "description": "Marquer la sortie pour {count} membre(s) sélectionné(s)."
+      },
+      "confirmCheckin": {
+        "title": "Check-in en masse",
+        "description": "Marquer l’entrée pour {count} membre(s) sélectionné(s)."
+      },
+      "toasts": {
+        "emptySelection": "Aucun membre sélectionné",
+        "checkoutLocked": "Le contrôle d’accès n’est pas activé",
+        "presenceLocked": "Le suivi de présence n’est pas activé",
+        "error": "Action en masse impossible",
+        "partialDelete": "{success} supprimé(s), {failed} en échec",
+        "partialCheckout": "{success} check-out, {failed} en échec",
+        "partialCheckin": "{success} check-in, {failed} en échec",
+        "deleteSuccess": "{count} membre(s) supprimé(s)",
+        "checkoutSuccess": "{count} check-out effectué(s)",
+        "checkinSuccess": "{count} check-in effectué(s)"
+      }
+    },
       "deleteDialog": {
         "title": "Supprimer le membre",
         "descriptionWithName": "Cette action supprimera {firstName} {lastName}. Les abonnements actifs seront conservés.",

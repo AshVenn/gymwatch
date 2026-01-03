@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo } from 'react'
 import { useTranslations, useLocale } from 'next-intl'
-import { useForm } from 'react-hook-form'
+import { type Resolver, useForm } from 'react-hook-form'
 import { z } from 'zod'
 import { zodResolver } from '@hookform/resolvers/zod'
 
@@ -25,6 +25,7 @@ import {
   PLAN_PRICING,
   computePricingFromSettings,
   isUnlimitedLimit,
+  normalizeLimitValue,
 } from '@/lib/subscription-plans'
 import {
   usePlanSettings,
@@ -62,19 +63,19 @@ export function PlanSettingsForm() {
   const { data, isLoading } = usePlanSettings()
   const updateSettings = useUpdatePlanSettings()
 
-  const form = useForm<PlanSettingsInput>({
-    resolver: zodResolver(schema),
+  const form = useForm<PlanSettingsInput, unknown, PlanSettingsInput>({
+    resolver: zodResolver(schema) as Resolver<PlanSettingsInput>,
     defaultValues: {
       basicMonthlyPrice: PLAN_PRICING.BASIC.MONTHLY,
       proMonthlyPrice: PLAN_PRICING.PRO.MONTHLY,
       enterpriseMonthlyPrice: PLAN_PRICING.ENTERPRISE.MONTHLY,
       annualDiscountPercent: DEFAULT_ANNUAL_DISCOUNT,
-      basicPlanLimitPerVariant: DEFAULT_PLAN_LIMITS.BASIC.perVariant,
-      basicPlanLimitPerNetwork: DEFAULT_PLAN_LIMITS.BASIC.perNetwork,
-      proPlanLimitPerVariant: DEFAULT_PLAN_LIMITS.PRO.perVariant,
-      proPlanLimitPerNetwork: DEFAULT_PLAN_LIMITS.PRO.perNetwork,
-      enterprisePlanLimitPerVariant: DEFAULT_PLAN_LIMITS.ENTERPRISE.perVariant,
-      enterprisePlanLimitPerNetwork: DEFAULT_PLAN_LIMITS.ENTERPRISE.perNetwork,
+      basicPlanLimitPerVariant: normalizeLimitValue(DEFAULT_PLAN_LIMITS.BASIC.perVariant),
+      basicPlanLimitPerNetwork: normalizeLimitValue(DEFAULT_PLAN_LIMITS.BASIC.perNetwork),
+      proPlanLimitPerVariant: normalizeLimitValue(DEFAULT_PLAN_LIMITS.PRO.perVariant),
+      proPlanLimitPerNetwork: normalizeLimitValue(DEFAULT_PLAN_LIMITS.PRO.perNetwork),
+      enterprisePlanLimitPerVariant: normalizeLimitValue(DEFAULT_PLAN_LIMITS.ENTERPRISE.perVariant),
+      enterprisePlanLimitPerNetwork: normalizeLimitValue(DEFAULT_PLAN_LIMITS.ENTERPRISE.perNetwork),
     },
   })
 

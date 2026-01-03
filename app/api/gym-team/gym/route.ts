@@ -1,19 +1,22 @@
-import { getServerSession } from "next-auth/next"
 import { NextRequest, NextResponse } from "next/server"
-import { authOptions } from "@/lib/auth-middleware"
 import { prisma } from "@/lib/prisma"
 import { resolveGymPlanLimits } from "@/lib/plan-settings"
+import { requireGymScope, requirePermission, requireSession } from "@/lib/auth/guards"
+import { Permissions } from "@/lib/rbac/permissions"
 
 export async function GET() {
   try {
-    const session = await getServerSession(authOptions)
+    const sessionResult = await requireSession()
+    if (!sessionResult.ok) return sessionResult.response
 
-    if (!session?.user?.gymId) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-    }
+    const permission = requirePermission(sessionResult.user, Permissions.GymMembersRead)
+    if (!permission.ok) return permission.response
+
+    const scope = requireGymScope(sessionResult.user)
+    if (!scope.ok) return scope.response
 
     const gym = await prisma.gym.findUnique({
-      where: { id: session.user.gymId },
+      where: { id: scope.gymId },
     })
 
     if (!gym) {
@@ -34,11 +37,14 @@ export async function GET() {
 
 export async function PUT(_request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions)
+    const sessionResult = await requireSession()
+    if (!sessionResult.ok) return sessionResult.response
 
-    if (!session?.user?.gymId) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-    }
+    const permission = requirePermission(sessionResult.user, Permissions.GymMembersRead)
+    if (!permission.ok) return permission.response
+
+    const scope = requireGymScope(sessionResult.user)
+    if (!scope.ok) return scope.response
 
     return NextResponse.json(
       {

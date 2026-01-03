@@ -5,12 +5,13 @@ import { AccessEventSource, AccessEventStatus } from "@prisma/client"
 import { prisma } from "@/lib/prisma"
 import { db } from "@/lib/db"
 import { resolveGymFeatures } from "@/lib/tenant-features"
-import { markCheckoutForMember } from "@/lib/visits"
+import { markCheckoutForMember, markVisitForMember } from "@/lib/visits"
 import { Permissions } from "@/lib/rbac/permissions"
 import { jsonError, requireGymScope, requirePermission, requireSession } from "@/lib/auth/guards"
+import { resolveAccessEventStatus } from "@/lib/access-events"
 
 const bulkSchema = z.object({
-  action: z.enum(["delete", "checkout"]),
+  action: z.enum(["delete", "checkout", "checkin"]),
   ids: z.array(z.string().min(1)).min(1).max(200),
 })
 
@@ -45,6 +46,11 @@ export async function POST(request: NextRequest) {
       return jsonError(400, "INVALID_PAYLOAD", "Invalid payload", error.flatten())
     }
     return jsonError(400, "INVALID_PAYLOAD", "Invalid payload")
+  }
+
+  if (payload.action !== "delete") {
+    const visitsPermission = requirePermission(sessionResult.user, Permissions.GymVisitsManage)
+    if (!visitsPermission.ok) return visitsPermission.response
   }
 
   const members = await prisma.member.findMany({
@@ -101,8 +107,8 @@ export async function POST(request: NextRequest) {
       gymId: scope.gymId,
       tier: sessionResult.user.subscriptionPlan ?? null,
     })
-    if (!features.accessControl) {
-      return jsonError(403, "ACCESS_CONTROL_REQUIRED", "Plan Pro ou Enterprise requis")
+    if (!features.presenceTracking) {
+      return jsonError(403, "PRESENCE_REQUIRED", "Plan Pro ou Enterprise requis")
     }
 
     for (const id of payload.ids) {
@@ -113,39 +119,88 @@ export async function POST(request: NextRequest) {
       }
 
       try {
-        const checkout = await markCheckoutForMember({
+        if (payload.action === "checkout") {
+          const checkout = await markCheckoutForMember({
+            gymId: scope.gymId,
+            memberId: id,
+            allowedVariantId: allowedVariantId ?? undefined,
+          })
+
+          const status = checkout.isOverMaxDuration
+            ? AccessEventStatus.SESSION_OVERSTAY
+            : AccessEventStatus.CHECKED_OUT
+
+          if (features.accessControl) {
+            await prisma.accessEvent.create({
+              data: {
+                memberId: id,
+                status,
+                source: AccessEventSource.MANUAL,
+              },
+            })
+          }
+
+          results.push({ id, ok: true })
+          continue
+        }
+
+        const visit = await markVisitForMember({
           gymId: scope.gymId,
           memberId: id,
           allowedVariantId: allowedVariantId ?? undefined,
         })
 
-        const status = checkout.isOverMaxDuration
-          ? AccessEventStatus.SESSION_OVERSTAY
-          : AccessEventStatus.CHECKED_OUT
+        const accessStatus = resolveAccessEventStatus(visit, "CHECK_IN")
+        if (features.accessControl) {
+          await prisma.accessEvent.create({
+            data: {
+              memberId: id,
+              status: accessStatus,
+              source: AccessEventSource.MANUAL,
+            },
+          })
+        }
 
-        await prisma.accessEvent.create({
-          data: {
-            memberId: id,
-            status,
-            source: AccessEventSource.MANUAL,
-          },
-        })
+        if (accessStatus !== AccessEventStatus.GRANTED) {
+          results.push({
+            id,
+            ok: false,
+            code: accessStatus,
+            message:
+              accessStatus === AccessEventStatus.ALREADY_CHECKED_IN
+                ? "Deja en cours"
+                : accessStatus === AccessEventStatus.DENIED_DAILY_LIMIT
+                  ? "Limite journaliere atteinte"
+                  : accessStatus === AccessEventStatus.DENIED_EXPIRED
+                    ? "Abonnement expire"
+                    : accessStatus === AccessEventStatus.DENIED_INACTIVE
+                      ? "Abonnement inactif"
+                      : "Entree refusee",
+          })
+          continue
+        }
 
         results.push({ id, ok: true })
       } catch (error) {
-        const message = error instanceof Error ? error.message : "CHECKOUT_FAILED"
+        const message = error instanceof Error ? error.message : "ACTION_FAILED"
         const code =
           message === "OPEN_VISIT_NOT_FOUND"
             ? "NO_OPEN_VISIT"
             : message === "FORBIDDEN_VARIANT"
               ? "FORBIDDEN_VARIANT"
-              : "CHECKOUT_FAILED"
+              : message === "Member not found"
+                ? "NOT_FOUND"
+                : "ACTION_FAILED"
         const label =
           code === "NO_OPEN_VISIT"
             ? "Aucune visite ouverte"
             : code === "FORBIDDEN_VARIANT"
               ? "Visite non autorisee pour cette salle"
-              : "Sortie impossible"
+              : code === "NOT_FOUND"
+                ? "Membre introuvable"
+                : payload.action === "checkout"
+                  ? "Sortie impossible"
+                  : "Entree impossible"
 
         results.push({ id, ok: false, code, message: label })
       }

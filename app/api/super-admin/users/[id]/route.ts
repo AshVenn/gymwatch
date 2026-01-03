@@ -15,9 +15,13 @@ const updateSchema = z.object({
   status: z.enum(["ACTIVE", "SUSPENDED"]).optional(),
 })
 
-const PLATFORM_ROLES = [UserRole.SUPER_ADMIN, UserRole.SUPER_MANAGER]
+const PLATFORM_ROLES = new Set<UserRole>([UserRole.SUPER_ADMIN, UserRole.SUPER_MANAGER])
 
-export async function PATCH(request: NextRequest, { params }: { params: { id: string } }) {
+export async function PATCH(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> },
+) {
+  const { id } = await params
   const sessionResult = await requireSession()
   if (!sessionResult.ok) return sessionResult.response
 
@@ -27,11 +31,11 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
   try {
     const payload = updateSchema.parse(await request.json())
     const target = await prisma.user.findUnique({
-      where: { id: params.id },
+      where: { id },
       select: { id: true, role: true, status: true, email: true },
     })
 
-    if (!target || !PLATFORM_ROLES.includes(target.role)) {
+    if (!target || !PLATFORM_ROLES.has(target.role)) {
       return NextResponse.json({ code: "NOT_FOUND", message: "User not found" }, { status: 404 })
     }
 
@@ -70,7 +74,7 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
       }
     }
 
-    const data: Prisma.UserUpdateInput = {
+    const data: Prisma.UserUncheckedUpdateInput = {
       email: payload.email ?? undefined,
       firstName: payload.firstName ?? undefined,
       lastName: payload.lastName ?? undefined,

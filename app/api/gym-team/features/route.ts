@@ -1,21 +1,24 @@
 import { NextResponse } from "next/server"
-import { getServerSession } from "next-auth"
 
-import { authOptions } from "@/lib/auth-middleware"
 import { getPlanFeatures } from "@/lib/subscription-plans"
 import { resolveGymFeatures } from "@/lib/tenant-features"
+import { requireGymScope, requirePermission, requireSession } from "@/lib/auth/guards"
+import { Permissions } from "@/lib/rbac/permissions"
 
 export async function GET() {
-  const session = await getServerSession(authOptions)
-  const gymId = (session?.user as any)?.gymId as string | undefined
-  const tier = (session?.user as any)?.subscriptionPlan ?? null
+  const sessionResult = await requireSession()
+  if (!sessionResult.ok) return sessionResult.response
 
-  if (!gymId) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-  }
+  const permission = requirePermission(sessionResult.user, Permissions.GymMembersRead)
+  if (!permission.ok) return permission.response
+
+  const scope = requireGymScope(sessionResult.user)
+  if (!scope.ok) return scope.response
+
+  const tier = sessionResult.user.subscriptionPlan ?? null
 
   try {
-    const { features, overrides } = await resolveGymFeatures({ gymId, tier })
+    const { features, overrides } = await resolveGymFeatures({ gymId: scope.gymId, tier })
 
     return NextResponse.json({
       tier,

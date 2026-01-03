@@ -2,9 +2,10 @@
 
 import { useEffect, useState } from "react"
 import { useLocale, useTranslations } from "next-intl"
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { toast } from "sonner"
 import { MoreVertical, Plus, ShieldCheck, ShieldOff } from "lucide-react"
+import { useSession } from "next-auth/react"
 
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -16,6 +17,9 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { PaginationControls } from "@/components/dashboard/pagination-controls"
+import { useRouter } from "@/i18n/routing"
+import { Permissions } from "@/lib/rbac/permissions"
+import { hasPermission } from "@/lib/rbac/policies"
 
 type PlatformRole = "SUPER_ADMIN" | "SUPER_MANAGER"
 type UserStatus = "ACTIVE" | "SUSPENDED"
@@ -52,6 +56,10 @@ export default function SuperAdminUsersPage() {
   const t = useTranslations("superAdminUsers")
   const locale = useLocale()
   const queryClient = useQueryClient()
+  const { data: session, status } = useSession()
+  const router = useRouter()
+
+  const canAccess = hasPermission(session?.user?.role as any, Permissions.PlatformUsersRead)
 
   const [query, setQuery] = useState("")
   const [roleFilter, setRoleFilter] = useState<"ALL" | PlatformRole>("ALL")
@@ -84,6 +92,25 @@ export default function SuperAdminUsersPage() {
     setPage(1)
   }, [query, roleFilter, statusFilter, pageSize])
 
+  useEffect(() => {
+    if (status === "authenticated" && !canAccess) {
+      router.replace("/super-admin")
+    }
+  }, [canAccess, router, status])
+
+  if (status === "loading") {
+    return (
+      <div className="space-y-4">
+        <Skeleton className="h-10 w-64" />
+        <Skeleton className="h-8 w-full" />
+      </div>
+    )
+  }
+
+  if (status === "authenticated" && !canAccess) {
+    return null
+  }
+
   const usersQuery = useQuery<UsersResponse>({
     queryKey: ["super-admin", "users", query, roleFilter, statusFilter, page, pageSize],
     queryFn: async () => {
@@ -101,7 +128,7 @@ export default function SuperAdminUsersPage() {
       }
       return payload as UsersResponse
     },
-    keepPreviousData: true,
+    placeholderData: keepPreviousData,
   })
 
   const createUser = useMutation({

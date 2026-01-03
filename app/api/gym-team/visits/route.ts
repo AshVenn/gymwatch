@@ -1,30 +1,35 @@
 import { NextRequest, NextResponse } from "next/server"
-import { getServerSession } from "next-auth"
 import { AccessEventSource, AccessEventStatus } from "@prisma/client"
-import { authOptions } from "@/lib/auth-middleware"
 import { getVisitAnalytics, markCheckoutForMember, markVisitForMember } from "@/lib/visits"
 import { resolveAccessEventStatus } from "@/lib/access-events"
 import { prisma } from "@/lib/prisma"
-import { resolveVariantAccess } from "@/lib/variant-access"
 import { resolveGymFeatures } from "@/lib/tenant-features"
+import {
+  jsonError,
+  requireGymScope,
+  requirePermission,
+  requireSession,
+  requireVariantAccess,
+} from "@/lib/auth/guards"
+import { Permissions } from "@/lib/rbac/permissions"
 
 export async function GET(request: NextRequest) {
-  const session = await getServerSession(authOptions)
-  const gymId = (session?.user as any)?.gymId as string | undefined
-  const role = (session?.user as any)?.role as string | undefined
-  const gymVariantId = (session?.user as any)?.gymVariantId as string | undefined
-  const tier = (session?.user as any)?.subscriptionPlan ?? null
+  const sessionResult = await requireSession()
+  if (!sessionResult.ok) return sessionResult.response
 
-  if (!gymId) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-  }
-  const { features } = await resolveGymFeatures({ gymId, tier })
+  const permission = requirePermission(sessionResult.user, Permissions.GymVisitsManage)
+  if (!permission.ok) return permission.response
 
+  const scope = requireGymScope(sessionResult.user)
+  if (!scope.ok) return scope.response
+
+  const role = sessionResult.user.role as string | undefined
+  const gymVariantId = sessionResult.user.gymVariantId ?? null
+  const tier = sessionResult.user.subscriptionPlan ?? null
+
+  const { features } = await resolveGymFeatures({ gymId: scope.gymId, tier })
   if (!features.presenceTracking) {
-    return NextResponse.json({ error: "Plan Pro ou Enterprise requis" }, { status: 403 })
-  }
-  if (role === "GYM_ADMIN" && !gymVariantId) {
-    return NextResponse.json({ error: "Variant manquant" }, { status: 403 })
+    return jsonError(403, "PRESENCE_REQUIRED", "Plan Pro ou Enterprise requis")
   }
 
   const params = request.nextUrl.searchParams
@@ -36,26 +41,14 @@ export async function GET(request: NextRequest) {
   const pageSize = Number.isFinite(pageSizeParam) ? pageSizeParam : 120
 
   const requestedVariant = params.get("variantId")
-  const variantAccess = await resolveVariantAccess({
-    gymId,
+  const variantAccess = await requireVariantAccess({
+    gymId: scope.gymId,
     tier,
     role,
     requestedVariantId: requestedVariant,
     sessionVariantId: gymVariantId,
   })
-
-  if (!variantAccess.ok) {
-    return NextResponse.json(
-      {
-        error: variantAccess.message,
-        code: variantAccess.code,
-        variantMode: variantAccess.variantMode,
-        defaultVariantId: variantAccess.defaultVariantId,
-        multiLocationAllowed: variantAccess.multiLocationAllowed,
-      },
-      { status: variantAccess.status },
-    )
-  }
+  if (!variantAccess.ok) return variantAccess.response
 
   const variantId = variantAccess.variantId
 
@@ -98,7 +91,7 @@ export async function GET(request: NextRequest) {
 
   try {
     const analytics = await getVisitAnalytics({
-      gymId,
+      gymId: scope.gymId,
       variantId,
       view,
       date,
@@ -112,11 +105,11 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({
       ...analytics,
       variantScope: {
-        variantId: variantId ?? null,
-        variantMode: variantAccess.variantMode,
-        multiLocationAllowed: variantAccess.multiLocationAllowed,
-      },
-    })
+      variantId: variantId ?? null,
+      variantMode: variantAccess.variantMode,
+      multiLocationAllowed: variantAccess.multiLocationAllowed,
+    },
+  })
   } catch (error) {
     console.error("[visits][get]", error)
     return NextResponse.json({ error: "Impossible de charger les visites" }, { status: 500 })
@@ -124,22 +117,22 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
-  const session = await getServerSession(authOptions)
-  const gymId = (session?.user as any)?.gymId as string | undefined
-  const role = (session?.user as any)?.role as string | undefined
-  const gymVariantId = (session?.user as any)?.gymVariantId as string | undefined
-  const tier = (session?.user as any)?.subscriptionPlan ?? null
+  const sessionResult = await requireSession()
+  if (!sessionResult.ok) return sessionResult.response
 
-  if (!gymId) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-  }
-  const { features } = await resolveGymFeatures({ gymId, tier })
+  const permission = requirePermission(sessionResult.user, Permissions.GymVisitsManage)
+  if (!permission.ok) return permission.response
 
+  const scope = requireGymScope(sessionResult.user)
+  if (!scope.ok) return scope.response
+
+  const role = sessionResult.user.role as string | undefined
+  const gymVariantId = sessionResult.user.gymVariantId ?? null
+  const tier = sessionResult.user.subscriptionPlan ?? null
+
+  const { features } = await resolveGymFeatures({ gymId: scope.gymId, tier })
   if (!features.presenceTracking) {
-    return NextResponse.json({ error: "Plan Pro ou Enterprise requis" }, { status: 403 })
-  }
-  if (role === "GYM_ADMIN" && !gymVariantId) {
-    return NextResponse.json({ error: "Variant manquant" }, { status: 403 })
+    return jsonError(403, "PRESENCE_REQUIRED", "Plan Pro ou Enterprise requis")
   }
 
   const {
@@ -153,7 +146,10 @@ export async function POST(request: NextRequest) {
   } = await request.json()
   const mode = typeof direction === "string" && direction.toUpperCase() === "OUT" ? "OUT" : "IN"
   const memberIdentifier = typeof memberId === "string" ? memberId : undefined
-  const allowedVariantId = role === "GYM_ADMIN" ? gymVariantId : undefined
+  const allowedVariantId = role === "GYM_ADMIN" ? gymVariantId ?? undefined : undefined
+  if (role === "GYM_ADMIN" && !allowedVariantId) {
+    return jsonError(403, "MISSING_VARIANT", "Variant manquant")
+  }
 
   const parseDate = (value: unknown): Date | undefined | "INVALID" => {
     if (!value || typeof value !== "string") return undefined
@@ -189,13 +185,13 @@ export async function POST(request: NextRequest) {
     try {
       if (mode === "OUT") {
         const checkout = await markCheckoutForMember({
-          gymId,
+          gymId: scope.gymId,
           memberId: memberIdentifier,
           visitId: typeof visitId === "string" ? visitId : undefined,
-          checkoutAt: checkoutDate === "INVALID" ? undefined : checkoutDate,
+          checkoutAt: checkoutDate,
           allowedVariantId,
-          rangeFrom: fromDate === "INVALID" ? undefined : fromDate,
-          rangeTo: toDate === "INVALID" ? undefined : toDate,
+          rangeFrom: fromDate,
+          rangeTo: toDate,
         })
 
         const accessStatus = checkout.isOverMaxDuration
@@ -219,9 +215,10 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ ...checkout, mode: "CHECK_OUT" })
       }
 
+      const memberId = memberIdentifier!
       const result = await markVisitForMember({
-        gymId,
-        memberId: memberIdentifier!,
+        gymId: scope.gymId,
+        memberId,
         markVisit,
         allowedVariantId,
       })
@@ -229,13 +226,13 @@ export async function POST(request: NextRequest) {
       if (features.accessControl) {
         try {
           const status = resolveAccessEventStatus(result, "CHECK_IN")
-          await prisma.accessEvent.create({
-            data: {
-              memberId: memberIdentifier,
-              status,
-              source: AccessEventSource.MANUAL,
-            },
-          })
+            await prisma.accessEvent.create({
+              data: {
+                memberId,
+                status,
+                source: AccessEventSource.MANUAL,
+              },
+            })
         } catch (error) {
           console.error("[access-events][visits]", error)
         }

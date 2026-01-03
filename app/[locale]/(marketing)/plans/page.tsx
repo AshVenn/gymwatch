@@ -64,7 +64,7 @@ export default async function PlansPage({ params }: PlansPageProps) {
     tier: plan.tier,
     name: plan.name,
     description: plan.description ?? "",
-    highlight: plan.highlight,
+    highlight: plan.highlight ?? false,
     highlightLabel: plan.highlightLabel,
     badges: plan.badges ?? [],
     features: plan.features ?? [],
@@ -73,10 +73,18 @@ export default async function PlansPage({ params }: PlansPageProps) {
   }))
 
   if (planCatalog.length === 0 || marketingTiers.size < 3) {
-    let fallbackCatalog = getPlanCatalogAsList(pricing)
+    let fallbackCatalog = getPlanCatalogAsList(pricing).map((plan) => ({
+      ...plan,
+      highlight: plan.highlight ?? false,
+      highlightLabel: plan.highlightLabel ?? undefined,
+    }))
     try {
       const tCatalog = await getTranslations({ locale, namespace: "subscriptionPlans" })
-      fallbackCatalog = getPlanCatalogAsListLocalized(tCatalog, pricing)
+      fallbackCatalog = getPlanCatalogAsListLocalized(tCatalog, pricing).map((plan) => ({
+        ...plan,
+        highlight: plan.highlight ?? false,
+        highlightLabel: plan.highlightLabel ?? undefined,
+      }))
     } catch {
     }
 

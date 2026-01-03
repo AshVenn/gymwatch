@@ -107,7 +107,7 @@ export function computeLimitsFromSettings(settings: {
 }
 
 export function isUnlimitedLimit(value: number | null | undefined) {
-  return value === null || value < 0
+  return value == null || value < 0
 }
 
 const EMPTY_FEATURES: PlanFeatures = {

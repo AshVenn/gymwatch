@@ -386,7 +386,11 @@ function createDrawer(pdf: PDFDocument, locale: ExportLocale, latinFont: any, ar
   return { drawTitle, drawLine, gap }
 }
 
-export async function POST(request: NextRequest, { params }: { params: { gymId: string } }) {
+export async function POST(
+  request: NextRequest,
+  { params }: { params: Promise<{ gymId: string }> },
+) {
+  const { gymId } = await params
   const sessionResult = await requireSession()
   if (!sessionResult.ok) return sessionResult.response
 
@@ -412,7 +416,7 @@ export async function POST(request: NextRequest, { params }: { params: { gymId: 
   const applyUpdate = payload.apply !== false
 
   const updatedGym = applyUpdate
-    ? await updateGymFromSuperAdmin(params.gymId, {
+    ? await updateGymFromSuperAdmin(gymId, {
         subscriptionStatus: payload.subscriptionStatus,
         subscriptionPlan: payload.subscriptionPlan,
         billingInterval: payload.billingInterval,
@@ -420,7 +424,7 @@ export async function POST(request: NextRequest, { params }: { params: { gymId: 
         subscriptionGracePeriodDays: payload.subscriptionGracePeriodDays,
         maxAdminAccounts: payload.maxAdminAccounts,
       })
-    : await getSuperAdminGymDetail(params.gymId)
+    : await getSuperAdminGymDetail(gymId)
 
   if (!updatedGym) return NextResponse.json({ error: "Gym not found" }, { status: 404 })
 
@@ -464,7 +468,7 @@ export async function POST(request: NextRequest, { params }: { params: { gymId: 
     actor: sessionResult.session.user,
     action: "platform.gym.invoice",
     targetType: "gym",
-    targetId: params.gymId,
+    targetId: gymId,
     metadata: {
       subscriptionPlan: payload.subscriptionPlan,
       billingInterval: payload.billingInterval,

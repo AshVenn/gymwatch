@@ -3,11 +3,11 @@
 import Link from 'next/link'
 import { useParams } from 'next/navigation'
 import { useEffect, useMemo, useState } from 'react'
-import { useMutation, useQuery } from '@tanstack/react-query'
+import { useQuery } from '@tanstack/react-query'
 import QRCode from 'qrcode'
-import { AccessEventSource, AccessEventStatus, SubscriptionStatus } from '@prisma/client'
+import { AccessEventStatus, SubscriptionStatus } from '@prisma/client'
 import { toast } from 'sonner'
-import { AlertTriangle, ArrowLeft, Copy, Download, QrCode, RefreshCw, ShieldCheck, Sparkles } from 'lucide-react'
+import { AlertTriangle, ArrowLeft, Copy, Download, QrCode } from 'lucide-react'
 import { useTranslations, useLocale } from 'next-intl'
 
 import { AccessLogTable, type AccessLogRow } from '@/components/dashboard/access-logs/table'
@@ -18,7 +18,6 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Skeleton } from '@/components/ui/skeleton'
-import { Switch } from '@/components/ui/switch'
 import { usePlanFeatures } from '@/app/hooks/use-plan-features'
 import { buildQrUrl } from '@/lib/qr'
 
@@ -52,7 +51,6 @@ export default function MemberBadgePage() {
 
   const { hasAccessControl, hasQrTools, hasQrDownloads } = usePlanFeatures()
   const [qrImage, setQrImage] = useState<string>('')
-  const [markVisit, setMarkVisit] = useState(false)
 
   const statusTone = useMemo(
     () =>
@@ -152,60 +150,6 @@ export default function MemberBadgePage() {
     }
   }, [locale, memberQuery.data?.qrToken, hasQrTools])
 
-  const simulateScan = useMutation({
-    mutationFn: async (withVisit: boolean) => {
-      const response = await fetch('/api/gym-team/access-events', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          memberId,
-          source: AccessEventSource.SIMULATOR,
-          markVisit: withVisit,
-        }),
-      })
-      const body = await response.json().catch(() => ({}))
-      if (!response.ok) {
-        throw new Error(body.error || t('errors.simulation'))
-      }
-      return body as { accessStatus: AccessEventStatus; event?: AccessLogRow; visit?: any }
-    },
-    onSuccess: (data) => {
-      const tone = statusTone[data.accessStatus]
-      const limitState = (data as any)?.visit?.limitState as string | undefined
-      const visitsRemaining =
-        typeof (data as any)?.visit?.visitsRemaining === 'number'
-          ? Math.max((data as any).visit.visitsRemaining, 0)
-          : null
-      const blocked =
-        data.accessStatus === AccessEventStatus.DENIED_DAILY_LIMIT ||
-        data.accessStatus === AccessEventStatus.DENIED_EXPIRED ||
-        data.accessStatus === AccessEventStatus.DENIED_INACTIVE ||
-        data.accessStatus === AccessEventStatus.DENIED_FORBIDDEN ||
-        limitState === 'BLOCKED'
-      const warning =
-        data.accessStatus === AccessEventStatus.SESSION_OVERSTAY ||
-        data.accessStatus === AccessEventStatus.ALREADY_CHECKED_IN ||
-        limitState === 'WARNING'
-      const baseLabel = tone?.label ?? t('simulator.toasts.base')
-      const labelWithRemaining =
-        visitsRemaining !== null
-          ? `${baseLabel} (${visitsRemaining})`
-          : baseLabel
-
-      if (blocked) {
-        toast.error(labelWithRemaining)
-      } else if (warning) {
-        toast.warning(labelWithRemaining)
-      } else {
-        toast.success(labelWithRemaining)
-      }
-      eventsQuery.refetch()
-    },
-    onError: (error) => {
-      const message = error instanceof Error ? error.message : t('errors.simulation')
-      toast.error(message)
-    },
-  })
 
   const member = memberQuery.data
   const latestEventStatus = eventsQuery.data?.[0]?.status ?? null
@@ -401,81 +345,6 @@ export default function MemberBadgePage() {
           </CardContent>
         </Card>
       </div>
-
-      <Card>
-        <CardHeader className="pb-2">
-          <CardTitle className="flex items-center gap-2 text-base text-muted-foreground">
-            <QrCode className="h-4 w-4" />
-            {t('simulator.title')}
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {!hasAccessControl ? (
-            <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-amber-900">
-              <div className="flex items-center gap-2 font-semibold">
-                <ShieldCheck className="h-4 w-4" />
-                {t('simulator.lockedTitle')}
-              </div>
-              <p className="text-sm">
-                {t('simulator.lockedBody')}
-              </p>
-            </div>
-          ) : (
-            <>
-              <div className="flex items-center justify-between gap-3 rounded-lg border border-border/60 bg-muted/40 p-3">
-                <div className="space-y-1">
-                  <p className="text-sm font-semibold">
-                    {t('simulator.panelTitle')}
-                  </p>
-                  <p className="text-xs text-muted-foreground">
-                    {t('simulator.panelDescription')}
-                  </p>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Switch
-                    id="mark-visit"
-                    checked={markVisit}
-                    onCheckedChange={setMarkVisit}
-                  />
-                  <Label htmlFor="mark-visit" className="text-sm">
-                    {t('simulator.panelMarkVisit')}
-                  </Label>
-                </div>
-              </div>
-              <Button
-                onClick={() => simulateScan.mutate(markVisit)}
-                disabled={simulateScan.isPending}
-              >
-                {simulateScan.isPending ? (
-                  <>
-                    <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
-                    {t('simulator.runPending')}
-                  </>
-                ) : (
-                  <>
-                    <Sparkles className="mr-2 h-4 w-4" />
-                    {t('simulator.runLabel')}
-                  </>
-                )}
-              </Button>
-              {eventsQuery.data?.length ? (
-                <div className="rounded-lg border border-border/60 bg-muted/30 p-3 text-sm">
-                  <p className="mb-2 font-semibold">
-                    {t('simulator.latestTitle')}
-                  </p>
-                  {latestTone ? (
-                    <p className={latestTone.color}>{latestTone.label}</p>
-                  ) : (
-                    <p className="text-muted-foreground">
-                      {t('simulator.latestEmpty')}
-                    </p>
-                  )}
-                </div>
-              ) : null}
-            </>
-          )}
-        </CardContent>
-      </Card>
 
       {hasAccessControl ? (
         <Card>

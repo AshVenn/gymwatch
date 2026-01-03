@@ -30,6 +30,10 @@ const expiryChartConfig: ChartConfig = {
   },
 }
 
+type Props = {
+  gym: SuperAdminGymDetail
+}
+
 export function GymAnalytics({ gym }: Props) {
   const t = useTranslations('superAdminGymAnalytics')
   const locale = useLocale()

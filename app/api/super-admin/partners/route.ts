@@ -9,7 +9,7 @@ import { requirePermission, requireSession } from "@/lib/auth/guards"
 import { recordAudit } from "@/lib/audit"
 
 const translationSchema = z.object({
-  name: z.string().min(2).optional(),
+  name: z.string().min(2),
   city: z.string().optional(),
   country: z.string().optional(),
   tagline: z.string().optional(),

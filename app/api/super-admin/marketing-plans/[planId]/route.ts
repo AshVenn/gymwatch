@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server"
+import { NextRequest, NextResponse } from "next/server"
 import { z, ZodError } from "zod"
 import { revalidatePath } from "next/cache"
 
@@ -9,7 +9,7 @@ import { requirePermission, requireSession } from "@/lib/auth/guards"
 import { recordAudit } from "@/lib/audit"
 
 const translationSchema = z.object({
-  name: z.string().min(2).optional(),
+  name: z.string().min(2),
   description: z.string().optional(),
   highlightLabel: z.string().optional(),
   badges: z.array(z.string()).optional(),
@@ -38,7 +38,11 @@ function revalidatePlanPages() {
   }
 }
 
-export async function PATCH(req: Request, { params }: { params: { planId: string } }) {
+export async function PATCH(
+  req: NextRequest,
+  { params }: { params: Promise<{ planId: string }> },
+) {
+  const { planId } = await params
   const sessionResult = await requireSession()
   if (!sessionResult.ok) return sessionResult.response
 
@@ -47,7 +51,10 @@ export async function PATCH(req: Request, { params }: { params: { planId: string
 
   try {
     const payload = planSchema.parse(await req.json())
-    const updated = await updateMarketingPlan(params.planId, payload)
+    const updated = await updateMarketingPlan(planId, payload)
+    if (!updated) {
+      return NextResponse.json({ code: "NOT_FOUND", message: "Plan not found" }, { status: 404 })
+    }
 
     revalidatePlanPages()
 
@@ -95,7 +102,11 @@ export async function PATCH(req: Request, { params }: { params: { planId: string
   }
 }
 
-export async function DELETE(_req: Request, { params }: { params: { planId: string } }) {
+export async function DELETE(
+  _req: NextRequest,
+  { params }: { params: Promise<{ planId: string }> },
+) {
+  const { planId } = await params
   const sessionResult = await requireSession()
   if (!sessionResult.ok) return sessionResult.response
 
@@ -103,13 +114,13 @@ export async function DELETE(_req: Request, { params }: { params: { planId: stri
   if (!permission.ok) return permission.response
 
   try {
-    await deleteMarketingPlan(params.planId)
+    await deleteMarketingPlan(planId)
     revalidatePlanPages()
     await recordAudit({
       actor: sessionResult.session.user,
       action: "platform.marketing-plan.delete",
       targetType: "marketing-plan",
-      targetId: params.planId,
+      targetId: planId,
       request: _req,
     })
     return NextResponse.json({ ok: true })

@@ -1,28 +1,31 @@
 // app/api/subscriptions/[subscriptionId]/route.ts
 import { NextRequest, NextResponse } from "next/server"
-import { getServerSession } from "next-auth"
-import { authOptions } from "@/lib/auth-middleware"
 import { prisma } from "@/lib/prisma"
 import { computeSubscriptionStatus } from "@/lib/subscription-status"
+import { jsonError, requireGymScope, requirePermission, requireSession } from "@/lib/auth/guards"
+import { Permissions } from "@/lib/rbac/permissions"
 
 export async function PUT(request: NextRequest, { params }: any) {
   try {
-    const session = await getServerSession(authOptions)
-    const gymId = (session?.user as any)?.gymId as string | undefined
-    const role = (session?.user as any)?.role as string | undefined
-    const sessionVariantId = (session?.user as any)?.gymVariantId as string | undefined
+    const sessionResult = await requireSession()
+    if (!sessionResult.ok) return sessionResult.response
 
-    if (!gymId) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-    }
+    const permission = requirePermission(sessionResult.user, Permissions.GymSubscriptionsManage)
+    if (!permission.ok) return permission.response
+
+    const scope = requireGymScope(sessionResult.user)
+    if (!scope.ok) return scope.response
+
+    const role = sessionResult.user.role as string | undefined
+    const sessionVariantId = sessionResult.user.gymVariantId ?? undefined
     if (role === "GYM_ADMIN" && !sessionVariantId) {
-      return NextResponse.json({ error: "Variant manquant" }, { status: 403 })
+      return jsonError(403, "MISSING_VARIANT", "Variant manquant")
     }
 
     const { planId, startDate, endDate, createPayment = true } = await request.json()
 
     const subscription = await prisma.subscription.findFirst({
-      where: { id: params.subscriptionId, gymId },
+      where: { id: params.subscriptionId, gymId: scope.gymId },
       select: { id: true, gymVariantId: true, memberId: true },
     })
 
@@ -37,7 +40,7 @@ export async function PUT(request: NextRequest, { params }: any) {
       where: { id: planId },
     })
 
-    if (!plan || plan.gymId !== gymId) {
+    if (!plan || plan.gymId !== scope.gymId) {
       return NextResponse.json({ error: "Plan not found" }, { status: 404 })
     }
 
@@ -67,7 +70,7 @@ export async function PUT(request: NextRequest, { params }: any) {
     const payment = createPayment
       ? await prisma.payment.create({
           data: {
-            gymId,
+            gymId: scope.gymId,
             amount: plan.price,
             currency: "MAD",
             paymentDate: start,
@@ -87,20 +90,23 @@ export async function PUT(request: NextRequest, { params }: any) {
 
 export async function DELETE(_request: NextRequest, { params }: any) {
   try {
-    const session = await getServerSession(authOptions)
-    const gymId = (session?.user as any)?.gymId as string | undefined
-    const role = (session?.user as any)?.role as string | undefined
-    const sessionVariantId = (session?.user as any)?.gymVariantId as string | undefined
+    const sessionResult = await requireSession()
+    if (!sessionResult.ok) return sessionResult.response
 
-    if (!gymId) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-    }
+    const permission = requirePermission(sessionResult.user, Permissions.GymSubscriptionsManage)
+    if (!permission.ok) return permission.response
+
+    const scope = requireGymScope(sessionResult.user)
+    if (!scope.ok) return scope.response
+
+    const role = sessionResult.user.role as string | undefined
+    const sessionVariantId = sessionResult.user.gymVariantId ?? undefined
     if (role === "GYM_ADMIN" && !sessionVariantId) {
-      return NextResponse.json({ error: "Variant manquant" }, { status: 403 })
+      return jsonError(403, "MISSING_VARIANT", "Variant manquant")
     }
 
     const subscription = await prisma.subscription.findFirst({
-      where: { id: params.subscriptionId, gymId },
+      where: { id: params.subscriptionId, gymId: scope.gymId },
       select: { id: true, gymVariantId: true },
     })
 

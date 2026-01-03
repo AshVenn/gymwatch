@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from "next/server"
-import { getServerSession } from "next-auth"
 import { z } from "zod"
-import { authOptions } from "@/lib/auth-middleware"
 import { db } from "@/lib/db"
 import { prisma } from "@/lib/prisma"
+import { jsonError, requireGymScope, requirePermission, requireSession } from "@/lib/auth/guards"
+import { Permissions } from "@/lib/rbac/permissions"
 
 const updateSchema = z.object({
   firstName: z.string().min(1),
@@ -17,15 +17,19 @@ export async function GET(
   { params }: { params: Promise<{ memberId: string | string[] }> },
 ) {
   try {
-    const session = await getServerSession(authOptions)
+    const sessionResult = await requireSession()
+    if (!sessionResult.ok) return sessionResult.response
 
-    if (!session?.user?.gymId) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-    }
-    const role = (session.user as any).role as string | undefined
-    const sessionVariantId = (session.user as any).gymVariantId as string | undefined
+    const permission = requirePermission(sessionResult.user, Permissions.GymMembersRead)
+    if (!permission.ok) return permission.response
+
+    const scope = requireGymScope(sessionResult.user)
+    if (!scope.ok) return scope.response
+
+    const role = (sessionResult.user as any).role as string | undefined
+    const sessionVariantId = sessionResult.user.gymVariantId ?? undefined
     if (role === "GYM_ADMIN" && !sessionVariantId) {
-      return NextResponse.json({ error: "Variant manquant" }, { status: 403 })
+      return jsonError(403, "MISSING_VARIANT", "Variant manquant")
     }
 
     const rawId = (await params).memberId
@@ -34,7 +38,7 @@ export async function GET(
     const member = await prisma.member.findFirst({
       where: {
         id: memberId,
-        gymId: session.user.gymId,
+        gymId: scope.gymId,
         ...(role === "GYM_ADMIN" && sessionVariantId ? { gymVariantId: sessionVariantId } : {}),
       },
       include: {
@@ -81,15 +85,19 @@ export async function PUT(
   { params }: { params: Promise<{ memberId: string | string[] }> },
 ) {
   try {
-    const session = await getServerSession(authOptions)
+    const sessionResult = await requireSession()
+    if (!sessionResult.ok) return sessionResult.response
 
-    if (!session?.user?.gymId) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-    }
-    const role = (session.user as any).role as string | undefined
-    const sessionVariantId = (session.user as any).gymVariantId as string | undefined
+    const permission = requirePermission(sessionResult.user, Permissions.GymMembersWrite)
+    if (!permission.ok) return permission.response
+
+    const scope = requireGymScope(sessionResult.user)
+    if (!scope.ok) return scope.response
+
+    const role = (sessionResult.user as any).role as string | undefined
+    const sessionVariantId = sessionResult.user.gymVariantId ?? undefined
     if (role === "GYM_ADMIN" && !sessionVariantId) {
-      return NextResponse.json({ error: "Variant manquant" }, { status: 403 })
+      return jsonError(403, "MISSING_VARIANT", "Variant manquant")
     }
 
     const rawId = (await params).memberId
@@ -98,7 +106,7 @@ export async function PUT(
     const payload = updateSchema.parse(await request.json())
 
     const member = await prisma.member.findFirst({
-      where: { id: memberId, gymId: session.user.gymId },
+      where: { id: memberId, gymId: scope.gymId },
       select: { id: true, gymVariantId: true },
     })
 
@@ -131,22 +139,26 @@ export async function DELETE(
   { params }: { params: Promise<{ memberId: string | string[] }> },
 ) {
   try {
-    const session = await getServerSession(authOptions)
+    const sessionResult = await requireSession()
+    if (!sessionResult.ok) return sessionResult.response
 
-    if (!session?.user?.gymId) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-    }
-    const role = (session.user as any).role as string | undefined
-    const sessionVariantId = (session.user as any).gymVariantId as string | undefined
+    const permission = requirePermission(sessionResult.user, Permissions.GymMembersWrite)
+    if (!permission.ok) return permission.response
+
+    const scope = requireGymScope(sessionResult.user)
+    if (!scope.ok) return scope.response
+
+    const role = (sessionResult.user as any).role as string | undefined
+    const sessionVariantId = sessionResult.user.gymVariantId ?? undefined
     if (role === "GYM_ADMIN" && !sessionVariantId) {
-      return NextResponse.json({ error: "Variant manquant" }, { status: 403 })
+      return jsonError(403, "MISSING_VARIANT", "Variant manquant")
     }
 
     const rawId = (await params).memberId
     const memberId = Array.isArray(rawId) ? rawId[0] : rawId
 
     const member = await prisma.member.findFirst({
-      where: { id: memberId, gymId: session.user.gymId },
+      where: { id: memberId, gymId: scope.gymId },
       select: { id: true, gymVariantId: true },
     })
 

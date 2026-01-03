@@ -9,7 +9,10 @@ import type { Permission } from "@/lib/rbac/permissions"
 import { resolveVariantAccess } from "@/lib/variant-access"
 
 type GuardFail = { ok: false; response: NextResponse }
-type GuardPass<T> = { ok: true } & T
+
+type Empty = Record<never, never>
+
+type GuardPass<T extends object = Empty> = { ok: true } & T
 
 export type AuthUser = {
   id?: string
@@ -36,10 +39,7 @@ export async function requireSession(): Promise<
   return { ok: true, session, user: session.user as AuthUser }
 }
 
-export function requireRole(
-  user: AuthUser,
-  roles: UserRole[],
-): GuardPass<{}> | GuardFail {
+export function requireRole(user: AuthUser, roles: UserRole[]): GuardPass | GuardFail {
   if (!user.role || !roles.includes(user.role)) {
     return { ok: false, response: jsonError(403, "FORBIDDEN_ROLE", "Forbidden") }
   }
@@ -49,7 +49,7 @@ export function requireRole(
 export function requirePermission(
   user: AuthUser,
   permission: Permission | Permission[],
-): GuardPass<{}> | GuardFail {
+): GuardPass | GuardFail {
   const allowed = Array.isArray(permission)
     ? hasAnyPermission(user.role ?? null, permission)
     : hasPermission(user.role ?? null, permission)
@@ -78,12 +78,13 @@ export async function requireVariantAccess(options: {
   requestedVariantId?: string | null
   sessionVariantId?: string | null
 }): Promise<
-  GuardPass<{
-    variantId?: string
-    variantMode: "SINGLE" | "MULTI"
-    defaultVariantId: string | null
-    multiLocationAllowed: boolean
-  }> | GuardFail
+  | GuardPass<{
+      variantId?: string
+      variantMode: "SINGLE" | "MULTI"
+      defaultVariantId: string | null
+      multiLocationAllowed: boolean
+    }>
+  | GuardFail
 > {
   const result = await resolveVariantAccess({
     gymId: options.gymId,

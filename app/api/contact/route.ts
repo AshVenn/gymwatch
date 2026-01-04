@@ -6,6 +6,40 @@ import { getClientIdentifier, rateLimit } from "@/lib/rate-limit"
 
 export const runtime = "nodejs"
 
+function normalizeOrigin(value: string) {
+  const trimmed = value.trim().replace(/\/+$/, "")
+  if (!trimmed) return null
+  if (!/^https?:\/\//i.test(trimmed)) return `https://${trimmed}`
+  return trimmed
+}
+
+function buildAllowedOrigins(request: NextRequest) {
+  const origins = new Set<string>()
+  origins.add(request.nextUrl.origin)
+
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.APP_URL
+  if (appUrl) {
+    const normalized = normalizeOrigin(appUrl)
+    if (normalized) origins.add(normalized)
+  }
+
+  const vercelUrl = process.env.VERCEL_URL
+  if (vercelUrl) {
+    const normalized = normalizeOrigin(vercelUrl)
+    if (normalized) origins.add(normalized)
+  }
+
+  const extra = process.env.ALLOWED_ORIGINS
+  if (extra) {
+    for (const entry of extra.split(",")) {
+      const normalized = normalizeOrigin(entry)
+      if (normalized) origins.add(normalized)
+    }
+  }
+
+  return origins
+}
+
 const contactSchema = z.object({
   name: z.string().trim().min(2),
   email: z.string().trim().email(),
@@ -32,7 +66,8 @@ export async function POST(request: NextRequest) {
     }
 
     const origin = request.headers.get("origin")
-    if (origin && origin !== request.nextUrl.origin) {
+    const allowedOrigins = buildAllowedOrigins(request)
+    if (origin && !allowedOrigins.has(origin)) {
       return NextResponse.json({ error: "Invalid payload" }, { status: 400 })
     }
 

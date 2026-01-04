@@ -126,17 +126,14 @@ export async function POST(request: NextRequest) {
     ]
 
     const title = "New demo request"
-    try {
-      await sendEmail({
-        subject: `Demo request: ${created.gymName}`,
-        text: formatEmailText(title, sections),
-        html: formatEmailHtml(title, sections),
-        replyTo: created.adminEmail,
-      })
-    } catch (error) {
-      await prisma.demoRequest.delete({ where: { id: created.id } }).catch(() => undefined)
-      throw error
-    }
+    void sendEmail({
+      subject: `Demo request: ${created.gymName}`,
+      text: formatEmailText(title, sections),
+      html: formatEmailHtml(title, sections),
+      replyTo: created.adminEmail,
+    }).catch((error) => {
+      console.error("[demo-request][email]", error)
+    })
 
     return NextResponse.json(created, { status: 201 })
   } catch (error) {

@@ -95,12 +95,17 @@ export async function sendEmail(options: SendEmailOptions) {
     tlsReject && ["false", "0", "no"].includes(tlsReject.toLowerCase())
       ? { rejectUnauthorized: false }
       : undefined
+  const timeoutMs = Number.parseInt(process.env.SMTP_TIMEOUT_MS ?? "10000", 10)
+  const smtpTimeout = Number.isFinite(timeoutMs) && timeoutMs > 0 ? timeoutMs : 10000
   const transporter = nodemailer.createTransport({
     host: config.host,
     port: config.port,
     secure: config.secure,
     auth: { user: config.user, pass: config.pass },
     ...(tls ? { tls } : {}),
+    connectionTimeout: smtpTimeout,
+    greetingTimeout: smtpTimeout,
+    socketTimeout: smtpTimeout,
   })
 
   await transporter.sendMail({

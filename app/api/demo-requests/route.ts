@@ -3,6 +3,9 @@ import { DemoRequestStatus, GymPlanTier } from "@prisma/client"
 import { z, ZodError } from "zod"
 import { prisma } from "@/lib/prisma"
 import { getClientIdentifier, rateLimit } from "@/lib/rate-limit"
+import { formatEmailHtml, formatEmailText, sendEmail, type EmailSection } from "@/lib/email"
+
+export const runtime = "nodejs"
 
 const demoRequestSchema = z.object({
   gymName: z.string().min(2),
@@ -73,6 +76,32 @@ export async function POST(request: NextRequest) {
         status: DemoRequestStatus.PENDING,
       },
     })
+
+    const sections: EmailSection[] = [
+      { label: "Gym name", value: created.gymName },
+      { label: "Gym email", value: created.gymEmail },
+      { label: "Admin name", value: `${created.adminFirstName} ${created.adminLastName}` },
+      { label: "Admin email", value: created.adminEmail },
+      { label: "Phone", value: created.phone },
+      { label: "Address", value: created.address },
+      { label: "City", value: created.city },
+      { label: "Country", value: created.country },
+      { label: "Plan", value: created.plan },
+      { label: "Message", value: created.message },
+    ]
+
+    const title = "New demo request"
+    try {
+      await sendEmail({
+        subject: `Demo request: ${created.gymName}`,
+        text: formatEmailText(title, sections),
+        html: formatEmailHtml(title, sections),
+        replyTo: created.adminEmail,
+      })
+    } catch (error) {
+      await prisma.demoRequest.delete({ where: { id: created.id } }).catch(() => undefined)
+      throw error
+    }
 
     return NextResponse.json(created, { status: 201 })
   } catch (error) {

@@ -712,6 +712,10 @@
       "actions": {
         "send": "Send",
         "emailDirect": "Email us directly"
+      },
+      "toast": {
+        "success": "Thanks! Your message has been sent.",
+        "error": "Unable to send your message right now. Please try again."
       }
     },
     "side": {

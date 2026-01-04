@@ -90,11 +90,17 @@ export function formatEmailHtml(title: string, sections: EmailSection[]) {
 
 export async function sendEmail(options: SendEmailOptions) {
   const config = getMailConfig()
+  const tlsReject = process.env.SMTP_TLS_REJECT_UNAUTHORIZED
+  const tls =
+    tlsReject && ["false", "0", "no"].includes(tlsReject.toLowerCase())
+      ? { rejectUnauthorized: false }
+      : undefined
   const transporter = nodemailer.createTransport({
     host: config.host,
     port: config.port,
     secure: config.secure,
     auth: { user: config.user, pass: config.pass },
+    ...(tls ? { tls } : {}),
   })
 
   await transporter.sendMail({

@@ -41,6 +41,7 @@ import { PaginationControls } from "@/components/dashboard/pagination-controls"
 import { usePlanFeatures } from "@/app/hooks/use-plan-features"
 import { useVariantOptions } from "@/app/hooks/use-variants"
 import { VariantSelector } from "@/components/dashboard/variant-selector"
+import { QrSuccessErrorAnimation } from "@/components/dashboard/qr-success-error-animation"
 import { buildQrUrl, extractQrToken } from "@/lib/qr"
 import { buildLabeledQrDataUrl } from "@/components/dashboard/qr-utils"
 
@@ -1006,9 +1007,16 @@ export default function MembersPage() {
   if (!gymId) return <div className="text-red-500 font-medium">{t("page.noGym")}</div>
 
   return (
-    <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-700">
-
-      {(error || membersError) && <div className="text-red-500 font-medium">{error || t("errors.genericMembers")}</div>}
+    <>
+      <QrSuccessErrorAnimation
+        status={scanStatus?.status ?? null}
+        memberName={scanStatus?.memberName ?? ""}
+        message={scanStatus?.message ?? ""}
+        daysRemaining={scanStatus?.daysRemaining}
+        onClose={() => setScanStatus(null)}
+      />
+      <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-700">
+        {(error || membersError) && <div className="text-red-500 font-medium">{error || t("errors.genericMembers")}</div>}
 
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
@@ -1755,5 +1763,6 @@ export default function MembersPage() {
         </AlertDialogContent>
       </AlertDialog>
     </div>
+    </>
   )
 }

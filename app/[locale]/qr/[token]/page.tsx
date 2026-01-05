@@ -327,9 +327,7 @@ export default async function QrProfilePage({ params }: QrProfilePageProps) {
 
               <div className="space-y-2">
                 <p className="text-sm font-semibold">{t("history.recentVisits")}</p>
-                {profile.context !== "staff" ? (
-                  <p className="text-sm text-muted-foreground">{t("history.staffOnly")}</p>
-                ) : recentVisits.length === 0 ? (
+                {recentVisits.length === 0 ? (
                   <p className="text-sm text-muted-foreground">{t("history.empty")}</p>
                 ) : (
                   <div className="space-y-2">

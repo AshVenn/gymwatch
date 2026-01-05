@@ -133,6 +133,13 @@ export async function GET(request: NextRequest) {
       }),
     ])
 
+    const recentVisitSummary = recentVisits.map((entry) => ({
+      id: entry.id,
+      checkIn: entry.checkIn,
+      checkOut: entry.checkOut,
+      variantName: entry.gymVariant?.name ?? null,
+    }))
+
     const isStaff =
       Boolean(sessionGymId && member.gymId === sessionGymId) &&
       (sessionRole === "GYM_OWNER" || sessionRole === "GYM_ADMIN" || sessionRole === "SUPER_ADMIN")
@@ -168,14 +175,7 @@ export async function GET(request: NextRequest) {
         visitsRemaining: visit.visitsRemaining,
         limitState: visit.limitState,
         overDailyLimit: visit.overDailyLimit,
-        recent: isStaff
-          ? recentVisits.map((entry) => ({
-              id: entry.id,
-              checkIn: entry.checkIn,
-              checkOut: entry.checkOut,
-              variantName: entry.gymVariant?.name ?? null,
-            }))
-          : [],
+        recent: recentVisitSummary,
         last30Days: visitsLast30Days,
       },
       classes: isStaff

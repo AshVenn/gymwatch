@@ -11,8 +11,8 @@ function isGymSubscriptionInactive(gym?: {
   subscriptionGracePeriodDays: number
 } | null) {
   if (!gym) return false
-  if (gym.subscriptionStatus === "EXPIRED" || gym.subscriptionStatus === "SUSPENDED") return true
-  if (!gym.subscriptionExpiresAt) return false
+  if (gym.subscriptionStatus === "SUSPENDED") return true
+  if (!gym.subscriptionExpiresAt) return gym.subscriptionStatus === "EXPIRED"
 
   const graceEnd = new Date(gym.subscriptionExpiresAt)
   graceEnd.setDate(graceEnd.getDate() + (gym.subscriptionGracePeriodDays ?? 0))
@@ -90,6 +90,7 @@ export const authOptions: NextAuthOptions = {
           subscriptionPlan: gym?.subscriptionPlan ?? null,
           billingInterval: gym?.billingInterval ?? null,
           subscriptionExpiresAt: gym?.subscriptionExpiresAt?.toISOString() ?? null,
+          subscriptionGracePeriodDays: gym?.subscriptionGracePeriodDays ?? null,
           isDemo: gym?.isDemo ?? false,
           demoEndsAt: gym?.demoEndsAt?.toISOString() ?? null,
           gymVariantId,
@@ -119,6 +120,7 @@ export const authOptions: NextAuthOptions = {
         ;(token as any).subscriptionPlan = (user as any).subscriptionPlan
         ;(token as any).billingInterval = (user as any).billingInterval
         ;(token as any).subscriptionExpiresAt = (user as any).subscriptionExpiresAt
+        ;(token as any).subscriptionGracePeriodDays = (user as any).subscriptionGracePeriodDays
         ;(token as any).isDemo = (user as any).isDemo
         ;(token as any).demoEndsAt = (user as any).demoEndsAt
         ;(token as any).gymVariantId = (user as any).gymVariantId
@@ -148,6 +150,7 @@ export const authOptions: NextAuthOptions = {
         ;(session.user as any).subscriptionPlan = (token as any).subscriptionPlan
         ;(session.user as any).billingInterval = (token as any).billingInterval
         ;(session.user as any).subscriptionExpiresAt = (token as any).subscriptionExpiresAt
+        ;(session.user as any).subscriptionGracePeriodDays = (token as any).subscriptionGracePeriodDays
         ;(session.user as any).isDemo = (token as any).isDemo
         ;(session.user as any).demoEndsAt = (token as any).demoEndsAt
         ;(session.user as any).gymVariantId = (token as any).gymVariantId

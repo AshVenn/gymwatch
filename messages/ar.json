@@ -2525,6 +2525,7 @@
     "demoActiveUntil": "الحساب التجريبي نشط حتى {date}",
     "thanks": "شكرًا لاستخدامك GymWatch.",
     "expiredMessage": "انتهت صلاحية اشتراكك. جدّد خطتك للاحتفاظ بإمكانية الوصول إلى الميزات.",
+    "graceMessage": "انتهت صلاحية اشتراكك. تنتهي فترة السماح خلال {days, plural, one {# يوم} other {# أيام}}.",
     "expiringIn": "سينتهي اشتراكك خلال {days, plural, one {# يوم} other {# أيام}}.",
     "actionRequired": "إجراء مطلوب",
     "reminder": "تذكير",

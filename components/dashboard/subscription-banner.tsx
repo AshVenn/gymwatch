@@ -43,6 +43,10 @@ export function SubscriptionBanner() {
   const expiresAtRaw = session?.user?.subscriptionExpiresAt ?? null
   const demoEndsAtRaw = (session?.user as any)?.demoEndsAt ?? null
   const isDemo = Boolean((session?.user as any)?.isDemo)
+  const graceDays =
+    typeof session?.user?.subscriptionGracePeriodDays === "number"
+      ? session.user.subscriptionGracePeriodDays
+      : 0
 
   const planKey = formatPlanKey(session?.user?.subscriptionPlan ?? null)
   const intervalKey = formatIntervalKey(session?.user?.billingInterval ?? null)
@@ -113,8 +117,32 @@ export function SubscriptionBanner() {
   const { message, tone, daysLeft } = useMemo(() => {
     if (!subscriptionStatus) return { message: null, tone: null, daysLeft: null }
 
+    const now = Date.now()
     const expiresAt = expiresAtRaw ? new Date(expiresAtRaw) : null
-    const diffDays = expiresAt ? Math.ceil((expiresAt.getTime() - Date.now()) / (1000 * 60 * 60 * 24)) : null
+    const diffDays = expiresAt ? Math.ceil((expiresAt.getTime() - now) / (1000 * 60 * 60 * 24)) : null
+    const graceEnd = expiresAt ? new Date(expiresAt) : null
+    if (graceEnd) {
+      graceEnd.setDate(graceEnd.getDate() + graceDays)
+    }
+    const graceDaysLeftRaw = graceEnd
+      ? Math.ceil((graceEnd.getTime() - now) / (1000 * 60 * 60 * 24))
+      : null
+    const graceDaysLeft =
+      typeof graceDaysLeftRaw === "number" ? Math.max(graceDaysLeftRaw, 0) : null
+    const inGrace =
+      graceDays > 0 &&
+      typeof diffDays === "number" &&
+      diffDays < 0 &&
+      typeof graceDaysLeftRaw === "number" &&
+      graceDaysLeftRaw >= 0
+
+    if (inGrace) {
+      return {
+        tone: "danger" as const,
+        message: t("graceMessage", { days: graceDaysLeft ?? 0 }),
+        daysLeft: graceDaysLeft,
+      }
+    }
 
     if (subscriptionStatus === "EXPIRED" || (diffDays !== null && diffDays < 0)) {
       return { tone: "danger" as const, message: t("expiredMessage"), daysLeft: diffDays }
@@ -125,7 +153,7 @@ export function SubscriptionBanner() {
     }
 
     return { message: null, tone: null, daysLeft: diffDays }
-  }, [expiresAtRaw, subscriptionStatus, t])
+  }, [expiresAtRaw, graceDays, subscriptionStatus, t])
 
   const demoSuffix = isDemo ? t("demoSuffix") : ""
 

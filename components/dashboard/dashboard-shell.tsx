@@ -83,16 +83,20 @@ export function DashboardShell({
     if (!session?.user) return false
     const userRole = session.user.role as UserRole
     if (userRole === UserRole.SUPER_ADMIN || userRole === UserRole.SUPER_MANAGER) return false
-    if (
-      session.user.subscriptionStatus === "EXPIRED" ||
-      session.user.subscriptionStatus === "SUSPENDED"
-    )
-      return true
+    if (session.user.subscriptionStatus === "SUSPENDED") return true
     const expiresAt = session.user.subscriptionExpiresAt
-    if (!expiresAt) return false
+    if (!expiresAt) return session.user.subscriptionStatus === "EXPIRED"
     const parsed = new Date(expiresAt)
-    if (Number.isNaN(parsed.getTime())) return false
-    return parsed.getTime() < Date.now()
+    if (Number.isNaN(parsed.getTime())) {
+      return session.user.subscriptionStatus === "EXPIRED"
+    }
+    const graceDays =
+      typeof session.user.subscriptionGracePeriodDays === "number"
+        ? session.user.subscriptionGracePeriodDays
+        : 0
+    const graceEnd = new Date(parsed)
+    graceEnd.setDate(graceEnd.getDate() + graceDays)
+    return graceEnd.getTime() < Date.now()
   }, [session?.user])
 
   useEffect(() => {

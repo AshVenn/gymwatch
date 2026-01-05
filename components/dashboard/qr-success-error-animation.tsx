@@ -55,7 +55,7 @@ export function QrSuccessErrorAnimation({ status, memberName, message, daysRemai
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.3 }}
-          className="pointer-events-none fixed inset-0 z-[70] flex items-center justify-center px-4 bg-black/20 backdrop-blur-sm"
+          className="pointer-events-none fixed inset-0 z-70 flex items-center justify-center px-4 bg-black/20 backdrop-blur-sm"
         >
           <motion.div
             className="absolute inset-0 flex items-center justify-center"

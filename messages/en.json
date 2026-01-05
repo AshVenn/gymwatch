@@ -2596,6 +2596,7 @@
     "demoActiveUntil": "Demo account active until {date}",
     "thanks": "Thanks for using GymWatch.",
     "expiredMessage": "Your subscription has expired. Renew your plan to keep access to features.",
+    "graceMessage": "Your subscription has expired. Grace period ends in {days, plural, one {# day} other {# days}}.",
     "expiringIn": "Your subscription will expire in {days, plural, one {# day} other {# days}}.",
     "actionRequired": "Action required",
     "reminder": "Reminder",

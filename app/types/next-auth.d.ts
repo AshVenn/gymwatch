@@ -9,6 +9,7 @@ declare module "next-auth" {
     gymVariantId?: string | null
     subscriptionStatus?: string | null
     subscriptionExpiresAt?: string | null
+    subscriptionGracePeriodDays?: number | null
     subscriptionPlan?: GymPlanTier | null
     billingInterval?: GymBillingInterval | null
     isDemo?: boolean
@@ -25,6 +26,7 @@ declare module "next-auth" {
       gymVariantId?: string | null
       subscriptionStatus?: string | null
       subscriptionExpiresAt?: string | null
+      subscriptionGracePeriodDays?: number | null
       subscriptionPlan?: GymPlanTier | null
       billingInterval?: GymBillingInterval | null
       isDemo?: boolean
@@ -43,6 +45,7 @@ declare module "next-auth/jwt" {
     gymVariantId?: string | null
     subscriptionStatus?: string | null
     subscriptionExpiresAt?: string | null
+    subscriptionGracePeriodDays?: number | null
     subscriptionPlan?: GymPlanTier | null
     billingInterval?: GymBillingInterval | null
     isDemo?: boolean

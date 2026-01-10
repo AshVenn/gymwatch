@@ -194,7 +194,7 @@ export function GymsTable({
                       </Badge>
                     ) : null}
                   </div>
-                  <p className="text-xs text-muted-foreground">{gym.email}</p>
+                    <p className="text-xs text-muted-foreground">{gym.email ?? "-"}</p>
                 </TableCell>
 
                 <TableCell>

@@ -50,7 +50,7 @@ export interface SuperAdminStats {
 export interface SuperAdminGym {
   id: string
   name: string
-  email: string
+  email: string | null
   phone?: string | null
   address?: string | null
   city: string | null
@@ -257,6 +257,25 @@ export type MarketingPlanInput = {
   translations?: Partial<Record<AppLocale, MarketingPlanTranslation>>
 }
 
+function formatValidationErrors(details?: {
+  fieldErrors?: Record<string, string[]>
+  formErrors?: string[]
+}) {
+  if (!details) return ""
+  const messages: string[] = []
+  if (Array.isArray(details.formErrors) && details.formErrors.length) {
+    messages.push(...details.formErrors)
+  }
+  if (details.fieldErrors) {
+    for (const [field, errors] of Object.entries(details.fieldErrors)) {
+      if (errors?.length) {
+        messages.push(`${field}: ${errors.join(", ")}`)
+      }
+    }
+  }
+  return messages.join(" | ")
+}
+
 async function fetchJSON<T>(input: string | URL, init?: RequestInit): Promise<T> {
   const response = await fetch(input, init)
   if (!response.ok) {
@@ -265,7 +284,8 @@ async function fetchJSON<T>(input: string | URL, init?: RequestInit): Promise<T>
       if (contentType.includes('application/json')) {
         const body = await response.json()
         const detail = (body as any)?.error ?? (body as any)?.message
-        throw new Error(detail || JSON.stringify(body) || 'Une erreur est survenue')
+        const validation = formatValidationErrors((body as any)?.details)
+        throw new Error(validation || detail || JSON.stringify(body) || 'Une erreur est survenue')
       }
       const message = await response.text()
       throw new Error(message || 'Une erreur est survenue')
@@ -278,8 +298,8 @@ async function fetchJSON<T>(input: string | URL, init?: RequestInit): Promise<T>
   if (contentType.includes('application/json')) {
     return response.json()
   }
-  return response.text() as T
-}
+    return response.text() as T
+  }
 
 export function useSuperAdminStats() {
   return useQuery<SuperAdminStats>({
@@ -561,11 +581,11 @@ export function useCreateGym() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: async (payload: {
-      name: string
-      email: string
-      phone?: string
-      address?: string
+      mutationFn: async (payload: {
+        name: string
+        email?: string | null
+        phone?: string
+        address?: string
       city?: string
       country?: string
       subscriptionPlan: GymPlanTier
@@ -690,7 +710,7 @@ export function useUpdateGymProfile() {
       gymId: string
       data: {
         name: string
-        email: string
+        email?: string | null
         phone: string
         city: string
         country: string

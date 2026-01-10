@@ -1216,6 +1216,8 @@
       "actions": "إجراءات"
     },
     "actions": {
+        "view": "عرض",
+        "createDemo": "إنشاء ديمو",
       "markVisit": "تسجيل زيارة",
       "manualCheckout": "تسجيل خروج يدوي",
       "edit": "تعديل",

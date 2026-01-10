@@ -18,8 +18,6 @@ import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { PaginationControls } from "@/components/dashboard/pagination-controls"
 import { useRouter } from "@/i18n/routing"
-import { Permissions } from "@/lib/rbac/permissions"
-import { hasPermission } from "@/lib/rbac/policies"
 
 type PlatformRole = "SUPER_ADMIN" | "SUPER_MANAGER"
 type UserStatus = "ACTIVE" | "SUSPENDED"
@@ -52,6 +50,25 @@ const statusOptions: Array<{ value: UserStatus; labelKey: string }> = [
   { value: "SUSPENDED", labelKey: "status.suspended" },
 ]
 
+const formatValidationErrors = (details?: {
+  fieldErrors?: Record<string, string[]>
+  formErrors?: string[]
+}) => {
+  if (!details) return ""
+  const messages: string[] = []
+  if (Array.isArray(details.formErrors) && details.formErrors.length) {
+    messages.push(...details.formErrors)
+  }
+  if (details.fieldErrors) {
+    for (const [field, errors] of Object.entries(details.fieldErrors)) {
+      if (errors?.length) {
+        messages.push(`${field}: ${errors.join(", ")}`)
+      }
+    }
+  }
+  return messages.join(" | ")
+}
+
 export default function SuperAdminUsersPage() {
   const t = useTranslations("superAdminUsers")
   const locale = useLocale()
@@ -59,7 +76,7 @@ export default function SuperAdminUsersPage() {
   const { data: session, status } = useSession()
   const router = useRouter()
 
-  const canAccess = hasPermission(session?.user?.role as any, Permissions.PlatformUsersRead)
+  const isSuperAdmin = session?.user?.role === "SUPER_ADMIN"
 
   const [query, setQuery] = useState("")
   const [roleFilter, setRoleFilter] = useState<"ALL" | PlatformRole>("ALL")
@@ -93,10 +110,10 @@ export default function SuperAdminUsersPage() {
   }, [query, roleFilter, statusFilter, pageSize])
 
   useEffect(() => {
-    if (status === "authenticated" && !canAccess) {
+    if (status === "authenticated" && !isSuperAdmin) {
       router.replace("/super-admin")
     }
-  }, [canAccess, router, status])
+  }, [isSuperAdmin, router, status])
 
   if (status === "loading") {
     return (
@@ -107,7 +124,7 @@ export default function SuperAdminUsersPage() {
     )
   }
 
-  if (status === "authenticated" && !canAccess) {
+  if (status === "authenticated" && !isSuperAdmin) {
     return null
   }
 
@@ -140,7 +157,8 @@ export default function SuperAdminUsersPage() {
       })
       const payload = await response.json().catch(() => ({}))
       if (!response.ok) {
-        throw new Error(payload.message || payload.error || t("errors.create"))
+        const validationMessage = formatValidationErrors(payload.details)
+        throw new Error(validationMessage || payload.message || payload.error || t("errors.create"))
       }
       return payload as PlatformUser
     },
@@ -171,7 +189,8 @@ export default function SuperAdminUsersPage() {
       })
       const body = await response.json().catch(() => ({}))
       if (!response.ok) {
-        throw new Error(body.message || body.error || t("errors.update"))
+        const validationMessage = formatValidationErrors(body.details)
+        throw new Error(validationMessage || body.message || body.error || t("errors.update"))
       }
       return body as PlatformUser
     },
@@ -368,7 +387,7 @@ export default function SuperAdminUsersPage() {
                         <Badge variant="secondary">{resolveRoleLabel(user.role)}</Badge>
                       </TableCell>
                       <TableCell>
-                        <Badge variant={user.status === "ACTIVE" ? "success" : "destructive"}>
+                        <Badge variant={user.status === "ACTIVE" ? "default" : "destructive"}>
                           {resolveStatusLabel(user.status)}
                         </Badge>
                       </TableCell>

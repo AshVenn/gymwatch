@@ -53,8 +53,8 @@ interface Member {
   id: string
   firstName: string
   lastName: string
-  email?: string
-  phone?: string
+  email?: string | null
+  phone?: string | null
   createdAt: string
   qrToken: string
   lastVisitedAt?: string | null
@@ -97,6 +97,24 @@ const buildDateTimeString = (date: string, time?: string) => {
   const base = time ? new Date(`${date}T${time}`) : new Date(date)
   if (Number.isNaN(base.getTime())) return null
   return base.toISOString()
+}
+const formatValidationErrors = (details?: {
+  fieldErrors?: Record<string, string[]>
+  formErrors?: string[]
+}) => {
+  if (!details) return ""
+  const messages: string[] = []
+  if (Array.isArray(details.formErrors) && details.formErrors.length) {
+    messages.push(...details.formErrors)
+  }
+  if (details.fieldErrors) {
+    for (const [field, errors] of Object.entries(details.fieldErrors)) {
+      if (errors?.length) {
+        messages.push(`${field}: ${errors.join(", ")}`)
+      }
+    }
+  }
+  return messages.join(" | ")
 }
 
 export default function MembersPage() {
@@ -206,7 +224,8 @@ export default function MembersPage() {
       const data = await response.json().catch(() => ({}))
 
       if (!response.ok) {
-        throw new Error(data.error || t("errors.saveMember"))
+        const validationMessage = formatValidationErrors(data.details)
+        throw new Error(validationMessage || data.error || t("errors.saveMember"))
       }
 
       return data

@@ -470,7 +470,7 @@ export async function updateGymFromSuperAdmin(
   gymId: string,
   data: {
     name?: string
-    email?: string
+    email?: string | null
     phone?: string | null
     city?: string | null
     country?: string | null
@@ -516,7 +516,7 @@ export async function updateGymFromSuperAdmin(
     where: { id: gymId },
     data: {
       name: data.name ?? undefined,
-      email: data.email ?? undefined,
+      email: data.email === undefined ? undefined : data.email,
       phone: data.phone ?? undefined,
       city: data.city ?? undefined,
       country: data.country ?? undefined,
@@ -606,7 +606,7 @@ export async function convertDemoGym(gymId: string) {
 
 export async function createGymForSuperAdmin(data: {
   name: string
-  email: string
+  email?: string | null
   phone: string
   address?: string | null
   city?: string | null
@@ -647,7 +647,7 @@ export async function createGymForSuperAdmin(data: {
     const gym = await tx.gym.create({
       data: {
         name: data.name,
-        email: data.email,
+        email: data.email ?? null,
         phone: data.phone,
         address: data.address ?? null,
         city: data.city ?? null,

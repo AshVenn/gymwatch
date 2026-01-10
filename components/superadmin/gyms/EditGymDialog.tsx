@@ -23,7 +23,7 @@ export function EditGymDialog({ gymId, onClose }: Props) {
 
   const schema = z.object({
     name: z.string().min(2, t("validation.nameMin")),
-    email: z.string().email(t("validation.emailInvalid")),
+    email: z.string().email(t("validation.emailInvalid")).optional().or(z.literal("")),
     phone: z.string().min(6, t("validation.phoneMin")),
     city: z.string().min(2, t("validation.cityMin")),
     country: z.string().min(2, t("validation.countryMin")),
@@ -52,7 +52,7 @@ export function EditGymDialog({ gymId, onClose }: Props) {
     if (gym) {
       form.reset({
         name: gym.name,
-        email: gym.email,
+        email: gym.email ?? "",
         phone: gym.phone ?? "",
         city: gym.city ?? "",
         country: gym.country ?? "",
@@ -68,7 +68,7 @@ export function EditGymDialog({ gymId, onClose }: Props) {
         gymId,
         data: {
           name: values.name,
-          email: values.email,
+          email: values.email?.trim() ? values.email : null,
           phone: values.phone,
           city: values.city,
           country: values.country,

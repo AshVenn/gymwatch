@@ -5,7 +5,7 @@ import { Prisma, UserRole, UserStatus } from "@prisma/client"
 import { prisma } from "@/lib/prisma"
 import { hashPassword } from "@/lib/auth"
 import { Permissions } from "@/lib/rbac/permissions"
-import { requirePermission, requireSession } from "@/lib/auth/guards"
+import { requirePermission, requireRole, requireSession } from "@/lib/auth/guards"
 import { recordAudit } from "@/lib/audit"
 
 const querySchema = z.object({
@@ -30,6 +30,9 @@ const PLATFORM_ROLES = [UserRole.SUPER_ADMIN, UserRole.SUPER_MANAGER]
 export async function GET(request: NextRequest) {
   const sessionResult = await requireSession()
   if (!sessionResult.ok) return sessionResult.response
+
+  const roleGate = requireRole(sessionResult.user, [UserRole.SUPER_ADMIN])
+  if (!roleGate.ok) return roleGate.response
 
   const permission = requirePermission(sessionResult.user, Permissions.PlatformUsersRead)
   if (!permission.ok) return permission.response
@@ -97,6 +100,9 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   const sessionResult = await requireSession()
   if (!sessionResult.ok) return sessionResult.response
+
+  const roleGate = requireRole(sessionResult.user, [UserRole.SUPER_ADMIN])
+  if (!roleGate.ok) return roleGate.response
 
   const permission = requirePermission(sessionResult.user, Permissions.PlatformUsersWrite)
   if (!permission.ok) return permission.response

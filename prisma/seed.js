@@ -812,7 +812,169 @@ async function seedPartnerClubs() {
   }
 }
 
+async function runProdSeed() {
+  console.log('Seeding GymWatch data (prod)...')
+  await clearDatabase()
+
+  await prisma.systemSettings.upsert({
+    where: { id: 1 },
+    update: {},
+    create: {
+      id: 1,
+      supportEmail: 'support@gymwatch.ma',
+      supportPhone: '+212600000000',
+      brandColor: '#5b4bff',
+      expiryReminder: true,
+      weeklyDigest: true,
+      incidentAlerts: true,
+      payoutReport: false,
+      gymSettingsIntervalMs: 60000,
+      userSettingsIntervalMs: 30000,
+      accessLogRetentionDays: 90,
+      lastPurgeAt: null,
+    },
+  })
+
+  await prisma.planSettings.upsert({
+    where: { id: 1 },
+    update: {},
+    create: {
+      id: 1,
+      basicMonthlyPrice: 200,
+      proMonthlyPrice: 350,
+      enterpriseMonthlyPrice: 520,
+      annualDiscountPercent: 15,
+      basicPlanLimitPerVariant: 3,
+      basicPlanLimitPerNetwork: 3,
+      proPlanLimitPerVariant: 6,
+      proPlanLimitPerNetwork: 10,
+      enterprisePlanLimitPerVariant: -1,
+      enterprisePlanLimitPerNetwork: -1,
+    },
+  })
+
+  const planCatalog = await upsertPlans()
+  await upsertMarketingPlans()
+
+  const adminPassword = await hashPassword('Admin123!')
+  const superAdmin = await prisma.user.upsert({
+    where: { email: 'admin@gymwatch.com' },
+    update: { password: adminPassword, role: UserRole.SUPER_ADMIN },
+    create: {
+      email: 'admin@gymwatch.com',
+      password: adminPassword,
+      role: UserRole.SUPER_ADMIN,
+      firstName: 'Admin',
+      lastName: 'GymWatch',
+    },
+  })
+  await ensurePreference(superAdmin.id)
+
+  const managerPassword = await hashPassword('Manager123!')
+  const superManager = await prisma.user.upsert({
+    where: { email: 'manager@gymwatch.com' },
+    update: { password: managerPassword, role: UserRole.SUPER_MANAGER },
+    create: {
+      email: 'manager@gymwatch.com',
+      password: managerPassword,
+      role: UserRole.SUPER_MANAGER,
+      firstName: 'Platform',
+      lastName: 'Manager',
+    },
+  })
+  await ensurePreference(superManager.id)
+
+  const now = new Date()
+  const todayStart = startOfDay(now)
+  const ownerPassword = await hashPassword('Owner123!')
+  const tierLabels = {
+    [GymPlanTier.BASIC]: 'Basic',
+    [GymPlanTier.PRO]: 'Pro',
+    [GymPlanTier.ENTERPRISE]: 'Enterprise',
+  }
+
+  const demoGyms = []
+
+  for (const tier of [GymPlanTier.BASIC, GymPlanTier.PRO, GymPlanTier.ENTERPRISE]) {
+    const plan = planCatalog.get(tier)
+    const label = tierLabels[tier] ?? tier
+
+    for (let index = 1; index <= 3; index += 1) {
+      const slug = `${tier.toLowerCase()}-${index}`
+      const gymId = `demo-${slug}`
+      const gymName = `${label} Demo ${index}`
+      const gymEmail = `demo-${slug}@gymwatch.local`
+      const ownerEmail = `owner-${slug}@gymwatch.local`
+
+      const gym = await prisma.gym.create({
+        data: {
+          id: gymId,
+          name: gymName,
+          email: gymEmail,
+          subscriptionPlan: tier,
+          billingInterval: GymBillingInterval.MONTHLY,
+          subscriptionPrice: plan?.price ?? 0,
+          subscriptionStatus: GymSubscriptionStatus.ACTIVE,
+          subscriptionStartedAt: addDays(now, -7),
+          subscriptionExpiresAt: addDays(now, 21),
+          subscriptionGracePeriodDays: 3,
+          maxAdminAccounts: 3,
+          maxMembers: plan?.maxMembers ?? -1,
+          maxVariants: plan?.maxVariants ?? 1,
+          capacity: plan?.capacityPerGym ?? 0,
+          isDemo: true,
+          demoEndsAt: addDays(now, 21),
+          lastSettingsUpdateAt: now,
+          todayVisitorCount: 0,
+          todayVisitorDate: todayStart,
+        },
+      })
+
+      const variant = await prisma.gymVariant.create({
+        data: {
+          gymId: gym.id,
+          name: `${gymName} Main`,
+          slug: 'main',
+          isDefault: true,
+        },
+      })
+
+      const owner = await prisma.user.create({
+        data: {
+          email: ownerEmail,
+          password: ownerPassword,
+          role: UserRole.GYM_OWNER,
+          firstName: label,
+          lastName: `Owner ${index}`,
+          gymId: gym.id,
+          gymVariantId: variant.id,
+        },
+      })
+
+      await prisma.userPreference.create({
+        data: { userId: owner.id },
+      })
+
+      await prisma.gym.update({
+        where: { id: gym.id },
+        data: { ownerId: owner.id },
+      })
+
+      demoGyms.push(gym)
+    }
+  }
+
+  return {
+    gymsSeeded: demoGyms.length,
+    membersSeeded: 0,
+  }
+}
+
 async function runSeed() {
+  if (process.env.SEED_MODE === 'prod') {
+    return runProdSeed()
+  }
+
   console.log('Seeding GymWatch data...')
   await clearDatabase()
 

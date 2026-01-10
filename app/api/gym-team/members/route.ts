@@ -12,11 +12,21 @@ import {
 } from "@/lib/auth/guards"
 import { Permissions } from "@/lib/rbac/permissions"
 
+const optionalEmail = z.preprocess(
+  (value) => (value === "" ? null : value),
+  z.string().email().nullable().optional(),
+)
+
+const optionalPhone = z.preprocess(
+  (value) => (value === "" ? null : value),
+  z.string().nullable().optional(),
+)
+
 const createMemberSchema = z.object({
   firstName: z.string().min(1),
   lastName: z.string().min(1),
-  email: z.string().email().optional().or(z.literal("").transform(() => undefined)),
-  phone: z.string().optional().or(z.literal("").transform(() => undefined)),
+  email: optionalEmail,
+  phone: optionalPhone,
   planId: z.string().optional().nullable(),
   startDate: z.string().optional().nullable(),
   gymVariantId: z.string().optional(),
@@ -277,7 +287,10 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(subscription ? { member, subscription } : member, { status: 201 })
   } catch (error) {
     if (error instanceof z.ZodError) {
-      return NextResponse.json({ error: "Invalid payload" }, { status: 400 })
+      return NextResponse.json(
+        { code: "INVALID_PAYLOAD", message: "Invalid payload", details: error.flatten() },
+        { status: 422 },
+      )
     }
     console.error("members.post", error)
     return NextResponse.json({ error: "Failed to create member" }, { status: 500 })

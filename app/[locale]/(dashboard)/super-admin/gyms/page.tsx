@@ -36,7 +36,7 @@ export default function SuperAdminGymsPage() {
       const matchesSearch =
         !query ||
         gym.name.toLowerCase().includes(query) ||
-        gym.email.toLowerCase().includes(query) ||
+        (gym.email ?? "").toLowerCase().includes(query) ||
         gym.owner?.email?.toLowerCase().includes(query)
 
       const matchesStatus = statusFilter === "ALL" ? true : gym.subscriptionStatus === statusFilter

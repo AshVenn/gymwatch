@@ -11,9 +11,14 @@ import { hasPermission } from "@/lib/rbac/policies"
 import { requirePermission, requireSession } from "@/lib/auth/guards"
 import { recordAudit } from "@/lib/audit"
 
+const optionalEmail = z.preprocess(
+  (value) => (value === "" ? null : value),
+  z.string().email().nullable().optional(),
+)
+
 const updateGymSchema = z.object({
   name: z.string().min(2).optional(),
-  email: z.string().email().optional(),
+  email: optionalEmail,
   phone: z.string().min(3).optional(),
   city: z.string().optional(),
   country: z.string().optional(),
@@ -91,7 +96,7 @@ export async function PATCH(
     )
     const updated = await updateGymFromSuperAdmin(params.gymId, {
       name: payload.name,
-      email: payload.email,
+      email: payload.email ?? null,
       phone: payload.phone,
       city: payload.city,
       country: payload.country,

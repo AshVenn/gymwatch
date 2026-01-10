@@ -5,11 +5,21 @@ import { prisma } from "@/lib/prisma"
 import { jsonError, requireGymScope, requirePermission, requireSession } from "@/lib/auth/guards"
 import { Permissions } from "@/lib/rbac/permissions"
 
+const optionalEmail = z.preprocess(
+  (value) => (value === "" ? null : value),
+  z.string().email().nullable().optional(),
+)
+
+const optionalPhone = z.preprocess(
+  (value) => (value === "" ? null : value),
+  z.string().nullable().optional(),
+)
+
 const updateSchema = z.object({
   firstName: z.string().min(1),
   lastName: z.string().min(1),
-  email: z.string().email().optional().or(z.literal("").transform(() => undefined)),
-  phone: z.string().optional().or(z.literal("").transform(() => undefined)),
+  email: optionalEmail,
+  phone: optionalPhone,
 })
 
 export async function GET(
@@ -127,7 +137,10 @@ export async function PUT(
     return NextResponse.json(updated)
   } catch (error) {
     if (error instanceof z.ZodError) {
-      return NextResponse.json({ error: "Invalid payload" }, { status: 400 })
+      return NextResponse.json(
+        { code: "INVALID_PAYLOAD", message: "Invalid payload", details: error.flatten() },
+        { status: 422 },
+      )
     }
     console.error("members.put", error)
     return NextResponse.json({ error: "Failed to update member" }, { status: 500 })

@@ -10,9 +10,14 @@ import { hasPermission } from "@/lib/rbac/policies"
 import { requirePermission, requireSession } from "@/lib/auth/guards"
 import { recordAudit } from "@/lib/audit"
 
+const optionalEmail = z.preprocess(
+  (value) => (value === "" ? null : value),
+  z.string().email().nullable().optional(),
+)
+
 const createGymSchema = z.object({
   name: z.string().min(2),
-  email: z.string().email(),
+  email: optionalEmail,
   phone: z.string().min(6),
   address: z.string().optional(),
   city: z.string().optional(),
@@ -104,7 +109,7 @@ export async function POST(req: Request) {
     )
     const created = await createGymForSuperAdmin({
       name: payload.name,
-      email: payload.email,
+      email: payload.email ?? null,
       phone: payload.phone,
       address: payload.address,
       city: payload.city,

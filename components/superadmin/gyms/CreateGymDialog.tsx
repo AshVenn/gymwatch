@@ -83,7 +83,7 @@ export function CreateGymDialog() {
       z
         .object({
           name: z.string().min(2, t("validation.nameRequired")),
-          email: z.string().email(t("validation.invalidEmail")),
+          email: z.string().email(t("validation.invalidEmail")).optional().or(z.literal("")),
           phone: z.string().min(6, t("validation.phoneRequired")),
           address: z.string().optional(),
           city: z.string().optional(),
@@ -183,7 +183,7 @@ export function CreateGymDialog() {
     createGym.mutate(
       {
         name: values.name,
-        email: values.email,
+        email: values.email?.trim() ? values.email : undefined,
         phone: values.phone,
         address: values.address || undefined,
         city: values.city || undefined,

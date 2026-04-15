@@ -470,7 +470,7 @@ export async function updateGymFromSuperAdmin(
   gymId: string,
   data: {
     name?: string
-    email?: string | null
+    email?: string
     phone?: string | null
     city?: string | null
     country?: string | null
@@ -517,15 +517,16 @@ export async function updateGymFromSuperAdmin(
     data: {
       name: data.name ?? undefined,
       email: data.email === undefined ? undefined : data.email,
-      phone: data.phone ?? undefined,
-      city: data.city ?? undefined,
-      country: data.country ?? undefined,
-      address: data.address ?? undefined,
+      phone: data.phone === undefined ? undefined : data.phone,
+      city: data.city === undefined ? undefined : data.city,
+      country: data.country === undefined ? undefined : data.country,
+      address: data.address === undefined ? undefined : data.address,
       subscriptionStatus: data.subscriptionStatus,
       subscriptionPlan: data.subscriptionPlan ?? undefined,
       billingInterval: data.billingInterval ?? undefined,
       subscriptionPrice,
-      subscriptionExpiresAt: data.subscriptionExpiresAt ?? null,
+      subscriptionExpiresAt:
+        data.subscriptionExpiresAt === undefined ? undefined : data.subscriptionExpiresAt,
       subscriptionGracePeriodDays: data.subscriptionGracePeriodDays ?? undefined,
       analyticsSnapshot: data.analyticsSnapshot ?? undefined,
       maxAdminAccounts: data.maxAdminAccounts ?? undefined,
@@ -533,9 +534,11 @@ export async function updateGymFromSuperAdmin(
       maxMembers: typeof data.maxMembers === "number" ? data.maxMembers : undefined,
       maxVariants: typeof data.maxVariants === "number" ? data.maxVariants : undefined,
       isDemo: typeof data.isDemo === "boolean" ? data.isDemo : undefined,
-      demoEndsAt: data.demoEndsAt ?? undefined,
-      planLimitPerVariant: data.planLimitPerVariant ?? undefined,
-      planLimitPerNetwork: data.planLimitPerNetwork ?? undefined,
+      demoEndsAt: data.demoEndsAt === undefined ? undefined : data.demoEndsAt,
+      planLimitPerVariant:
+        data.planLimitPerVariant === undefined ? undefined : data.planLimitPerVariant,
+      planLimitPerNetwork:
+        data.planLimitPerNetwork === undefined ? undefined : data.planLimitPerNetwork,
     },
   })
 
@@ -606,7 +609,7 @@ export async function convertDemoGym(gymId: string) {
 
 export async function createGymForSuperAdmin(data: {
   name: string
-  email?: string | null
+  email?: string
   phone: string
   address?: string | null
   city?: string | null
@@ -647,7 +650,7 @@ export async function createGymForSuperAdmin(data: {
     const gym = await tx.gym.create({
       data: {
         name: data.name,
-        email: data.email ?? null,
+        email: data.email ?? data.owner.email,
         phone: data.phone,
         address: data.address ?? null,
         city: data.city ?? null,

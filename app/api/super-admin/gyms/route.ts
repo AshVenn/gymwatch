@@ -109,7 +109,7 @@ export async function POST(req: Request) {
     )
     const created = await createGymForSuperAdmin({
       name: payload.name,
-      email: payload.email ?? null,
+      email: payload.email ?? undefined,
       phone: payload.phone,
       address: payload.address,
       city: payload.city,

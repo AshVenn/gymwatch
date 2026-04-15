@@ -40,17 +40,22 @@ const updateGymSchema = z.object({
   freezeUntil: z.string().nullable().optional(),
 })
 
+type RouteContext = {
+  params: Promise<{ gymId: string }>
+}
+
 export async function GET(
   _req: Request,
-  { params }: any,
+  { params }: RouteContext,
 ) {
+  const { gymId } = await params
   const sessionResult = await requireSession()
   if (!sessionResult.ok) return sessionResult.response
 
   const permission = requirePermission(sessionResult.user, Permissions.PlatformGymsRead)
   if (!permission.ok) return permission.response
 
-  const gym = await getSuperAdminGymDetail(params.gymId)
+  const gym = await getSuperAdminGymDetail(gymId)
   if (!gym) {
     return NextResponse.json({ code: "NOT_FOUND", message: "Not found" }, { status: 404 })
   }
@@ -80,8 +85,9 @@ export async function GET(
 
 export async function PATCH(
   req: Request,
-  { params }: any,
+  { params }: RouteContext,
 ) {
+  const { gymId } = await params
   const sessionResult = await requireSession()
   if (!sessionResult.ok) return sessionResult.response
 
@@ -94,9 +100,9 @@ export async function PATCH(
       sessionResult.user.role ?? null,
       Permissions.PlatformAnalyticsRevenue,
     )
-    const updated = await updateGymFromSuperAdmin(params.gymId, {
+    const updated = await updateGymFromSuperAdmin(gymId, {
       name: payload.name,
-      email: payload.email ?? null,
+      email: payload.email ?? undefined,
       phone: payload.phone,
       city: payload.city,
       country: payload.country,
@@ -104,9 +110,12 @@ export async function PATCH(
       subscriptionStatus: payload.subscriptionStatus,
       subscriptionPlan: payload.subscriptionPlan,
       billingInterval: payload.billingInterval,
-      subscriptionExpiresAt: payload.subscriptionExpiresAt
-        ? new Date(payload.subscriptionExpiresAt)
-        : null,
+      subscriptionExpiresAt:
+        payload.subscriptionExpiresAt === undefined
+          ? undefined
+          : payload.subscriptionExpiresAt
+            ? new Date(payload.subscriptionExpiresAt)
+            : null,
       subscriptionGracePeriodDays: payload.subscriptionGracePeriodDays,
       analyticsSnapshot: canViewFinancials ? payload.analyticsSnapshot : undefined,
       maxAdminAccounts: payload.maxAdminAccounts,
@@ -117,7 +126,12 @@ export async function PATCH(
       maxVariants: payload.maxVariants,
       freezeStatus: payload.freezeStatus ?? undefined,
       freezeReason: payload.freezeReason ?? undefined,
-      freezeUntil: payload.freezeUntil ? new Date(payload.freezeUntil) : null,
+      freezeUntil:
+        payload.freezeUntil === undefined
+          ? undefined
+          : payload.freezeUntil
+            ? new Date(payload.freezeUntil)
+            : null,
     })
 
     await recordAudit({
@@ -151,8 +165,9 @@ export async function PATCH(
 
 export async function DELETE(
   _req: Request,
-  { params }: any,
+  { params }: RouteContext,
 ) {
+  const { gymId } = await params
   const sessionResult = await requireSession()
   if (!sessionResult.ok) return sessionResult.response
 
@@ -160,12 +175,12 @@ export async function DELETE(
   if (!permission.ok) return permission.response
 
   try {
-    await deleteGymFromSuperAdmin(params.gymId)
+    await deleteGymFromSuperAdmin(gymId)
     await recordAudit({
       actor: sessionResult.session.user,
       action: "platform.gym.delete",
       targetType: "gym",
-      targetId: params.gymId,
+      targetId: gymId,
       request: _req,
     })
     return NextResponse.json({ success: true })

@@ -8,6 +8,7 @@ import { notFound } from 'next/navigation'
 import { AuthProvider } from '@/app/providers/session-provider'
 import { ReactQueryProvider } from '@/app/providers/react-query-provider'
 import { ThemeProvider } from '@/app/providers/theme-provider'
+import { HelpbotWidget } from '@/components/helpbot/helpbot-widget'
 import { Toaster } from '@/components/ui/sonner'
 import { routing, type AppLocale } from '@/i18n/routing'
 
@@ -122,6 +123,7 @@ export default async function LocaleLayout({ children, params }: LocaleLayoutPro
           <ReactQueryProvider>
             <Toaster />
             <main>{children}</main>
+            <HelpbotWidget />
           </ReactQueryProvider>
         </AuthProvider>
       </ThemeProvider>
